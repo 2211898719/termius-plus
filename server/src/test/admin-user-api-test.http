@@ -1,0 +1,67 @@
+# Admin User API Test
+
+### Login
+POST http://localhost:8080/api-admin/public/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "admin"
+}
+
+> {%
+client.global.set("token", response.body.token);
+%}
+
+### Create user
+POST http://localhost:8080/api-admin/user/create
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "username": "admin01",
+  "password": "admin"
+}
+
+### Lock user
+POST http://localhost:8080/api-admin/user/lock
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "id": 2
+}
+
+### Unlock user
+POST http://localhost:8080/api-admin/user/unlock
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "id": 2
+}
+
+### Get user
+GET http://localhost:8080/api-admin/user/get?id=3
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+### Get user by username
+GET http://localhost:8080/api-admin/user/getByUsername?username=admin003
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+### Search user
+GET http://localhost:8080/api-admin/user/search?sort=id,asc&page=0&size=2
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+### Scheduler.resetSystemJobs
+POST http://localhost:8080/api-admin/scheduler/resetSystemJobs
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+### Queue.test
+POST http://localhost:8080/api-admin/queue/test
+Content-Type: application/json
+Authorization: Bearer {{token}}

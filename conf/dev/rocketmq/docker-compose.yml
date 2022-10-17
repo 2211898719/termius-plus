@@ -1,0 +1,36 @@
+version: '3'
+services:
+  rmqnamesrv:
+    image: edusoho/rocketmq:4.9.3
+    ports:
+      - 9876:9876
+    environment:
+      JAVA_OPT_EXT: "-server -Xms128m -Xmx128m -Xmn48m"
+    volumes:
+      - ./data/namesrv/logs:/home/rocketmq/logs
+    command: sh mqnamesrv
+  rmqbroker:
+    image: edusoho/rocketmq:4.9.3
+    ports:
+      - 10909:10909
+      - 10911:10911
+      - 10912:10912
+    environment:
+      JAVA_OPT_EXT: "-server -Xms128m -Xmx128m -Xmn48m"
+    volumes:
+      - ./data/broker/logs:/home/rocketmq/logs
+      - ./data/broker/store:/home/rocketmq/store
+      - ./conf/broker.conf:/home/rocketmq/rocketmq-4.9.3/conf/broker.conf
+    command: sh mqbroker -n rmqnamesrv:9876 -c ../conf/broker.conf
+    depends_on:
+      - rmqnamesrv
+  rmqdashboard:
+    image: edusoho/rocketmq-dashboard:1.0.1
+    ports:
+      - 10002:8080
+    environment:
+      JAVA_OPTS: "-server -Xms128m -Xmx128m -Xmn48m"
+    volumes:
+      - ./conf/application-dashboard.yml:/home/rocketmq/application.yml
+    depends_on:
+      - rmqnamesrv
