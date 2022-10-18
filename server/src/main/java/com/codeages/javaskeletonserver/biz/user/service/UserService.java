@@ -4,6 +4,7 @@ import com.codeages.javaskeletonserver.biz.user.dto.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface UserService {
@@ -19,4 +20,6 @@ public interface UserService {
     Optional<UserDto> getByUsername(String name);
 
     Page<UserDto> search(UserSearchParams params, Pageable pager);
+
+    List<UserDto> findAllByIdIn(List<Long> ids);
 }

@@ -20,6 +20,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import javax.validation.Validator;
+import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -125,5 +126,10 @@ public class UserServiceImpl implements UserService {
         }
 
         return repo.findAll(builder, pager).map(mapper::toDto);
+    }
+
+    @Override
+    public List<UserDto> findAllByIdIn(List<Long> ids) {
+        return mapper.toDto(repo.findAllByIdIn(ids));
     }
 }

@@ -36,14 +36,17 @@ public enum ErrorCode implements ErrorCodeInterface {
         this.status = status;
     }
 
+    @Override
     public String getCode() {
         return this.name();
     }
 
+    @Override
     public String getMessage() {
         return message;
     }
 
+    @Override
     public int getStatus() {
         return status;
     }
