@@ -10,8 +10,6 @@ import java.util.Optional;
 
 public interface FileRepository extends JpaRepository<File, Long>, QuerydslPredicateExecutor<File> {
 
-    Optional<File> getByCorpIdAndUuid(Long corpId, String uuid);
-
     Optional<File> getByUuid(String uuid);
 
     List<File> findAllByUuidIn(Collection<String> uuid);

@@ -19,9 +19,6 @@
         <module name="java-skeleton-project" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
-      <module name="java-skeleton-project" target="11" />
-    </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
