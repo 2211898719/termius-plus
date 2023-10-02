@@ -1,0 +1,18 @@
+import {client} from "@shared/api-client";
+
+export const serverApi = {
+
+    list: async (params) => {
+        return client.get("/api-admin/server/list", {params: params});
+    },
+    create: async (params) => {
+        return client.post("/api-admin/server/create",  params);
+    },
+    update: async (params) => {
+        return client.post("/api-admin/server/update",  params);
+    },
+    updateSort: async (params) => {
+        return client.post("/api-admin/server/updateSort",  params);
+    },
+
+}

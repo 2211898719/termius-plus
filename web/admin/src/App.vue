@@ -39,4 +39,7 @@ store.$onAction(({name, after}) => {
 #app {
     height: 100%;
 }
+.ant-popconfirm {
+  z-index: 1001 !important;
+}
 </style>
