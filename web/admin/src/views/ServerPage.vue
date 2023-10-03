@@ -1,14 +1,16 @@
 <script setup>
-import {computed, nextTick, onMounted, reactive, ref, watch} from "vue";
+import {computed, createVNode, nextTick, onMounted, reactive, ref, watch} from "vue";
 import Sortable from 'sortablejs';
 import {walk} from "@/utils/treeUtil";
 import {serverApi} from "@/api/server";
 import _ from "lodash";
-import {Form, message} from "ant-design-vue";
+import {Form, message, Modal} from "ant-design-vue";
 import PSelect from "@/components /p-select.vue";
 import {proxyApi} from "@/api/proxy";
 import PEnumSelect from "@/components /p-enum-select.vue";
 import ProxyTypeEnum from "@/enums /ProxyTypeEnum";
+import {ExclamationCircleOutlined} from "@ant-design/icons-vue";
+
 
 const useForm = Form.useForm;
 
@@ -51,6 +53,35 @@ const handleEditServer = (row) => {
   creationVisible.value = true;
   creationType.value = 'update'
   Object.assign(creationState, row)
+}
+const handleCopyServer = async (row) => {
+  creationType.value = 'create'
+  Object.assign(creationState, row)
+  creationState.id = null
+  creationState.name = creationState.name + '-复制'
+  await serverApi[creationType.value](creationState);
+  message.success("操作成功");
+  await getServerList()
+}
+const handleDelServer = (item) => {
+
+  Modal.confirm({
+    title: '确定要删除吗?',
+    icon: createVNode(ExclamationCircleOutlined),
+    content: item.isGroup ? '删除组会丢失组下所有服务器信息！！' : '',
+    onOk: async () => {
+      await serverApi.del(item.id)
+      await getServerList()
+      message.success("操作成功");
+    },
+    onCancel() {
+    },
+  });
+}
+const handleEditProxy = (row) => {
+  proxyCreationVisible.value = true;
+  creationProxyType.value = 'update'
+  Object.assign(creationProxyState, row)
 }
 const handleAddGroup = () => {
   creationVisible.value = true;
@@ -99,6 +130,7 @@ const handleDblclick = (item) => {
   tagActiveKey.value = copyItem.operationId
 }
 
+//监听iframe加载完成，执行sudo等初始化命令
 window.onmessage = (e) => {
   if (e.data === 'connected') {
     spinning.value = false
@@ -108,19 +140,26 @@ window.onmessage = (e) => {
         handleExecCommand("echo \"" + server.password + "\" | sudo -S ls && sudo -i")
       })
     }
+
+    if (server.firstCommand) {
+      nextTick(() => {
+        handleExecCommand(server.firstCommand)
+      })
+    }
   }
 }
 
 const createSortEl = (el) => {
   if (el) {
-    Sortable.create(el, {
+    return Sortable.create(el, {
       group: {
         name: 'shared',
         pull: 'clone',
         put: false // Do not allow items to be put into this list
       },
       scroll: true,
-      dataIdAttr: 'data-id',
+      dataIdAttr: 'id',
+      sortElement: '.sortEl',
       dragClass: "sortable-drag",
       animation: 500,
       onEnd: function (evt) {
@@ -147,13 +186,20 @@ const updateSort = _.debounce(async (sortData) => {
 
 
 onMounted(() => {
-  createSortEl(document.getElementsByClassName('ant-row')[0])
+  var elementsByClassNameElement = document.getElementsByClassName('ant-row')[0];
+
+  let able = createSortEl(elementsByClassNameElement)
+  console.log(able.toArray())
+  console.log(able.sortData)
 
   createSortEl(document.getElementsByClassName('ant-tabs-nav-list')[0])
 })
 
 const onCloseServer = (item) => {
   _.remove(serverList.value, i => i.operationId === item)
+  if (item === tagActiveKey.value) {
+    tagActiveKey.value = 'server'
+  }
 }
 
 let tagActiveKey = ref()
@@ -171,6 +217,7 @@ const creationState = reactive({
   key: "",
   proxyId: "",
   parentId: "",
+  firstCommand: "",
   isGroup: false,
   username: "",
   autoSudo: true,
@@ -224,7 +271,7 @@ let {
   }
 } = computed(() => useForm(creationState, creationRules))
 
-
+const creationProxyType = ref('create');
 const creationProxyState = reactive({
   name: "",
   ip: "",
@@ -261,6 +308,12 @@ const creationProxyRules = reactive({
       message: "端口格式不正确"
     }
   ],
+  type: [
+    {
+      required: true,
+      message: "请选择类型",
+    }
+  ],
 });
 
 let {
@@ -269,11 +322,13 @@ let {
   validateInfos: proxyCreationValidations
 } = useForm(creationProxyState, creationProxyRules)
 
-const handleProxyVisibleChange = (visible) => {
+let proxyCreationVisible = ref(false);
+
+watch(proxyCreationVisible, (visible) => {
   if (!visible) {
     proxyResetCreationFields();
   }
-}
+});
 
 
 watch(creationVisible, (visible) => {
@@ -282,9 +337,13 @@ watch(creationVisible, (visible) => {
   }
 });
 
-let proxyCreationVisible = ref(false);
 
 let proxyRef = ref()
+
+const proxyCreation = () => {
+  proxyCreationVisible.value = true;
+  creationProxyType.value = 'create'
+}
 const handleProxyCreate = async () => {
   try {
     await proxyValidateCreation();
@@ -293,8 +352,12 @@ const handleProxyCreate = async () => {
     return false;
   }
 
-  let res = await proxyApi.create(creationProxyState);
-  await proxyRef.value.getData()
+  let res = await proxyApi[creationProxyType.value](creationProxyState);
+  if (proxyRef.value) {
+    await proxyRef.value.getData()
+  }
+  await getProxyData();
+  await getServerList()
   creationState.proxyId = res.id
   proxyCreationVisible.value = false;
   message.success("操作成功");
@@ -325,33 +388,34 @@ getProxyData()
 </script>
 
 <template>
-  <page-container title="服务器">
-    <a-spin :spinning="spinning" tip="等待中...">
-      <a-tabs style="width: 100%;"
-              type="editable-card"
-              :tabBarGutter="5"
-              v-model:activeKey="tagActiveKey"
-              :tab-position="'left'">
-        <template v-slot:addIcon></template>
+  <a-spin :spinning="spinning" tip="等待中...">
+    <a-tabs style="width: 100%;"
+            type="editable-card"
+            :tabBarGutter="5"
+            :hideAdd="true"
+            v-model:activeKey="tagActiveKey"
+            :tab-position="'left'">
 
-        <a-tab-pane tab="服务器" key="server" :closable="false">
-          <a-space direction="vertical" size="middle" style="width: 100%;">
-            <a-card>
-              <div style="display: flex;justify-content: space-between">
-                <a-breadcrumb>
-                  <a-breadcrumb-item v-for="item in groupBreadcrumb" :key="item.id" @click="handleDblclick(item)">
-                    <a>{{ item.name }}</a>
-                  </a-breadcrumb-item>
-                </a-breadcrumb>
-                <div>
-                  <a-button @click="handleAddServer" class="my-button">新增服务器</a-button>
-                  <a-button class="ml10 my-button" @click="handleAddGroup">新增分组</a-button>
-                </div>
+      <a-tab-pane class="eddd" tab="服务器" key="server" :closable="false">
+        <a-space direction="vertical" size="middle" style="width: 100%;">
+          <a-card>
+            <div style="display: flex;justify-content: space-between">
+              <a-breadcrumb>
+                <a-breadcrumb-item v-for="item in groupBreadcrumb" :key="item.id" @click="handleDblclick(item)">
+                  <a>{{ item.name }}</a>
+                </a-breadcrumb-item>
+              </a-breadcrumb>
+              <div>
+                <a-button @click="getServerList" class="my-button">刷新</a-button>
+                <a-button @click="handleAddServer" class="ml10 my-button">新增服务器</a-button>
+                <a-button class="ml10 my-button" @click="handleAddGroup">新增分组</a-button>
               </div>
-              <div class="mt30 server">
-                <a-list :grid="{ gutter: 16, column: 4 }" :data-source="currentData" row-key="id">
-                  <template #renderItem="{ item }">
-                    <a-list-item @dblclick="handleDblclick(item)">
+            </div>
+            <div class="mt30 server">
+              <a-list :grid="{ gutter: 16, column: 4 }" :data-source="currentData" row-key="id">
+                <template #renderItem="{ item }">
+                  <a-dropdown :trigger="['contextmenu']">
+                    <a-list-item class="sortEl" @dblclick="handleDblclick(item)">
                       <template #actions>
                         <a key="list-loadmore-edit">
                           <edit-outlined @click="handleEditServer(item)"/>
@@ -366,7 +430,7 @@ getProxyData()
                               <span>{{ item.name }}</span>
                             </template>
                             <template #avatar>
-                              <ungroup-outlined v-if="item.isGroup" class="icon-server"/>
+                              <ApartmentOutlined v-if="item.isGroup" class="icon-server"/>
                               <hdd-outlined v-else class="icon-server" style="color: #f25e62;"/>
                             </template>
                           </a-list-item-meta>
@@ -374,74 +438,139 @@ getProxyData()
                       </a-card>
 
                     </a-list-item>
-                  </template>
-                </a-list>
+                    <template #overlay>
+                      <a-menu>
+                        <a-menu-item v-if="!item.isGroup" key="2" @click="handleDblclick(item)">
+                          <link-outlined/>
+                          连接
+                        </a-menu-item>
+                        <a-menu-item key="4" @click="handleEditServer(item)">
+                          <edit-outlined/>
+                          修改
+                        </a-menu-item>
+                        <a-menu-item key="3" @click="handleCopyServer(item)">
+                          <CopyOutlined/>
+                          复制
+                        </a-menu-item>
+
+                        <a-menu-item key="1" @click="handleDelServer(item)">
+                          <DeleteOutlined/>
+                          删除
+                        </a-menu-item>
+                      </a-menu>
+                    </template>
+                  </a-dropdown>
+
+                </template>
+              </a-list>
+            </div>
+          </a-card>
+        </a-space>
+      </a-tab-pane>
+      <a-tab-pane tab="代理" key="proxy" :closable="false">
+        <a-space direction="vertical" size="middle" style="width: 100%;">
+          <a-card>
+            <div style="display: flex;justify-content: space-between">
+              <div>
+
               </div>
-            </a-card>
-          </a-space>
+              <div>
+                <a-button @click="proxyCreation" class="my-button">新增代理</a-button>
+              </div>
+            </div>
+            <div class="mt30 server">
+              <a-list :grid="{ gutter: 16, column: 4 }" :data-source="proxyData" row-key="id">
+                <template #renderItem="{ item }">
+                  <a-list-item>
+                    <template #actions>
+                      <a key="list-loadmore-edit">
+                        <edit-outlined @click="handleEditProxy(item)"/>
+                      </a>
+                    </template>
+                    <a-card>
+                      <a-skeleton avatar :title="false" :loading="!!item.loading" active>
+                        <a-list-item-meta
+                            :description="item.type+','+item.ip+':'+item.port"
+                        >
+                          <template #title>
+                            <span>{{ item.name }}</span>
+                          </template>
+                          <template #avatar>
+                            <safety-certificate-outlined class="icon-server" style="color: #f25e62;"/>
+                          </template>
+                        </a-list-item-meta>
+                      </a-skeleton>
+                    </a-card>
+
+                  </a-list-item>
+                </template>
+              </a-list>
+            </div>
+          </a-card>
+        </a-space>
+      </a-tab-pane>
+      <template v-for="server in serverList" :key="server.operationId">
+        <a-tab-pane :tab="server.name">
+          <template v-slot:closeIcon>
+            <close-outlined @click="onCloseServer(server.operationId)"/>
+          </template>
+          <iframe class="ssh"
+                  title="ssh"
+                  :id="server.operationId"
+                  :src="server.url">
+          </iframe>
         </a-tab-pane>
-        <a-tab-pane tab="代理" key="proxy" :closable="false">
-          <a-space direction="vertical" size="middle" style="width: 100%;">
-            <a-card>
-              <div style="display: flex;justify-content: space-between">
-                <div>
+      </template>
+    </a-tabs>
+  </a-spin>
 
-                </div>
-                <div>
-                  <a-button @click="handleAddServer" class="my-button">新增代理</a-button>
-                </div>
-              </div>
-              <div class="mt30 server">
-                <a-list :grid="{ gutter: 16, column: 4 }" :data-source="proxyData" row-key="id">
-                  <template #renderItem="{ item }">
-                    <a-list-item @dblclick="handleDblclick(item)">
-                      <template #actions>
-                        <a key="list-loadmore-edit">
-                          <edit-outlined @click="handleEditServer(item)"/>
-                        </a>
-                      </template>
-                      <a-card>
-                        <a-skeleton avatar :title="false" :loading="!!item.loading" active>
-                          <a-list-item-meta
-                              :description="item.type+','+item.ip+':'+item.port"
-                          >
-                            <template #title>
-                              <span>{{ item.name }}</span>
-                            </template>
-                            <template #avatar>
-                              <safety-certificate-outlined class="icon-server" style="color: #f25e62;"/>
-                            </template>
-                          </a-list-item-meta>
-                        </a-skeleton>
-                      </a-card>
 
-                    </a-list-item>
-                  </template>
-                </a-list>
-              </div>
-            </a-card>
-          </a-space>
-        </a-tab-pane>
-        <template v-for="server in serverList" :key="server.operationId">
-          <a-tab-pane :tab="server.name">
-            <template v-slot:closeIcon>
-              <close-outlined @click="onCloseServer(server.operationId)"/>
-            </template>
-            <iframe class="ssh"
-                    title="ssh"
-                    :id="server.operationId"
-                    :src="server.url">
-            </iframe>
-          </a-tab-pane>
-        </template>
-      </a-tabs>
-    </a-spin>
+  <a-drawer
+      v-model:visible="proxyCreationVisible"
+      title="新增代理"
+      placement="right"
+      width="40%"
+      size="large"
+  >
+    <template #extra>
+      <a-space>
+        <a-button @click="proxyCreationVisible = false">取消</a-button>
+        <a-button type="primary" @click="handleProxyCreate">提交</a-button>
+      </a-space>
+    </template>
 
-  </page-container>
+    <a-form
+        :label-col="{ span: 6 }"
+        :wrapper-col="{ span: 15 }"
+        autocomplete="off"
+    >
+      <a-form-item label="名称：" v-bind="proxyCreationValidations.name">
+        <a-input v-model:value="creationProxyState.name"/>
+      </a-form-item>
+      <a-form-item label="host：" v-bind="proxyCreationValidations.ip">
+        <a-input v-model:value="creationProxyState.ip"/>
+      </a-form-item>
+      <a-form-item label="端口：" v-bind="proxyCreationValidations.port">
+        <a-input v-model:value="creationProxyState.port"/>
+      </a-form-item>
+      <a-form-item label="类型：" v-bind="proxyCreationValidations.type">
+        <p-enum-select style="max-width: 100%" v-model:value="creationProxyState.type"
+                       :module="ProxyTypeEnum"></p-enum-select>
+      </a-form-item>
+      <a-form-item label="用户名：" v-bind="proxyCreationValidations.username">
+        <a-input v-model:value="creationProxyState.username"/>
+      </a-form-item>
+      <a-form-item label="密码：" v-bind="proxyCreationValidations.password">
+        <a-input v-model:value="creationProxyState.password"/>
+      </a-form-item>
+    </a-form>
+  </a-drawer>
+
   <a-drawer
       v-model:visible="creationVisible"
       title="新增服务器"
       placement="right"
+      width="50%"
       size="large"
   >
     <template #extra>
@@ -476,6 +605,10 @@ getProxyData()
           <a-input-password v-model:value="creationState.password"/>
         </a-form-item>
 
+        <a-form-item label="连接时执行命令" v-bind="creationValidations.firstCommand">
+          <a-textarea :auto-size="{ minRows: 2, maxRows: 5 }" v-model:value="creationState.firstCommand"></a-textarea>
+        </a-form-item>
+
         <a-form-item label="自动sudo" v-bind="creationValidations.aotoSudo">
           <a-switch v-model:checked="creationState.aotoSudo"></a-switch>
         </a-form-item>
@@ -487,52 +620,11 @@ getProxyData()
       <a-form-item label="代理" v-bind="creationValidations.proxyId">
         <p-select ref="proxyRef" :api="proxyApi.list" v-model:value="creationState.proxyId"
                   style="width: 90%"></p-select>
-        <a-popconfirm
-            ok-text="确定"
-            cancel-text="取消"
-            placement="bottomRight"
-            v-model:visible="proxyCreationVisible"
-            @visibleChange="handleProxyVisibleChange"
-        >
-          <template v-slot:okButton>
-            <a-button type="primary" size="small" @click="handleProxyCreate">确定</a-button>
+        <a-button @click="proxyCreation" style="margin-left: 2%" type="primary" shape="circle">
+          <template #icon>
+            <plus-outlined/>
           </template>
-          <template v-slot:title>
-            <a-form
-                :label-col="{ span: 6 }"
-                :wrapper-col="{ span: 15 }"
-                autocomplete="off"
-            >
-              <a-form-item label="名称：" v-bind="proxyCreationValidations.name">
-                <a-input v-model:value="creationProxyState.name"/>
-              </a-form-item>
-              <a-form-item label="host：" v-bind="proxyCreationValidations.ip">
-                <a-input v-model:value="creationProxyState.ip"/>
-              </a-form-item>
-              <a-form-item label="端口：" v-bind="proxyCreationValidations.port">
-                <a-input v-model:value="creationProxyState.port"/>
-              </a-form-item>
-              <a-form-item label="类型：" v-bind="proxyCreationValidations.type">
-                <p-enum-select style="max-width: 100%" v-model:value="creationProxyState.type"
-                               :module="ProxyTypeEnum"></p-enum-select>
-              </a-form-item>
-              <a-form-item label="用户名：" v-bind="proxyCreationValidations.username">
-                <a-input v-model:value="creationProxyState.username"/>
-              </a-form-item>
-              <a-form-item label="密码：" v-bind="proxyCreationValidations.password">
-                <a-input v-model:value="creationProxyState.password"/>
-              </a-form-item>
-            </a-form>
-          </template>
-          <template v-slot:icon>
-
-          </template>
-          <a-button style="margin-left: 2%" type="primary" shape="circle">
-            <template #icon>
-              <plus-outlined/>
-            </template>
-          </a-button>
-        </a-popconfirm>
+        </a-button>
       </a-form-item>
 
 
@@ -626,7 +718,13 @@ getProxyData()
       }
 
       .ant-list-item-meta-title {
+        color: #cccdd6;
         line-height: 1;
+        //单行文字溢出显示省略号
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+
 
         span {
           color: #cccdd6;
@@ -635,7 +733,7 @@ getProxyData()
 
       .ant-list-item-meta-description {
         line-height: 1;
-        color: #cccdd6;
+        color: #9a9daa;
         font-size: 0.8em;
         transform: scale(0.9); /* 用缩放来解决 */
         transform-origin: 0 0; /* 左对齐 */
@@ -683,6 +781,17 @@ getProxyData()
 
   &:hover {
     background-color: #32364a;
+  }
+}
+
+.ant-dropdown-menu {
+  color: #fff;
+  background-color: #292a3d;
+  border: 1px solid #000;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .15);
+
+  :deep(.ant-dropdown-menu-item, .ant-dropdown-menu-submenu-title) {
+    color: #fff;
   }
 }
 

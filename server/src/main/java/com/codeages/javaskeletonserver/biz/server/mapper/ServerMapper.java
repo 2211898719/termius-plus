@@ -5,10 +5,7 @@ import com.codeages.javaskeletonserver.biz.server.dto.ServerDto;
 import com.codeages.javaskeletonserver.biz.server.dto.ServerUpdateParams;
 import com.codeages.javaskeletonserver.biz.server.dto.TreeSortParams;
 import com.codeages.javaskeletonserver.biz.server.entity.Server;
-import org.mapstruct.BeanMapping;
-import org.mapstruct.Mapper;
-import org.mapstruct.MappingTarget;
-import org.mapstruct.NullValuePropertyMappingStrategy;
+import org.mapstruct.*;
 
 @Mapper(componentModel = "spring")
 public interface ServerMapper {
@@ -16,6 +13,7 @@ public interface ServerMapper {
 
     Server toCreateEntity(ServerCreateParams createParams);
 
+    @Mapping(target = "sort", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     Server toUpdateEntity(@MappingTarget Server server, ServerUpdateParams updateParams);
 

@@ -12,6 +12,7 @@ public class ServerSearchParams {
     private String ip;
     private String username;
     private Boolean isGroup;
+    private String firstCommand;
     private Long sort;
     private Boolean autoSudo;
     private Long parentId;

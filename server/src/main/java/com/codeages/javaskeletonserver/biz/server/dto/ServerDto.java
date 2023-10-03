@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 public class ServerDto {
     private Long id;
     private Boolean isGroup;
+    private String firstCommand;
     private Long parentId;
     private String username;
     private Long sort;

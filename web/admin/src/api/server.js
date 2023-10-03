@@ -15,4 +15,7 @@ export const serverApi = {
         return client.post("/api-admin/server/updateSort",  params);
     },
 
+    del(id) {
+        return client.post("/api-admin/server/delete", {id: id});
+    }
 }

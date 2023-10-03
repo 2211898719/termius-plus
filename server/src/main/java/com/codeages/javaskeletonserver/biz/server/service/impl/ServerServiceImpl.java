@@ -151,26 +151,56 @@ public class ServerServiceImpl implements ServerService {
                                                                    "&password=" + encoder.encodeToString(e.getPassword()
                                                                                                           .getBytes());
 
-
-                                                           if (e.getProxyId() != null) {
-                                                               ProxyDto proxyDto = proxyIdProxyMap.get(e.getProxyId());
-                                                               if (proxyDto != null) {
-                                                                   url += "&proxyType=" + proxyDto.getType().getCode() +
-                                                                           "&proxyIp=" + proxyDto.getIp() +
-                                                                           "&proxyPort=" + proxyDto.getPort() +
-                                                                           "&proxyRdns=true" +
-                                                                           "&proxyUser=" + proxyDto.getUsername() +
-                                                                           "&proxyPass=" + proxyDto.getPassword();
-                                                               }
-                                                           }
-
                                                            longTreeNode.getExtra().put("url", url);
                                                            return longTreeNode;
                                                        })
                                                        .collect(Collectors.toList());
 
-        return TreeUtil.build(servers, 0L);
+        List<Tree<Long>> treeList = TreeUtil.build(servers, 0L);
+
+        buildProxy(treeList, proxyIdProxyMap, null);
+
+        return treeList;
     }
+
+    /**
+     * 递归构建每个节点的代理，子节点的代理会覆盖父节点的代理，取就近原则
+     */
+    private void buildProxy(List<Tree<Long>> servers, Map<Long, ProxyDto> proxyIdProxyMap, Long parentProxyId) {
+        for (Tree<Long> serverTree : servers) {
+            //如果是组节点，递归构建子节点的代理
+            if (Boolean.TRUE.equals(serverTree.get("isGroup"))) {
+                if (serverTree.hasChild()) {
+                    Long proxyId = (Long) serverTree.get("proxyId");
+                    buildProxy(serverTree.getChildren(), proxyIdProxyMap, proxyId == null ? parentProxyId : proxyId);
+                }
+                continue;
+            }
+
+            //如果是服务器节点，构建代理
+            Long proxyId = (Long) serverTree.get("proxyId");
+            //如果节点没有代理，就用父节点的代理
+            if (proxyId == null) {
+                proxyId = parentProxyId;
+            }
+
+            ProxyDto proxyDto = proxyIdProxyMap.get(proxyId);
+            if (proxyDto != null) {
+                serverTree.put("proxy", proxyDto);
+                String url = (String) serverTree.get("url");
+
+                url += "&proxyType=" + proxyDto.getType().getCode() +
+                        "&proxyIp=" + proxyDto.getIp() +
+                        "&proxyPort=" + proxyDto.getPort() +
+                        "&proxyRdns=true" +
+                        "&proxyUser=" + proxyDto.getUsername() +
+                        "&proxyPass=" + proxyDto.getPassword();
+                serverTree.put("url", url);
+            }
+        }
+
+    }
+
 
 }
 

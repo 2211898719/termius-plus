@@ -29,6 +29,7 @@ public class Server {
      * 服务器IP/host
      */
     private String ip;
+    private String firstCommand;
     /**
      * ssh服务器端口
      */

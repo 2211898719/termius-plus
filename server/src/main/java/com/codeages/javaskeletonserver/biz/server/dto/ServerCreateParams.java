@@ -12,6 +12,7 @@ public class ServerCreateParams {
     private String name;
     private String username;
     private String ip;
+    private String firstCommand;
     private Long port;
     private Long sort;
     private Boolean autoSudo;

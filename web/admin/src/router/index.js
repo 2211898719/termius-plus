@@ -43,13 +43,7 @@ const routes = [
         path: '/server',
         name: 'server',
         meta: { title: '服务器', icon: 'SettingOutlined' },
-        component:  () => import('../views/server.vue'),
-      },
-      {
-        path: '/terminal',
-        name: 'terminal',
-        meta: { title: '终端', icon: 'SettingOutlined' },
-        component:  () => import('../views/terminal.vue'),
+        component:  () => import('../views/ServerPage.vue'),
       },
       {
         path: '/system',

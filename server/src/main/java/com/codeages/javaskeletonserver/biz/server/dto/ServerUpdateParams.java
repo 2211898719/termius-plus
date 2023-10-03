@@ -14,6 +14,7 @@ public class ServerUpdateParams {
     private Boolean isGroup;
     private Long parentId;
     private String username;
+    private String firstCommand;
     private Long sort;
     private Boolean autoSudo;
     private Long port;
