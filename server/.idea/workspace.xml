@@ -5,52 +5,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="0de18e6e-97dd-4171-a773-cfeff3460ad8" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/api/admin/SFTPController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/context/SFTPContext.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/dto/LsFileDto.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/dto/SFTPBean.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/dto/SFTPParams.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/enums/LsFileTypeEnum.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/job/SFTPTimeOutJob.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/SFTPService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/impl/SFTPServiceImpl.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/util/SFTPUtil.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../web/admin/src/api/sftp.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../web/admin/src/assets/file-icon/dir.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../web/admin/src/assets/file-icon/file.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../web/admin/src/components/p-sftp.vue" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../web/admin/src/utils/File.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/5/7/570aa07841a819fc714799ca7832a267bb13cd9a" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/6/2/62950a3a0e7d1204cb2a895ea453befa8fb4d267" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/9/b/9bfc2768e9eeeb1b4622928a9a1d3f1dd59ef85b" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/9/b/9bfc2768e9eeeb1b4622928a9a1d3f1dd59ef85b" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/9/d/9d018066962625eca3b4ec6b1bf4b2292f156580" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/a/5/a57863f8645c2086103f3e61b02a7df209e28f91" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/c/6/c6cf754e09943dd9ded602aae2632b830194cd1c" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/c/6/c6cf754e09943dd9ded602aae2632b830194cd1c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/c/a/ca73be8043833776a2f1ea08d02567654fb998e9" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/c/a/ca73be8043833776a2f1ea08d02567654fb998e9" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/e/f/effebbae40d7958e70e562d6f6b6c28b6af1514e" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/e/f/effebbae40d7958e70e562d6f6b6c28b6af1514e" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/index.pb" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/index.pb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/securityhotspotstore/5/7/570aa07841a819fc714799ca7832a267bb13cd9a" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/securityhotspotstore/6/2/62950a3a0e7d1204cb2a895ea453befa8fb4d267" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/securityhotspotstore/9/d/9d018066962625eca3b4ec6b1bf4b2292f156580" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/securityhotspotstore/a/5/a57863f8645c2086103f3e61b02a7df209e28f91" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/securityhotspotstore/index.pb" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/securityhotspotstore/index.pb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/api/admin/ServerController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/api/admin/ServerController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/dto/ServerDto.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/dto/ServerDto.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/enums/ProxyTypeEnum.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/enums/ProxyTypeEnum.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/ProxyService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/ProxyService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/ServerService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/ServerService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/impl/ProxyServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/impl/ProxyServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/impl/ServerServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/impl/ServerServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/storage/service/StorageService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/storage/service/StorageService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/storage/service/impl/StorageServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/storage/service/impl/StorageServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/storage/utils/FileUtil.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/storage/utils/FileUtil.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/impl/SFTPServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/impl/SFTPServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/src/api/sftp.js" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/api/sftp.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../web/admin/src/boot/bootAntDesignVue.js" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/boot/bootAntDesignVue.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../web/admin/src/components /p-enum-select.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/components/p-enum-select.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../web/admin/src/components /p-select.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/components/p-select.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/src/components/p-sftp.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/components/p-sftp.vue" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../web/admin/src/views/ServerPage.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/views/ServerPage.vue" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -119,6 +78,9 @@
     ]
   }
 }</component>
+  <component name="ReactorSettings">
+    <option name="notificationShown" value="true" />
+  </component>
   <component name="RecentsManager">
     <key name="CopyClassDialog.RECENTS_KEY">
       <recent name="com.codeages.javaskeletonserver.biz.server.dto" />
@@ -187,11 +149,37 @@
       <workItem from="1696173376252" duration="7330000" />
       <workItem from="1696259349085" duration="56000" />
       <workItem from="1696259411224" duration="21388000" />
-      <workItem from="1696399220811" duration="6802000" />
+      <workItem from="1696399220811" duration="16169000" />
     </task>
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>jar://$MAVEN_REPOSITORY$/com/jcraft/jsch/0.1.55/jsch-0.1.55-sources.jar!/com/jcraft/jsch/ProxySOCKS5.java</url>
+          <line>199</line>
+          <option name="timeStamp" value="3" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>jar://$MAVEN_REPOSITORY$/com/jcraft/jsch/0.1.55/jsch-0.1.55-sources.jar!/com/jcraft/jsch/ProxySOCKS5.java</url>
+          <line>135</line>
+          <option name="timeStamp" value="4" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>jar://$MAVEN_REPOSITORY$/com/jcraft/jsch/0.1.55/jsch-0.1.55-sources.jar!/com/jcraft/jsch/ProxyHTTP.java</url>
+          <line>105</line>
+          <option name="timeStamp" value="6" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>jar://$MAVEN_REPOSITORY$/com/jcraft/jsch/0.1.55/jsch-0.1.55-sources.jar!/com/jcraft/jsch/ProxySOCKS5.java</url>
+          <line>74</line>
+          <option name="timeStamp" value="7" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
 </project>

@@ -49,13 +49,22 @@ let sessionId = ref("")
 const init = async () => {
   spinning.value = true
   spinTip.value = "正在连接服务器"
-  if (sessionId.value) {
-    await sftpApi.close({id: sessionId.value})
+  try {
+
+
+    if (sessionId.value) {
+      await sftpApi.close({id: sessionId.value})
+    }
+    sessionId.value = await sftpApi.init({id: props.serverId})
+    currentPath.value = await sftpApi.pwd({id: sessionId.value})
+  } catch (e) {
+    console.error(e)
+    message.error(e.message)
+    return
+  } finally {
+    spinning.value = false
+    spinTip.value = ""
   }
-  sessionId.value = await sftpApi.init({id: props.serverId})
-  currentPath.value = await sftpApi.pwd({id: sessionId.value})
-  spinning.value = false
-  spinTip.value = ""
 
   await ls()
 }
@@ -63,21 +72,21 @@ const init = async () => {
 init()
 
 
-const ls = _.debounce(async () => {
+const ls = async () => {
   spinning.value = true
   spinTip.value = "正在获取文件列表"
   try {
     currentFiles.value = await sftpApi.ls({id: sessionId.value, remotePath: currentPath.value})
     return true
   } catch (e) {
-    message.error("没有权限")
+    message.error("没有权限或连接断开")
     console.error(e)
     return false
   } finally {
     spinning.value = false
     spinTip.value = ""
   }
-}, 200, {'maxWait': 200});
+}
 
 const changeDir = async (path) => {
   let originPath = currentPath.value
@@ -100,6 +109,7 @@ const handleUpload = () => {
 
 defineExpose({
   changeDir,
+  init,
   serverId: props.serverId,
   operationId: props.operationId,
 })
@@ -178,9 +188,35 @@ const handleDel = (file) => {
   });
 }
 
+let mkdirVisible = ref(false)
+let mkdirName = ref('')
+const handleMkdir = () => {
+  mkdirVisible.value = true
+  mkdirName.value = ''
+}
+const mkdir = () => {
+  if (!mkdirName.value) {
+    message.error("请输入目录名")
+    return
+  }
+  sftpApi.mkdir({id: sessionId.value, remotePath: currentPath.value + '/' + mkdirName.value})
+      .then(() => {
+        message.success("创建成功")
+        ls()
+      })
+      .catch((e) => {
+        console.error(e)
+        message.error(e.message)
+      })
+  mkdirVisible.value = false
+}
+
+
 //组件关闭时，关闭sftp连接
 onUnmounted(async () => {
-  await sftpApi.close({id: sessionId.value})
+  if (sessionId.value) {
+    await sftpApi.close({id: sessionId.value})
+  }
 })
 
 </script>
@@ -200,8 +236,8 @@ onUnmounted(async () => {
               </a-breadcrumb-item>
             </a-breadcrumb>
             <div>
-              <a-button @click="init">重新连接</a-button>
               <a-button class="ml10" @click="ls">刷新</a-button>
+              <a-button class="ml10" @click="handleMkdir">新建目录</a-button>
               <a-button class="ml10" @click="handleUpload">上传</a-button>
             </div>
 
@@ -243,6 +279,9 @@ onUnmounted(async () => {
         </a-card-grid>
       </a-card>
     </a-spin>
+    <a-modal v-model:visible="mkdirVisible" title="新建目录" @ok="mkdir">
+      <a-input v-model:value="mkdirName" placeholder="请输入目录名"/>
+    </a-modal>
   </div>
 </template>
 
@@ -259,7 +298,7 @@ onUnmounted(async () => {
 
   :deep(.ant-card-grid) {
     box-shadow: none;
-    width: 15%;
+    width: 16.6%;
     height: 130px;
     text-align: center;
     padding: 8px;

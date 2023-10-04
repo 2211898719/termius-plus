@@ -31,5 +31,5 @@ export const sftpApi = {
     },
     close: async (params) => {
         return client.post("/api-admin/sftp/" + params.id + "/close", params);
-    }
+    },
 }

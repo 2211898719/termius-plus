@@ -3,6 +3,8 @@ package com.codeages.javaskeletonserver.biz.server.service.impl;
 import cn.hutool.core.lang.Pair;
 import cn.hutool.core.lang.UUID;
 import cn.hutool.core.lang.reflect.MethodHandleUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.ssh.Sftp;
 import com.codeages.javaskeletonserver.biz.ErrorCode;
 import com.codeages.javaskeletonserver.biz.server.context.SFTPContext;
@@ -14,10 +16,7 @@ import com.codeages.javaskeletonserver.biz.server.enums.LsFileTypeEnum;
 import com.codeages.javaskeletonserver.biz.server.service.SFTPService;
 import com.codeages.javaskeletonserver.biz.server.service.ServerService;
 import com.codeages.javaskeletonserver.exception.AppException;
-import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.Proxy;
-import com.jcraft.jsch.Session;
-import com.jcraft.jsch.SocketFactory;
+import com.jcraft.jsch.*;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -71,17 +70,16 @@ public class SFTPServiceImpl implements SFTPService {
         ProxyDto proxyDto = server.getProxy();
         Proxy proxy = proxyDto.getType()
                               .getProxyClass()
-                              .getDeclaredConstructor(SocketFactory.class, String.class, int.class, int.class)
-                              .newInstance(null, server.getIp(), server.getPort().intValue(), 1000 * 60 * 60);
+                              .getDeclaredConstructor(String.class, int.class)
+                              .newInstance(proxyDto.getIp(), proxyDto.getPort().intValue());
 
         MethodHandleUtil.findMethod(
                                 proxyDto.getType().getProxyClass(),
                                 "setUserPasswd",
                                 MethodType.methodType(void.class, String.class, String.class)
                         )
-                        .invoke(proxyDto.getUsername(), proxyDto.getPassword());
+                        .invoke(proxy, proxyDto.getUsername(), proxyDto.getPassword());
 
-        proxy.connect(null, server.getIp(), server.getPort().intValue(), 1000 * 60 * 60);
         return proxy;
     }
 
@@ -107,8 +105,8 @@ public class SFTPServiceImpl implements SFTPService {
         List<String> files = sftp.lsFiles(path);
         List<String> dirs = sftp.lsDirs(path);
         return Stream.concat(
-                files.stream().map(file -> new LsFileDto(file, LsFileTypeEnum.FILE)),
-                dirs.stream().map(dir -> new LsFileDto(dir, LsFileTypeEnum.DIR))
+                dirs.stream().map(dir -> new LsFileDto(dir, LsFileTypeEnum.DIR)),
+                files.stream().map(file -> new LsFileDto(file, LsFileTypeEnum.FILE))
         ).collect(Collectors.toList());
     }
 
