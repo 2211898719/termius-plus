@@ -22,7 +22,10 @@ import {
     Spin,
     Switch,
     Popconfirm,
-    Select
+    Select,
+    Image,
+    PageHeader,
+    Popover
 } from 'ant-design-vue';
 import icons from '@/icons';
 
@@ -55,5 +58,8 @@ export function bootAntDesignVue(app) {
         .use(Switch)
         .use(Popconfirm)
         .use(Select)
+        .use(Image)
+        .use(Popover)
+        .use(PageHeader)
     ;
 }

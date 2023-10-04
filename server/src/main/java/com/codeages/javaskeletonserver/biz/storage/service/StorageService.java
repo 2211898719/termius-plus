@@ -22,6 +22,8 @@ public interface StorageService {
 
     List<FileDto> findFileInfo(List<String> uuids);
 
+    void deleteFile(String uuid);
+
     FileDto store(ByteArrayOutputStream outputStream, String fileName, FileTargetTypeEnum targetType);
 
 }

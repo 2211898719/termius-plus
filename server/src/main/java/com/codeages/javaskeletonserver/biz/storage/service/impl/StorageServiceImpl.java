@@ -143,6 +143,13 @@ public class StorageServiceImpl implements StorageService {
     }
 
     @Override
+    public void deleteFile(String uuid) {
+        File file = getFileByUUID(uuid);
+        FileUtil.del(file.getUri());
+        fileRepository.delete(file);
+    }
+
+    @Override
     @SneakyThrows(IOException.class)
     public FileDto store(ByteArrayOutputStream outputStream, String fileName, FileTargetTypeEnum targetType) {
         byte[] content = outputStream.toByteArray();

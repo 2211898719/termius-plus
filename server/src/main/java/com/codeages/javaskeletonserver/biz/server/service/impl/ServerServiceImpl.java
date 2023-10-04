@@ -73,6 +73,40 @@ public class ServerServiceImpl implements ServerService {
         serverRepository.saveAll(toUpdateAllEntity(treeSortParams));
     }
 
+    @Override
+    public ServerDto findById(Long id) {
+        ServerDto serverDto = serverRepository.findById(id)
+                                              .map(serverMapper::toDto)
+                                              .orElseThrow(() -> new AppException(
+                                                      ErrorCode.INVALID_ARGUMENT,
+                                                      "服务器不存在"
+                                              ));
+
+        Long proxyId = serverDto.getProxyId();
+        while (proxyId == null) {
+            if (serverDto.getParentId() == null || serverDto.getParentId() == 0) {
+                break;
+            }
+
+            proxyId = serverRepository.findById(serverDto.getParentId())
+                                      .map(serverMapper::toDto)
+                                      .orElseThrow(() -> new AppException(
+                                              ErrorCode.INVALID_ARGUMENT,
+                                              "服务器不存在"
+                                      )).getProxyId();
+        }
+
+        if (proxyId != null) {
+            serverDto.setProxy(proxyService.findById(proxyId)
+                                           .orElseThrow(() -> new AppException(
+                                                   ErrorCode.INVALID_ARGUMENT,
+                                                   "代理不存在"
+                                           )));
+        }
+
+        return serverDto;
+    }
+
     private List<Server> toUpdateAllEntity(List<TreeSortParams> serverUpdateParams) {
         if (CollectionUtil.isEmpty(serverUpdateParams)) {
             return Collections.emptyList();

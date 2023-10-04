@@ -823,7 +823,7 @@ public class FileUtil {
             );
         }
 
-        writeBateToResponse(
+        writeByteToResponse(
                 cn.hutool.core.io.FileUtil.readBytes(file.getUri()),
                 file.getName(),
                 response
@@ -843,7 +843,7 @@ public class FileUtil {
             );
         }
 
-        writeBateToResponse(
+        writeByteToResponse(
                 cn.hutool.core.io.FileUtil.readBytes(file.getUri()),
                 file.getName(),
                 response
@@ -854,7 +854,7 @@ public class FileUtil {
     public static void writeInputStreamToResponse(InputStream inputStream,
                                                   String fileName,
                                                   HttpServletResponse response) {
-        writeBateToResponse(
+        writeByteToResponse(
                 inputStream.readAllBytes(),
                 fileName,
                 response
@@ -863,7 +863,7 @@ public class FileUtil {
     }
 
     @SneakyThrows(IOException.class)
-    private static void writeBateToResponse(byte[] bytes, String fileName, HttpServletResponse response) {
+    public static void writeByteToResponse(byte[] bytes, String fileName, HttpServletResponse response) {
         response.reset();
         response.setContentType(ContentType.OCTET_STREAM.getValue());
         response.setCharacterEncoding(CharsetUtil.UTF_8);

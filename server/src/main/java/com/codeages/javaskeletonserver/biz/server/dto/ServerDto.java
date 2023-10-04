@@ -21,5 +21,6 @@ public class ServerDto {
     private String password;
     private String key;
     private Long proxyId;
+    private ProxyDto proxy;
 }
 

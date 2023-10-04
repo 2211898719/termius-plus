@@ -1,0 +1,298 @@
+<script setup>
+import {computed, createVNode, defineExpose, defineProps, nextTick, onUnmounted, ref} from "vue";
+import {sftpApi} from "@/api/sftp";
+import {message, Modal} from "ant-design-vue";
+import fileIcon from "@/assets/file-icon/dir.png";
+import dirIcon from "@/assets/file-icon/file.png";
+import _ from "lodash";
+import {download, uploadFile} from "@/utils/File";
+import {ExclamationCircleOutlined} from "@ant-design/icons-vue";
+
+console.log(fileIcon)
+
+const props = defineProps({
+  serverId: {
+    type: [Number], default: undefined,
+  },
+  operationId: {
+    type: [String], default: undefined,
+  },
+});
+
+let spinning = ref(false)
+let spinTip = ref('')
+
+let currentPath = ref("/");
+let currentPathArray = computed(() => {
+  let path = currentPath.value.split("/");
+  path = path.filter(item => item !== "")
+  let temp = "";
+
+  let res = path.map(item => {
+    temp += `/${item}`
+    return {
+      name: item,
+      path: temp
+    }
+  })
+
+  res.unshift({
+    name: "/",
+    path: "/"
+  })
+
+  return res
+})
+let currentFiles = ref([]);
+let sessionId = ref("")
+
+const init = async () => {
+  spinning.value = true
+  spinTip.value = "正在连接服务器"
+  if (sessionId.value) {
+    await sftpApi.close({id: sessionId.value})
+  }
+  sessionId.value = await sftpApi.init({id: props.serverId})
+  currentPath.value = await sftpApi.pwd({id: sessionId.value})
+  spinning.value = false
+  spinTip.value = ""
+
+  await ls()
+}
+
+init()
+
+
+const ls = _.debounce(async () => {
+  spinning.value = true
+  spinTip.value = "正在获取文件列表"
+  try {
+    currentFiles.value = await sftpApi.ls({id: sessionId.value, remotePath: currentPath.value})
+    return true
+  } catch (e) {
+    message.error("没有权限")
+    console.error(e)
+    return false
+  } finally {
+    spinning.value = false
+    spinTip.value = ""
+  }
+}, 200, {'maxWait': 200});
+
+const changeDir = async (path) => {
+  let originPath = currentPath.value
+  currentPath.value = path
+  let res = await ls()
+  if (!res) {
+    currentPath.value = originPath
+    await ls()
+  }
+}
+
+const handleUpload = () => {
+  uploadFile(sftpApi.upload({id: sessionId.value, remotePath: currentPath.value}), async (res, fileName) => {
+    console.log(res)
+    console.log(fileName)
+    await ls()
+  }, {remotePath: currentPath.value});
+}
+
+
+defineExpose({
+  changeDir,
+  serverId: props.serverId,
+  operationId: props.operationId,
+})
+
+const handleDownload = (file) => {
+  download(sftpApi.download({id: sessionId.value}), {remotePath: currentPath.value + '/' + file.fileName}, file.fileName)
+}
+
+
+let renameInputs = ref([])
+let currentRenameFileIndex = ref(null)
+let newFileName = ref('')
+let renameFile = ref('')
+
+const handleRename = async (file, index) => {
+  renameFile.value = file
+  newFileName.value = file.fileName
+  currentRenameFileIndex.value = index
+  nextTick(() => {
+    renameInputs.value.forEach(item => {
+      item.focus()
+    })
+  })
+}
+
+const confirmRename = _.throttle(async () => {
+  if (renameFile.value.fileName === newFileName.value) {
+    currentRenameFileIndex.value = null
+    return
+  }
+
+  try {
+    await sftpApi.rename({
+      id: sessionId.value,
+      remotePath: currentPath.value + '/' + renameFile.value.fileName,
+      newRemotePath: currentPath.value + '/' + newFileName.value
+    })
+  } catch (e) {
+    console.error(e)
+    message.error(e.message)
+  }
+
+  await ls()
+
+  currentRenameFileIndex.value = null
+}, 1000, {
+  leading: true,
+  trailing: false,
+  maxWait: 1000,
+})
+
+
+const handleDel = (file) => {
+  let rmApi = sftpApi.rm
+  if (file.type === 'DIR') {
+    rmApi = sftpApi.rmDir
+  }
+
+  Modal.confirm({
+    title: '确定要删除吗?',
+    icon: createVNode(ExclamationCircleOutlined),
+    content: file.type === 'DIR' ? '你要删除的是一个文件夹，请小心行事！！!' : '',
+    onOk() {
+      rmApi({id: sessionId.value, remotePath: currentPath.value + '/' + file.fileName})
+          .then(() => {
+            message.success("删除成功")
+            ls()
+          })
+          .catch((e) => {
+            console.error(e)
+            message.error(e.message)
+          })
+    },
+    onCancel() {
+    },
+  });
+}
+
+//组件关闭时，关闭sftp连接
+onUnmounted(async () => {
+  await sftpApi.close({id: sessionId.value})
+})
+
+</script>
+
+<template>
+  <div class="sftp-root">
+    <a-spin v-model:spinning="spinning" :tip="spinTip">
+      <a-card :bordered="false" :hoverable="false">
+        <template v-slot:title>
+          <div class="head">
+            <a-breadcrumb>
+              <a-breadcrumb-item v-for="path in currentPathArray" :key="path.path" @click="changeDir(path.path)">
+                <component :is="path.path===currentPath?'span':'a'" v-if="path.name!=='/'">{{ path.name }}</component>
+                <component :is="path.path===currentPath?'span':'a'" v-else>
+                  <home-outlined/>
+                </component>
+              </a-breadcrumb-item>
+            </a-breadcrumb>
+            <div>
+              <a-button @click="init">重新连接</a-button>
+              <a-button class="ml10" @click="ls">刷新</a-button>
+              <a-button class="ml10" @click="handleUpload">上传</a-button>
+            </div>
+
+          </div>
+        </template>
+        <a-card-grid :bordered="false" :hoverable="false" v-for="(file,index) in currentFiles" :key="file.fileName"
+                     @dblclick="file.type==='FILE'?'':changeDir(currentPath+'/'+file.fileName)" :title="file.fileName">
+          <a-dropdown :trigger="['contextmenu']">
+            <div>
+              <div>
+                <a-image class="icon" :preview="false" :src="dirIcon" v-if="file.type==='FILE'"></a-image>
+                <a-image class="icon" :preview="false" :src="fileIcon" v-else></a-image>
+              </div>
+              <div>
+                <a-input ref="renameInputs" @blur="confirmRename" @pressEnter="confirmRename"
+                         v-if="currentRenameFileIndex===index" v-model:value="newFileName"
+                         style="text-align: center"/>
+                <p v-else class="fileName">{{ file.fileName }}</p>
+              </div>
+            </div>
+            <template #overlay>
+              <a-menu>
+                <a-menu-item v-if="file.type==='FILE'" key="4" @click="handleDownload(file)">
+                  <cloud-download-outlined/>
+                  下载
+                </a-menu-item>
+                <a-menu-item key="3" @click="handleRename(file,index)">
+                  <edit-outlined/>
+                  重命名
+                </a-menu-item>
+
+                <a-menu-item key="1" @click="handleDel(file)">
+                  <DeleteOutlined/>
+                  删除
+                </a-menu-item>
+              </a-menu>
+            </template>
+          </a-dropdown>
+        </a-card-grid>
+      </a-card>
+    </a-spin>
+  </div>
+</template>
+
+<style scoped lang="less">
+.sftp-root {
+  .head {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center
+  }
+
+  min-height: 500px;
+
+  :deep(.ant-card-grid) {
+    box-shadow: none;
+    width: 15%;
+    height: 130px;
+    text-align: center;
+    padding: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+    .icon {
+      width: 60%;
+      height: 60%;
+    }
+
+    &:hover {
+      transform: scale(1.1);
+    }
+
+  }
+
+  .fileName {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.ml10 {
+  margin-left: 10px;
+}
+
+.ml5 {
+  margin-left: 5px;
+}
+
+</style>

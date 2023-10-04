@@ -2,16 +2,14 @@ package com.codeages.javaskeletonserver.api.admin;
 
 import cn.hutool.core.lang.tree.Tree;
 import com.codeages.javaskeletonserver.biz.server.dto.*;
+import com.codeages.javaskeletonserver.biz.server.service.SFTPService;
 import com.codeages.javaskeletonserver.biz.server.service.ServerService;
 import com.codeages.javaskeletonserver.common.IdPayload;
 import com.codeages.javaskeletonserver.common.OkResponse;
-import com.codeages.javaskeletonserver.common.PagerResponse;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
-import javax.annotation.security.RolesAllowed;
+import java.io.OutputStream;
 import java.util.List;
 
 @RestController
@@ -57,6 +55,8 @@ public class ServerController {
 
         return OkResponse.TRUE;
     }
+
+
 
 }
 

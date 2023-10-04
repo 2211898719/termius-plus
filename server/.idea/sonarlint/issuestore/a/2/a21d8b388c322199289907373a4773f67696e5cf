@@ -1,0 +1,38 @@
+
+M
+java:S3740Ì"/Provide the parametrized type for this generic.(§šÅ8 ±½Æ¯1
+R
+java:S3740Î"/Provide the parametrized type for this generic.(–Ïµüÿÿÿÿ8¡±½Æ¯1
+
+java:S1488Î"^Immediately return this expression instead of assigning it to the temporary variable "vector".(–Ïµüÿÿÿÿ8¡±½Æ¯1
+h
+java:S2184."FCast one of the operands of this multiplication operation to a "long".(ÏÚ®½şÿÿÿÿ8¢±½Æ¯1
+d
+java:S2095+"BUse try-with-resources or close this "Sftp" in a "finally" clause.(¹­²÷ÿÿÿÿÿ8¬±½Æ¯1
+}
+java:S1149"_Replace the synchronized class "StringBuffer" by an unsynchronized one such as "StringBuilder".(–ÄÒ‹8­±½Æ¯1
+ƒ
+java:S1149Ì"eReplace the synchronized class "Vector" by an unsynchronized one such as "ArrayList" or "LinkedList".(§šÅ8­±½Æ¯1
+ˆ
+java:S1149Î"eReplace the synchronized class "Vector" by an unsynchronized one such as "ArrayList" or "LinkedList".(–Ïµüÿÿÿÿ8­±½Æ¯1
+L	java:S106,"+Replace this use of System.out by a logger.(êïÕùûÿÿÿÿ8¯±½Æ¯1
+G	java:S106-"+Replace this use of System.out by a logger.(×³¨™8¯±½Æ¯1
+G	java:S1060"+Replace this use of System.out by a logger.(Ë÷ÒÙ8°±½Æ¯1
+L	java:S1061"+Replace this use of System.out by a logger.(›®‚‡ùÿÿÿÿ8°±½Æ¯1
+L	java:S106?"+Replace this use of System.out by a logger.(£ıŞ¹üÿÿÿÿ8±±½Æ¯1
+L	java:S106R"+Replace this use of System.out by a logger.(£Ü†Úúÿÿÿÿ8²±½Æ¯1
+G	java:S106W"+Replace this use of System.out by a logger.(îºĞâ8³±½Æ¯1
+G
+java:S1197"*Move the array designators [] to the type.(ğ¢§18´±½Æ¯1
+†
+java:S1157´"cReplace these toUpperCase()/toLowerCase() and equals() calls with a single equalsIgnoreCase() call.(öÂ‘Ğüÿÿÿÿ8µ±½Æ¯1
+I
+java:S1168Ó"+Return an empty collection instead of null.(¥¹ï8¶±½Æ¯1
+c
+java:S2147ø"ECombine this catch with the one at line 246, which has the same body.(‹±ÃÆ8·±½Æ¯1
+S
+java:S1128	"6Remove this unused import 'lombok.extern.slf4j.Slf4j'.(ûúÄ®8¸±½Æ¯1
+@
+java:S1128"$Remove this unused import 'java.io'.(¬›ãD8¸±½Æ¯1
+C
+java:S1128"&Remove this unused import 'java.util'.(Î€ŒÙ8¸±½Æ¯1

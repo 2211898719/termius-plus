@@ -17,6 +17,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import javax.validation.Validator;
+import java.util.Optional;
 
 @Service
 public class ProxyServiceImpl implements ProxyService {
@@ -81,6 +82,11 @@ public class ProxyServiceImpl implements ProxyService {
         proxyRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
 
         proxyRepository.deleteById(id);
+    }
+
+    @Override
+    public Optional<ProxyDto> findById(Long proxyId) {
+        return proxyRepository.findById(proxyId).map(proxyMapper::toDto);
     }
 }
 
