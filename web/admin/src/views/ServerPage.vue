@@ -157,7 +157,7 @@ window.onmessage = (e) => {
 
     nextTick(() => {
       //可以用来实现拖拽分屏
-      // createSortEl(document.getElementsByClassName('split-box')[0])
+      createSortEl(document.getElementsByClassName('split-box')[0])
     })
   }
 

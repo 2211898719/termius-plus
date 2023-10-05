@@ -5,20 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="0de18e6e-97dd-4171-a773-cfeff3460ad8" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/4/b/4bef646907e6b0113d46a125718bf4a66ae0475c" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/4/b/4bef646907e6b0113d46a125718bf4a66ae0475c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/7/d/7d145f48e9e2d655f1ddc11a5fbba359d6d65874" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/7/d/7d145f48e9e2d655f1ddc11a5fbba359d6d65874" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/a/8/a871ba24e9be7a9ddb4d43308f484ae95166ec35" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/a/8/a871ba24e9be7a9ddb4d43308f484ae95166ec35" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/index.pb" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/index.pb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/securityhotspotstore/index.pb" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/securityhotspotstore/index.pb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/enums/ProxyTypeEnum.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/enums/ProxyTypeEnum.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/impl/SFTPServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/impl/SFTPServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../web/admin/src/components/p-sftp.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/components/p-sftp.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../web/admin/src/config.js" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/config.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../web/admin/src/layouts/BasicLayout.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/layouts/BasicLayout.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../web/admin/src/router/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/router/index.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../web/admin/src/utils/File.js" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/utils/File.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../web/admin/src/views/LoginPage.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/views/LoginPage.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/impl/ServerServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/impl/ServerServiceImpl.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../web/admin/src/views/ServerPage.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/views/ServerPage.vue" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -159,7 +148,7 @@
       <workItem from="1696259349085" duration="56000" />
       <workItem from="1696259411224" duration="21388000" />
       <workItem from="1696399220811" duration="18902000" />
-      <workItem from="1696515905440" duration="110000" />
+      <workItem from="1696515905440" duration="3990000" />
     </task>
     <servers />
   </component>

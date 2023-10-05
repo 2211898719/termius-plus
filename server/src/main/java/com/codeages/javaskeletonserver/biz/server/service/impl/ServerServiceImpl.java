@@ -182,6 +182,7 @@ public class ServerServiceImpl implements ServerService {
                                                            String url = websshUrl +
                                                                    "?hostname=" + e.getIp() +
                                                                    "&username=" + e.getUsername() +
+                                                                   "&port=" + e.getPort() +
                                                                    "&password=" + encoder.encodeToString(e.getPassword()
                                                                                                           .getBytes());
 
