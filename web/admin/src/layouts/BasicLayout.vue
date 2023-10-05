@@ -40,7 +40,7 @@ const layoutConf = ref({
     navTheme: 'light',
     headerTheme: 'dark',
     layout: 'mix',
-    splitMenus: false,
+    splitMenus: true,
     fixSiderbar: true,
 });
 

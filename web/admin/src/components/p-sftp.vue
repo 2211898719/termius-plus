@@ -50,8 +50,6 @@ const init = async () => {
   spinning.value = true
   spinTip.value = "正在连接服务器"
   try {
-
-
     if (sessionId.value) {
       await sftpApi.close({id: sessionId.value})
     }
@@ -128,7 +126,7 @@ const handleRename = async (file, index) => {
   renameFile.value = file
   newFileName.value = file.fileName
   currentRenameFileIndex.value = index
-  nextTick(() => {
+  await nextTick(() => {
     renameInputs.value.forEach(item => {
       item.focus()
     })
@@ -296,6 +294,9 @@ onUnmounted(async () => {
 
   min-height: 500px;
 
+  :deep(.ant-card-body){
+    margin-top: 24px;
+  }
   :deep(.ant-card-grid) {
     box-shadow: none;
     width: 16.6%;

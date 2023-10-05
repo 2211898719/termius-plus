@@ -623,8 +623,6 @@ const changeSftpEnable = () => {
 
 <template>
   <div class="server-root">
-
-
     <a-spin :spinning="spinning" tip="等待中...">
       <a-tabs style="width: 100%;"
               type="editable-card"
@@ -824,7 +822,8 @@ const changeSftpEnable = () => {
               <div class="ssh-content">
                 <a-card title="终端">
                   <template #extra>
-                    <a-button type="link" :class="{green:sftpEnable}" @click="changeSftpEnable">
+                    <a-button type="link" style="display: flex;justify-content: center;align-items: center"
+                              :class="{green:sftpEnable}" @click="changeSftpEnable">
                       <template v-slot:icon>
                         <svg t="1696435355552" class="tags" viewBox="0 0 1024 1024" version="1.1"
                              xmlns="http://www.w3.org/2000/svg" p-id="19507" width="200" height="200">
@@ -1192,10 +1191,15 @@ const changeSftpEnable = () => {
 
 }
 
+:deep(.ant-card-extra) {
+  display: flex;
+}
+
 
 :deep(.tags) {
   width: 20px;
   height: 20px;
+  font-size: 20px;
 }
 
 

@@ -1,5 +1,5 @@
 import {client} from "@shared/api-client";
-import {message} from "ant-design-vue";
+import {message, notification} from "ant-design-vue";
 import axios from "axios";
 import {useAuthStore} from "@shared/store/useAuthStore";
 
@@ -90,7 +90,12 @@ export const getFileLocalUrl = async (url, data = null, loading = true) => {
     let key = 'downloadFileProgress'
 
     if (loading) {
-        message.loading({content: `下载中...${downloadFileProgress}%`, key}, 0);
+        notification.open({
+            key: key,
+            message: '下载',
+            description: `下载中...${downloadFileProgress}%`,
+            duration: 0,
+        });
     }
 
     let res = await axios({
@@ -100,13 +105,18 @@ export const getFileLocalUrl = async (url, data = null, loading = true) => {
         onDownloadProgress: (progressEvent) => {
             downloadFileProgress = progressEvent.loaded / progressEvent.total * 100
             if (loading) {
-                message.loading({content: `下载中...${downloadFileProgress.toFixed(2)}%`, key}, 0);
+                notification.open({
+                    key: key,
+                    message: '下载',
+                    description: `下载中...${downloadFileProgress.toFixed(2)}%`,
+                    duration: 0,
+                });
             }
         }
     })
 
     if (loading) {
-        message.destroy(key);
+        notification.close(key);
     }
 
     if (res.data.type === "application/json") {

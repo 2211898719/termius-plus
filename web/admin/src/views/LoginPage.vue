@@ -75,7 +75,7 @@ const onFinish = async (params) => {
     try {
         const loginedUser = await authApi.login(params);
         store.login(loginedUser);
-        await router.push({name: 'welcome'});
+        await router.push({name: 'server'});
     } catch (err) {
         message.error(err.message);
     }

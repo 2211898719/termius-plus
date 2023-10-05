@@ -103,3 +103,9 @@ Zsrc/main/java/com/codeages/javaskeletonserver/biz/server/service/impl/SFTPServi
 Lsrc/main/java/com/codeages/javaskeletonserver/biz/server/dto/SFTPParams.java,4/9/49cbc7499281e9d27330ced30af82a6b07020c99
 {
 Ksrc/main/java/com/codeages/javaskeletonserver/api/admin/SFTPController.java,0/a/0ac23d5b075112de94809cdea1dc0b4da982394c
+z
+Jsrc/main/java/com/codeages/javaskeletonserver/biz/server/dto/SFTPBean.java,d/2/d257c68271f2b82e52b3207e383a55cb6fc4476c
+Ä
+Psrc/main/java/com/codeages/javaskeletonserver/biz/server/job/SFTPTimeOutJob.java,0/8/08b2954cba8d2e1c2cb53d93ab39d32fb50f73d2
+Å
+Qsrc/main/java/com/codeages/javaskeletonserver/biz/server/context/SFTPContext.java,9/1/91e471fb4c9e3664c390af659111066d71d89375

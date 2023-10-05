@@ -1,3 +1,3 @@
 module.exports = {
-    name: "Java Skeleton Admin"
+    name: "Termius-Plus",
 }

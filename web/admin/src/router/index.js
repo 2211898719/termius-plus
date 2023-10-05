@@ -10,7 +10,7 @@ const routes = [
     name: 'index',
     meta: {title: 'Home'},
     component: BasicLayout,
-    redirect: '/welcome',
+    redirect: '/server',
     children: [
       {
         path: '/welcome',
