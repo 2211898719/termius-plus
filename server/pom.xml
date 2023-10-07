@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.codeages</groupId>
 	<artifactId>java-skeleton-project</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>v1</version>
 	<name>java-skeleton-project</name>
 	<description>Java Skeleton Project</description>
 	<properties>
@@ -147,6 +147,37 @@
 							<artifactId>lombok</artifactId>
 						</exclude>
 					</excludes>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>com.google.cloud.tools</groupId>
+				<artifactId>jib-maven-plugin</artifactId>
+				<version>3.3.2</version>
+				<configuration>
+					<from>
+						<image>openjdk:11-jre</image>
+					</from>
+					<to>
+						<!--配置仓库名、镜像名-->
+						<image>registry.cn-hangzhou.aliyuncs.com/education-portal/termius-plus</image>
+						<!--配置Tag信息-->
+						<tags>
+							<tag>server-${project.version}</tag>
+						</tags>
+					</to>
+					<allowInsecureRegistries>true</allowInsecureRegistries>
+					<container>
+						<!--暴露容器端口-->
+						<mainClass>com.codeages.javaskeletonserver.JavaSkeletonServerApplication</mainClass>
+						<ports>
+							<port>8080</port>
+						</ports>
+						<creationTime>USE_CURRENT_TIMESTAMP</creationTime>
+						<volumes>
+							<volume>/var/www/data</volume>
+							<volume>/var/www/data/tmp/</volume>
+						</volumes>
+					</container>
 				</configuration>
 			</plugin>
 			<plugin>

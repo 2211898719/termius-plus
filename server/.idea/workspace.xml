@@ -5,10 +5,27 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="0de18e6e-97dd-4171-a773-cfeff3460ad8" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/../esee/server/.idea/workspace.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../esee/web/.idea/workspace.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/docker/.env" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/docker/docker-compose.yml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/docker/server.env" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/server.env" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../web/admin/Dockerfile" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../web/admin/build-docker.sh" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../web/admin/docker/.env.placeholder" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../web/admin/docker/99-replace-vue-env-var-placeholders.sh" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../web/admin/docker/nginx.conf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/enums/ProxyTypeEnum.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/enums/ProxyTypeEnum.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/impl/ServerServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/impl/ServerServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/storage/utils/FileUtil.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/storage/utils/FileUtil.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/package.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../web/admin/src/views/ServerPage.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/views/ServerPage.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/vue.config.js" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/vue.config.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/yarn.lock" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/yarn.lock" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -46,40 +63,45 @@
     <option name="showLibraryContents" value="true" />
     <option name="showModules" value="false" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;RequestMappingsPanelOrder0&quot;: &quot;0&quot;,
-    &quot;RequestMappingsPanelOrder1&quot;: &quot;1&quot;,
-    &quot;RequestMappingsPanelWidth0&quot;: &quot;75&quot;,
-    &quot;RequestMappingsPanelWidth1&quot;: &quot;75&quot;,
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;master-termius-plus&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/Users/hjl/package/termius-plus/esee/server&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;project.structure.last.edited&quot;: &quot;Project&quot;,
-    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
-    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;com.sjhy.plugin.ui.TypeMapperSettingForm&quot;,
-    &quot;spring.configuration.checksum&quot;: &quot;4cc366ba2178339e1ebe998b9e57e535&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RequestMappingsPanelOrder0": "0",
+    "RequestMappingsPanelOrder1": "1",
+    "RequestMappingsPanelWidth0": "75",
+    "RequestMappingsPanelWidth1": "75",
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "WebServerToolWindowFactoryState": "false",
+    "git-widget-placeholder": "master-termius-plus",
+    "last_opened_file_path": "/Users/hjl/package/termius-plus/server/src/main/resources",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "project.structure.last.edited": "Project",
+    "project.structure.proportion": "0.0",
+    "project.structure.side.proportion": "0.0",
+    "settings.editor.selected.configurable": "com.sjhy.plugin.ui.TypeMapperSettingForm",
+    "spring.configuration.checksum": "4cc366ba2178339e1ebe998b9e57e535",
+    "vue.rearranger.settings.migration": "true"
   },
-  &quot;keyToStringList&quot;: {
-    &quot;DatabaseDriversLRU&quot;: [
-      &quot;mysql&quot;
+  "keyToStringList": {
+    "DatabaseDriversLRU": [
+      "mysql"
     ]
   }
-}</component>
+}]]></component>
   <component name="ReactorSettings">
     <option name="notificationShown" value="true" />
   </component>
   <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/src/main/resources" />
+      <recent name="$PROJECT_DIR$/docker" />
+      <recent name="$PROJECT_DIR$" />
+    </key>
     <key name="CopyClassDialog.RECENTS_KEY">
       <recent name="com.codeages.javaskeletonserver.biz.server.dto" />
       <recent name="com.codeages.javaskeletonserver.api.admin" />
@@ -91,6 +113,7 @@
   <component name="RunAnythingCache">
     <option name="myCommands">
       <command value="mvn compile" />
+      <command value="mvn compile jib:build  -Djib.to.auth.username=洪俊龙哈哈1  -Djib.to.auth.password=z13867013469[" />
     </option>
   </component>
   <component name="RunManager" selected="Spring Boot.JavaSkeletonServerApplication">
@@ -149,6 +172,7 @@
       <workItem from="1696259411224" duration="21388000" />
       <workItem from="1696399220811" duration="18902000" />
       <workItem from="1696515905440" duration="3990000" />
+      <workItem from="1696649557635" duration="14188000" />
     </task>
     <servers />
   </component>
@@ -162,6 +186,21 @@
           <url>jar://$MAVEN_REPOSITORY$/com/jcraft/jsch/0.1.55/jsch-0.1.55-sources.jar!/com/jcraft/jsch/ProxySOCKS5.java</url>
           <line>199</line>
           <option name="timeStamp" value="3" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/impl/SFTPServiceImpl.java</url>
+          <line>51</line>
+          <option name="timeStamp" value="4" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/impl/SFTPServiceImpl.java</url>
+          <line>41</line>
+          <option name="timeStamp" value="5" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/impl/ServerServiceImpl.java</url>
+          <line>80</line>
+          <option name="timeStamp" value="6" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

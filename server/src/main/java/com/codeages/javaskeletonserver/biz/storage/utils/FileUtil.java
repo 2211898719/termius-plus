@@ -864,6 +864,13 @@ public class FileUtil {
 
     @SneakyThrows(IOException.class)
     public static void writeByteToResponse(byte[] bytes, String fileName, HttpServletResponse response) {
+        initResponse(bytes.length, fileName, response);
+        ServletOutputStream outputStream = response.getOutputStream();
+        outputStream.write(bytes);
+        IoUtil.close(outputStream);
+    }
+
+    public static void initResponse(int byteLength, String fileName, HttpServletResponse response) {
         response.reset();
         response.setContentType(ContentType.OCTET_STREAM.getValue());
         response.setCharacterEncoding(CharsetUtil.UTF_8);
@@ -881,15 +888,12 @@ public class FileUtil {
         );
         response.setHeader(
                 Header.CONTENT_LENGTH.getValue(),
-                String.valueOf(bytes.length)
+                String.valueOf(byteLength)
         );
         response.setHeader(
                 "Accept-Ranges",
                 "bytes"
         );
-        ServletOutputStream outputStream = response.getOutputStream();
-        outputStream.write(bytes);
-        IoUtil.close(outputStream);
     }
 
     public static String getFileExt(String fileName) {

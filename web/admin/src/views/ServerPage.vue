@@ -12,7 +12,7 @@ import ProxyTypeEnum from "@/enums /ProxyTypeEnum";
 import {ExclamationCircleOutlined} from "@ant-design/icons-vue";
 import PSftp from "@/components/p-sftp.vue";
 import {Input} from "ant-design-vue";
-
+import { v4 } from 'uuid'
 
 const useForm = Form.useForm;
 
@@ -103,9 +103,9 @@ let groupBreadcrumb = ref([{id: 0, isGroup: true, name: 'all'}])
 
 const handleOpenServer = (item) => {
   spinning.value = true;
-  let uuid = crypto.randomUUID();
+  let uuid = v4();
   while (serverList.value.findIndex(e => e.operationId === uuid) !== -1) {
-    uuid = crypto.randomUUID();
+    uuid = v4();
   }
 
   let copyItem = JSON.parse(JSON.stringify(item));

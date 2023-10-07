@@ -5,7 +5,7 @@ const appConfig = require('./src/config');
 module.exports = defineConfig({
     transpileDependencies: true,
     assetsDir: "assets",
-    publicPath: "/admin/",
+    publicPath: "/",
     devServer: {
         port: 8081,
         proxy: {

@@ -22,6 +22,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
+import java.net.URLEncoder;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -83,17 +86,19 @@ public class ServerServiceImpl implements ServerService {
                                               ));
 
         Long proxyId = serverDto.getProxyId();
+        ServerDto currentServer = serverDto;
         while (proxyId == null) {
-            if (serverDto.getParentId() == null || serverDto.getParentId() == 0) {
+            if (currentServer.getParentId() == null || currentServer.getParentId() == 0) {
                 break;
             }
 
-            proxyId = serverRepository.findById(serverDto.getParentId())
-                                      .map(serverMapper::toDto)
-                                      .orElseThrow(() -> new AppException(
-                                              ErrorCode.INVALID_ARGUMENT,
-                                              "服务器不存在"
-                                      )).getProxyId();
+            currentServer = serverRepository.findById(currentServer.getParentId())
+                                            .map(serverMapper::toDto)
+                                            .orElseThrow(() -> new AppException(
+                                                    ErrorCode.INVALID_ARGUMENT,
+                                                    "服务器不存在"
+                                            ));
+            proxyId = currentServer.getProxyId();
         }
 
         if (proxyId != null) {
@@ -182,6 +187,7 @@ public class ServerServiceImpl implements ServerService {
                                                            String url = websshUrl +
                                                                    "?hostname=" + e.getIp() +
                                                                    "&username=" + e.getUsername() +
+                                                                   "&privatekey=" + e.getKey() +
                                                                    "&port=" + e.getPort() +
                                                                    "&password=" + encoder.encodeToString(e.getPassword()
                                                                                                           .getBytes());
@@ -202,6 +208,10 @@ public class ServerServiceImpl implements ServerService {
      * 递归构建每个节点的代理，子节点的代理会覆盖父节点的代理，取就近原则
      */
     private void buildProxy(List<Tree<Long>> servers, Map<Long, ProxyDto> proxyIdProxyMap, Long parentProxyId) {
+        if (CollectionUtil.isEmpty(servers)) {
+            return;
+        }
+
         for (Tree<Long> serverTree : servers) {
             //如果是组节点，递归构建子节点的代理
             if (Boolean.TRUE.equals(serverTree.get("isGroup"))) {

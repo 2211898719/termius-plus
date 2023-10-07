@@ -1,0 +1,76 @@
+version: "3"
+
+services:
+  server:
+    image: registry.cn-hangzhou.aliyuncs.com/education-portal/termius-plus:server-${VERSION:?error}
+    restart: unless-stopped
+    environment:
+      - TZ=Asia/Shanghai
+    env_file:
+      - server.env
+    volumes:
+      - file_data:/var/www/data
+    ports:
+      - 8088:8080
+    networks:
+      - edu-admin
+    depends_on:
+      - redis
+      - mysql
+  front:
+    image: registry.cn-hangzhou.aliyuncs.com/education-portal/termius-plus:front-${VERSION:?error}
+    restart: unless-stopped
+    environment:
+      - TZ=Asia/Shanghai
+    ports:
+      - 9999:80
+    networks:
+      - edu-admin
+    depends_on:
+      - server
+  webssh:
+    image: registry.cn-hangzhou.aliyuncs.com/education-portal/termius-plus:webssh-${VERSION:?error}
+    restart: unless-stopped
+    environment:
+      - TZ=Asia/Shanghai
+    ports:
+      - 8888:8888
+    networks:
+      - edu-admin
+    depends_on:
+      - server
+
+  redis:
+    image: redis:5
+    container_name: redis
+    command: redis-server --appendonly yes
+    networks:
+      - edu-admin
+    volumes:
+      - redis_data:/data
+  mysql:
+    image: mysql:8
+    container_name: db
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --init-file /docker-entrypoint-initdb.d/init.sql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    networks:
+      - edu-admin
+    volumes:
+      - ./mysql-data:/var/lib/mysql
+      - ./mysql-data:/var/log/mysql
+      - ./mysql-data:/etc/mysql/conf.d
+      - ./mysql-init:/docker-entrypoint-initdb.d
+
+networks:
+  edu-admin:
+    driver: bridge
+
+volumes:
+  file_data:
+  nginx_config_data:
+  redis_data:
+  mysql_data:
+  mysql_log_data:
+  mysql_config_data:
