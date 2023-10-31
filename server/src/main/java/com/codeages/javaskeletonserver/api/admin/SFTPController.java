@@ -6,6 +6,7 @@ import com.codeages.javaskeletonserver.biz.server.service.SFTPService;
 import com.codeages.javaskeletonserver.biz.storage.utils.FileUtil;
 import com.codeages.javaskeletonserver.common.IdPayload;
 import lombok.SneakyThrows;
+import net.schmizz.sshj.sftp.RemoteResourceInfo;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -34,7 +35,7 @@ public class SFTPController {
     }
 
     @GetMapping("/{id}/ls")
-    public List<LsFileDto> ls(@PathVariable String id, SFTPParams params) {
+    public List<RemoteResourceInfo> ls(@PathVariable String id, SFTPParams params) {
         return sftpService.ls(id, params.getRemotePath());
     }
 

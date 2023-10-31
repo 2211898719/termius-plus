@@ -2,9 +2,10 @@ package com.codeages.javaskeletonserver.biz.server.service;
 
 import cn.hutool.core.lang.tree.Tree;
 import com.codeages.javaskeletonserver.biz.server.dto.*;
+import net.schmizz.sshj.SSHClient;
 
+import java.net.Proxy;
 import java.util.List;
-import java.util.Optional;
 
 public interface ServerService {
 
@@ -19,6 +20,12 @@ public interface ServerService {
     void sort(List<TreeSortParams> treeSortParams);
 
     ServerDto findById(Long id);
+
+//    Session createSession(Long id);
+
+    SSHClient createSSHClient(Long id);
+
+    Proxy createProxy(ServerDto server);
 
 }
 

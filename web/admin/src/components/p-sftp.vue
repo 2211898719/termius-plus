@@ -113,7 +113,7 @@ defineExpose({
 })
 
 const handleDownload = (file) => {
-  download(sftpApi.download({id: sessionId.value}), {remotePath: currentPath.value + '/' + file.fileName}, file.fileName)
+  download(sftpApi.download({id: sessionId.value}), {remotePath: currentPath.value + '/' + file.name}, file.name)
 }
 
 
@@ -124,7 +124,7 @@ let renameFile = ref('')
 
 const handleRename = async (file, index) => {
   renameFile.value = file
-  newFileName.value = file.fileName
+  newFileName.value = file.name
   currentRenameFileIndex.value = index
   await nextTick(() => {
     renameInputs.value.forEach(item => {
@@ -134,7 +134,7 @@ const handleRename = async (file, index) => {
 }
 
 const confirmRename = _.throttle(async () => {
-  if (renameFile.value.fileName === newFileName.value) {
+  if (renameFile.value.name === newFileName.value) {
     currentRenameFileIndex.value = null
     return
   }
@@ -142,7 +142,7 @@ const confirmRename = _.throttle(async () => {
   try {
     await sftpApi.rename({
       id: sessionId.value,
-      remotePath: currentPath.value + '/' + renameFile.value.fileName,
+      remotePath: currentPath.value + '/' + renameFile.value.name,
       newRemotePath: currentPath.value + '/' + newFileName.value
     })
   } catch (e) {
@@ -162,7 +162,7 @@ const confirmRename = _.throttle(async () => {
 
 const handleDel = (file) => {
   let rmApi = sftpApi.rm
-  if (file.type === 'DIR') {
+  if (file.directory) {
     rmApi = sftpApi.rmDir
   }
 
@@ -171,7 +171,7 @@ const handleDel = (file) => {
     icon: createVNode(ExclamationCircleOutlined),
     content: file.type === 'DIR' ? '你要删除的是一个文件夹，请小心行事！！!' : '',
     onOk() {
-      rmApi({id: sessionId.value, remotePath: currentPath.value + '/' + file.fileName})
+      rmApi({id: sessionId.value, remotePath: currentPath.value + '/' + file.name})
           .then(() => {
             message.success("删除成功")
             ls()
@@ -241,24 +241,24 @@ onUnmounted(async () => {
 
           </div>
         </template>
-        <a-card-grid :bordered="false" :hoverable="false" v-for="(file,index) in currentFiles" :key="file.fileName"
-                     @dblclick="file.type==='FILE'?'':changeDir(currentPath+'/'+file.fileName)" :title="file.fileName">
+        <a-card-grid :bordered="false" :hoverable="false" v-for="(file,index) in currentFiles" :key="file.name"
+                     @dblclick="!file.directory?'':changeDir(currentPath+'/'+file.name)" :title="file.name">
           <a-dropdown :trigger="['contextmenu']">
             <div>
               <div>
-                <a-image class="icon" :preview="false" :src="dirIcon" v-if="file.type==='FILE'"></a-image>
+                <a-image class="icon" :preview="false" :src="dirIcon" v-if="!file.directory"></a-image>
                 <a-image class="icon" :preview="false" :src="fileIcon" v-else></a-image>
               </div>
               <div>
                 <a-input ref="renameInputs" @blur="confirmRename" @pressEnter="confirmRename"
                          v-if="currentRenameFileIndex===index" v-model:value="newFileName"
                          style="text-align: center"/>
-                <p v-else class="fileName">{{ file.fileName }}</p>
+                <p v-else class="fileName">{{ file.name }}</p>
               </div>
             </div>
             <template #overlay>
               <a-menu>
-                <a-menu-item v-if="file.type==='FILE'" key="4" @click="handleDownload(file)">
+                <a-menu-item v-if="!file.directory" key="4" @click="handleDownload(file)">
                   <cloud-download-outlined/>
                   下载
                 </a-menu-item>

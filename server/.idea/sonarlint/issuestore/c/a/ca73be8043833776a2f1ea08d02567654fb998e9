@@ -1,5 +1,11 @@
 
 g
-java:S3252o"JUse static access with "cn.hutool.core.collection.CollUtil" for "isEmpty".(­ßû˜8ÙÚÇ¯1
+java:S3252s"JUse static access with "cn.hutool.core.collection.CollUtil" for "isEmpty".(­ßû˜8Èıãç°1
 k
-java:S3252‡"MUse static access with "cn.hutool.core.collection.CollUtil" for "isNotEmpty".(Ş‚Ù­8ÚÚÇ¯1
+java:S3252‹"MUse static access with "cn.hutool.core.collection.CollUtil" for "isNotEmpty".(Ş‚Ù­8Êıãç°1
+e
+java:S3252½"GUse static access with "cn.hutool.core.net.URLEncodeUtil" for "encode".(Å£8Íıãç°1
+h
+java:S3252Ò"JUse static access with "cn.hutool.core.collection.CollUtil" for "isEmpty".(‚äÕ§8Îıãç°1
+M
+java:S1128"0Remove this unused import 'java.net.URLEncoder'.(ê¢ºÆ8Ğıãç°1

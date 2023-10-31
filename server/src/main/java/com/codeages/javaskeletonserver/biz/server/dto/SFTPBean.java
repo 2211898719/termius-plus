@@ -4,11 +4,12 @@ import cn.hutool.extra.ssh.Sftp;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import net.schmizz.sshj.sftp.SFTPClient;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class SFTPBean {
-    private Sftp sftp;
+    private SFTPClient sftp;
     private Long time;
 }

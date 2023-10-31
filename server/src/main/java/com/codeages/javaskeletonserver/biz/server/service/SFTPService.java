@@ -5,9 +5,11 @@ import com.codeages.javaskeletonserver.biz.server.dto.LsFileDto;
 import com.codeages.javaskeletonserver.biz.server.dto.ServerCreateParams;
 import com.codeages.javaskeletonserver.biz.server.dto.ServerUpdateParams;
 import com.codeages.javaskeletonserver.biz.server.dto.TreeSortParams;
+import net.schmizz.sshj.sftp.RemoteResourceInfo;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
 import java.util.function.Consumer;
@@ -36,7 +38,7 @@ public interface SFTPService {
      * @param path
      * @return
      */
-    List<LsFileDto> ls(String id, String path);
+    List<RemoteResourceInfo> ls(String id, String path);
 
     /**
      * 创建目录
@@ -88,7 +90,7 @@ public interface SFTPService {
      * @param remotePath
      * @param outputStream
      */
-    void download(String id, String remotePath, OutputStream outputStream);
+    void download(String id, String remotePath, OutputStream outputStream) throws IOException;
 
     /**
      * 关闭连接

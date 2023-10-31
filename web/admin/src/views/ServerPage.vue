@@ -4,15 +4,14 @@ import Sortable from 'sortablejs';
 import {walk} from "@/utils/treeUtil";
 import {serverApi} from "@/api/server";
 import _ from "lodash";
-import {Form, message, Modal} from "ant-design-vue";
+import {Form, Input, message, Modal} from "ant-design-vue";
 import PSelect from "@/components/p-select.vue";
 import {proxyApi} from "@/api/proxy";
 import PEnumSelect from "@/components/p-enum-select.vue";
 import ProxyTypeEnum from "@/enums /ProxyTypeEnum";
 import {ExclamationCircleOutlined} from "@ant-design/icons-vue";
 import PSftp from "@/components/p-sftp.vue";
-import {Input} from "ant-design-vue";
-import { v4 } from 'uuid'
+import {v4} from 'uuid'
 
 const useForm = Form.useForm;
 
@@ -213,18 +212,6 @@ const createSortEl = (el) => {
       sortElement: '.sortEl',
       dragClass: "sortable-drag",
       animation: 500,
-      onEnd: function (evt) {
-        //根据evt.oldIndex和evt.newIndex来维护currentData.value
-        let oldIndex = evt.oldIndex;
-        let newIndex = evt.newIndex;
-
-        let sortData = currentData.value
-        let item = sortData[oldIndex];
-        sortData.splice(oldIndex, 1);
-        sortData.splice(newIndex, 0, item);
-
-        updateSort(sortData)
-      },
     });
   }
 }
@@ -243,7 +230,20 @@ onMounted(() => {
   console.log(able.toArray())
   console.log(able.sortData)
 
-  createSortEl(document.getElementsByClassName('ant-tabs-nav-list')[0])
+  let navList = createSortEl(document.getElementsByClassName('ant-tabs-nav-list')[0])
+  navList.onEnd = (evt) => {
+    //根据evt.oldIndex和evt.newIndex来维护currentData.value
+    let oldIndex = evt.oldIndex;
+    let newIndex = evt.newIndex;
+
+    let sortData = currentData.value
+    let item = sortData[oldIndex];
+    sortData.splice(oldIndex, 1);
+    sortData.splice(newIndex, 0, item);
+
+    updateSort(sortData)
+  }
+
 })
 
 const onCloseServer = (item) => {
@@ -925,7 +925,7 @@ const changeSftpEnable = () => {
         v-model:visible="creationVisible"
         title="新增服务器"
         placement="right"
-        width="50%"
+        width="60%"
         size="large"
     >
       <template #extra>
@@ -939,6 +939,7 @@ const changeSftpEnable = () => {
           :label-col="{ span: 4 }"
           :wrapper-col="{ span: 18 }"
           autocomplete="off"
+
       >
 
         <a-form-item label="名称" v-bind="creationValidations.name">
@@ -969,7 +970,7 @@ const changeSftpEnable = () => {
           </a-form-item>
 
           <a-form-item label="私钥" v-bind="creationValidations.key">
-            <a-input v-model:value="creationState.key"/>
+            <a-textarea v-model:value="creationState.key"></a-textarea>
           </a-form-item>
         </template>
         <a-form-item label="代理" v-bind="creationValidations.proxyId">

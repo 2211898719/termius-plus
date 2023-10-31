@@ -5,6 +5,9 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.lang.tree.Tree;
 import cn.hutool.core.lang.tree.TreeNode;
 import cn.hutool.core.lang.tree.TreeUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.URLUtil;
+import cn.hutool.crypto.KeyUtil;
 import com.codeages.javaskeletonserver.biz.ErrorCode;
 import com.codeages.javaskeletonserver.biz.server.dto.*;
 import com.codeages.javaskeletonserver.biz.server.entity.Server;
@@ -14,16 +17,24 @@ import com.codeages.javaskeletonserver.biz.server.service.ProxyService;
 import com.codeages.javaskeletonserver.biz.server.service.ServerService;
 import com.codeages.javaskeletonserver.biz.util.TreeUtils;
 import com.codeages.javaskeletonserver.exception.AppException;
+import lombok.SneakyThrows;
+import net.schmizz.sshj.SSHClient;
+import net.schmizz.sshj.transport.verification.PromiscuousVerifier;
+import net.schmizz.sshj.userauth.keyprovider.OpenSSHKeyFile;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.net.SocketFactory;
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
-import java.net.URLEncoder;
-import java.nio.charset.Charset;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
+import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.Function;
@@ -187,7 +198,7 @@ public class ServerServiceImpl implements ServerService {
                                                            String url = websshUrl +
                                                                    "?hostname=" + e.getIp() +
                                                                    "&username=" + e.getUsername() +
-                                                                   "&privatekey=" + e.getKey() +
+                                                                   "&privatekey=" + URLUtil.encode(e.getKey()) +
                                                                    "&port=" + e.getPort() +
                                                                    "&password=" + encoder.encodeToString(e.getPassword()
                                                                                                           .getBytes());
@@ -244,6 +255,109 @@ public class ServerServiceImpl implements ServerService {
             }
         }
 
+    }
+
+
+//    @Override
+//    @SneakyThrows
+//    public Session createSession(Long id) {
+//        ServerDto server = findById(id);
+//        JSch jSch = new JSch();
+////        StringReader reader = new StringReader(server.getKey());
+////        PEMParser pemParser = new PEMParser(reader);
+////        KeyPair keyPair = converter.getKeyPair((PEMKeyPair) object);
+////        PrivateKey privateKey = keyPair.getPrivate();
+//
+//        //key可能是OpenSSH格式的，需要转换成PEM格式
+//        if (CharSequenceUtil.isNotBlank(server.getKey())) {
+//            String key = server.getKey();
+//            if (key.startsWith("-----BEGIN OPENSSH PRIVATE KEY-----")) {
+//                key = KeyUtil.toPEMFormat(key);
+//            }
+//            jSch.addIdentity("key", key.getBytes(StandardCharsets.UTF_8), null, null);
+//        }
+//
+//
+//        jSch.addIdentity("key", server.getKey().getBytes(StandardCharsets.UTF_8), null, null);
+//
+//
+//        Session session = jSch.getSession(server.getUsername(), server.getIp(), server.getPort().intValue());
+//        session.setConfig("StrictHostKeyChecking", "no");
+//        if (CharSequenceUtil.isNotBlank(server.getPassword())) {
+//            session.setPassword(server.getPassword());
+//        }
+//
+//        if (server.getProxy() != null) {
+//            session.setProxy(createProxy(server));
+//        }
+//        session.connect();
+//        session.setTimeout(1000 * 60 * 60);
+//        return session;
+//    }
+
+    @SneakyThrows
+    public SSHClient createSSHClient(Long id) {
+        ServerDto server = findById(id);
+        SSHClient ssh = new SSHClient();
+
+        //设置sshj代理
+        if (server.getProxy() != null) {
+            ssh.setSocketFactory(new SocketFactory() {
+                @Override
+                public Socket createSocket(String host, int port) throws IOException {
+                    Socket socket = new Socket(createProxy(server));
+                    socket.connect(new InetSocketAddress(host, port));
+                    return socket;
+                }
+
+                @Override
+                public Socket createSocket(String host,
+                                           int port,
+                                           InetAddress localHost,
+                                           int localPort) throws IOException {
+                    Socket socket = new Socket(createProxy(server));
+                    socket.connect(new InetSocketAddress(host, port));
+                    return socket;
+                }
+
+                @Override
+                public Socket createSocket(InetAddress host, int port) throws IOException {
+                    Socket socket = new Socket(createProxy(server));
+                    socket.connect(new InetSocketAddress(host, port));
+                    return socket;
+                }
+
+                @Override
+                public Socket createSocket(InetAddress address,
+                                           int port,
+                                           InetAddress localAddress,
+                                           int localPort) throws IOException {
+                    Socket socket = new Socket(createProxy(server));
+                    socket.connect(new InetSocketAddress(address, port));
+                    return socket;
+                }
+            });
+        }
+
+        // 设置主机和端口号
+        ssh.addHostKeyVerifier(new PromiscuousVerifier());
+        ssh.connect(server.getIp(), server.getPort().intValue());
+        // 配置身份验证使用的私钥
+        OpenSSHKeyFile privateKey = new OpenSSHKeyFile();
+        privateKey.init(server.getKey(), null);
+        ssh.authPublickey(server.getUsername(), privateKey);
+
+        return ssh;
+    }
+
+    @Override
+    @SneakyThrows
+    public Proxy createProxy(ServerDto server) {
+        ProxyDto proxyDto = server.getProxy();
+        return new Proxy(
+                proxyDto.getType().getType(),
+                new InetSocketAddress(proxyDto.getIp(), proxyDto.getPort().intValue())
+        );
     }
 
 

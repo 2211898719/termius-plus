@@ -1,6 +1,6 @@
 
 j
-java:S2095"NUse try-with-resources or close this "RandomAccessFile" in a "finally" clause.(•ùş²øÿÿÿÿ
+java:S2095“"NUse try-with-resources or close this "RandomAccessFile" in a "finally" clause.(•ùş²øÿÿÿÿ
 |
 java:S3008""aRename this field "FILE_EXT_FILE_TYPE_MAP" to match the regular expression '^[a-z][a-zA-Z0-9]*$'.(¼õÇ¶øÿÿÿÿ
 U
@@ -9,7 +9,7 @@ A
 java:S3599%",Use another way to initialize this instance.(èß¦
 n
 java:S1171%"YMove the contents of this initializer to a standard constructor or to field initializers.(èß¦
-F	java:S106’"+Replace this use of System.out by a logger.(îÁ–ûÿÿÿÿ
-F	java:S106–"+Replace this use of System.out by a logger.(ˆ«¨øÿÿÿÿ
+F	java:S106–"+Replace this use of System.out by a logger.(îÁ–ûÿÿÿÿ
+F	java:S106š"+Replace this use of System.out by a logger.(ˆ«¨øÿÿÿÿ
 U
-java:S1854¿">Remove this useless assignment to local variable "endPointer".(ÇÿƒÕ
+java:S1854Ã">Remove this useless assignment to local variable "endPointer".(ÇÿƒÕ
