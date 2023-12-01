@@ -5,50 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="0de18e6e-97dd-4171-a773-cfeff3460ad8" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/../web/admin/src/api/file.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../web/admin/src/components/group-cascader.vue" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../web/admin/src/components/p-flip.vue" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../web/admin/src/components/tinymce/File.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../web/admin/src/components/tinymce/p-editor.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/0/8/08b2954cba8d2e1c2cb53d93ab39d32fb50f73d2" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/0/8/08b2954cba8d2e1c2cb53d93ab39d32fb50f73d2" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/4/4/442292b8a7efeabbe4cc176709b833b1792140ec" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/4/4/442292b8a7efeabbe4cc176709b833b1792140ec" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/4/9/4927d144509494c0929f9bd26aef9ba795e6a00c" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/4/9/4927d144509494c0929f9bd26aef9ba795e6a00c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/4/b/4bef646907e6b0113d46a125718bf4a66ae0475c" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/4/b/4bef646907e6b0113d46a125718bf4a66ae0475c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/7/d/7d145f48e9e2d655f1ddc11a5fbba359d6d65874" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/7/d/7d145f48e9e2d655f1ddc11a5fbba359d6d65874" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/8/3/8395e1fd3747f6a3067c3409f9d92751ac87e605" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/9/1/91e471fb4c9e3664c390af659111066d71d89375" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/9/1/91e471fb4c9e3664c390af659111066d71d89375" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/9/b/9bfc2768e9eeeb1b4622928a9a1d3f1dd59ef85b" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/9/b/9bfc2768e9eeeb1b4622928a9a1d3f1dd59ef85b" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/a/2/a21d8b388c322199289907373a4773f67696e5cf" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/c/6/c6cf754e09943dd9ded602aae2632b830194cd1c" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/c/6/c6cf754e09943dd9ded602aae2632b830194cd1c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/c/a/ca73be8043833776a2f1ea08d02567654fb998e9" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/c/a/ca73be8043833776a2f1ea08d02567654fb998e9" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/d/2/d257c68271f2b82e52b3207e383a55cb6fc4476c" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/d/2/d257c68271f2b82e52b3207e383a55cb6fc4476c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/index.pb" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/index.pb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/securityhotspotstore/8/3/8395e1fd3747f6a3067c3409f9d92751ac87e605" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/securityhotspotstore/a/2/a21d8b388c322199289907373a4773f67696e5cf" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/securityhotspotstore/index.pb" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/securityhotspotstore/index.pb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/api/admin/SFTPController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/api/admin/SFTPController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/api/admin/ServerController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/api/admin/ServerController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/dto/ServerCreateParams.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/dto/ServerCreateParams.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/dto/ServerDto.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/dto/ServerDto.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/dto/ServerUpdateParams.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/dto/ServerUpdateParams.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/entity/Server.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/entity/Server.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/repository/ServerRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/repository/ServerRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/ServerService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/ServerService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/impl/SFTPServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/impl/SFTPServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/impl/ServerServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/impl/ServerServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/storage/entity/File.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/storage/entity/File.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/security/SecurityConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/security/SecurityConfig.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../web/admin/.eslintrc.js" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/.eslintrc.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/build-docker.sh" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/build-docker.sh" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../web/admin/jsconfig.json" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/jsconfig.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../web/admin/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../web/admin/src/api/server.js" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/api/server.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../web/admin/src/boot/bootAntDesignVue.js" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/boot/bootAntDesignVue.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../web/admin/src/components/p-select.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/components/p-select.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../web/admin/src/components/p-sftp.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/components/p-sftp.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../web/admin/src/main.js" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/main.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../web/admin/src/utils/File.js" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/utils/File.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../web/admin/src/views/ServerPage.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/views/ServerPage.vue" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../web/admin/vue.config.js" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/vue.config.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../web/admin/yarn.lock" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/yarn.lock" afterDir="false" />
@@ -143,8 +103,8 @@
   </component>
   <component name="RunAnythingCache">
     <option name="myCommands">
-      <command value="mvn compile jib:build  -Djib.to.auth.username=洪俊龙哈哈1  -Djib.to.auth.password=z13867013469[" />
       <command value="mvn compile" />
+      <command value="mvn compile jib:build  -Djib.to.auth.username=洪俊龙哈哈1  -Djib.to.auth.password=z13867013469[" />
     </option>
   </component>
   <component name="RunManager" selected="Spring Boot.JavaSkeletonServerApplication">
@@ -212,7 +172,7 @@
       <workItem from="1698716743249" duration="10691000" />
       <workItem from="1699006572431" duration="486000" />
       <workItem from="1701225095390" duration="7747000" />
-      <workItem from="1701394065003" duration="7048000" />
+      <workItem from="1701394065003" duration="8254000" />
     </task>
     <servers />
   </component>

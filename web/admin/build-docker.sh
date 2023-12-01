@@ -7,6 +7,8 @@ if [ ! -n "$1" ] ;then
     exit
 fi
 
+yarn build
+
 docker build -t registry.cn-hangzhou.aliyuncs.com/education-portal/termius-plus:front-$1 .
 
 docker login registry.cn-hangzhou.aliyuncs.com

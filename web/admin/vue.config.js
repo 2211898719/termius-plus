@@ -20,9 +20,6 @@ module.exports = defineConfig({
             .plugin('html')
             .tap(args => {
                 args[0].title = appConfig.name;
-                args[0].compilerOptions = {
-                    defineModel: true
-                };
                 return args;
             })
         config.resolve.alias

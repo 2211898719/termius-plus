@@ -6724,7 +6724,7 @@ vue-types@^3.0.0:
   dependencies:
     is-plain-object "3.0.1"
 
-vue@^3.3.9:
+vue@^3.2.13:
   version "3.3.9"
   resolved "https://registry.npmmirror.com/vue/-/vue-3.3.9.tgz#219a2ec68e8d4d0b0180460af0f5b9299b3f3f1f"
   integrity sha512-sy5sLCTR8m6tvUk1/ijri3Yqzgpdsmxgj6n6yl7GXXCXqVbmW2RCXe9atE4cEI6Iv7L89v5f35fZRRr5dChP9w==

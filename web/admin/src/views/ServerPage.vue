@@ -1049,8 +1049,6 @@ const remarkStatus = ref(false)
         <a-form-item label="备注" v-bind="creationValidations.remark">
           <p-editor v-model:value="creationState.remark"></p-editor>
         </a-form-item>
-
-
       </a-form>
 
     </a-drawer>
@@ -1200,7 +1198,7 @@ const remarkStatus = ref(false)
     .ssh-content {
       .ssh {
         width: 100%;
-        height: 100%;
+        height: 500px;
         border: none;
         //resize: vertical; /* 可以调整宽度和高度 */
       }

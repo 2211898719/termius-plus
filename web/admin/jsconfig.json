@@ -2,7 +2,6 @@
   "compilerOptions": {
     "target": "es5",
     "module": "esnext",
-    "defineModel": true,
     "baseUrl": "./",
     "moduleResolution": "node",
     "paths": {
