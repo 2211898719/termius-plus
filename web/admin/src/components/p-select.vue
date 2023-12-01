@@ -1,6 +1,6 @@
 <template>
   <a-select style="min-width: 200px" v-model:value="currentValue" :placeholder="placeholder" :bordered="true"
-            @change="handleChange" :disabled="disabled" :mode="mode" :max-tag-count="maxTagCount" show-search>
+            @change="handleChange" :disabled="disabled" :mode="mode" :max-tag-count="maxTagCount" show-search allow-clear>
     <template v-for="item in data" :key="item[optionKey]">
       <a-select-option :value="item[optionKey]"> {{
           item[label]

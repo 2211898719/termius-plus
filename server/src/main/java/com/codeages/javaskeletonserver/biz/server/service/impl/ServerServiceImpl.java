@@ -5,9 +5,8 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.lang.tree.Tree;
 import cn.hutool.core.lang.tree.TreeNode;
 import cn.hutool.core.lang.tree.TreeUtil;
-import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.core.util.URLUtil;
-import cn.hutool.crypto.KeyUtil;
 import com.codeages.javaskeletonserver.biz.ErrorCode;
 import com.codeages.javaskeletonserver.biz.server.dto.*;
 import com.codeages.javaskeletonserver.biz.server.entity.Server;
@@ -35,7 +34,6 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.Socket;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -303,6 +301,11 @@ public class ServerServiceImpl implements ServerService {
         //设置sshj代理
         if (server.getProxy() != null) {
             ssh.setSocketFactory(new SocketFactory() {
+
+                public Socket createSocket() {
+                    return new Socket(createProxy(server));
+                }
+
                 @Override
                 public Socket createSocket(String host, int port) throws IOException {
                     Socket socket = new Socket(createProxy(server));
@@ -338,14 +341,19 @@ public class ServerServiceImpl implements ServerService {
                 }
             });
         }
-
+//        ssh.setSocketFactory(SocketFactory.getDefault());
         // 设置主机和端口号
         ssh.addHostKeyVerifier(new PromiscuousVerifier());
         ssh.connect(server.getIp(), server.getPort().intValue());
         // 配置身份验证使用的私钥
-        OpenSSHKeyFile privateKey = new OpenSSHKeyFile();
-        privateKey.init(server.getKey(), null);
-        ssh.authPublickey(server.getUsername(), privateKey);
+        if (StrUtil.isNotBlank(server.getKey())){
+            OpenSSHKeyFile privateKey = new OpenSSHKeyFile();
+            privateKey.init(server.getKey(), null);
+            ssh.authPublickey(server.getUsername(), privateKey);
+        }else {
+            ssh.authPassword(server.getUsername(), server.getPassword());
+        }
+
 
         return ssh;
     }
@@ -358,6 +366,29 @@ public class ServerServiceImpl implements ServerService {
                 proxyDto.getType().getType(),
                 new InetSocketAddress(proxyDto.getIp(), proxyDto.getPort().intValue())
         );
+    }
+
+    @Override
+    public List<Tree<Long>> groupList() {
+        List<TreeNode<Long>> servers = serverRepository.findAllByIsGroupTrue()
+                                                       .stream()
+                                                       .map(e -> {
+                                                           TreeNode<Long> longTreeNode = new TreeNode<>(
+                                                                   e.getId(),
+                                                                   e.getParentId(),
+                                                                   e.getName(),
+                                                                   e.getSort()
+                                                           );
+                                                           longTreeNode.setExtra(BeanUtil.beanToMap(e));
+                                                           return longTreeNode;
+                                                       })
+                                                       .collect(Collectors.toList());
+
+        Tree<Long> root = new Tree<>();
+        root.setId(0L);
+        root.setName("all");
+        root.setChildren(TreeUtil.build(servers, 0L));
+        return List.of(root);
     }
 
 

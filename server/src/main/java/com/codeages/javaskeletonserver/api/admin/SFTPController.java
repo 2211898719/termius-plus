@@ -1,6 +1,5 @@
 package com.codeages.javaskeletonserver.api.admin;
 
-import com.codeages.javaskeletonserver.biz.server.dto.LsFileDto;
 import com.codeages.javaskeletonserver.biz.server.dto.SFTPParams;
 import com.codeages.javaskeletonserver.biz.server.service.SFTPService;
 import com.codeages.javaskeletonserver.biz.storage.utils.FileUtil;

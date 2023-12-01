@@ -26,7 +26,8 @@ import {
     Image,
     PageHeader,
     Popover,
-    Modal
+    Modal,
+    Cascader
 } from 'ant-design-vue';
 import icons from '@/icons';
 
@@ -63,5 +64,6 @@ export function bootAntDesignVue(app) {
         .use(Popover)
         .use(PageHeader)
         .use(Modal)
+        .use(Cascader)
     ;
 }

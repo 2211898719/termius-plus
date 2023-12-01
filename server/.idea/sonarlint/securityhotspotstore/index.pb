@@ -3,8 +3,6 @@
 	README.md,8/e/8ec9a00bfd09b3190ac6b22251dbb1aa95a0579d
 ˆ
 Xsrc/main/java/com/codeages/javaskeletonserver/biz/user/service/impl/UserServiceImpl.java,2/b/2bf87c1a4b91289e2911b4ab04b2eecd4616f0e1
-t
-Dsrc/main/java/com/codeages/javaskeletonserver/biz/util/SshUtils.java,8/3/8395e1fd3747f6a3067c3409f9d92751ac87e605
 z
 Jsrc/main/java/com/codeages/javaskeletonserver/biz/storage/entity/File.java,9/b/9bf83668eed19b85eb949de429c3f5e20c8f8961
 ˆ
@@ -81,8 +79,6 @@ Lsrc/main/java/com/codeages/javaskeletonserver/api/admin/ProxyController.java,f
 Psrc/main/java/com/codeages/javaskeletonserver/JavaSkeletonServerApplication.java,1/3/1306dc456f356ddad690d68a8768a5627ed41577
 ’
 bsrc/main/java/com/codeages/javaskeletonserver/biz/server/dto/ServerServiceMonitorUpdateParams.java,9/4/9493396891e1b9884df4572cf33e6a830c9ddae4
-t
-Dsrc/main/java/com/codeages/javaskeletonserver/biz/util/SFTPUtil.java,a/2/a21d8b388c322199289907373a4773f67696e5cf
 ‚
 Rsrc/main/java/com/codeages/javaskeletonserver/biz/server/enums/LsFileTypeEnum.java,a/8/a871ba24e9be7a9ddb4d43308f484ae95166ec35
 …
@@ -131,3 +127,9 @@ I
 docker/docker-compose.yml,3/f/3fe733692645251b38d6ef0a55b2d48c3a1cf387
 A
 docker/server.env,4/1/41ca8cd090fc9c12b363af98954be85df7c89e00
+‹
+[src/main/java/com/codeages/javaskeletonserver/biz/server/service/PortForWardingService.java,f/c/fc9754ba3d9cf779bc7a9c32f00fde68c0f8cba1
+”
+dsrc/main/java/com/codeages/javaskeletonserver/biz/server/service/impl/PortForWardingServiceImpl.java,9/7/97edab3385989eb7d6f82c2e5fdec9b307ffa3f2
+p
+@src/main/java/com/codeages/javaskeletonserver/biz/ErrorCode.java,4/1/417bfc086830c374b5839cbd289e5dd36fb8811c

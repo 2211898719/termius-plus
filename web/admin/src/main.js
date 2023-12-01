@@ -6,7 +6,7 @@ import {bootAxios} from "@/boot/bootAxios";
 import {bootPinia} from "@/boot/bootPinia";
 import {bootStore} from "@/boot/bootStore";
 import {bootFilters} from "@/boot/bootFilters";
-
+import '@wangeditor/editor/dist/css/style.css' // 引入 css
 const app = createApp(App);
 app.use(router);
 

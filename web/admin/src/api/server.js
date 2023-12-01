@@ -5,6 +5,9 @@ export const serverApi = {
     list: async (params) => {
         return client.get("/api-admin/server/list", {params: params});
     },
+    groupList: async (params) => {
+        return client.get("/api-admin/server/groupList", {params: params});
+    },
     create: async (params) => {
         return client.post("/api-admin/server/create",  params);
     },

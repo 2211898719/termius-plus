@@ -27,6 +27,7 @@ public interface ServerService {
 
     Proxy createProxy(ServerDto server);
 
+    List<Tree<Long>> groupList();
 }
 
 

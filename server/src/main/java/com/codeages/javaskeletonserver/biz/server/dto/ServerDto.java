@@ -20,6 +20,7 @@ public class ServerDto {
     private Long port;
     private String password;
     private String key;
+    private String remark;
     private Long proxyId;
     private ProxyDto proxy;
 }

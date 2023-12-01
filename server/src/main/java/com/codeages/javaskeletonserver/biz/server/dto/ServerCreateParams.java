@@ -19,6 +19,7 @@ public class ServerCreateParams {
     private Boolean isGroup;
     private Long parentId;
     private String password;
+    private String remark;
     private String key;
     private Long proxyId;
 }

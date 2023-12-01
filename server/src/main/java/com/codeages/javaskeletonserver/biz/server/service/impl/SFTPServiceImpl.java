@@ -2,6 +2,7 @@ package com.codeages.javaskeletonserver.biz.server.service.impl;
 
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.lang.UUID;
+import cn.hutool.extra.ssh.Sftp;
 import com.codeages.javaskeletonserver.biz.ErrorCode;
 import com.codeages.javaskeletonserver.biz.server.context.SFTPContext;
 import com.codeages.javaskeletonserver.biz.server.dto.SFTPBean;
@@ -84,7 +85,11 @@ public class SFTPServiceImpl implements SFTPService {
     @Override
     @SneakyThrows
     public List<RemoteResourceInfo> ls(String id, String path) {
+        try {
         return getSftp(id).ls(path);
+        }catch (Exception e){
+            throw new AppException(ErrorCode.INTERNAL_ERROR, e.getMessage());
+        }
     }
 
     @SneakyThrows

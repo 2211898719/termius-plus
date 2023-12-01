@@ -77,7 +77,7 @@ const ls = async () => {
     currentFiles.value = await sftpApi.ls({id: sessionId.value, remotePath: currentPath.value})
     return true
   } catch (e) {
-    message.error("没有权限或连接断开")
+    message.error(e.message)
     console.error(e)
     return false
   } finally {
@@ -113,7 +113,13 @@ defineExpose({
 })
 
 const handleDownload = (file) => {
-  download(sftpApi.download({id: sessionId.value}), {remotePath: currentPath.value + '/' + file.name}, file.name)
+  try{
+    download(sftpApi.download({id: sessionId.value}), {remotePath: currentPath.value + '/' + file.name}, file.name).catch(() => {
+      message.error("下载失败")
+    })
+  }catch (e) {
+    message.error("下载失败")
+  }
 }
 
 
@@ -242,12 +248,13 @@ onUnmounted(async () => {
           </div>
         </template>
         <a-card-grid :bordered="false" :hoverable="false" v-for="(file,index) in currentFiles" :key="file.name"
-                     @dblclick="!file.directory?'':changeDir(currentPath+'/'+file.name)" :title="file.name">
+                     @dblclick="file.attributes.type==='REGULAR'?'':changeDir(currentPath+'/'+file.name)" :title="file.name">
           <a-dropdown :trigger="['contextmenu']">
             <div>
               <div>
-                <a-image class="icon" :preview="false" :src="dirIcon" v-if="!file.directory"></a-image>
-                <a-image class="icon" :preview="false" :src="fileIcon" v-else></a-image>
+                <a-image class="icon" :preview="false" :src="fileIcon" v-if="file.attributes.type==='DIRECTORY'"></a-image>
+                <svg v-else-if="file.attributes.type==='SYMLINK'" class="icon"  style="vertical-align: middle;fill: currentColor;overflow: hidden;" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="24103"><path d="M625.792 302.912V64L1024 482.112l-398.208 418.176V655.36C341.312 655.36 142.208 750.912 0 960c56.896-298.688 227.584-597.312 625.792-657.088z" fill="#262626" p-id="24104"></path></svg>
+                <a-image class="icon" :preview="false" :src="dirIcon" v-else></a-image>
               </div>
               <div>
                 <a-input ref="renameInputs" @blur="confirmRename" @pressEnter="confirmRename"
@@ -296,6 +303,8 @@ onUnmounted(async () => {
 
   :deep(.ant-card-body){
     margin-top: 24px;
+    height: 400px;
+    overflow: scroll;
   }
   :deep(.ant-card-grid) {
     box-shadow: none;
@@ -310,8 +319,8 @@ onUnmounted(async () => {
     justify-content: center;
 
     .icon {
-      width: 60%;
-      height: 60%;
+      width: 50%;
+      height: 50%;
     }
 
     &:hover {

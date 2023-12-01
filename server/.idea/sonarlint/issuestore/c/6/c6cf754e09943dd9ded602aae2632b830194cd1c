@@ -1,3 +1,5 @@
 
 j
 java:S3252*"OUse static access with "cn.hutool.core.text.CharSequenceUtil" for "isNotEmpty".(ω–οίÿÿÿÿÿ
+L
+java:S2201L"/The return value of "orElseThrow" must be used.(‰‘8“ Υ›Έ1

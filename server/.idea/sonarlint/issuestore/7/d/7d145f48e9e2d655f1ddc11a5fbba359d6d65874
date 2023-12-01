@@ -1,3 +1,2 @@
 
-X
-java:S1128"6Remove this unused import 'lombok.AllArgsConstructor'.(´œ¾öùÿÿÿÿ8Õõõí¯1
+p	java:S116"ORename this field "Type" to match the regular expression '^[a-z][a-zA-Z0-9]*$'.(Ä¼Ğìúÿÿÿÿ8¶ô”¸1

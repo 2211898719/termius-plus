@@ -28,6 +28,11 @@ public class ServerController {
         return serverService.findAll();
     }
 
+    @GetMapping("/groupList")
+    public List<Tree<Long>> groupList() {
+        return serverService.groupList();
+    }
+
     @PostMapping("/create")
     public OkResponse create(@RequestBody ServerCreateParams serverCreateParams) {
         serverService.create(serverCreateParams);

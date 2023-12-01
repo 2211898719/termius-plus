@@ -1,7 +1,9 @@
+import {fileApi} from "@/api/file";
 import {client} from "@shared/api-client";
-import {message, notification} from "ant-design-vue";
+import {message} from "ant-design-vue";
 import axios from "axios";
 import {useAuthStore} from "@shared/store/useAuthStore";
+import {isObject} from "ant-design-vue/es/_util/util";
 
 export const fileTypeEnum = {
     image: "image",
@@ -14,26 +16,41 @@ export const fileTypeEnum = {
     zip: "zip",
 }
 
+const fileParams = {
+    [fileTypeEnum.image]: {accept: '.jpg, .jpeg, .png, .gif', url: fileApi.upload()},
+    [fileTypeEnum.media]: {accept: '.mp3, .mp4', url: fileApi.upload()},
+    [fileTypeEnum.all]: {accept: '*', url: fileApi.upload()},
+    [fileTypeEnum.excel]: {accept: '.xlsx, .xls', url: fileApi.uploadExcel()},
+    [fileTypeEnum.word]: {accept: '.docx, .doc', url: fileApi.upload()},
+    [fileTypeEnum.pdf]: {accept: '.pdf', url: fileApi.upload()},
+    [fileTypeEnum.ppt]: {accept: '.pptx, .ppt', url: fileApi.upload()},
+    [fileTypeEnum.zip]: {accept: '.zip', url: fileApi.upload()},
+}
 
-const defaultCallback = (res, fileName) => {
-    console.log("defaultCallback, file:", res, fileName);
+const defaultCallback = (res, fileName, fileUrl) => {
+    console.log("defaultCallback, file:", fileUrl);
 }
 
 const defaultBeforeUpload = (res, fileName, fileUrl) => {
-    console.log("defaultCallback, file:", res, fileName, fileUrl);
+    console.log("defaultCallback, file:", fileUrl);
 }
 
-export const uploadFile = (url, callback = defaultCallback, otherParams = {}, beforeUpload = defaultBeforeUpload, errorCallback) => {
+export const uploadFile = (filetype = fileTypeEnum.all, callback = defaultCallback, otherParams = {}, beforeUpload = defaultBeforeUpload, errorCallback) => {
+    if (!fileParams[filetype]) {
+        console.error(`File type ${filetype} is not supported`);
+    }
+
     const input = document.createElement('input');
     input.setAttribute('type', 'file');
+    input.setAttribute('accept', fileParams[filetype].accept);
     input.onchange = function () {
         if (beforeUpload) {
             beforeUpload();
         }
 
         const file = this.files[0];
-        upload(url, file, otherParams).then(res => {
-            callback(res, file.name)
+        upload(fileParams[filetype].url, file, otherParams).then(res => {
+            callback(res, file.name, fileApi.getAppFile(res.uuid))
         }).catch(err => {
             errorCallback(err)
             message.error(err.message)
@@ -90,12 +107,7 @@ export const getFileLocalUrl = async (url, data = null, loading = true) => {
     let key = 'downloadFileProgress'
 
     if (loading) {
-        notification.open({
-            key: key,
-            message: '下载',
-            description: `下载中...${downloadFileProgress}%`,
-            duration: 0,
-        });
+        message.loading({content: `下载中...${downloadFileProgress}%`, key}, 0);
     }
 
     let res = await axios({
@@ -105,24 +117,13 @@ export const getFileLocalUrl = async (url, data = null, loading = true) => {
         onDownloadProgress: (progressEvent) => {
             downloadFileProgress = progressEvent.loaded / progressEvent.total * 100
             if (loading) {
-                notification.open({
-                    key: key,
-                    message: '下载',
-                    description: `下载中...${downloadFileProgress.toFixed(2)}%`,
-                    duration: 0,
-                });
+                message.loading({content: `下载中...${downloadFileProgress.toFixed(2)}%`, key}, 0);
             }
         }
-    }).catch(err => {
-        if (loading) {
-            notification.close(key);
-        }
-
-        throw err;
     })
 
     if (loading) {
-        notification.close(key);
+        message.destroy(key);
     }
 
     if (res.data.type === "application/json") {
@@ -135,6 +136,28 @@ export const getFileLocalUrl = async (url, data = null, loading = true) => {
     return {url: window.URL.createObjectURL(res.data), res};
 }
 
+function generateURL(url, data) {
+    let param = '';
+    for (let value in data) {
+        if (data[value] === undefined || data[value] === '') {
+            continue;
+        }
+
+        if (isObject(data[value])) {
+            for (let item in data[value]) {
+                if (data[value][item]) {
+                    let array = item.toLowerCase().split('');
+                    array[0] = array[0].toUpperCase();
+                    param += `${value}${array.join('')}=${data[value][item]}&&`;
+                }
+            }
+        } else {
+            param += `${value}=${data[value]}&&`;
+        }
+    }
+
+    return url + '?' + param;
+}
 
 function send(filename, link) {
     let DownloadLink = document.createElement('a');
@@ -161,7 +184,7 @@ export function getFileName(response) {
 }
 
 function blobToObject(data) {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
         let reader = new FileReader();
         reader.readAsText(data, 'utf-8');
         reader.onload = function () {
@@ -208,32 +231,6 @@ export function isImage(ext) {
 
 export function isVideo(ext) {
     return ['mp4', 'avi', 'rmvb', 'rm', 'flv', '3gp', 'mkv', 'mov'].includes(ext.toLowerCase());
-}
-
-//根据文件类型显示不同图标
-export const computedFileIcon = (type) => {
-    let fileIcon = ''
-    if (type === 'doc' || type === 'docx') {
-        fileIcon += 'word'
-    } else if (type === 'xls' || type === 'xlsx') {
-        fileIcon += 'excel'
-    } else if (type === 'ppt' || type === 'pptx') {
-        fileIcon += 'ppt'
-    } else if (type === 'pdf') {
-        fileIcon += 'pdf'
-    } else if (type === 'txt') {
-        fileIcon += 'txt'
-    } else if (type === 'zip' || type === 'rar') {
-        fileIcon += 'zip'
-    } else if (type === 'jpg' || type === 'jpeg' || type === 'png' || type === 'gif') {
-        fileIcon += 'img-default'
-    } else if (type === 'mp4' || type === 'avi' || type === 'rmvb' || type === 'flv' || type === 'wmv' || type === 'mov' || type === 'mkv') {
-        fileIcon += 'video'
-    } else {
-        fileIcon += 'unknown'
-    }
-
-    return require('@/assets/file-icon/' + fileIcon + '.png');
 }
 
 

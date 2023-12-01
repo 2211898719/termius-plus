@@ -51,6 +51,7 @@ public class Server {
      */
     @Column(name = "`key`")
     private String key;
+    private String remark;
     /**
      * 代理ID
      */
