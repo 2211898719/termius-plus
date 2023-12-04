@@ -36,10 +36,6 @@ store.$onAction(({name, after}) => {
 </template>
 
 <style lang="less">
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 #app {
     height: 100%;
 }

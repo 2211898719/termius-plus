@@ -5,33 +5,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="0de18e6e-97dd-4171-a773-cfeff3460ad8" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/../web/admin/src/views/ProxyListPage.vue" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../web/admin/src/views/ServerContent.vue" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../web/admin/src/views/ServerListPage.vue" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../web/admin/src/views/SettingPage.vue" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../web/admin/src/views/css/termius.less" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/impl/SFTPServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/impl/SFTPServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/snippet/controller/CommandController.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/snippet/dto/CommandCreateParams.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/snippet/dto/CommandDto.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/snippet/dto/CommandSearchParams.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/snippet/dto/CommandUpdateParams.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/snippet/entity/Command.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/snippet/mapper/CommandMapper.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/snippet/repository/CommandRepository.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/snippet/service/CommandService.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/snippet/service/impl/CommandServiceImpl.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/user/service/impl/UserAuthServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/user/service/impl/UserAuthServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/security/AuthTokenFilter.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/security/AuthTokenFilter.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../web/admin/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/build-docker.sh" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/build-docker.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/postcss.config.js" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/../web/admin/src/App.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/App.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../web/admin/src/api/sftp.js" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/api/sftp.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../web/admin/src/components/p-sftp.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/components/p-sftp.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../web/admin/src/components/tinymce/p-editor.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/components/tinymce/p-editor.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../web/admin/src/main.js" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/main.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../web/admin/src/views/ServerPage.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/views/ServerPage.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../web/admin/yarn.lock" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/yarn.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/src/views/css/termius.less" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/views/css/termius.less" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/tailwind.config.js" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -129,9 +109,9 @@
   </component>
   <component name="RunAnythingCache">
     <option name="myCommands">
-      <command value="mvn compile jib:build  -Djib.to.auth.username=洪俊龙哈哈1  -Djib.to.auth.password=z13867013469[" />
       <command value="mvn clean" />
       <command value="mvn compile" />
+      <command value="mvn compile jib:build  -Djib.to.auth.username=洪俊龙哈哈1  -Djib.to.auth.password=z13867013469[" />
     </option>
   </component>
   <component name="RunManager" selected="Spring Boot.JavaSkeletonServerApplication">
@@ -200,7 +180,7 @@
       <workItem from="1699006572431" duration="486000" />
       <workItem from="1701225095390" duration="7747000" />
       <workItem from="1701394065003" duration="8284000" />
-      <workItem from="1701653804384" duration="9490000" />
+      <workItem from="1701653804384" duration="10526000" />
     </task>
     <servers />
   </component>

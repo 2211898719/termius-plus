@@ -54,7 +54,9 @@ const reloadSftp = () => {
 }
 
 const changeDir = (dir) => {
-  sftpEl.value.changeDir(dir)
+  if (sftpEnable.value) {
+    sftpEl.value.changeDir(dir)
+  }
 }
 
 const reloadServer = () => {
@@ -98,7 +100,7 @@ defineExpose({
 </script>
 
 <template>
-  <div class="split-box" >
+  <div class="split-box">
     <p-flip ref="flip" :operation-id="server.operationId">
       <template #back>
         <div v-show="sftpEnable">
@@ -159,7 +161,7 @@ defineExpose({
               </a-button>
             </template>
 
-            <div style="display: flex" >
+            <div style="display: flex">
               <div style="width: 100%;position: relative;">
                 <iframe class="ssh"
                         title="ssh"
@@ -171,7 +173,8 @@ defineExpose({
                      @click="remarkStatus=!remarkStatus" v-if="server.remark">
                   <left-outlined :class="{'button-action':remarkStatus,'left':true}"/>
                 </div>
-                <div style="position: absolute;right: 16px;top: 16px;color: aliceblue" class="left" @click="handleRequestFullscreen">
+                <div style="position: absolute;right: 16px;top: 16px;color: aliceblue" class="left"
+                     @click="handleRequestFullscreen">
                   <fullscreen-outlined/>
                 </div>
               </div>

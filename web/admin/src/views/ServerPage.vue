@@ -62,13 +62,19 @@ window.onmessage = (e) => {
   let rule = /^\/[^\0]+$/;
   if (e.data.event === 'command') {
     // 判断e.data.data是不是一个标准的linux路径 比如 /root , /home ，/var/www，如果是就保存下来留着sftp用
-    let data = e.data.data.split('\r\n')
-    for (let i = 0; i < data.length; i++) {
-      if (rule.test(data[i])) {
-        currentServerContent.value.changeDir(data[i])
-        break
-      }
+    let command = e.data.data.replaceAll('\r\n', '')
+    if (rule.test(command)) {
+      console.log("监测到命令", command)
+      currentServerContent.value.changeDir(command)
     }
+    // let data = e.data.data.split('\r\n')
+    // for (let i = 0; i < data.length; i++) {
+    //   if (rule.test(data[i])) {
+    //     // console.log("监测到命令",data[i])
+    //     currentServerContent.value.changeDir(data[i])
+    //     break
+    //   }
+    // }
 
   }
 }
@@ -199,7 +205,6 @@ const proxyCreation = () => {
 }
 
 
-
 </script>
 
 <template>
@@ -279,7 +284,6 @@ const proxyCreation = () => {
 
 <style scoped lang="less">
 
-
 :deep(.ant-card-extra) {
   display: flex;
 }
@@ -307,6 +311,5 @@ const proxyCreation = () => {
     fill: #1daa6c;
   }
 }
-
 
 </style>
