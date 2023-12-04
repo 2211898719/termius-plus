@@ -5,7 +5,7 @@ import {message, Modal} from "ant-design-vue";
 import fileIcon from "@/assets/file-icon/dir.png";
 import dirIcon from "@/assets/file-icon/file.png";
 import _ from "lodash";
-import {download, uploadFile} from "@/utils/File";
+import {uploadFile} from "@/utils/File";
 import {ExclamationCircleOutlined} from "@ant-design/icons-vue";
 
 console.log(fileIcon)
@@ -113,13 +113,7 @@ defineExpose({
 })
 
 const handleDownload = (file) => {
-  try{
-    download(sftpApi.download({id: sessionId.value}), {remotePath: currentPath.value + '/' + file.name}, file.name).catch(() => {
-      message.error("下载失败")
-    })
-  }catch (e) {
-    message.error("下载失败")
-  }
+  window.open(sftpApi.download({id: sessionId.value,remotePath: currentPath.value + '/' + file.name}))
 }
 
 

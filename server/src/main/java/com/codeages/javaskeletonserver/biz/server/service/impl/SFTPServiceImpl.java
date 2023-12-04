@@ -42,7 +42,7 @@ public class SFTPServiceImpl implements SFTPService {
     @Override
     public String init(Long serverId) {
         StatefulSFTPClient sftp = createSftp(serverId);
-        String id = UUID.fastUUID().toString();
+        String id = UUID.fastUUID() + "-" + serverId;
         SFTPContext.SFTP_POOL.put(id, new SFTPBean(sftp, System.currentTimeMillis()));
 
         return id;
@@ -53,6 +53,7 @@ public class SFTPServiceImpl implements SFTPService {
         SSHClient sshClient = serverService.createSSHClient(serverId);
         Session session = sshClient.startSession();
         session.allocateDefaultPTY();
+        sshClient.useCompression();
 
         return sshClient.newStatefulSFTPClient();
     }
@@ -61,8 +62,9 @@ public class SFTPServiceImpl implements SFTPService {
     private StatefulSFTPClient getSftp(String id) {
         SFTPBean sftp = SFTPContext.SFTP_POOL.get(id);
         if (sftp == null) {
-            throw new AppException(ErrorCode.NOT_FOUND, "SFTP连接已失效");
-//            sftp = new SFTPBean(createSftp(1L), System.currentTimeMillis());
+            log.info("SFTP连接已失效：{}", id);
+            String[] split = id.split("-");
+            sftp = new SFTPBean(createSftp(Long.valueOf(split[split.length-1])), System.currentTimeMillis());
         }
 
         sftp.setTime(System.currentTimeMillis());

@@ -16,6 +16,8 @@ import com.codeages.javaskeletonserver.exception.AppException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletResponse;
 import java.util.Date;
 
 @Service
@@ -27,10 +29,14 @@ public class UserAuthServiceImpl implements UserAuthService {
 
     private final UserCacheManager cacheManager;
 
-    public UserAuthServiceImpl(AppConfig config, PasswordEncoder encoder, UserCacheManager cacheManager) {
+    private final HttpServletResponse response;
+
+    public UserAuthServiceImpl(AppConfig config, PasswordEncoder encoder, UserCacheManager cacheManager,
+                               HttpServletResponse response) {
         this.config = config;
         this.encoder = encoder;
         this.cacheManager = cacheManager;
+        this.response = response;
     }
 
     @Override
@@ -52,6 +58,14 @@ public class UserAuthServiceImpl implements UserAuthService {
         if (userOp.isEmpty()) {
             throw new AppException(ErrorCode.NOT_FOUND, "用户不存在");
         }
+
+        Cookie cookie = new Cookie("token", token);
+
+        cookie.setPath("/");
+        cookie.setHttpOnly(true);
+        cookie.setMaxAge(86400000*90);
+
+        response.addCookie(cookie);
 
         return makeUserAuthedDto(userOp.get(), token);
     }

@@ -1,0 +1,174 @@
+.server-root {
+
+  .mt10 {
+    margin-top: 10px;
+  }
+
+  .mt30 {
+    margin-top: 30px;
+  }
+
+  .ml10 {
+    margin-left: 10px;
+  }
+
+  .icon-server {
+    font-size: 30px;
+    color: #1890ff;
+  }
+
+  .ant-list-item-meta {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+  }
+
+
+  .server-pane, .proxy-pane {
+    :deep(.ant-card-body) {
+      padding: 12px;
+      background-color: #1e1f32;
+    }
+
+    .server {
+      :deep(.ant-list) {
+        .ant-list-item {
+          &:hover {
+            .ant-list-item-action {
+              opacity: 1 !important;
+            }
+          }
+        }
+
+        .ant-empty-description {
+          color: #ffffff;
+        }
+      }
+
+
+      :deep(.ant-list-item-action) {
+        position: absolute;
+        right: 16px;
+        opacity: 0;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+
+      .ant-card {
+        border-radius: 16px;
+        overflow: hidden;
+        //鼠标变成手指
+        cursor: pointer;
+        //鼠标点击显示绿色边框
+
+        &:active {
+          border: 2px solid #1daa6c;
+        }
+
+        //添加透明边框，解决hover时挤大容器
+        border: 2px solid #292a3d;
+
+
+        :deep(.ant-card-body) {
+          background-color: #292a3d;
+          color: #cccdd6;
+          //禁用文字选中
+          -webkit-user-select: none;
+          -moz-user-select: none;
+          -ms-user-select: none;
+          user-select: none;
+
+
+          &:hover {
+            background-color: #32364a;
+          }
+
+          .ant-list-item-meta-title {
+            color: #cccdd6;
+            line-height: 1;
+            //单行文字溢出显示省略号
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+
+
+            span {
+              color: #cccdd6;
+            }
+          }
+
+          .ant-list-item-meta-description {
+            line-height: 1;
+            color: #9a9daa;
+            font-size: 0.8em;
+            transform: scale(0.9); /* 用缩放来解决 */
+            transform-origin: 0 0; /* 左对齐 */
+          }
+        }
+      }
+    }
+  }
+
+
+  :deep(.ant-breadcrumb) {
+    color: #cccdd6;
+
+    .ant-breadcrumb-separator {
+      color: #cccdd6;
+    }
+
+    span {
+      a {
+        color: #1daa6c;
+      }
+    }
+
+    span:last-child {
+      a {
+        color: #cccdd6;
+      }
+    }
+
+    .ant-breadcrumb-link {
+      color: #cccdd6;
+    }
+  }
+
+  .my-button {
+    background-color: #292a3d;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+
+    &:hover {
+      background-color: #32364a;
+    }
+  }
+
+  .ant-dropdown-menu {
+    color: #fff;
+    background-color: #292a3d;
+    border: 1px solid #000;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .15);
+
+    :deep(.ant-dropdown-menu-item, .ant-dropdown-menu-submenu-title) {
+      color: #fff;
+    }
+  }
+
+  .link-root {
+    display: flex;
+    justify-content: center;
+    margin-top: 12px;
+    align-items: center;
+
+    .link-icon {
+      font-size: 2em;
+    }
+
+    .link-icon-activation {
+      color: #1daa6c;
+    }
+  }
+
+}

@@ -36,16 +36,11 @@ onUpdated(() => {
   if (props.value) {
     currentValue.value = props.value
     // editorRef.value.setHtml(props.value)
+  }else{
+    currentValue.value = ''
   }
 })
 
-//
-// watch(() => props.value, (val) => {
-//   nextTick(() => {
-//     currentValue.value = val
-//   })
-//
-// })
 
 
 // 编辑器实例，必须用 shallowRef

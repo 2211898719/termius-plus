@@ -1,0 +1,427 @@
+<script setup>
+import {serverApi} from "@/api/server";
+import {message, Modal} from "ant-design-vue";
+import {computed, createVNode, defineEmits, defineExpose, nextTick, onMounted, reactive, ref, watch} from "vue";
+import {ExclamationCircleOutlined} from "@ant-design/icons-vue";
+import {walk} from "@/utils/treeUtil";
+import {proxyApi} from "@/api/proxy";
+import PSelect from "@/components/p-select.vue";
+import PEditor from "@/components/tinymce/p-editor.vue";
+import GroupCascader from "@/components/group-cascader.vue";
+import {useForm} from "ant-design-vue/es/form";
+import Sortable from "sortablejs";
+import _ from "lodash";
+
+const emit = defineEmits(['openServer', 'proxyCreation'])
+
+const creationVisible = ref(false);
+const creationType = ref('create');
+let groupBreadcrumb = ref([{id: 0, isGroup: true, name: 'all'}])
+const data = ref([{}]);
+const creationState = reactive({
+  name: "",
+  ip: "",
+  port: "22",
+  password: "",
+  key: "",
+  proxyId: "",
+  parentId: "",
+  firstCommand: "",
+  isGroup: false,
+  username: "",
+  remark: "",
+  autoSudo: true,
+});
+
+
+const creationRules = computed(() => reactive({
+  name: [
+    {
+      required: true,
+      message: "请输入名称",
+    },
+    {
+      min: 1,
+      max: 10,
+      message: "名称长度在1-10之间",
+    }
+  ],
+  parentId: [
+    {
+      required: true,
+      message: "请选择位置",
+    }
+  ],
+  ip: [
+    {
+      required: !creationState.isGroup,
+      message: "请输入host",
+    },
+    {
+      pattern: /^(?:(?:[0-9]{1,3}\.){3}[0-9]{1,3}|(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,})$/,
+      message: "host格式不正确"
+    }
+  ],
+  port: [
+    {
+      required: !creationState.isGroup,
+      message: "请输入端口",
+    },
+    {
+      pattern: /^\d+$/,
+      message: "端口格式不正确"
+    }
+  ],
+  username: [
+    {
+      required: !creationState.isGroup,
+      message: "请输入用户名",
+    }
+  ],
+}));
+
+let currentData = ref(data.value)
+
+let {
+  value: {
+    resetFields: resetCreationFields,
+    validate: validateCreation,
+    validateInfos: creationValidations
+  }
+} = computed(() => useForm(creationState, creationRules))
+
+watch(creationVisible, (visible) => {
+  if (!visible) {
+    resetCreationFields();
+  }
+});
+
+const handleAddServer = () => {
+  creationVisible.value = true;
+  creationState.isGroup = false;
+  creationType.value = 'create'
+  creationState.parentId = groupBreadcrumb.value[groupBreadcrumb.value.length - 1].id
+}
+
+const handleEditServer = (row) => {
+  creationVisible.value = true;
+  creationType.value = 'update'
+  Object.assign(creationState, row)
+}
+
+const handleBreadcrumbData = (item) => {
+  if (item.id === 0) {
+    currentData.value = data.value
+  } else {
+    //遍历data找到这个item.id并
+    walk(data.value, (node) => {
+      if (node.id === item.id) {
+        currentData.value = node.children
+      }
+    });
+  }
+}
+
+const getServerList = async () => {
+  let list = await serverApi.list()
+  data.value.splice(0)
+  data.value.push(...list)
+
+  handleBreadcrumbData(groupBreadcrumb.value[groupBreadcrumb.value.length - 1])
+}
+
+getServerList()
+
+const handleCopyServer = async (row) => {
+  creationType.value = 'create'
+  Object.assign(creationState, row)
+  creationState.id = null
+  creationState.name = creationState.name + '-复制'
+  await serverApi[creationType.value](creationState);
+  message.success("操作成功");
+  await getServerList()
+}
+const handleDelServer = (item) => {
+
+  Modal.confirm({
+    title: '确定要删除吗?',
+    icon: createVNode(ExclamationCircleOutlined),
+    content: item.isGroup ? '删除组会丢失组下所有服务器信息！！' : '',
+    onOk: async () => {
+      await serverApi.del(item.id)
+      await getServerList()
+      message.success("操作成功");
+    },
+    onCancel() {
+    },
+  });
+}
+
+const submitCreate = async () => {
+  try {
+    await validateCreation();
+  } catch (error) {
+    return;
+  }
+
+  await serverApi[creationType.value](creationState);
+  message.success("操作成功");
+
+  creationVisible.value = false;
+  await getServerList()
+}
+
+const createSortEl = (el) => {
+  if (el) {
+    return Sortable.create(el, {
+      group: {
+        name: 'shared',
+        pull: 'clone',
+        put: 'true' // Do not allow items to be put into this list
+      },
+      scroll: true,
+      dataIdAttr: 'id',
+      sortElement: '.sortEl',
+      dragClass: "sortable-drag",
+      animation: 500,
+      onEnd: handleChangeSort
+    });
+  }
+}
+
+const handleChangeSort = (evt) => {
+  //根据evt.oldIndex和evt.newIndex来维护currentData.value
+  let oldIndex = evt.oldIndex;
+  let newIndex = evt.newIndex;
+
+  let sortData = currentData.value
+  let item = sortData[oldIndex];
+  sortData.splice(oldIndex, 1);
+  sortData.splice(newIndex, 0, item);
+
+  updateSort(sortData)
+}
+
+const updateSort = _.debounce(async (sortData) => {
+  await serverApi.updateSort(
+      sortData.map(item => ({id: item.id, sort: item.sort}))
+  )
+}, 250, {'maxWait': 1000});
+
+
+const handleDblclick = (item) => {
+  if (item.isGroup) {
+    //维护面包屑
+    let index = groupBreadcrumb.value.findIndex(i => i.id === item.id);
+    if (index === -1) {
+      groupBreadcrumb.value.push(item);
+    } else {
+      groupBreadcrumb.value = groupBreadcrumb.value.splice(0, index + 1)
+    }
+
+    //维护列表
+    handleBreadcrumbData(item)
+    nextTick(() => {
+      createSortEl(document.getElementsByClassName('ant-row')[0])
+    })
+    return
+  }
+
+  emit('openServer', item)
+}
+
+const handleOpenNewWindow = (item) => {
+  window.open(item.url)
+}
+
+onMounted(() => {
+  createSortEl(document.getElementsByClassName('ant-row')[0])
+})
+
+const proxyCreation = () => {
+  emit('proxyCreation')
+}
+
+const handleAddGroup = () => {
+  creationVisible.value = true;
+  creationState.isGroup = true
+  creationType.value = 'create'
+  creationState.parentId = groupBreadcrumb.value[groupBreadcrumb.value.length - 1].id
+}
+
+
+let proxyRef = ref()
+
+const getProxyData = async () => {
+  if (proxyRef.value) {
+    await proxyRef.value.getData()
+  }
+}
+
+const setProxyId = (id) => {
+  creationState.proxyId = id
+}
+
+defineExpose({
+  getProxyData,
+  setProxyId
+})
+
+</script>
+
+<template>
+  <div class="server-root">
+    <div class="server-pane">
+      <a-space direction="vertical" size="middle" style="width: 100%;">
+        <a-card>
+          <div style="display: flex;justify-content: space-between">
+            <a-breadcrumb>
+              <a-breadcrumb-item v-for="item in groupBreadcrumb" :key="item.id" @click="handleDblclick(item)">
+                <a>{{ item.name }}</a>
+              </a-breadcrumb-item>
+            </a-breadcrumb>
+            <div>
+
+              <a-button @click="getServerList" class="my-button">刷新</a-button>
+              <a-button @click="handleAddServer" class="ml10 my-button">新增服务器</a-button>
+              <a-button class="ml10 my-button" @click="handleAddGroup">新增分组</a-button>
+            </div>
+          </div>
+          <div class="mt30 server">
+            <a-list :grid="{ gutter: 16, column: 4 }" :data-source="currentData" row-key="id">
+              <template #renderItem="{ item }">
+                <a-dropdown :trigger="['contextmenu']">
+                  <a-list-item class="sortEl" @dblclick="handleDblclick(item)">
+                    <template #actions>
+                      <a key="list-loadmore-edit">
+                        <edit-outlined @click="handleEditServer(item)"/>
+                      </a>
+                    </template>
+                    <a-card>
+                      <a-skeleton avatar :title="false" :loading="!!item.loading" active>
+                        <a-list-item-meta
+                            :description="item.isGroup?'group':'server'"
+                        >
+                          <template #title>
+                            <span>{{ item.name }}</span>
+                          </template>
+                          <template #avatar>
+                            <ApartmentOutlined v-if="item.isGroup" class="icon-server"/>
+                            <hdd-outlined v-else class="icon-server" style="color: #f25e62;"/>
+                          </template>
+                        </a-list-item-meta>
+                      </a-skeleton>
+                    </a-card>
+
+                  </a-list-item>
+                  <template #overlay>
+                    <a-menu>
+                      <a-menu-item v-if="!item.isGroup" key="2" @click="handleDblclick(item)">
+                        <link-outlined/>
+                        连接
+                      </a-menu-item>
+                      <a-menu-item v-if="!item.isGroup" key="2" @click="handleOpenNewWindow(item)">
+                        <link-outlined/>
+                        新窗口
+                      </a-menu-item>
+                      <a-menu-item key="4" @click="handleEditServer(item)">
+                        <edit-outlined/>
+                        修改
+                      </a-menu-item>
+                      <a-menu-item key="3" @click="handleCopyServer(item)">
+                        <CopyOutlined/>
+                        复制
+                      </a-menu-item>
+
+                      <a-menu-item key="1" @click="handleDelServer(item)">
+                        <DeleteOutlined/>
+                        删除
+                      </a-menu-item>
+                    </a-menu>
+                  </template>
+                </a-dropdown>
+              </template>
+            </a-list>
+          </div>
+        </a-card>
+      </a-space>
+      <a-drawer
+          v-model:visible="creationVisible"
+          title="新增服务器"
+          placement="right"
+          width="80%"
+          size="large"
+      >
+        <template #extra>
+          <a-space>
+            <a-button @click="creationVisible = false">取消</a-button>
+            <a-button type="primary" @click="submitCreate">提交</a-button>
+          </a-space>
+        </template>
+
+        <a-form
+            :label-col="{ span: 4 }"
+            :wrapper-col="{ span: 18 }"
+            autocomplete="off"
+        >
+
+          <a-form-item label="名称" v-bind="creationValidations.name">
+            <a-input v-model:value="creationState.name"/>
+          </a-form-item>
+          <a-form-item label="位置" v-bind="creationValidations.parentId">
+            <GroupCascader v-if="creationVisible"
+                           :disabled="creationState.id"
+                           v-model:value="creationState.parentId"></GroupCascader>
+          </a-form-item>
+          <template v-if="!creationState.isGroup">
+            <a-form-item label="host" v-bind="creationValidations.ip">
+              <a-input v-model:value="creationState.ip"/>
+            </a-form-item>
+
+            <a-form-item label="端口" v-bind="creationValidations.port">
+              <a-input v-model:value="creationState.port"/>
+            </a-form-item>
+            <a-form-item label="用户名" v-bind="creationValidations.username">
+              <a-input v-model:value="creationState.username"/>
+            </a-form-item>
+
+            <a-form-item label="密码" v-bind="creationValidations.password">
+              <a-input-password v-model:value="creationState.password"/>
+            </a-form-item>
+
+            <a-form-item label="连接时执行命令" v-bind="creationValidations.firstCommand">
+              <a-textarea :auto-size="{ minRows: 2, maxRows: 5 }"
+                          v-model:value="creationState.firstCommand"></a-textarea>
+            </a-form-item>
+
+            <a-form-item label="自动sudo" v-bind="creationValidations.aotoSudo">
+              <a-switch v-model:checked="creationState.autoSudo"></a-switch>
+            </a-form-item>
+
+            <a-form-item label="私钥" v-bind="creationValidations.key">
+              <a-textarea v-model:value="creationState.key"></a-textarea>
+            </a-form-item>
+          </template>
+          <a-form-item label="代理" v-bind="creationValidations.proxyId">
+            <p-select ref="proxyRef" :api="proxyApi.list" v-model:value="creationState.proxyId"
+                      style="width: 90%"></p-select>
+            <a-button @click="proxyCreation" style="margin-left: 2%" type="primary" shape="circle">
+              <template #icon>
+                <plus-outlined/>
+              </template>
+            </a-button>
+          </a-form-item>
+          <a-form-item label="备注" v-bind="creationValidations.remark">
+            <p-editor v-model:value="creationState.remark"></p-editor>
+          </a-form-item>
+        </a-form>
+
+      </a-drawer>
+    </div>
+  </div>
+</template>
+
+<style scoped lang="less">
+@import url('./css/termius');
+
+</style>

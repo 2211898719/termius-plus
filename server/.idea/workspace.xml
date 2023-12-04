@@ -5,31 +5,33 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="0de18e6e-97dd-4171-a773-cfeff3460ad8" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/snippet/controller/CommandController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/snippet/dto/CommandCreateParams.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/snippet/dto/CommandDto.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/snippet/dto/CommandSearchParams.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/snippet/dto/CommandUpdateParams.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/snippet/entity/Command.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/snippet/mapper/CommandMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/snippet/repository/CommandRepository.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/snippet/service/CommandService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/snippet/service/impl/CommandServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources/7a2d8a16-7a99-4d59-9724-de92db928614.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/7a2d8a16-7a99-4d59-9724-de92db928614.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources/7a2d8a16-7a99-4d59-9724-de92db928614/storage_v2/_src_/schema/termius-plus.TJMRtA.meta" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/7a2d8a16-7a99-4d59-9724-de92db928614/storage_v2/_src_/schema/termius-plus.TJMRtA.meta" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/index.pb" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/index.pb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/securityhotspotstore/index.pb" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/securityhotspotstore/index.pb" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../web/admin/src/views/ProxyListPage.vue" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../web/admin/src/views/ServerContent.vue" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../web/admin/src/views/ServerListPage.vue" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../web/admin/src/views/SettingPage.vue" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../web/admin/src/views/css/termius.less" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/api/admin/SFTPController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/api/admin/SFTPController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/dto/SFTPBean.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/dto/SFTPBean.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/SFTPService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/SFTPService.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/impl/SFTPServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/impl/SFTPServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/impl/ServerServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/impl/ServerServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/storage/utils/FileUtil.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/storage/utils/FileUtil.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../web/admin/docker/nginx.conf" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/docker/nginx.conf" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../web/admin/src/components/tinymce/File.js" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/components/tinymce/File.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../web/admin/src/utils/File.js" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/utils/File.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/snippet/controller/CommandController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/snippet/dto/CommandCreateParams.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/snippet/dto/CommandDto.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/snippet/dto/CommandSearchParams.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/snippet/dto/CommandUpdateParams.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/snippet/entity/Command.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/snippet/mapper/CommandMapper.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/snippet/repository/CommandRepository.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/snippet/service/CommandService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/snippet/service/impl/CommandServiceImpl.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/user/service/impl/UserAuthServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/user/service/impl/UserAuthServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/security/AuthTokenFilter.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/security/AuthTokenFilter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/src/App.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/App.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/src/api/sftp.js" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/api/sftp.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/src/components/p-sftp.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/components/p-sftp.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/src/components/tinymce/p-editor.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/components/tinymce/p-editor.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/src/main.js" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/main.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/src/views/ServerPage.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/views/ServerPage.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/yarn.lock" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/yarn.lock" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -127,8 +129,9 @@
   </component>
   <component name="RunAnythingCache">
     <option name="myCommands">
-      <command value="mvn compile" />
       <command value="mvn compile jib:build  -Djib.to.auth.username=洪俊龙哈哈1  -Djib.to.auth.password=z13867013469[" />
+      <command value="mvn clean" />
+      <command value="mvn compile" />
     </option>
   </component>
   <component name="RunManager" selected="Spring Boot.JavaSkeletonServerApplication">
@@ -197,7 +200,7 @@
       <workItem from="1699006572431" duration="486000" />
       <workItem from="1701225095390" duration="7747000" />
       <workItem from="1701394065003" duration="8284000" />
-      <workItem from="1701653804384" duration="5012000" />
+      <workItem from="1701653804384" duration="9490000" />
     </task>
     <servers />
   </component>

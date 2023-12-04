@@ -15,6 +15,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -55,6 +56,15 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     }
 
     private String parseToken(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ("token".equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
+            }
+        }
+
         String headerAuth = request.getHeader("Authorization");
         if (StrUtil.isNotEmpty(headerAuth) && headerAuth.startsWith("Bearer ")) {
             return headerAuth.substring(7);
