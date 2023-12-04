@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <dataSource name="termius-plus@localhost">
   <database-model serializer="dbm" dbms="MYSQL" family-id="MYSQL" format-version="4.49">
-    <root id="1"/>
+    <root id="1">
+      <DefaultEngine>InnoDB</DefaultEngine>
+      <DefaultTmpEngine>InnoDB</DefaultTmpEngine>
+      <ServerVersion>8.0.19</ServerVersion>
+    </root>
     <collation id="2" parent="1" name="utf8mb4_lt_0900_as_cs">
       <Charset>utf8mb4</Charset>
     </collation>
@@ -918,8 +922,8 @@
     </schema>
     <schema id="293" parent="1" name="termius-plus">
       <Current>1</Current>
-      <IntrospectionTimestamp>2023-10-02.00:58:31</IntrospectionTimestamp>
-      <LocalIntrospectionTimestamp>2023-10-01.08:58:31</LocalIntrospectionTimestamp>
+      <IntrospectionTimestamp>2023-12-04.19:06:23</IntrospectionTimestamp>
+      <LocalIntrospectionTimestamp>2023-12-04.03:06:23</LocalIntrospectionTimestamp>
       <CollationName>utf8mb4_bin</CollationName>
     </schema>
     <user id="294" parent="1" name="mysql.session">
@@ -985,75 +989,80 @@
       <Engine>InnoDB</Engine>
       <CollationName>utf8mb4_general_ci</CollationName>
     </table>
-    <table id="309" parent="293" name="file">
+    <table id="309" parent="293" name="command">
+      <Comment>命令</Comment>
+      <Engine>InnoDB</Engine>
+      <CollationName>utf8mb4_general_ci</CollationName>
+    </table>
+    <table id="310" parent="293" name="file">
       <Comment>文件</Comment>
       <Engine>InnoDB</Engine>
       <CollationName>utf8mb4_general_ci</CollationName>
     </table>
-    <table id="310" parent="293" name="flyway_schema_history">
+    <table id="311" parent="293" name="flyway_schema_history">
       <Engine>InnoDB</Engine>
-      <CollationName>utf8mb4_bin</CollationName>
+      <CollationName>utf8mb4_0900_ai_ci</CollationName>
     </table>
-    <table id="311" parent="293" name="group">
+    <table id="312" parent="293" name="group">
       <Comment>组</Comment>
       <Engine>InnoDB</Engine>
       <CollationName>utf8mb4_general_ci</CollationName>
     </table>
-    <table id="312" parent="293" name="object_log">
+    <table id="313" parent="293" name="object_log">
       <Comment>业务对象日志表</Comment>
       <Engine>InnoDB</Engine>
       <CollationName>utf8mb4_general_ci</CollationName>
     </table>
-    <table id="313" parent="293" name="proxy">
+    <table id="314" parent="293" name="proxy">
       <Comment>代理</Comment>
       <Engine>InnoDB</Engine>
       <CollationName>utf8mb4_general_ci</CollationName>
     </table>
-    <table id="314" parent="293" name="role">
+    <table id="315" parent="293" name="role">
       <Comment>角色</Comment>
       <Engine>InnoDB</Engine>
       <CollationName>utf8mb4_general_ci</CollationName>
     </table>
-    <table id="315" parent="293" name="server">
+    <table id="316" parent="293" name="server">
       <Comment>服务器</Comment>
       <Engine>InnoDB</Engine>
       <CollationName>utf8mb4_general_ci</CollationName>
     </table>
-    <table id="316" parent="293" name="server_service_monitor">
+    <table id="317" parent="293" name="server_service_monitor">
       <Comment>服务监控</Comment>
       <Engine>InnoDB</Engine>
       <CollationName>utf8mb4_general_ci</CollationName>
     </table>
-    <table id="317" parent="293" name="user">
+    <table id="318" parent="293" name="user">
       <Comment>用户</Comment>
       <Engine>InnoDB</Engine>
       <CollationName>utf8mb4_general_ci</CollationName>
     </table>
-    <table id="318" parent="293" name="user_role">
+    <table id="319" parent="293" name="user_role">
       <Comment>用户拥有角色</Comment>
       <Engine>InnoDB</Engine>
       <CollationName>utf8mb4_general_ci</CollationName>
     </table>
-    <column id="319" parent="298" name="SCHED_NAME">
+    <column id="320" parent="298" name="SCHED_NAME">
       <DasType>varchar(120)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>1</Position>
     </column>
-    <column id="320" parent="298" name="TRIGGER_NAME">
+    <column id="321" parent="298" name="TRIGGER_NAME">
       <DasType>varchar(190)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>2</Position>
     </column>
-    <column id="321" parent="298" name="TRIGGER_GROUP">
+    <column id="322" parent="298" name="TRIGGER_GROUP">
       <DasType>varchar(190)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>3</Position>
     </column>
-    <column id="322" parent="298" name="BLOB_DATA">
+    <column id="323" parent="298" name="BLOB_DATA">
       <DasType>blob|0s</DasType>
       <Position>4</Position>
     </column>
-    <foreign-key id="323" parent="298" name="qrtz_blob_triggers_ibfk_1">
+    <foreign-key id="324" parent="298" name="qrtz_blob_triggers_ibfk_1">
       <ColNames>SCHED_NAME
 TRIGGER_NAME
 TRIGGER_GROUP</ColNames>
@@ -1062,75 +1071,75 @@ TRIGGER_NAME
 TRIGGER_GROUP</RefColNames>
       <RefTableName>QRTZ_TRIGGERS</RefTableName>
     </foreign-key>
-    <index id="324" parent="298" name="PRIMARY">
+    <index id="325" parent="298" name="PRIMARY">
       <ColNames>SCHED_NAME
 TRIGGER_NAME
 TRIGGER_GROUP</ColNames>
       <Type>btree</Type>
       <Unique>1</Unique>
     </index>
-    <index id="325" parent="298" name="SCHED_NAME">
+    <index id="326" parent="298" name="SCHED_NAME">
       <ColNames>SCHED_NAME
 TRIGGER_NAME
 TRIGGER_GROUP</ColNames>
       <Type>btree</Type>
     </index>
-    <key id="326" parent="298" name="PRIMARY">
+    <key id="327" parent="298" name="PRIMARY">
       <NameSurrogate>1</NameSurrogate>
       <Primary>1</Primary>
       <UnderlyingIndexName>PRIMARY</UnderlyingIndexName>
     </key>
-    <column id="327" parent="299" name="SCHED_NAME">
+    <column id="328" parent="299" name="SCHED_NAME">
       <DasType>varchar(120)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>1</Position>
     </column>
-    <column id="328" parent="299" name="CALENDAR_NAME">
+    <column id="329" parent="299" name="CALENDAR_NAME">
       <DasType>varchar(190)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>2</Position>
     </column>
-    <column id="329" parent="299" name="CALENDAR">
+    <column id="330" parent="299" name="CALENDAR">
       <DasType>blob|0s</DasType>
       <NotNull>1</NotNull>
       <Position>3</Position>
     </column>
-    <index id="330" parent="299" name="PRIMARY">
+    <index id="331" parent="299" name="PRIMARY">
       <ColNames>SCHED_NAME
 CALENDAR_NAME</ColNames>
       <Type>btree</Type>
       <Unique>1</Unique>
     </index>
-    <key id="331" parent="299" name="PRIMARY">
+    <key id="332" parent="299" name="PRIMARY">
       <NameSurrogate>1</NameSurrogate>
       <Primary>1</Primary>
       <UnderlyingIndexName>PRIMARY</UnderlyingIndexName>
     </key>
-    <column id="332" parent="300" name="SCHED_NAME">
+    <column id="333" parent="300" name="SCHED_NAME">
       <DasType>varchar(120)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>1</Position>
     </column>
-    <column id="333" parent="300" name="TRIGGER_NAME">
+    <column id="334" parent="300" name="TRIGGER_NAME">
       <DasType>varchar(190)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>2</Position>
     </column>
-    <column id="334" parent="300" name="TRIGGER_GROUP">
+    <column id="335" parent="300" name="TRIGGER_GROUP">
       <DasType>varchar(190)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>3</Position>
     </column>
-    <column id="335" parent="300" name="CRON_EXPRESSION">
+    <column id="336" parent="300" name="CRON_EXPRESSION">
       <DasType>varchar(120)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>4</Position>
     </column>
-    <column id="336" parent="300" name="TIME_ZONE_ID">
+    <column id="337" parent="300" name="TIME_ZONE_ID">
       <DasType>varchar(80)|0s</DasType>
       <Position>5</Position>
     </column>
-    <foreign-key id="337" parent="300" name="qrtz_cron_triggers_ibfk_1">
+    <foreign-key id="338" parent="300" name="qrtz_cron_triggers_ibfk_1">
       <ColNames>SCHED_NAME
 TRIGGER_NAME
 TRIGGER_GROUP</ColNames>
@@ -1139,297 +1148,297 @@ TRIGGER_NAME
 TRIGGER_GROUP</RefColNames>
       <RefTableName>QRTZ_TRIGGERS</RefTableName>
     </foreign-key>
-    <index id="338" parent="300" name="PRIMARY">
+    <index id="339" parent="300" name="PRIMARY">
       <ColNames>SCHED_NAME
 TRIGGER_NAME
 TRIGGER_GROUP</ColNames>
       <Type>btree</Type>
       <Unique>1</Unique>
     </index>
-    <key id="339" parent="300" name="PRIMARY">
+    <key id="340" parent="300" name="PRIMARY">
       <NameSurrogate>1</NameSurrogate>
       <Primary>1</Primary>
       <UnderlyingIndexName>PRIMARY</UnderlyingIndexName>
     </key>
-    <column id="340" parent="301" name="SCHED_NAME">
+    <column id="341" parent="301" name="SCHED_NAME">
       <DasType>varchar(120)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>1</Position>
     </column>
-    <column id="341" parent="301" name="ENTRY_ID">
+    <column id="342" parent="301" name="ENTRY_ID">
       <DasType>varchar(95)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>2</Position>
     </column>
-    <column id="342" parent="301" name="TRIGGER_NAME">
+    <column id="343" parent="301" name="TRIGGER_NAME">
       <DasType>varchar(190)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>3</Position>
     </column>
-    <column id="343" parent="301" name="TRIGGER_GROUP">
+    <column id="344" parent="301" name="TRIGGER_GROUP">
       <DasType>varchar(190)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>4</Position>
     </column>
-    <column id="344" parent="301" name="INSTANCE_NAME">
+    <column id="345" parent="301" name="INSTANCE_NAME">
       <DasType>varchar(190)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>5</Position>
     </column>
-    <column id="345" parent="301" name="FIRED_TIME">
+    <column id="346" parent="301" name="FIRED_TIME">
       <DasType>bigint|0s</DasType>
       <NotNull>1</NotNull>
       <Position>6</Position>
     </column>
-    <column id="346" parent="301" name="SCHED_TIME">
+    <column id="347" parent="301" name="SCHED_TIME">
       <DasType>bigint|0s</DasType>
       <NotNull>1</NotNull>
       <Position>7</Position>
     </column>
-    <column id="347" parent="301" name="PRIORITY">
+    <column id="348" parent="301" name="PRIORITY">
       <DasType>int|0s</DasType>
       <NotNull>1</NotNull>
       <Position>8</Position>
     </column>
-    <column id="348" parent="301" name="STATE">
+    <column id="349" parent="301" name="STATE">
       <DasType>varchar(16)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>9</Position>
     </column>
-    <column id="349" parent="301" name="JOB_NAME">
+    <column id="350" parent="301" name="JOB_NAME">
       <DasType>varchar(190)|0s</DasType>
       <Position>10</Position>
     </column>
-    <column id="350" parent="301" name="JOB_GROUP">
+    <column id="351" parent="301" name="JOB_GROUP">
       <DasType>varchar(190)|0s</DasType>
       <Position>11</Position>
     </column>
-    <column id="351" parent="301" name="IS_NONCONCURRENT">
+    <column id="352" parent="301" name="IS_NONCONCURRENT">
       <DasType>varchar(1)|0s</DasType>
       <Position>12</Position>
     </column>
-    <column id="352" parent="301" name="REQUESTS_RECOVERY">
+    <column id="353" parent="301" name="REQUESTS_RECOVERY">
       <DasType>varchar(1)|0s</DasType>
       <Position>13</Position>
     </column>
-    <index id="353" parent="301" name="PRIMARY">
+    <index id="354" parent="301" name="PRIMARY">
       <ColNames>SCHED_NAME
 ENTRY_ID</ColNames>
       <Type>btree</Type>
       <Unique>1</Unique>
     </index>
-    <index id="354" parent="301" name="IDX_QRTZ_FT_T_G">
+    <index id="355" parent="301" name="IDX_QRTZ_FT_T_G">
       <ColNames>SCHED_NAME
 TRIGGER_NAME
 TRIGGER_GROUP</ColNames>
       <Type>btree</Type>
     </index>
-    <index id="355" parent="301" name="IDX_QRTZ_FT_TG">
+    <index id="356" parent="301" name="IDX_QRTZ_FT_TG">
       <ColNames>SCHED_NAME
 TRIGGER_GROUP</ColNames>
       <Type>btree</Type>
     </index>
-    <index id="356" parent="301" name="IDX_QRTZ_FT_INST_JOB_REQ_RCVRY">
+    <index id="357" parent="301" name="IDX_QRTZ_FT_INST_JOB_REQ_RCVRY">
       <ColNames>SCHED_NAME
 INSTANCE_NAME
 REQUESTS_RECOVERY</ColNames>
       <Type>btree</Type>
     </index>
-    <index id="357" parent="301" name="IDX_QRTZ_FT_TRIG_INST_NAME">
+    <index id="358" parent="301" name="IDX_QRTZ_FT_TRIG_INST_NAME">
       <ColNames>SCHED_NAME
 INSTANCE_NAME</ColNames>
       <Type>btree</Type>
     </index>
-    <index id="358" parent="301" name="IDX_QRTZ_FT_J_G">
+    <index id="359" parent="301" name="IDX_QRTZ_FT_J_G">
       <ColNames>SCHED_NAME
 JOB_NAME
 JOB_GROUP</ColNames>
       <Type>btree</Type>
     </index>
-    <index id="359" parent="301" name="IDX_QRTZ_FT_JG">
+    <index id="360" parent="301" name="IDX_QRTZ_FT_JG">
       <ColNames>SCHED_NAME
 JOB_GROUP</ColNames>
       <Type>btree</Type>
     </index>
-    <key id="360" parent="301" name="PRIMARY">
+    <key id="361" parent="301" name="PRIMARY">
       <NameSurrogate>1</NameSurrogate>
       <Primary>1</Primary>
       <UnderlyingIndexName>PRIMARY</UnderlyingIndexName>
     </key>
-    <column id="361" parent="302" name="SCHED_NAME">
+    <column id="362" parent="302" name="SCHED_NAME">
       <DasType>varchar(120)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>1</Position>
     </column>
-    <column id="362" parent="302" name="JOB_NAME">
+    <column id="363" parent="302" name="JOB_NAME">
       <DasType>varchar(190)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>2</Position>
     </column>
-    <column id="363" parent="302" name="JOB_GROUP">
+    <column id="364" parent="302" name="JOB_GROUP">
       <DasType>varchar(190)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>3</Position>
     </column>
-    <column id="364" parent="302" name="DESCRIPTION">
+    <column id="365" parent="302" name="DESCRIPTION">
       <DasType>varchar(250)|0s</DasType>
       <Position>4</Position>
     </column>
-    <column id="365" parent="302" name="JOB_CLASS_NAME">
+    <column id="366" parent="302" name="JOB_CLASS_NAME">
       <DasType>varchar(250)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>5</Position>
     </column>
-    <column id="366" parent="302" name="IS_DURABLE">
+    <column id="367" parent="302" name="IS_DURABLE">
       <DasType>varchar(1)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>6</Position>
     </column>
-    <column id="367" parent="302" name="IS_NONCONCURRENT">
+    <column id="368" parent="302" name="IS_NONCONCURRENT">
       <DasType>varchar(1)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>7</Position>
     </column>
-    <column id="368" parent="302" name="IS_UPDATE_DATA">
+    <column id="369" parent="302" name="IS_UPDATE_DATA">
       <DasType>varchar(1)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>8</Position>
     </column>
-    <column id="369" parent="302" name="REQUESTS_RECOVERY">
+    <column id="370" parent="302" name="REQUESTS_RECOVERY">
       <DasType>varchar(1)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>9</Position>
     </column>
-    <column id="370" parent="302" name="JOB_DATA">
+    <column id="371" parent="302" name="JOB_DATA">
       <DasType>blob|0s</DasType>
       <Position>10</Position>
     </column>
-    <index id="371" parent="302" name="PRIMARY">
+    <index id="372" parent="302" name="PRIMARY">
       <ColNames>SCHED_NAME
 JOB_NAME
 JOB_GROUP</ColNames>
       <Type>btree</Type>
       <Unique>1</Unique>
     </index>
-    <index id="372" parent="302" name="IDX_QRTZ_J_GRP">
+    <index id="373" parent="302" name="IDX_QRTZ_J_GRP">
       <ColNames>SCHED_NAME
 JOB_GROUP</ColNames>
       <Type>btree</Type>
     </index>
-    <index id="373" parent="302" name="IDX_QRTZ_J_REQ_RECOVERY">
+    <index id="374" parent="302" name="IDX_QRTZ_J_REQ_RECOVERY">
       <ColNames>SCHED_NAME
 REQUESTS_RECOVERY</ColNames>
       <Type>btree</Type>
     </index>
-    <key id="374" parent="302" name="PRIMARY">
+    <key id="375" parent="302" name="PRIMARY">
       <NameSurrogate>1</NameSurrogate>
       <Primary>1</Primary>
       <UnderlyingIndexName>PRIMARY</UnderlyingIndexName>
     </key>
-    <column id="375" parent="303" name="SCHED_NAME">
+    <column id="376" parent="303" name="SCHED_NAME">
       <DasType>varchar(120)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>1</Position>
     </column>
-    <column id="376" parent="303" name="LOCK_NAME">
+    <column id="377" parent="303" name="LOCK_NAME">
       <DasType>varchar(40)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>2</Position>
     </column>
-    <index id="377" parent="303" name="PRIMARY">
+    <index id="378" parent="303" name="PRIMARY">
       <ColNames>SCHED_NAME
 LOCK_NAME</ColNames>
       <Type>btree</Type>
       <Unique>1</Unique>
     </index>
-    <key id="378" parent="303" name="PRIMARY">
+    <key id="379" parent="303" name="PRIMARY">
       <NameSurrogate>1</NameSurrogate>
       <Primary>1</Primary>
       <UnderlyingIndexName>PRIMARY</UnderlyingIndexName>
     </key>
-    <column id="379" parent="304" name="SCHED_NAME">
+    <column id="380" parent="304" name="SCHED_NAME">
       <DasType>varchar(120)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>1</Position>
     </column>
-    <column id="380" parent="304" name="TRIGGER_GROUP">
+    <column id="381" parent="304" name="TRIGGER_GROUP">
       <DasType>varchar(190)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>2</Position>
     </column>
-    <index id="381" parent="304" name="PRIMARY">
+    <index id="382" parent="304" name="PRIMARY">
       <ColNames>SCHED_NAME
 TRIGGER_GROUP</ColNames>
       <Type>btree</Type>
       <Unique>1</Unique>
     </index>
-    <key id="382" parent="304" name="PRIMARY">
+    <key id="383" parent="304" name="PRIMARY">
       <NameSurrogate>1</NameSurrogate>
       <Primary>1</Primary>
       <UnderlyingIndexName>PRIMARY</UnderlyingIndexName>
     </key>
-    <column id="383" parent="305" name="SCHED_NAME">
+    <column id="384" parent="305" name="SCHED_NAME">
       <DasType>varchar(120)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>1</Position>
     </column>
-    <column id="384" parent="305" name="INSTANCE_NAME">
+    <column id="385" parent="305" name="INSTANCE_NAME">
       <DasType>varchar(190)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>2</Position>
     </column>
-    <column id="385" parent="305" name="LAST_CHECKIN_TIME">
+    <column id="386" parent="305" name="LAST_CHECKIN_TIME">
       <DasType>bigint|0s</DasType>
       <NotNull>1</NotNull>
       <Position>3</Position>
     </column>
-    <column id="386" parent="305" name="CHECKIN_INTERVAL">
+    <column id="387" parent="305" name="CHECKIN_INTERVAL">
       <DasType>bigint|0s</DasType>
       <NotNull>1</NotNull>
       <Position>4</Position>
     </column>
-    <index id="387" parent="305" name="PRIMARY">
+    <index id="388" parent="305" name="PRIMARY">
       <ColNames>SCHED_NAME
 INSTANCE_NAME</ColNames>
       <Type>btree</Type>
       <Unique>1</Unique>
     </index>
-    <key id="388" parent="305" name="PRIMARY">
+    <key id="389" parent="305" name="PRIMARY">
       <NameSurrogate>1</NameSurrogate>
       <Primary>1</Primary>
       <UnderlyingIndexName>PRIMARY</UnderlyingIndexName>
     </key>
-    <column id="389" parent="306" name="SCHED_NAME">
+    <column id="390" parent="306" name="SCHED_NAME">
       <DasType>varchar(120)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>1</Position>
     </column>
-    <column id="390" parent="306" name="TRIGGER_NAME">
+    <column id="391" parent="306" name="TRIGGER_NAME">
       <DasType>varchar(190)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>2</Position>
     </column>
-    <column id="391" parent="306" name="TRIGGER_GROUP">
+    <column id="392" parent="306" name="TRIGGER_GROUP">
       <DasType>varchar(190)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>3</Position>
     </column>
-    <column id="392" parent="306" name="REPEAT_COUNT">
+    <column id="393" parent="306" name="REPEAT_COUNT">
       <DasType>bigint|0s</DasType>
       <NotNull>1</NotNull>
       <Position>4</Position>
     </column>
-    <column id="393" parent="306" name="REPEAT_INTERVAL">
+    <column id="394" parent="306" name="REPEAT_INTERVAL">
       <DasType>bigint|0s</DasType>
       <NotNull>1</NotNull>
       <Position>5</Position>
     </column>
-    <column id="394" parent="306" name="TIMES_TRIGGERED">
+    <column id="395" parent="306" name="TIMES_TRIGGERED">
       <DasType>bigint|0s</DasType>
       <NotNull>1</NotNull>
       <Position>6</Position>
     </column>
-    <foreign-key id="395" parent="306" name="qrtz_simple_triggers_ibfk_1">
+    <foreign-key id="396" parent="306" name="qrtz_simple_triggers_ibfk_1">
       <ColNames>SCHED_NAME
 TRIGGER_NAME
 TRIGGER_GROUP</ColNames>
@@ -1438,78 +1447,78 @@ TRIGGER_NAME
 TRIGGER_GROUP</RefColNames>
       <RefTableName>QRTZ_TRIGGERS</RefTableName>
     </foreign-key>
-    <index id="396" parent="306" name="PRIMARY">
+    <index id="397" parent="306" name="PRIMARY">
       <ColNames>SCHED_NAME
 TRIGGER_NAME
 TRIGGER_GROUP</ColNames>
       <Type>btree</Type>
       <Unique>1</Unique>
     </index>
-    <key id="397" parent="306" name="PRIMARY">
+    <key id="398" parent="306" name="PRIMARY">
       <NameSurrogate>1</NameSurrogate>
       <Primary>1</Primary>
       <UnderlyingIndexName>PRIMARY</UnderlyingIndexName>
     </key>
-    <column id="398" parent="307" name="SCHED_NAME">
+    <column id="399" parent="307" name="SCHED_NAME">
       <DasType>varchar(120)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>1</Position>
     </column>
-    <column id="399" parent="307" name="TRIGGER_NAME">
+    <column id="400" parent="307" name="TRIGGER_NAME">
       <DasType>varchar(190)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>2</Position>
     </column>
-    <column id="400" parent="307" name="TRIGGER_GROUP">
+    <column id="401" parent="307" name="TRIGGER_GROUP">
       <DasType>varchar(190)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>3</Position>
     </column>
-    <column id="401" parent="307" name="STR_PROP_1">
+    <column id="402" parent="307" name="STR_PROP_1">
       <DasType>varchar(512)|0s</DasType>
       <Position>4</Position>
     </column>
-    <column id="402" parent="307" name="STR_PROP_2">
+    <column id="403" parent="307" name="STR_PROP_2">
       <DasType>varchar(512)|0s</DasType>
       <Position>5</Position>
     </column>
-    <column id="403" parent="307" name="STR_PROP_3">
+    <column id="404" parent="307" name="STR_PROP_3">
       <DasType>varchar(512)|0s</DasType>
       <Position>6</Position>
     </column>
-    <column id="404" parent="307" name="INT_PROP_1">
+    <column id="405" parent="307" name="INT_PROP_1">
       <DasType>int|0s</DasType>
       <Position>7</Position>
     </column>
-    <column id="405" parent="307" name="INT_PROP_2">
+    <column id="406" parent="307" name="INT_PROP_2">
       <DasType>int|0s</DasType>
       <Position>8</Position>
     </column>
-    <column id="406" parent="307" name="LONG_PROP_1">
+    <column id="407" parent="307" name="LONG_PROP_1">
       <DasType>bigint|0s</DasType>
       <Position>9</Position>
     </column>
-    <column id="407" parent="307" name="LONG_PROP_2">
+    <column id="408" parent="307" name="LONG_PROP_2">
       <DasType>bigint|0s</DasType>
       <Position>10</Position>
     </column>
-    <column id="408" parent="307" name="DEC_PROP_1">
+    <column id="409" parent="307" name="DEC_PROP_1">
       <DasType>decimal(13,4 digit)|0s</DasType>
       <Position>11</Position>
     </column>
-    <column id="409" parent="307" name="DEC_PROP_2">
+    <column id="410" parent="307" name="DEC_PROP_2">
       <DasType>decimal(13,4 digit)|0s</DasType>
       <Position>12</Position>
     </column>
-    <column id="410" parent="307" name="BOOL_PROP_1">
+    <column id="411" parent="307" name="BOOL_PROP_1">
       <DasType>varchar(1)|0s</DasType>
       <Position>13</Position>
     </column>
-    <column id="411" parent="307" name="BOOL_PROP_2">
+    <column id="412" parent="307" name="BOOL_PROP_2">
       <DasType>varchar(1)|0s</DasType>
       <Position>14</Position>
     </column>
-    <foreign-key id="412" parent="307" name="qrtz_simprop_triggers_ibfk_1">
+    <foreign-key id="413" parent="307" name="qrtz_simprop_triggers_ibfk_1">
       <ColNames>SCHED_NAME
 TRIGGER_NAME
 TRIGGER_GROUP</ColNames>
@@ -1518,91 +1527,91 @@ TRIGGER_NAME
 TRIGGER_GROUP</RefColNames>
       <RefTableName>QRTZ_TRIGGERS</RefTableName>
     </foreign-key>
-    <index id="413" parent="307" name="PRIMARY">
+    <index id="414" parent="307" name="PRIMARY">
       <ColNames>SCHED_NAME
 TRIGGER_NAME
 TRIGGER_GROUP</ColNames>
       <Type>btree</Type>
       <Unique>1</Unique>
     </index>
-    <key id="414" parent="307" name="PRIMARY">
+    <key id="415" parent="307" name="PRIMARY">
       <NameSurrogate>1</NameSurrogate>
       <Primary>1</Primary>
       <UnderlyingIndexName>PRIMARY</UnderlyingIndexName>
     </key>
-    <column id="415" parent="308" name="SCHED_NAME">
+    <column id="416" parent="308" name="SCHED_NAME">
       <DasType>varchar(120)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>1</Position>
     </column>
-    <column id="416" parent="308" name="TRIGGER_NAME">
+    <column id="417" parent="308" name="TRIGGER_NAME">
       <DasType>varchar(190)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>2</Position>
     </column>
-    <column id="417" parent="308" name="TRIGGER_GROUP">
+    <column id="418" parent="308" name="TRIGGER_GROUP">
       <DasType>varchar(190)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>3</Position>
     </column>
-    <column id="418" parent="308" name="JOB_NAME">
+    <column id="419" parent="308" name="JOB_NAME">
       <DasType>varchar(190)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>4</Position>
     </column>
-    <column id="419" parent="308" name="JOB_GROUP">
+    <column id="420" parent="308" name="JOB_GROUP">
       <DasType>varchar(190)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>5</Position>
     </column>
-    <column id="420" parent="308" name="DESCRIPTION">
+    <column id="421" parent="308" name="DESCRIPTION">
       <DasType>varchar(250)|0s</DasType>
       <Position>6</Position>
     </column>
-    <column id="421" parent="308" name="NEXT_FIRE_TIME">
+    <column id="422" parent="308" name="NEXT_FIRE_TIME">
       <DasType>bigint|0s</DasType>
       <Position>7</Position>
     </column>
-    <column id="422" parent="308" name="PREV_FIRE_TIME">
+    <column id="423" parent="308" name="PREV_FIRE_TIME">
       <DasType>bigint|0s</DasType>
       <Position>8</Position>
     </column>
-    <column id="423" parent="308" name="PRIORITY">
+    <column id="424" parent="308" name="PRIORITY">
       <DasType>int|0s</DasType>
       <Position>9</Position>
     </column>
-    <column id="424" parent="308" name="TRIGGER_STATE">
+    <column id="425" parent="308" name="TRIGGER_STATE">
       <DasType>varchar(16)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>10</Position>
     </column>
-    <column id="425" parent="308" name="TRIGGER_TYPE">
+    <column id="426" parent="308" name="TRIGGER_TYPE">
       <DasType>varchar(8)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>11</Position>
     </column>
-    <column id="426" parent="308" name="START_TIME">
+    <column id="427" parent="308" name="START_TIME">
       <DasType>bigint|0s</DasType>
       <NotNull>1</NotNull>
       <Position>12</Position>
     </column>
-    <column id="427" parent="308" name="END_TIME">
+    <column id="428" parent="308" name="END_TIME">
       <DasType>bigint|0s</DasType>
       <Position>13</Position>
     </column>
-    <column id="428" parent="308" name="CALENDAR_NAME">
+    <column id="429" parent="308" name="CALENDAR_NAME">
       <DasType>varchar(190)|0s</DasType>
       <Position>14</Position>
     </column>
-    <column id="429" parent="308" name="MISFIRE_INSTR">
+    <column id="430" parent="308" name="MISFIRE_INSTR">
       <DasType>smallint|0s</DasType>
       <Position>15</Position>
     </column>
-    <column id="430" parent="308" name="JOB_DATA">
+    <column id="431" parent="308" name="JOB_DATA">
       <DasType>blob|0s</DasType>
       <Position>16</Position>
     </column>
-    <foreign-key id="431" parent="308" name="qrtz_triggers_ibfk_1">
+    <foreign-key id="432" parent="308" name="qrtz_triggers_ibfk_1">
       <ColNames>SCHED_NAME
 JOB_NAME
 JOB_GROUP</ColNames>
@@ -1611,64 +1620,64 @@ JOB_NAME
 JOB_GROUP</RefColNames>
       <RefTableName>QRTZ_JOB_DETAILS</RefTableName>
     </foreign-key>
-    <index id="432" parent="308" name="PRIMARY">
+    <index id="433" parent="308" name="PRIMARY">
       <ColNames>SCHED_NAME
 TRIGGER_NAME
 TRIGGER_GROUP</ColNames>
       <Type>btree</Type>
       <Unique>1</Unique>
     </index>
-    <index id="433" parent="308" name="IDX_QRTZ_T_N_STATE">
+    <index id="434" parent="308" name="IDX_QRTZ_T_N_STATE">
       <ColNames>SCHED_NAME
 TRIGGER_NAME
 TRIGGER_GROUP
 TRIGGER_STATE</ColNames>
       <Type>btree</Type>
     </index>
-    <index id="434" parent="308" name="IDX_QRTZ_T_N_G_STATE">
+    <index id="435" parent="308" name="IDX_QRTZ_T_N_G_STATE">
       <ColNames>SCHED_NAME
 TRIGGER_GROUP
 TRIGGER_STATE</ColNames>
       <Type>btree</Type>
     </index>
-    <index id="435" parent="308" name="IDX_QRTZ_T_G">
+    <index id="436" parent="308" name="IDX_QRTZ_T_G">
       <ColNames>SCHED_NAME
 TRIGGER_GROUP</ColNames>
       <Type>btree</Type>
     </index>
-    <index id="436" parent="308" name="IDX_QRTZ_T_J">
+    <index id="437" parent="308" name="IDX_QRTZ_T_J">
       <ColNames>SCHED_NAME
 JOB_NAME
 JOB_GROUP</ColNames>
       <Type>btree</Type>
     </index>
-    <index id="437" parent="308" name="IDX_QRTZ_T_JG">
+    <index id="438" parent="308" name="IDX_QRTZ_T_JG">
       <ColNames>SCHED_NAME
 JOB_GROUP</ColNames>
       <Type>btree</Type>
     </index>
-    <index id="438" parent="308" name="IDX_QRTZ_T_NEXT_FIRE_TIME">
+    <index id="439" parent="308" name="IDX_QRTZ_T_NEXT_FIRE_TIME">
       <ColNames>SCHED_NAME
 NEXT_FIRE_TIME</ColNames>
       <Type>btree</Type>
     </index>
-    <index id="439" parent="308" name="IDX_QRTZ_T_NFT_ST">
+    <index id="440" parent="308" name="IDX_QRTZ_T_NFT_ST">
       <ColNames>SCHED_NAME
 TRIGGER_STATE
 NEXT_FIRE_TIME</ColNames>
       <Type>btree</Type>
     </index>
-    <index id="440" parent="308" name="IDX_QRTZ_T_STATE">
+    <index id="441" parent="308" name="IDX_QRTZ_T_STATE">
       <ColNames>SCHED_NAME
 TRIGGER_STATE</ColNames>
       <Type>btree</Type>
     </index>
-    <index id="441" parent="308" name="IDX_QRTZ_T_C">
+    <index id="442" parent="308" name="IDX_QRTZ_T_C">
       <ColNames>SCHED_NAME
 CALENDAR_NAME</ColNames>
       <Type>btree</Type>
     </index>
-    <index id="442" parent="308" name="IDX_QRTZ_T_NFT_ST_MISFIRE_GRP">
+    <index id="443" parent="308" name="IDX_QRTZ_T_NFT_ST_MISFIRE_GRP">
       <ColNames>SCHED_NAME
 MISFIRE_INSTR
 NEXT_FIRE_TIME
@@ -1676,595 +1685,683 @@ TRIGGER_GROUP
 TRIGGER_STATE</ColNames>
       <Type>btree</Type>
     </index>
-    <index id="443" parent="308" name="IDX_QRTZ_T_NFT_ST_MISFIRE">
+    <index id="444" parent="308" name="IDX_QRTZ_T_NFT_ST_MISFIRE">
       <ColNames>SCHED_NAME
 MISFIRE_INSTR
 NEXT_FIRE_TIME
 TRIGGER_STATE</ColNames>
       <Type>btree</Type>
     </index>
-    <index id="444" parent="308" name="IDX_QRTZ_T_NFT_MISFIRE">
+    <index id="445" parent="308" name="IDX_QRTZ_T_NFT_MISFIRE">
       <ColNames>SCHED_NAME
 MISFIRE_INSTR
 NEXT_FIRE_TIME</ColNames>
       <Type>btree</Type>
     </index>
-    <key id="445" parent="308" name="PRIMARY">
+    <key id="446" parent="308" name="PRIMARY">
       <NameSurrogate>1</NameSurrogate>
       <Primary>1</Primary>
       <UnderlyingIndexName>PRIMARY</UnderlyingIndexName>
     </key>
-    <column id="446" parent="309" name="id">
+    <column id="447" parent="309" name="id">
       <AutoIncrement>1</AutoIncrement>
+      <DasType>bigint unsigned|0s</DasType>
+      <NotNull>1</NotNull>
+      <Position>1</Position>
+    </column>
+    <column id="448" parent="309" name="name">
+      <Comment>命令名称</Comment>
+      <DasType>varchar(256)|0s</DasType>
+      <DefaultExpression>&apos;&apos;</DefaultExpression>
+      <NotNull>1</NotNull>
+      <Position>2</Position>
+    </column>
+    <column id="449" parent="309" name="command">
+      <Comment>命令</Comment>
+      <DasType>varchar(256)|0s</DasType>
+      <DefaultExpression>&apos;&apos;</DefaultExpression>
+      <NotNull>1</NotNull>
+      <Position>3</Position>
+    </column>
+    <column id="450" parent="309" name="remark">
+      <Comment>备注</Comment>
+      <DasType>longtext|0s</DasType>
+      <Position>4</Position>
+    </column>
+    <column id="451" parent="309" name="created_at">
+      <DasType>bigint unsigned|0s</DasType>
+      <NotNull>1</NotNull>
+      <Position>5</Position>
+    </column>
+    <column id="452" parent="309" name="updated_at">
+      <DasType>bigint unsigned|0s</DasType>
+      <NotNull>1</NotNull>
+      <Position>6</Position>
+    </column>
+    <index id="453" parent="309" name="PRIMARY">
+      <ColNames>id</ColNames>
+      <Type>btree</Type>
+      <Unique>1</Unique>
+    </index>
+    <key id="454" parent="309" name="PRIMARY">
+      <NameSurrogate>1</NameSurrogate>
+      <Primary>1</Primary>
+      <UnderlyingIndexName>PRIMARY</UnderlyingIndexName>
+    </key>
+    <column id="455" parent="310" name="id">
+      <AutoIncrement>11</AutoIncrement>
       <Comment>id</Comment>
       <DasType>int unsigned|0s</DasType>
       <NotNull>1</NotNull>
       <Position>1</Position>
     </column>
-    <column id="447" parent="309" name="target_type">
+    <column id="456" parent="310" name="target_type">
       <Comment>所属分类</Comment>
       <DasType>varchar(32)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>2</Position>
     </column>
-    <column id="448" parent="309" name="name">
+    <column id="457" parent="310" name="name">
       <Comment>文件原名</Comment>
       <DasType>varchar(1024)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>3</Position>
-      <CollationName>utf8mb3_general_ci</CollationName>
+      <CollationName>utf8_general_ci</CollationName>
     </column>
-    <column id="449" parent="309" name="ext">
+    <column id="458" parent="310" name="ext">
       <Comment>文件格式</Comment>
       <DasType>varchar(16)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>4</Position>
-      <CollationName>utf8mb3_general_ci</CollationName>
+      <CollationName>utf8_general_ci</CollationName>
     </column>
-    <column id="450" parent="309" name="size">
+    <column id="459" parent="310" name="size">
       <Comment>文件大小</Comment>
       <DasType>int|0s</DasType>
       <NotNull>1</NotNull>
       <Position>5</Position>
     </column>
-    <column id="451" parent="309" name="user_id">
+    <column id="460" parent="310" name="user_id">
       <Comment>上传人</Comment>
       <DasType>int|0s</DasType>
       <Position>6</Position>
     </column>
-    <column id="452" parent="309" name="uri">
+    <column id="461" parent="310" name="uri">
       <Comment>存储地址</Comment>
       <DasType>varchar(512)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>7</Position>
-      <CollationName>utf8mb3_general_ci</CollationName>
+      <CollationName>utf8_general_ci</CollationName>
     </column>
-    <column id="453" parent="309" name="uuid">
+    <column id="462" parent="310" name="uuid">
       <Comment>uuid</Comment>
       <DasType>varchar(32)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>8</Position>
-      <CollationName>utf8mb3_general_ci</CollationName>
+      <CollationName>utf8_general_ci</CollationName>
     </column>
-    <column id="454" parent="309" name="created_at">
+    <column id="463" parent="310" name="created_at">
       <DasType>bigint unsigned|0s</DasType>
       <NotNull>1</NotNull>
       <Position>9</Position>
     </column>
-    <column id="455" parent="309" name="updated_at">
+    <column id="464" parent="310" name="updated_at">
       <DasType>bigint unsigned|0s</DasType>
       <NotNull>1</NotNull>
       <Position>10</Position>
     </column>
-    <index id="456" parent="309" name="PRIMARY">
+    <column id="465" parent="310" name="upload_time">
+      <Comment>上传时间</Comment>
+      <DasType>datetime|0s</DasType>
+      <Position>11</Position>
+    </column>
+    <index id="466" parent="310" name="PRIMARY">
       <ColNames>id</ColNames>
       <Type>btree</Type>
       <Unique>1</Unique>
     </index>
-    <key id="457" parent="309" name="PRIMARY">
+    <key id="467" parent="310" name="PRIMARY">
       <NameSurrogate>1</NameSurrogate>
       <Primary>1</Primary>
       <UnderlyingIndexName>PRIMARY</UnderlyingIndexName>
     </key>
-    <column id="458" parent="310" name="installed_rank">
+    <column id="468" parent="311" name="installed_rank">
       <DasType>int|0s</DasType>
       <NotNull>1</NotNull>
       <Position>1</Position>
     </column>
-    <column id="459" parent="310" name="version">
+    <column id="469" parent="311" name="version">
       <DasType>varchar(50)|0s</DasType>
       <Position>2</Position>
     </column>
-    <column id="460" parent="310" name="description">
+    <column id="470" parent="311" name="description">
       <DasType>varchar(200)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>3</Position>
     </column>
-    <column id="461" parent="310" name="type">
+    <column id="471" parent="311" name="type">
       <DasType>varchar(20)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>4</Position>
     </column>
-    <column id="462" parent="310" name="script">
+    <column id="472" parent="311" name="script">
       <DasType>varchar(1000)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>5</Position>
     </column>
-    <column id="463" parent="310" name="checksum">
+    <column id="473" parent="311" name="checksum">
       <DasType>int|0s</DasType>
       <Position>6</Position>
     </column>
-    <column id="464" parent="310" name="installed_by">
+    <column id="474" parent="311" name="installed_by">
       <DasType>varchar(100)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>7</Position>
     </column>
-    <column id="465" parent="310" name="installed_on">
+    <column id="475" parent="311" name="installed_on">
       <DasType>timestamp|0s</DasType>
       <DefaultExpression>CURRENT_TIMESTAMP</DefaultExpression>
       <NotNull>1</NotNull>
       <Position>8</Position>
     </column>
-    <column id="466" parent="310" name="execution_time">
+    <column id="476" parent="311" name="execution_time">
       <DasType>int|0s</DasType>
       <NotNull>1</NotNull>
       <Position>9</Position>
     </column>
-    <column id="467" parent="310" name="success">
+    <column id="477" parent="311" name="success">
       <DasType>tinyint(1)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>10</Position>
     </column>
-    <index id="468" parent="310" name="PRIMARY">
+    <index id="478" parent="311" name="PRIMARY">
       <ColNames>installed_rank</ColNames>
       <Type>btree</Type>
       <Unique>1</Unique>
     </index>
-    <index id="469" parent="310" name="flyway_schema_history_s_idx">
+    <index id="479" parent="311" name="flyway_schema_history_s_idx">
       <ColNames>success</ColNames>
       <Type>btree</Type>
     </index>
-    <key id="470" parent="310" name="PRIMARY">
+    <key id="480" parent="311" name="PRIMARY">
       <NameSurrogate>1</NameSurrogate>
       <Primary>1</Primary>
       <UnderlyingIndexName>PRIMARY</UnderlyingIndexName>
     </key>
-    <column id="471" parent="311" name="id">
+    <column id="481" parent="312" name="id">
       <AutoIncrement>1</AutoIncrement>
       <DasType>bigint unsigned|0s</DasType>
       <NotNull>1</NotNull>
       <Position>1</Position>
     </column>
-    <column id="472" parent="311" name="name">
+    <column id="482" parent="312" name="name">
       <Comment>组名</Comment>
       <DasType>varchar(128)|0s</DasType>
       <DefaultExpression>&apos;&apos;</DefaultExpression>
       <NotNull>1</NotNull>
       <Position>2</Position>
     </column>
-    <column id="473" parent="311" name="parent_id">
+    <column id="483" parent="312" name="parent_id">
       <Comment>父组ID</Comment>
       <DasType>bigint unsigned|0s</DasType>
       <DefaultExpression>&apos;0&apos;</DefaultExpression>
       <NotNull>1</NotNull>
       <Position>3</Position>
     </column>
-    <column id="474" parent="311" name="proxy_id">
+    <column id="484" parent="312" name="proxy_id">
       <Comment>代理ID</Comment>
       <DasType>bigint unsigned|0s</DasType>
       <Position>4</Position>
     </column>
-    <column id="475" parent="311" name="created_at">
+    <column id="485" parent="312" name="created_at">
       <DasType>bigint unsigned|0s</DasType>
       <NotNull>1</NotNull>
       <Position>5</Position>
     </column>
-    <column id="476" parent="311" name="updated_at">
+    <column id="486" parent="312" name="updated_at">
       <DasType>bigint unsigned|0s</DasType>
       <NotNull>1</NotNull>
       <Position>6</Position>
     </column>
-    <index id="477" parent="311" name="PRIMARY">
+    <index id="487" parent="312" name="PRIMARY">
       <ColNames>id</ColNames>
       <Type>btree</Type>
       <Unique>1</Unique>
     </index>
-    <key id="478" parent="311" name="PRIMARY">
+    <key id="488" parent="312" name="PRIMARY">
       <NameSurrogate>1</NameSurrogate>
       <Primary>1</Primary>
       <UnderlyingIndexName>PRIMARY</UnderlyingIndexName>
     </key>
-    <column id="479" parent="312" name="id">
+    <column id="489" parent="313" name="id">
       <AutoIncrement>1</AutoIncrement>
       <DasType>bigint unsigned|0s</DasType>
       <NotNull>1</NotNull>
       <Position>1</Position>
     </column>
-    <column id="480" parent="312" name="level">
+    <column id="490" parent="313" name="level">
       <Comment>日志级别(info,warn,error)</Comment>
       <DasType>enum(&apos;info&apos;, &apos;warn&apos;, &apos;error&apos;)|0e</DasType>
       <NotNull>1</NotNull>
       <Position>2</Position>
     </column>
-    <column id="481" parent="312" name="type">
+    <column id="491" parent="313" name="type">
       <Comment>对象类型</Comment>
       <DasType>varchar(64)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>3</Position>
     </column>
-    <column id="482" parent="312" name="oid">
+    <column id="492" parent="313" name="oid">
       <Comment>对象ID</Comment>
       <DasType>bigint unsigned|0s</DasType>
       <DefaultExpression>&apos;0&apos;</DefaultExpression>
       <NotNull>1</NotNull>
       <Position>4</Position>
     </column>
-    <column id="483" parent="312" name="event">
+    <column id="493" parent="313" name="event">
       <Comment>事件名</Comment>
       <DasType>varchar(32)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>5</Position>
     </column>
-    <column id="484" parent="312" name="message">
+    <column id="494" parent="313" name="message">
       <Comment>日志内容</Comment>
       <DasType>longtext|0s</DasType>
       <Position>6</Position>
     </column>
-    <column id="485" parent="312" name="context">
+    <column id="495" parent="313" name="context">
       <Comment>上下文数据</Comment>
       <DasType>json|0s</DasType>
       <Position>7</Position>
     </column>
-    <column id="486" parent="312" name="operator_id">
+    <column id="496" parent="313" name="operator_id">
       <Comment>操作人用户ID(0: 表示系统用户)</Comment>
       <DasType>bigint unsigned|0s</DasType>
       <DefaultExpression>&apos;0&apos;</DefaultExpression>
       <NotNull>1</NotNull>
       <Position>8</Position>
     </column>
-    <column id="487" parent="312" name="created_at">
+    <column id="497" parent="313" name="created_at">
       <DasType>bigint unsigned|0s</DasType>
       <NotNull>1</NotNull>
       <Position>9</Position>
     </column>
-    <index id="488" parent="312" name="PRIMARY">
+    <index id="498" parent="313" name="PRIMARY">
       <ColNames>id</ColNames>
       <Type>btree</Type>
       <Unique>1</Unique>
     </index>
-    <key id="489" parent="312" name="PRIMARY">
+    <key id="499" parent="313" name="PRIMARY">
       <NameSurrogate>1</NameSurrogate>
       <Primary>1</Primary>
       <UnderlyingIndexName>PRIMARY</UnderlyingIndexName>
     </key>
-    <column id="490" parent="313" name="id">
-      <AutoIncrement>1</AutoIncrement>
+    <column id="500" parent="314" name="id">
+      <AutoIncrement>3</AutoIncrement>
       <DasType>bigint unsigned|0s</DasType>
       <NotNull>1</NotNull>
       <Position>1</Position>
     </column>
-    <column id="491" parent="313" name="ip">
+    <column id="501" parent="314" name="ip">
       <Comment>代理IP</Comment>
       <DasType>varchar(40)|0s</DasType>
       <DefaultExpression>&apos;&apos;</DefaultExpression>
       <NotNull>1</NotNull>
       <Position>2</Position>
     </column>
-    <column id="492" parent="313" name="port">
+    <column id="502" parent="314" name="port">
       <Comment>代理端口</Comment>
       <DasType>int unsigned|0s</DasType>
       <DefaultExpression>&apos;80&apos;</DefaultExpression>
       <NotNull>1</NotNull>
       <Position>3</Position>
     </column>
-    <column id="493" parent="313" name="type">
+    <column id="503" parent="314" name="type">
       <Comment>代理类型,HTTP,SOCKS5</Comment>
       <DasType>varchar(40)|0s</DasType>
       <DefaultExpression>&apos;HTTP&apos;</DefaultExpression>
       <NotNull>1</NotNull>
       <Position>4</Position>
     </column>
-    <column id="494" parent="313" name="password">
+    <column id="504" parent="314" name="password">
       <Comment>密码</Comment>
       <DasType>varchar(128)|0s</DasType>
       <DefaultExpression>&apos;&apos;</DefaultExpression>
       <NotNull>1</NotNull>
       <Position>5</Position>
     </column>
-    <column id="495" parent="313" name="created_at">
+    <column id="505" parent="314" name="created_at">
       <DasType>bigint unsigned|0s</DasType>
       <NotNull>1</NotNull>
       <Position>6</Position>
     </column>
-    <column id="496" parent="313" name="updated_at">
+    <column id="506" parent="314" name="updated_at">
       <DasType>bigint unsigned|0s</DasType>
       <NotNull>1</NotNull>
       <Position>7</Position>
     </column>
-    <index id="497" parent="313" name="PRIMARY">
+    <column id="507" parent="314" name="name">
+      <DasType>varchar(256)|0s</DasType>
+      <DefaultExpression>&apos;&apos;</DefaultExpression>
+      <NotNull>1</NotNull>
+      <Position>8</Position>
+    </column>
+    <index id="508" parent="314" name="PRIMARY">
       <ColNames>id</ColNames>
       <Type>btree</Type>
       <Unique>1</Unique>
     </index>
-    <key id="498" parent="313" name="PRIMARY">
+    <key id="509" parent="314" name="PRIMARY">
       <NameSurrogate>1</NameSurrogate>
       <Primary>1</Primary>
       <UnderlyingIndexName>PRIMARY</UnderlyingIndexName>
     </key>
-    <column id="499" parent="314" name="id">
+    <column id="510" parent="315" name="id">
       <AutoIncrement>4</AutoIncrement>
       <DasType>bigint unsigned|0s</DasType>
       <NotNull>1</NotNull>
       <Position>1</Position>
     </column>
-    <column id="500" parent="314" name="name">
+    <column id="511" parent="315" name="name">
       <Comment>角色名</Comment>
       <DasType>varchar(128)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>2</Position>
     </column>
-    <column id="501" parent="314" name="created_at">
+    <column id="512" parent="315" name="created_at">
       <DasType>bigint unsigned|0s</DasType>
       <NotNull>1</NotNull>
       <Position>3</Position>
     </column>
-    <column id="502" parent="314" name="updated_at">
+    <column id="513" parent="315" name="updated_at">
       <DasType>bigint unsigned|0s</DasType>
       <NotNull>1</NotNull>
       <Position>4</Position>
     </column>
-    <index id="503" parent="314" name="PRIMARY">
+    <index id="514" parent="315" name="PRIMARY">
       <ColNames>id</ColNames>
       <Type>btree</Type>
       <Unique>1</Unique>
     </index>
-    <key id="504" parent="314" name="PRIMARY">
+    <key id="515" parent="315" name="PRIMARY">
       <NameSurrogate>1</NameSurrogate>
       <Primary>1</Primary>
       <UnderlyingIndexName>PRIMARY</UnderlyingIndexName>
     </key>
-    <column id="505" parent="315" name="id">
-      <AutoIncrement>1</AutoIncrement>
+    <column id="516" parent="316" name="id">
+      <AutoIncrement>18</AutoIncrement>
       <DasType>bigint unsigned|0s</DasType>
       <NotNull>1</NotNull>
       <Position>1</Position>
     </column>
-    <column id="506" parent="315" name="group_id">
-      <Comment>组ID</Comment>
-      <DasType>bigint unsigned|0s</DasType>
-      <DefaultExpression>&apos;0&apos;</DefaultExpression>
-      <NotNull>1</NotNull>
-      <Position>2</Position>
-    </column>
-    <column id="507" parent="315" name="name">
+    <column id="517" parent="316" name="name">
       <Comment>服务器名</Comment>
       <DasType>varchar(128)|0s</DasType>
       <DefaultExpression>&apos;&apos;</DefaultExpression>
       <NotNull>1</NotNull>
-      <Position>3</Position>
+      <Position>2</Position>
     </column>
-    <column id="508" parent="315" name="ip">
+    <column id="518" parent="316" name="ip">
       <Comment>服务器IP/host</Comment>
       <DasType>varchar(512)|0s</DasType>
       <DefaultExpression>&apos;&apos;</DefaultExpression>
       <NotNull>1</NotNull>
-      <Position>4</Position>
+      <Position>3</Position>
     </column>
-    <column id="509" parent="315" name="port">
+    <column id="519" parent="316" name="port">
       <Comment>ssh服务器端口</Comment>
       <DasType>int unsigned|0s</DasType>
       <DefaultExpression>&apos;22&apos;</DefaultExpression>
       <NotNull>1</NotNull>
-      <Position>5</Position>
+      <Position>4</Position>
     </column>
-    <column id="510" parent="315" name="password">
+    <column id="520" parent="316" name="password">
       <Comment>密码</Comment>
       <DasType>varchar(512)|0s</DasType>
       <DefaultExpression>&apos;&apos;</DefaultExpression>
       <NotNull>1</NotNull>
+      <Position>5</Position>
+    </column>
+    <column id="521" parent="316" name="key">
+      <DasType>text|0s</DasType>
       <Position>6</Position>
     </column>
-    <column id="511" parent="315" name="key">
-      <Comment>密钥</Comment>
-      <DasType>varchar(512)|0s</DasType>
-      <DefaultExpression>&apos;&apos;</DefaultExpression>
-      <NotNull>1</NotNull>
-      <Position>7</Position>
-    </column>
-    <column id="512" parent="315" name="proxy_id">
+    <column id="522" parent="316" name="proxy_id">
       <Comment>代理ID</Comment>
       <DasType>bigint unsigned|0s</DasType>
+      <Position>7</Position>
+    </column>
+    <column id="523" parent="316" name="created_at">
+      <DasType>bigint unsigned|0s</DasType>
+      <NotNull>1</NotNull>
       <Position>8</Position>
     </column>
-    <column id="513" parent="315" name="created_at">
+    <column id="524" parent="316" name="updated_at">
       <DasType>bigint unsigned|0s</DasType>
       <NotNull>1</NotNull>
       <Position>9</Position>
     </column>
-    <column id="514" parent="315" name="updated_at">
+    <column id="525" parent="316" name="parent_id">
+      <Comment>父组ID</Comment>
       <DasType>bigint unsigned|0s</DasType>
+      <DefaultExpression>&apos;0&apos;</DefaultExpression>
       <NotNull>1</NotNull>
       <Position>10</Position>
     </column>
-    <index id="515" parent="315" name="PRIMARY">
+    <column id="526" parent="316" name="is_group">
+      <Comment>是否为组</Comment>
+      <DasType>tinyint unsigned|0s</DasType>
+      <DefaultExpression>&apos;0&apos;</DefaultExpression>
+      <NotNull>1</NotNull>
+      <Position>11</Position>
+    </column>
+    <column id="527" parent="316" name="sort">
+      <DasType>bigint unsigned|0s</DasType>
+      <DefaultExpression>&apos;0&apos;</DefaultExpression>
+      <NotNull>1</NotNull>
+      <Position>12</Position>
+    </column>
+    <column id="528" parent="316" name="username">
+      <DasType>varchar(256)|0s</DasType>
+      <DefaultExpression>&apos;root&apos;</DefaultExpression>
+      <NotNull>1</NotNull>
+      <Position>13</Position>
+    </column>
+    <column id="529" parent="316" name="auto_sudo">
+      <Comment>自动sudo</Comment>
+      <DasType>tinyint unsigned|0s</DasType>
+      <DefaultExpression>&apos;1&apos;</DefaultExpression>
+      <NotNull>1</NotNull>
+      <Position>14</Position>
+    </column>
+    <column id="530" parent="316" name="first_command">
+      <DasType>varchar(256)|0s</DasType>
+      <Position>15</Position>
+    </column>
+    <column id="531" parent="316" name="remark">
+      <Comment>备注</Comment>
+      <DasType>longtext|0s</DasType>
+      <Position>16</Position>
+    </column>
+    <index id="532" parent="316" name="PRIMARY">
       <ColNames>id</ColNames>
       <Type>btree</Type>
       <Unique>1</Unique>
     </index>
-    <key id="516" parent="315" name="PRIMARY">
+    <key id="533" parent="316" name="PRIMARY">
       <NameSurrogate>1</NameSurrogate>
       <Primary>1</Primary>
       <UnderlyingIndexName>PRIMARY</UnderlyingIndexName>
     </key>
-    <column id="517" parent="316" name="id">
+    <column id="534" parent="317" name="id">
       <AutoIncrement>1</AutoIncrement>
       <DasType>bigint unsigned|0s</DasType>
       <NotNull>1</NotNull>
       <Position>1</Position>
     </column>
-    <column id="518" parent="316" name="server_id">
+    <column id="535" parent="317" name="server_id">
       <Comment>服务器ID</Comment>
       <DasType>bigint unsigned|0s</DasType>
       <DefaultExpression>&apos;0&apos;</DefaultExpression>
       <NotNull>1</NotNull>
       <Position>2</Position>
     </column>
-    <column id="519" parent="316" name="name">
+    <column id="536" parent="317" name="name">
       <Comment>服务名</Comment>
       <DasType>varchar(128)|0s</DasType>
       <DefaultExpression>&apos;&apos;</DefaultExpression>
       <NotNull>1</NotNull>
       <Position>3</Position>
     </column>
-    <column id="520" parent="316" name="port">
+    <column id="537" parent="317" name="port">
       <Comment>端口</Comment>
       <DasType>int unsigned|0s</DasType>
       <DefaultExpression>&apos;0&apos;</DefaultExpression>
       <NotNull>1</NotNull>
       <Position>4</Position>
     </column>
-    <column id="521" parent="316" name="created_at">
+    <column id="538" parent="317" name="created_at">
       <DasType>bigint unsigned|0s</DasType>
       <NotNull>1</NotNull>
       <Position>5</Position>
     </column>
-    <column id="522" parent="316" name="updated_at">
+    <column id="539" parent="317" name="updated_at">
       <DasType>bigint unsigned|0s</DasType>
       <NotNull>1</NotNull>
       <Position>6</Position>
     </column>
-    <index id="523" parent="316" name="PRIMARY">
+    <index id="540" parent="317" name="PRIMARY">
       <ColNames>id</ColNames>
       <Type>btree</Type>
       <Unique>1</Unique>
     </index>
-    <key id="524" parent="316" name="PRIMARY">
+    <key id="541" parent="317" name="PRIMARY">
       <NameSurrogate>1</NameSurrogate>
       <Primary>1</Primary>
       <UnderlyingIndexName>PRIMARY</UnderlyingIndexName>
     </key>
-    <column id="525" parent="317" name="id">
+    <column id="542" parent="318" name="id">
       <AutoIncrement>2</AutoIncrement>
       <DasType>bigint unsigned|0s</DasType>
       <NotNull>1</NotNull>
       <Position>1</Position>
     </column>
-    <column id="526" parent="317" name="username">
+    <column id="543" parent="318" name="username">
       <Comment>用户名</Comment>
       <DasType>varchar(128)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>2</Position>
     </column>
-    <column id="527" parent="317" name="password">
+    <column id="544" parent="318" name="password">
       <Comment>密码</Comment>
       <DasType>varchar(128)|0s</DasType>
       <DefaultExpression>&apos;&apos;</DefaultExpression>
       <NotNull>1</NotNull>
       <Position>3</Position>
     </column>
-    <column id="528" parent="317" name="locked">
+    <column id="545" parent="318" name="locked">
       <Comment>是否锁定</Comment>
       <DasType>tinyint unsigned|0s</DasType>
       <DefaultExpression>&apos;0&apos;</DefaultExpression>
       <NotNull>1</NotNull>
       <Position>4</Position>
     </column>
-    <column id="529" parent="317" name="email">
+    <column id="546" parent="318" name="email">
       <Comment>电子邮件</Comment>
       <DasType>varchar(128)|0s</DasType>
       <DefaultExpression>&apos;&apos;</DefaultExpression>
       <NotNull>1</NotNull>
       <Position>5</Position>
     </column>
-    <column id="530" parent="317" name="avatar">
+    <column id="547" parent="318" name="avatar">
       <Comment>头像地址</Comment>
       <DasType>varchar(1024)|0s</DasType>
       <DefaultExpression>&apos;&apos;</DefaultExpression>
       <NotNull>1</NotNull>
       <Position>6</Position>
     </column>
-    <column id="531" parent="317" name="register_at">
+    <column id="548" parent="318" name="register_at">
       <Comment>注册时间</Comment>
       <DasType>bigint unsigned|0s</DasType>
       <DefaultExpression>&apos;0&apos;</DefaultExpression>
       <NotNull>1</NotNull>
       <Position>7</Position>
     </column>
-    <column id="532" parent="317" name="register_ip">
+    <column id="549" parent="318" name="register_ip">
       <Comment>注册IP</Comment>
       <DasType>varchar(40)|0s</DasType>
       <DefaultExpression>&apos;&apos;</DefaultExpression>
       <NotNull>1</NotNull>
       <Position>8</Position>
     </column>
-    <column id="533" parent="317" name="login_at">
+    <column id="550" parent="318" name="login_at">
       <Comment>最后登录时间</Comment>
       <DasType>bigint unsigned|0s</DasType>
       <DefaultExpression>&apos;0&apos;</DefaultExpression>
       <NotNull>1</NotNull>
       <Position>9</Position>
     </column>
-    <column id="534" parent="317" name="login_ip">
+    <column id="551" parent="318" name="login_ip">
       <Comment>最后登录IP</Comment>
       <DasType>varchar(40)|0s</DasType>
       <DefaultExpression>&apos;&apos;</DefaultExpression>
       <NotNull>1</NotNull>
       <Position>10</Position>
     </column>
-    <column id="535" parent="317" name="created_at">
+    <column id="552" parent="318" name="created_at">
       <DasType>bigint unsigned|0s</DasType>
       <NotNull>1</NotNull>
       <Position>11</Position>
     </column>
-    <column id="536" parent="317" name="updated_at">
+    <column id="553" parent="318" name="updated_at">
       <DasType>bigint unsigned|0s</DasType>
       <NotNull>1</NotNull>
       <Position>12</Position>
     </column>
-    <index id="537" parent="317" name="PRIMARY">
+    <index id="554" parent="318" name="PRIMARY">
       <ColNames>id</ColNames>
       <Type>btree</Type>
       <Unique>1</Unique>
     </index>
-    <key id="538" parent="317" name="PRIMARY">
+    <key id="555" parent="318" name="PRIMARY">
       <NameSurrogate>1</NameSurrogate>
       <Primary>1</Primary>
       <UnderlyingIndexName>PRIMARY</UnderlyingIndexName>
     </key>
-    <column id="539" parent="318" name="id">
+    <column id="556" parent="319" name="id">
       <AutoIncrement>3</AutoIncrement>
       <DasType>bigint unsigned|0s</DasType>
       <NotNull>1</NotNull>
       <Position>1</Position>
     </column>
-    <column id="540" parent="318" name="user_id">
+    <column id="557" parent="319" name="user_id">
       <Comment>用户ID</Comment>
       <DasType>bigint unsigned|0s</DasType>
       <NotNull>1</NotNull>
       <Position>2</Position>
     </column>
-    <column id="541" parent="318" name="role_id">
+    <column id="558" parent="319" name="role_id">
       <Comment>角色ID</Comment>
       <DasType>bigint unsigned|0s</DasType>
       <NotNull>1</NotNull>
       <Position>3</Position>
     </column>
-    <column id="542" parent="318" name="created_at">
+    <column id="559" parent="319" name="created_at">
       <DasType>bigint unsigned|0s</DasType>
       <NotNull>1</NotNull>
       <Position>4</Position>
     </column>
-    <column id="543" parent="318" name="updated_at">
+    <column id="560" parent="319" name="updated_at">
       <DasType>bigint unsigned|0s</DasType>
       <NotNull>1</NotNull>
       <Position>5</Position>
     </column>
-    <index id="544" parent="318" name="PRIMARY">
+    <index id="561" parent="319" name="PRIMARY">
       <ColNames>id</ColNames>
       <Type>btree</Type>
       <Unique>1</Unique>
     </index>
-    <key id="545" parent="318" name="PRIMARY">
+    <key id="562" parent="319" name="PRIMARY">
       <NameSurrogate>1</NameSurrogate>
       <Primary>1</Primary>
       <UnderlyingIndexName>PRIMARY</UnderlyingIndexName>

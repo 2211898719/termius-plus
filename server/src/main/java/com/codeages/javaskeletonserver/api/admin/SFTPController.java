@@ -9,8 +9,8 @@ import net.schmizz.sshj.sftp.RemoteResourceInfo;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
-import java.io.ByteArrayOutputStream;
 import java.util.List;
 
 @RestController
@@ -68,10 +68,7 @@ public class SFTPController {
     @SneakyThrows
     @GetMapping("/{id}/download")
     public void download(@PathVariable String id, SFTPParams params, HttpServletResponse response) {
-        String filename = params.getRemotePath().substring(params.getRemotePath().lastIndexOf("/") + 1);
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        sftpService.download(id, params.getRemotePath(), outputStream);
-        FileUtil.writeByteToResponse(outputStream.toByteArray(), filename, response);
+        sftpService.download(id, params.getRemotePath(), response);
     }
 
     @PostMapping("/{id}/close")

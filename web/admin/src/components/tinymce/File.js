@@ -104,7 +104,7 @@ export const getFileLocalUrl = async (url, data = null, loading = true) => {
     let store = useAuthStore();
 
     let downloadFileProgress = 0;
-    let key = 'downloadFileProgress'
+    let key = 'downloadFileProgress' + new Date().getTime()
 
     if (loading) {
         message.loading({content: `下载中...${downloadFileProgress}%`, key}, 0);

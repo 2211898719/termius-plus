@@ -8,6 +8,7 @@ import com.codeages.javaskeletonserver.biz.server.dto.TreeSortParams;
 import net.schmizz.sshj.sftp.RemoteResourceInfo;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -90,7 +91,9 @@ public interface SFTPService {
      * @param remotePath
      * @param outputStream
      */
-    void download(String id, String remotePath, OutputStream outputStream) throws IOException;
+    void download(String id, String remotePath, HttpServletResponse response) throws IOException;
+
+    long size(String id, String remotePath);
 
     /**
      * 关闭连接

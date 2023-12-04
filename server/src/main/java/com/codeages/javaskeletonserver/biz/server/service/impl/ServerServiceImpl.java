@@ -341,7 +341,7 @@ public class ServerServiceImpl implements ServerService {
                 }
             });
         }
-//        ssh.setSocketFactory(SocketFactory.getDefault());
+
         // 设置主机和端口号
         ssh.addHostKeyVerifier(new PromiscuousVerifier());
         ssh.connect(server.getIp(), server.getPort().intValue());

@@ -870,7 +870,7 @@ public class FileUtil {
         IoUtil.close(outputStream);
     }
 
-    public static void initResponse(int byteLength, String fileName, HttpServletResponse response) {
+    public static void initResponse(long byteLength, String fileName, HttpServletResponse response) {
         response.reset();
         response.setContentType(ContentType.OCTET_STREAM.getValue());
         response.setCharacterEncoding(CharsetUtil.UTF_8);

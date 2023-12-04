@@ -77,22 +77,22 @@ export const upload = (url, file, otherParams) => {
 
 
 export const download = async (url, data = null, fileName = null) => {
-    let res = await getFileLocalUrl(url, data);
     let name = fileName !== null ? fileName : getFileName(res.res);
+    let res = await getFileLocalUrl(url, name, data);
     send(name, res.url)
     window.URL.revokeObjectURL(res.url)
 }
 
-export const getFileLocalUrl = async (url, data = null, loading = true) => {
+export const getFileLocalUrl = async (url, name, data = null, loading = true) => {
     let store = useAuthStore();
 
     let downloadFileProgress = 0;
-    let key = 'downloadFileProgress'
+    let key = 'downloadFileProgress' + new Date().getTime()
 
     if (loading) {
         notification.open({
             key: key,
-            message: '下载',
+            message: '下载：' + name,
             description: `下载中...${downloadFileProgress}%`,
             duration: 0,
         });
@@ -107,7 +107,7 @@ export const getFileLocalUrl = async (url, data = null, loading = true) => {
             if (loading) {
                 notification.open({
                     key: key,
-                    message: '下载',
+                    message: '下载：'+ name,
                     description: `下载中...${downloadFileProgress.toFixed(2)}%`,
                     duration: 0,
                 });

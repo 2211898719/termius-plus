@@ -133,3 +133,5 @@ A
 dsrc/main/java/com/codeages/javaskeletonserver/biz/server/service/impl/PortForWardingServiceImpl.java,9/7/97edab3385989eb7d6f82c2e5fdec9b307ffa3f2
 p
 @src/main/java/com/codeages/javaskeletonserver/biz/ErrorCode.java,4/1/417bfc086830c374b5839cbd289e5dd36fb8811c
+{
+Ksrc/main/java/com/codeages/javaskeletonserver/security/SecurityContext.java,7/4/74bace639f5ae683aa91897527fac13630c973a4

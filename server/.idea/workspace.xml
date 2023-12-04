@@ -5,13 +5,31 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="0de18e6e-97dd-4171-a773-cfeff3460ad8" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/snippet/controller/CommandController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/snippet/dto/CommandCreateParams.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/snippet/dto/CommandDto.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/snippet/dto/CommandSearchParams.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/snippet/dto/CommandUpdateParams.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/snippet/entity/Command.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/snippet/mapper/CommandMapper.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/snippet/repository/CommandRepository.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/snippet/service/CommandService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/snippet/service/impl/CommandServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/7a2d8a16-7a99-4d59-9724-de92db928614.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/7a2d8a16-7a99-4d59-9724-de92db928614.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/7a2d8a16-7a99-4d59-9724-de92db928614/storage_v2/_src_/schema/termius-plus.TJMRtA.meta" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/7a2d8a16-7a99-4d59-9724-de92db928614/storage_v2/_src_/schema/termius-plus.TJMRtA.meta" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/index.pb" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/index.pb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/securityhotspotstore/index.pb" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/securityhotspotstore/index.pb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../web/admin/build-docker.sh" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/build-docker.sh" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../web/admin/jsconfig.json" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/jsconfig.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../web/admin/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../web/admin/src/views/ServerPage.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/views/ServerPage.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../web/admin/vue.config.js" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/vue.config.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../web/admin/yarn.lock" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/yarn.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/api/admin/SFTPController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/api/admin/SFTPController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/dto/SFTPBean.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/dto/SFTPBean.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/SFTPService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/SFTPService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/impl/SFTPServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/impl/SFTPServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/impl/ServerServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/impl/ServerServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/storage/utils/FileUtil.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/storage/utils/FileUtil.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/docker/nginx.conf" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/docker/nginx.conf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/src/components/tinymce/File.js" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/components/tinymce/File.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/src/utils/File.js" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/utils/File.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -21,6 +39,7 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
+        <option value="package-info" />
         <option value="Class" />
       </list>
     </option>
@@ -29,9 +48,14 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
   </component>
   <component name="HighlightingSettingsPerFile">
+    <setting file="jar://$MAVEN_REPOSITORY$/cn/hutool/hutool-all/5.7.22/hutool-all-5.7.22-sources.jar!/cn/hutool/core/io/IoUtil.java" root0="SKIP_INSPECTION" />
+    <setting file="jar://$MAVEN_REPOSITORY$/cn/hutool/hutool-all/5.7.22/hutool-all-5.7.22-sources.jar!/cn/hutool/core/io/copy/StreamCopier.java" root0="SKIP_INSPECTION" />
     <setting file="jar://$MAVEN_REPOSITORY$/cn/hutool/hutool-all/5.7.22/hutool-all-5.7.22-sources.jar!/cn/hutool/extra/ssh/Sftp.java" root0="SKIP_INSPECTION" />
+    <setting file="jar://$MAVEN_REPOSITORY$/com/hierynomus/sshj/0.37.0/sshj-0.37.0-sources.jar!/net/schmizz/sshj/common/StreamCopier.java" root0="SKIP_INSPECTION" />
+    <setting file="jar://$MAVEN_REPOSITORY$/com/hierynomus/sshj/0.37.0/sshj-0.37.0-sources.jar!/net/schmizz/sshj/connection/channel/ChannelOutputStream.java" root0="SKIP_INSPECTION" />
     <setting file="jar://$MAVEN_REPOSITORY$/com/jcraft/jsch/0.1.55/jsch-0.1.55-sources.jar!/com/jcraft/jsch/ChannelSftp.java" root0="SKIP_INSPECTION" />
     <setting file="jar://$MAVEN_REPOSITORY$/com/jcraft/jsch/0.1.55/jsch-0.1.55-sources.jar!/com/jcraft/jsch/SftpATTRS.java" root0="SKIP_INSPECTION" />
+    <setting file="jar://$USER_HOME$/Library/Java/JavaVirtualMachines/corretto-11.0.16/Contents/Home/lib/src.zip!/java.base/java/io/InputStream.java" root0="SKIP_INSPECTION" />
   </component>
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
@@ -172,7 +196,8 @@
       <workItem from="1698716743249" duration="10691000" />
       <workItem from="1699006572431" duration="486000" />
       <workItem from="1701225095390" duration="7747000" />
-      <workItem from="1701394065003" duration="8254000" />
+      <workItem from="1701394065003" duration="8284000" />
+      <workItem from="1701653804384" duration="5012000" />
     </task>
     <servers />
   </component>

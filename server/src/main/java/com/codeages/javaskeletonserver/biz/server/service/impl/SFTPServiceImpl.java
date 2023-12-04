@@ -1,8 +1,8 @@
 package com.codeages.javaskeletonserver.biz.server.service.impl;
 
 import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.lang.UUID;
-import cn.hutool.extra.ssh.Sftp;
 import com.codeages.javaskeletonserver.biz.ErrorCode;
 import com.codeages.javaskeletonserver.biz.server.context.SFTPContext;
 import com.codeages.javaskeletonserver.biz.server.dto.SFTPBean;
@@ -13,14 +13,18 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.connection.channel.direct.Session;
+import net.schmizz.sshj.sftp.RemoteFile;
 import net.schmizz.sshj.sftp.RemoteResourceInfo;
 import net.schmizz.sshj.sftp.SFTPClient;
+import net.schmizz.sshj.sftp.StatefulSFTPClient;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
+import java.io.InputStream;
 import java.util.List;
 
 @Slf4j
@@ -37,7 +41,7 @@ public class SFTPServiceImpl implements SFTPService {
     @SneakyThrows
     @Override
     public String init(Long serverId) {
-        SFTPClient sftp = createSftp(serverId);
+        StatefulSFTPClient sftp = createSftp(serverId);
         String id = UUID.fastUUID().toString();
         SFTPContext.SFTP_POOL.put(id, new SFTPBean(sftp, System.currentTimeMillis()));
 
@@ -45,19 +49,20 @@ public class SFTPServiceImpl implements SFTPService {
     }
 
     @SneakyThrows
-    private SFTPClient createSftp(Long serverId) {
+    private StatefulSFTPClient createSftp(Long serverId) {
         SSHClient sshClient = serverService.createSSHClient(serverId);
         Session session = sshClient.startSession();
         session.allocateDefaultPTY();
 
-        return sshClient.newSFTPClient();
+        return sshClient.newStatefulSFTPClient();
     }
 
 
-    private SFTPClient getSftp(String id) {
+    private StatefulSFTPClient getSftp(String id) {
         SFTPBean sftp = SFTPContext.SFTP_POOL.get(id);
         if (sftp == null) {
             throw new AppException(ErrorCode.NOT_FOUND, "SFTP连接已失效");
+//            sftp = new SFTPBean(createSftp(1L), System.currentTimeMillis());
         }
 
         sftp.setTime(System.currentTimeMillis());
@@ -68,18 +73,7 @@ public class SFTPServiceImpl implements SFTPService {
     @Override
     @SneakyThrows
     public String pwd(String id) {
-        // 获取当前目录
-        List<RemoteResourceInfo> resources = getSftp(id).ls(".");
-//        String currentDirectory = null;
-//        for (RemoteResourceInfo resource : resources) {
-//            if (resource.getPath().equals(".")) {
-//                currentDirectory = resource.getPath();
-//                break;
-//            }
-//        }
-//
-//        return currentDirectory;
-        return "/";
+        return getSftp(id).pwd();
     }
 
     @Override
@@ -131,14 +125,33 @@ public class SFTPServiceImpl implements SFTPService {
     }
 
     @Override
-    public void download(String id, String remotePath, OutputStream outputStream) throws IOException {
-        File tmpFile = createTmpFile();
+    public void download(String id, String remotePath, HttpServletResponse response) throws IOException {
+        String filename = remotePath.substring(remotePath.lastIndexOf("/") + 1);
+        ServletOutputStream outputStream = response.getOutputStream();
 
-        getSftp(id).getFileTransfer().download(remotePath, tmpFile.getPath());
+        SFTPClient sftp = getSftp(id);
+        RemoteFile readFile = sftp.open(remotePath);
+        com.codeages.javaskeletonserver.biz.storage.utils.FileUtil.initResponse(
+                readFile.length(),
+                filename,
+                response
+        );
 
-        FileUtil.writeToStream(tmpFile, outputStream);
+        InputStream is = readFile.new RemoteFileInputStream(0);
+        IoUtil.copy(is, outputStream);
 
-        FileUtil.del(tmpFile);
+        IoUtil.close(is);
+        IoUtil.close(outputStream);
+    }
+
+    @Override
+    @SneakyThrows
+    public long size(String id, String remotePath) {
+        try (SFTPClient sftp = getSftp(id)) {
+            try (RemoteFile readFile = sftp.open(remotePath)) {
+                return readFile.length();
+            }
+        }
     }
 
     private static File createTmpFile() {
