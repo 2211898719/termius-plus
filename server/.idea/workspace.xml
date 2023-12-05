@@ -5,13 +5,48 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="0de18e6e-97dd-4171-a773-cfeff3460ad8" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/enums/OSEnum.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../web/admin/src/api/command.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../web/admin/src/enums /OsEnum.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../web/admin/src/views/SnippetListPage.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/0/a/0ac23d5b075112de94809cdea1dc0b4da982394c" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/0/a/0ac23d5b075112de94809cdea1dc0b4da982394c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/2/4/2469b10afb8e42fc3357890275e723f409cffc74" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/2/4/2469b10afb8e42fc3357890275e723f409cffc74" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/3/2/3217179cd71990472bcf8d9c7ca636e6c2fbc737" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/3/2/3217179cd71990472bcf8d9c7ca636e6c2fbc737" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/4/4/442292b8a7efeabbe4cc176709b833b1792140ec" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/4/4/442292b8a7efeabbe4cc176709b833b1792140ec" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/4/9/4927d144509494c0929f9bd26aef9ba795e6a00c" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/4/9/4927d144509494c0929f9bd26aef9ba795e6a00c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/4/9/49cbc7499281e9d27330ced30af82a6b07020c99" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/4/9/49cbc7499281e9d27330ced30af82a6b07020c99" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/4/b/4bef646907e6b0113d46a125718bf4a66ae0475c" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/4/b/4bef646907e6b0113d46a125718bf4a66ae0475c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/9/3/93ecba9276f3f043954f0fb6c889d26a31e9610e" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/9/3/93ecba9276f3f043954f0fb6c889d26a31e9610e" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/9/b/9bfc2768e9eeeb1b4622928a9a1d3f1dd59ef85b" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/9/b/9bfc2768e9eeeb1b4622928a9a1d3f1dd59ef85b" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/c/a/ca73be8043833776a2f1ea08d02567654fb998e9" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/c/a/ca73be8043833776a2f1ea08d02567654fb998e9" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/d/2/d257c68271f2b82e52b3207e383a55cb6fc4476c" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/d/2/d257c68271f2b82e52b3207e383a55cb6fc4476c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/e/0/e0aa7e4ccc5a12a514e25fe0855ec4bb5ae06056" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/e/0/e0aa7e4ccc5a12a514e25fe0855ec4bb5ae06056" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/index.pb" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/index.pb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/securityhotspotstore/index.pb" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/securityhotspotstore/index.pb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../web/admin/build-docker.sh" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/build-docker.sh" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../web/admin/postcss.config.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/dto/ServerCreateParams.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/dto/ServerCreateParams.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/dto/ServerDto.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/dto/ServerDto.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/dto/ServerSearchParams.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/dto/ServerSearchParams.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/dto/ServerUpdateParams.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/dto/ServerUpdateParams.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/entity/Server.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/entity/Server.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/impl/SFTPServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/impl/SFTPServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/impl/ServerServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/impl/ServerServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/snippet/controller/CommandController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/api/admin/CommandController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/storage/utils/FileUtil.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/storage/utils/FileUtil.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/package.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../web/admin/src/App.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/App.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/src/boot/bootAntDesignVue.js" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/boot/bootAntDesignVue.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/src/components/tinymce/p-editor.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/components/tinymce/p-editor.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/src/layouts/BasicLayout.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/layouts/BasicLayout.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/src/main.js" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/main.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/src/views/ProxyListPage.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/views/ProxyListPage.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/src/views/ServerContent.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/views/ServerContent.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/src/views/ServerListPage.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/views/ServerListPage.vue" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../web/admin/src/views/ServerPage.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/views/ServerPage.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../web/admin/src/views/css/termius.less" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/views/css/termius.less" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../web/admin/tailwind.config.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/vue.config.js" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/vue.config.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/yarn.lock" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/yarn.lock" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -110,8 +145,8 @@
   <component name="RunAnythingCache">
     <option name="myCommands">
       <command value="mvn clean" />
-      <command value="mvn compile" />
       <command value="mvn compile jib:build  -Djib.to.auth.username=洪俊龙哈哈1  -Djib.to.auth.password=z13867013469[" />
+      <command value="mvn compile" />
     </option>
   </component>
   <component name="RunManager" selected="Spring Boot.JavaSkeletonServerApplication">
@@ -180,7 +215,9 @@
       <workItem from="1699006572431" duration="486000" />
       <workItem from="1701225095390" duration="7747000" />
       <workItem from="1701394065003" duration="8284000" />
-      <workItem from="1701653804384" duration="10526000" />
+      <workItem from="1701653804384" duration="10547000" />
+      <workItem from="1701739988353" duration="4737000" />
+      <workItem from="1701751577458" duration="5951000" />
     </task>
     <servers />
   </component>
@@ -204,6 +241,12 @@
           <url>jar://$MAVEN_REPOSITORY$/com/jcraft/jsch/0.1.55/jsch-0.1.55-sources.jar!/com/jcraft/jsch/KeyPair.java</url>
           <line>569</line>
           <option name="timeStamp" value="9" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-field">
+          <url>jar://$MAVEN_REPOSITORY$/com/hierynomus/sshj/0.37.0/sshj-0.37.0-sources.jar!/net/schmizz/sshj/userauth/keyprovider/BaseFileKeyProvider.java</url>
+          <line>28</line>
+          <properties field="resource" class="net.schmizz.sshj.userauth.keyprovider.BaseFileKeyProvider" />
+          <option name="timeStamp" value="10" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

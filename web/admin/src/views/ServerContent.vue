@@ -4,6 +4,7 @@ import PSftp from "@/components/p-sftp.vue";
 import {message} from "ant-design-vue";
 import {defineExpose, defineProps, nextTick, ref} from "vue";
 import {useStorage} from "@vueuse/core";
+import {commandApi} from "@/api/command";
 
 const props = defineProps({
   server: {
@@ -89,6 +90,16 @@ const changeSftpEnable = () => {
     flip.value.flip()
   })
 }
+
+let rightTabKey = ref('remark')
+
+const commandData = ref([])
+
+const getCommandData = async () => {
+  commandData.value = await commandApi.list()
+}
+
+getCommandData()
 
 defineExpose({
   handleExecCommand,
@@ -178,14 +189,47 @@ defineExpose({
                   <fullscreen-outlined/>
                 </div>
               </div>
-              <div :class="{remark:true,'remark-enter':remarkStatus}">
-                <a-card title="备注" style="margin-left: 8px">
-                  <div class="w-e-text-container">
-                    <div data-slate-editor v-html="server.remark">
+              <div :class="{remark:true,'remark-enter':remarkStatus}" class="card-container">
 
-                    </div>
-                  </div>
-                </a-card>
+                <a-tabs v-model:activeKey="rightTabKey" style="margin-left: 8px" type="card">
+                  <a-tab-pane key="remark" tab="备注">
+                      <div class="w-e-text-container">
+                        <div data-slate-editor v-html="server.remark">
+
+                        </div>
+                      </div>
+                  </a-tab-pane>
+                  <a-tab-pane key="command" tab="命令" force-render>
+                    <a-list style="padding: 8px" item-layout="horizontal" :data-source="commandData">
+                      <template #renderItem="{ item }">
+                        <a-list-item >
+                          <a-list-item-meta
+
+                          >
+                            <template #title>
+                              {{ item.name }}
+                            </template>
+                            <template #avatar>
+                              <mac-command-outlined style="color: #F6C445;" />
+                            </template>
+                            <template #description>
+                              <a-collapse v-model:activeKey="item.activeKey">
+                                <a-collapse-panel key="1" :header="item.command">
+                                  <div class="w-e-text-container">
+                                    <div data-slate-editor v-html="item.remark">
+
+                                    </div>
+                                  </div>
+                                  <template #extra><check-circle-outlined style="color: #A0E548" @click="handleExecCommand(item.command)" /></template>
+                                </a-collapse-panel>
+                              </a-collapse>
+                            </template>
+                          </a-list-item-meta>
+                        </a-list-item>
+                      </template>
+                    </a-list>
+                  </a-tab-pane>
+                </a-tabs>
               </div>
             </div>
           </a-card>
@@ -250,4 +294,5 @@ defineExpose({
     width: 100% !important;
   }
 }
+
 </style>

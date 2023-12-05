@@ -1,5 +1,6 @@
 package com.codeages.javaskeletonserver.biz.server.dto;
 
+import com.codeages.javaskeletonserver.biz.server.enums.OSEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -15,6 +16,7 @@ public class ServerSearchParams {
     private String firstCommand;
     private Long sort;
     private Boolean autoSudo;
+    private OSEnum os;
     private Long parentId;
     private Long port;
     private String password;

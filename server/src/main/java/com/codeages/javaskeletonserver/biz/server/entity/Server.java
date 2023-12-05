@@ -1,5 +1,6 @@
 package com.codeages.javaskeletonserver.biz.server.entity;
 
+import com.codeages.javaskeletonserver.biz.server.enums.OSEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -41,6 +42,11 @@ public class Server {
      * 密码
      */
     private String password;
+    /**
+     * 操作系统
+     */
+    @Enumerated(EnumType.STRING)
+    private OSEnum os;
     /**
      * 用户名
      */

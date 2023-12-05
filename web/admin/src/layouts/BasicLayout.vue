@@ -1,4 +1,5 @@
 <template>
+  <keep-alive>
     <pro-layout
         :locale="locale"
         v-model:openKeys="state.openKeys"
@@ -12,14 +13,23 @@
             <a-button type="link" @click="onLogout">退出</a-button>
         </template>
 
-        <router-view />
+      <router-view v-slot="{ Component }">
+        <transition>
+          <div>
+          <keep-alive>
+            <component :is="Component"/>
+          </keep-alive>
+          </div>
+        </transition>
+      </router-view>
     </pro-layout>
+  </keep-alive>
 </template>
 
 <script setup>
-import { ref, reactive, watch } from 'vue';
+import {reactive, ref, watch} from 'vue';
 import {useRouter} from 'vue-router';
-import { getMenuData, clearMenuItem } from '@ant-design-vue/pro-layout';
+import {clearMenuItem, getMenuData} from '@ant-design-vue/pro-layout';
 import {useAuthStore} from "@shared/store/useAuthStore";
 import config from "@/config";
 

@@ -142,7 +142,7 @@ defineExpose({
                           <span>{{ item.name }}</span>
                         </template>
                         <template #avatar>
-                          <safety-certificate-outlined class="icon-server" style="color: #f25e62;"/>
+                          <safety-certificate-outlined class="icon-server" style="color: #E45F2B;"/>
                         </template>
                       </a-list-item-meta>
                     </a-skeleton>

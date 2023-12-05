@@ -11,6 +11,8 @@ import GroupCascader from "@/components/group-cascader.vue";
 import {useForm} from "ant-design-vue/es/form";
 import Sortable from "sortablejs";
 import _ from "lodash";
+import PEnumSelect from "@/components/p-enum-select.vue";
+import OsEnum from "@/enums /OsEnum";
 
 const emit = defineEmits(['openServer', 'proxyCreation'])
 
@@ -24,12 +26,13 @@ const creationState = reactive({
   port: "22",
   password: "",
   key: "",
+  os: "LINUX",
   proxyId: "",
   parentId: "",
   firstCommand: "",
   isGroup: false,
   username: "",
-  remark: "",
+  remark: "<div></div>",
   autoSudo: true,
 });
 
@@ -42,8 +45,14 @@ const creationRules = computed(() => reactive({
     },
     {
       min: 1,
-      max: 10,
-      message: "名称长度在1-10之间",
+      max: 30,
+      message: "名称长度在1-30之间",
+    }
+  ],
+  os: [
+    {
+      required: true,
+      message: "请选择操作系统",
     }
   ],
   parentId: [
@@ -227,6 +236,12 @@ const handleDblclick = (item) => {
     return
   }
 
+  if (item.os === OsEnum.WINDOWS.value) {
+    windowsInfoVisible.value = true
+    windowsInfoState.value = item
+    return
+  }
+
   emit('openServer', item)
 }
 
@@ -262,6 +277,42 @@ const setProxyId = (id) => {
   creationState.proxyId = id
 }
 
+let windowsInfoVisible = ref(false)
+let windowsInfoState = ref({})
+
+const downloadWindowsRdpConfig = (item) => {
+  let ipAddress = item.ip;
+  let port = item.port;
+  let username = item.username;
+  let password = item.password;
+
+  let rdpConfig = "full address:s:" + ipAddress + ":" + port + "\nusername:s:" + username + "\npassword 51:b:" + btoa(password);
+
+  // 创建Blob对象
+  let blob = new Blob([rdpConfig], {type: "application/octet-stream"});
+
+  // 创建下载链接
+  let downloadLink = document.createElement("a");
+  downloadLink.href = URL.createObjectURL(blob);
+  downloadLink.download = "remote.rdp";
+
+  // 添加到DOM并模拟点击下载
+  document.body.appendChild(downloadLink);
+  downloadLink.click();
+
+  // 清理
+  document.body.removeChild(downloadLink);
+  URL.revokeObjectURL(downloadLink.href);
+
+  navigator.clipboard.writeText(item.password)
+      .then(() => {
+        message.success("密码已复制到剪贴板");
+      })
+      .catch((error) => {
+        console.error("复制文本到剪贴板时出错:", error);
+      });
+}
+
 defineExpose({
   getProxyData,
   setProxyId
@@ -280,8 +331,8 @@ defineExpose({
                 <a>{{ item.name }}</a>
               </a-breadcrumb-item>
             </a-breadcrumb>
-            <div>
 
+            <div>
               <a-button @click="getServerList" class="my-button">刷新</a-button>
               <a-button @click="handleAddServer" class="ml10 my-button">新增服务器</a-button>
               <a-button class="ml10 my-button" @click="handleAddGroup">新增分组</a-button>
@@ -307,7 +358,10 @@ defineExpose({
                           </template>
                           <template #avatar>
                             <ApartmentOutlined v-if="item.isGroup" class="icon-server"/>
-                            <hdd-outlined v-else class="icon-server" style="color: #f25e62;"/>
+                            <hdd-outlined v-else-if="item.os===OsEnum.LINUX.value" class="icon-server"
+                                          style="color: #E45F2B;"/>
+                            <windows-outlined v-else-if="item.os===OsEnum.WINDOWS.value" class="icon-server"
+                                              style="color: #E45F2B;"/>
                           </template>
                         </a-list-item-meta>
                       </a-skeleton>
@@ -374,6 +428,9 @@ defineExpose({
                            v-model:value="creationState.parentId"></GroupCascader>
           </a-form-item>
           <template v-if="!creationState.isGroup">
+            <a-form-item label="操作系统" v-bind="creationValidations.os">
+              <p-enum-select :module="OsEnum" v-model:value="creationState.os"></p-enum-select>
+            </a-form-item>
             <a-form-item label="host" v-bind="creationValidations.ip">
               <a-input v-model:value="creationState.ip"/>
             </a-form-item>
@@ -416,6 +473,28 @@ defineExpose({
           </a-form-item>
         </a-form>
 
+      </a-drawer>
+
+      <a-drawer
+          v-model:visible="windowsInfoVisible"
+          class="custom-class"
+          style="color: red"
+          title="windows服务器信息"
+          placement="right"
+          width="40%"
+      >
+        <a-form
+            :label-col="{ span: 4 }"
+            :wrapper-col="{ span: 18 }"
+            autocomplete="off"
+        >
+          <a-form-item label="连接文件：">
+            <a-button class="copy-btn" @click="downloadWindowsRdpConfig(windowsInfoState)">下载</a-button>
+          </a-form-item>
+          <a-form-item label="密码：">
+            <a-input-password v-model:value="windowsInfoState.password"></a-input-password>
+          </a-form-item>
+        </a-form>
       </a-drawer>
     </div>
   </div>

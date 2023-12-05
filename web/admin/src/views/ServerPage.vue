@@ -9,6 +9,7 @@ import ServerListPage from "@/views/ServerListPage.vue";
 import ProxyListPage from "@/views/ProxyListPage.vue";
 import SettingPage from "@/views/SettingPage.vue";
 import ServerContent from "@/views/ServerContent.vue";
+import SnippetListPage from "@/views/SnippetListPage.vue";
 
 let spinning = ref(false)
 
@@ -217,17 +218,17 @@ const proxyCreation = () => {
               v-model:activeKey="tagActiveKey"
               :tab-position="'left'">
 
-        <a-tab-pane class="server-pane" key="server" :closable="false">
-          <template v-slot:tab>
-            服务器
-          </template>
+        <a-tab-pane  tab="服务器" class="server-pane" key="server" :closable="false">
           <ServerListPage ref="serverListRef" @openServer="handleOpenServer"
                           @proxyCreation="proxyCreation"></ServerListPage>
         </a-tab-pane>
         <a-tab-pane class="proxy-pane" tab="代理" key="proxy" :closable="false" :forceRender="true">
           <proxy-list-page ref="proxyListRef" @createSuccess="handleProxyCreateSuccess"></proxy-list-page>
         </a-tab-pane>
-        <a-tab-pane class="setting-pane" tab="设置" key="setting" :closable="false">
+        <a-tab-pane tab="命令" key="snippet" :closable="false" :forceRender="true">
+          <snippet-list-page ref="snippetListRef" @createSuccess="handleProxyCreateSuccess"></snippet-list-page>
+        </a-tab-pane>
+        <a-tab-pane class="setting-pane" tab="设置" key="setting" :closable="false" :forceRender="true">
           <setting-page></setting-page>
         </a-tab-pane>
         <template v-for="server in serverList" :key="server.operationId">

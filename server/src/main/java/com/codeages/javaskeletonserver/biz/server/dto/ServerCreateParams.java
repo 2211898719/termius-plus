@@ -1,5 +1,6 @@
 package com.codeages.javaskeletonserver.biz.server.dto;
 
+import com.codeages.javaskeletonserver.biz.server.enums.OSEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -15,6 +16,7 @@ public class ServerCreateParams {
     private String firstCommand;
     private Long port;
     private Long sort;
+    private OSEnum os;
     private Boolean autoSudo;
     private Boolean isGroup;
     private Long parentId;

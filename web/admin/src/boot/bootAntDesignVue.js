@@ -1,5 +1,5 @@
 import '@ant-design-vue/pro-layout/dist/style.less';
-
+import 'ant-design-vue/dist/antd.css';
 import ProLayout, {PageContainer} from '@ant-design-vue/pro-layout';
 import {
     Button,
@@ -27,6 +27,7 @@ import {
     PageHeader,
     Popover,
     Modal,
+    Collapse,
     Cascader
 } from 'ant-design-vue';
 import icons from '@/icons';
@@ -65,5 +66,6 @@ export function bootAntDesignVue(app) {
         .use(PageHeader)
         .use(Modal)
         .use(Cascader)
+        .use(Collapse)
     ;
 }

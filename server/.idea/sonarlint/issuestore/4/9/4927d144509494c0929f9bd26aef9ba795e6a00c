@@ -1,12 +1,6 @@
 
 }
-java:S1488—"_Immediately return this expression instead of assigning it to the temporary variable "tmpFile".(ÎßÏ¦8—çÕÏÁ1
+java:S1488§"_Immediately return this expression instead of assigning it to the temporary variable "tmpFile".(ÎßÏ¦8‡¶ßœÃ1
 i
-java:S20951"GUse try-with-resources or close this "SSHClient" in a "finally" clause.(ÌœÍôùÿÿÿÿ8ŸçÕÏÁ1
-Z
-java:S1854H"=Remove this useless assignment to local variable "resources".(Ë´—í8¢çÕÏÁ1
-K
-java:S1481H".Remove this unused "resources" local variable.(Ë´—í8¢çÕÏÁ1
-X	java:S125I"<This block of commented-out lines of code should be removed.(èŞ¼•8¢çÕÏÁ1
-W
-java:S1128"5Remove this unused import 'cn.hutool.extra.ssh.Sftp'.(ÏÓ¢Åşÿÿÿÿ8¦çÕÏÁ1
+java:S20955"GUse try-with-resources or close this "SSHClient" in a "finally" clause.(ÌœÍôùÿÿÿÿ8•¶ßœÃ1
+X	java:S1259"<This block of commented-out lines of code should be removed.(¥˜ïÊ8Ø ¡ÀÃ1

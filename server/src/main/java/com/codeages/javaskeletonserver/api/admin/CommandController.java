@@ -1,4 +1,4 @@
-package com.codeages.javaskeletonserver.biz.snippet.controller;
+package com.codeages.javaskeletonserver.api.admin;
 
 import com.codeages.javaskeletonserver.biz.snippet.service.CommandService;
 import com.codeages.javaskeletonserver.biz.snippet.dto.CommandDto;
@@ -16,6 +16,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.data.domain.Pageable;
 
 import javax.annotation.security.RolesAllowed;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api-admin/command")
@@ -28,12 +29,17 @@ public class CommandController {
     }
 
     @GetMapping("/search")
-    public PagerResponse<CommandDto> search(@RequestParam CommandSearchParams searchParams,
+    public PagerResponse<CommandDto> search(CommandSearchParams searchParams,
                                             @PageableDefault(size = 20, sort = {"createdAt"}, direction = Sort.Direction.DESC) Pageable pager) {
         return new PagerResponse<>(
                 commandService.search(searchParams, pager),
                 pager
         );
+    }
+
+    @GetMapping("/list")
+    public List<CommandDto> list(CommandSearchParams searchParams) {
+        return commandService.search(searchParams, Pageable.unpaged()).getContent();
     }
 
     @PostMapping("/create")

@@ -875,9 +875,10 @@ public class FileUtil {
         response.setContentType(ContentType.OCTET_STREAM.getValue());
         response.setCharacterEncoding(CharsetUtil.UTF_8);
 
+        //缓存7天
         response.setHeader(
                 Header.CACHE_CONTROL.getValue(),
-                "no-cache, no-store, must-revalidate"
+                "max-age=" + 60 * 60 * 24 * 7
         );
         response.setHeader(
                 Header.CONTENT_DISPOSITION.getValue(),

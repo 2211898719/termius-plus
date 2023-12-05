@@ -53,6 +53,7 @@ public class SFTPServiceImpl implements SFTPService {
         SSHClient sshClient = serverService.createSSHClient(serverId);
         Session session = sshClient.startSession();
         session.allocateDefaultPTY();
+        //压缩传输
         sshClient.useCompression();
 
         return sshClient.newStatefulSFTPClient();

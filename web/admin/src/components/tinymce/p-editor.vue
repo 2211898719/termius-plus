@@ -7,7 +7,7 @@
         :mode="mode"
     />
     <Editor
-        style="height: auto;min-height: 200px; overflow-y: hidden;"
+        style="height: auto;min-height: 400px; overflow-y: hidden;"
         :defaultConfig="editorConfig"
         :mode="mode"
         v-model="currentValue"
@@ -19,7 +19,7 @@
 
 <script setup>
 
-import {defineEmits, defineProps, onBeforeUnmount, onUpdated, ref, shallowRef} from 'vue'
+import {defineEmits, defineProps, onBeforeUnmount, ref, shallowRef, watch} from 'vue'
 import {Editor, Toolbar} from '@wangeditor/editor-for-vue'
 import {upload} from "@/utils/File";
 import {fileApi} from "@/api/file";
@@ -30,17 +30,15 @@ const props = defineProps({
   }
 })
 
-let currentValue = ref('')
+let currentValue = ref(props.value)
 
-onUpdated(() => {
-  if (props.value) {
-    currentValue.value = props.value
-    // editorRef.value.setHtml(props.value)
+watch(() => props.value, (val) => {
+  if (val) {
+    currentValue.value = val
   }else{
-    currentValue.value = ''
+    editorRef.value.clear();
   }
 })
-
 
 
 // 编辑器实例，必须用 shallowRef

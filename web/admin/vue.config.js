@@ -6,6 +6,7 @@ module.exports = defineConfig({
     transpileDependencies: true,
     assetsDir: "assets",
     publicPath: "/",
+    lintOnSave: false,
     devServer: {
         port: 8081,
         proxy: {
@@ -13,6 +14,9 @@ module.exports = defineConfig({
                 target: process.env.VUE_APP_PROXY_FOR_API,
                 changeOrigin: true,
             }
+        },
+        client: {
+            overlay: false
         }
     },
     chainWebpack: config => {

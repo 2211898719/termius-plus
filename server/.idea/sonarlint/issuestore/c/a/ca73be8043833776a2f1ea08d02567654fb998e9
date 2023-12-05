@@ -1,25 +1,24 @@
 
 g
-java:S2095Á"DUse try-with-resources or close this "Socket" in a "finally" clause.(‚úßıÿÿÿÿ8óÈ®ËÁ1
+java:S2095¶"DUse try-with-resources or close this "Socket" in a "finally" clause.(‚úßıÿÿÿÿ8¯ü”¿Ã1
 g
-java:S2095Ò"DUse try-with-resources or close this "Socket" in a "finally" clause.(‚úßıÿÿÿÿ8óÈ®ËÁ1
+java:S2095Ñ"DUse try-with-resources or close this "Socket" in a "finally" clause.(‚úßıÿÿÿÿ8¯ü”¿Ã1
 g
-java:S2095È"DUse try-with-resources or close this "Socket" in a "finally" clause.(‚úßıÿÿÿÿ8óÈ®ËÁ1
+java:S2095Ç"DUse try-with-resources or close this "Socket" in a "finally" clause.(‚úßıÿÿÿÿ8¯ü”¿Ã1
 j
-java:S2095«"GUse try-with-resources or close this "SSHClient" in a "finally" clause.(şüìøÿÿÿÿ8óÈ®ËÁ1
+java:S2095ª"GUse try-with-resources or close this "SSHClient" in a "finally" clause.(şüìøÿÿÿÿ8®ü”¿Ã1
 g
-java:S2095·"DUse try-with-resources or close this "Socket" in a "finally" clause.(‚úßıÿÿÿÿ8óÈ®ËÁ1
+java:S2095À"DUse try-with-resources or close this "Socket" in a "finally" clause.(‚úßıÿÿÿÿ8¯ü”¿Ã1
 g
-java:S3252}"JUse static access with "cn.hutool.core.collection.CollUtil" for "isEmpty".(­ßû˜8üÈ®ËÁ1
+java:S3252|"JUse static access with "cn.hutool.core.collection.CollUtil" for "isEmpty".(­ßû˜8µü”¿Ã1
 k
-java:S3252•"MUse static access with "cn.hutool.core.collection.CollUtil" for "isNotEmpty".(Ş‚Ù­8şÈ®ËÁ1
+java:S3252”"MUse static access with "cn.hutool.core.collection.CollUtil" for "isNotEmpty".(Ş‚Ù­8¶ü”¿Ã1
 e
-java:S3252Ç"GUse static access with "cn.hutool.core.net.URLEncodeUtil" for "encode".(Å£8‚É®ËÁ1
+java:S3252Æ"GUse static access with "cn.hutool.core.net.URLEncodeUtil" for "encode".(Å£8¹ü”¿Ã1
 h
-java:S3252Ü"JUse static access with "cn.hutool.core.collection.CollUtil" for "isEmpty".(‚äÕ§8„É®ËÁ1
-^	java:S125…"<This block of commented-out lines of code should be removed.(îœ´åşÿÿÿÿ8‡É®ËÁ1
+java:S3252Û"JUse static access with "cn.hutool.core.collection.CollUtil" for "isEmpty".(‚äÕ§8ºü”¿Ã1
+^	java:S125„"<This block of commented-out lines of code should be removed.(îœ´åşÿÿÿÿ8¼ü”¿Ã1
 X
-java:S1161±":Add the "@Override" annotation above this method signature(ÆĞæ–8‹É®ËÁ1
-^	java:S125Ø"<This block of commented-out lines of code should be removed.(ê¼µÔüÿÿÿÿ8É®ËÁ1
+java:S1161°":Add the "@Override" annotation above this method signature(ÆĞæ–8¿ü”¿Ã1
 r
-java:S3252İ"OUse static access with "cn.hutool.core.text.CharSequenceUtil" for "isNotBlank".(Ü¡›¨ÿÿÿÿÿ8É®ËÁ1
+java:S3252Ü"OUse static access with "cn.hutool.core.text.CharSequenceUtil" for "isNotBlank".(Ü¡›¨ÿÿÿÿÿ8Âü”¿Ã1

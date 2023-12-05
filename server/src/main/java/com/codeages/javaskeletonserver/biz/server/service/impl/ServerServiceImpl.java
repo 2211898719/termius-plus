@@ -19,7 +19,6 @@ import com.codeages.javaskeletonserver.exception.AppException;
 import lombok.SneakyThrows;
 import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.transport.verification.PromiscuousVerifier;
-import net.schmizz.sshj.userauth.keyprovider.OpenSSHKeyFile;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -255,44 +254,6 @@ public class ServerServiceImpl implements ServerService {
 
     }
 
-
-//    @Override
-//    @SneakyThrows
-//    public Session createSession(Long id) {
-//        ServerDto server = findById(id);
-//        JSch jSch = new JSch();
-////        StringReader reader = new StringReader(server.getKey());
-////        PEMParser pemParser = new PEMParser(reader);
-////        KeyPair keyPair = converter.getKeyPair((PEMKeyPair) object);
-////        PrivateKey privateKey = keyPair.getPrivate();
-//
-//        //key可能是OpenSSH格式的，需要转换成PEM格式
-//        if (CharSequenceUtil.isNotBlank(server.getKey())) {
-//            String key = server.getKey();
-//            if (key.startsWith("-----BEGIN OPENSSH PRIVATE KEY-----")) {
-//                key = KeyUtil.toPEMFormat(key);
-//            }
-//            jSch.addIdentity("key", key.getBytes(StandardCharsets.UTF_8), null, null);
-//        }
-//
-//
-//        jSch.addIdentity("key", server.getKey().getBytes(StandardCharsets.UTF_8), null, null);
-//
-//
-//        Session session = jSch.getSession(server.getUsername(), server.getIp(), server.getPort().intValue());
-//        session.setConfig("StrictHostKeyChecking", "no");
-//        if (CharSequenceUtil.isNotBlank(server.getPassword())) {
-//            session.setPassword(server.getPassword());
-//        }
-//
-//        if (server.getProxy() != null) {
-//            session.setProxy(createProxy(server));
-//        }
-//        session.connect();
-//        session.setTimeout(1000 * 60 * 60);
-//        return session;
-//    }
-
     @SneakyThrows
     public SSHClient createSSHClient(Long id) {
         ServerDto server = findById(id);
@@ -347,9 +308,7 @@ public class ServerServiceImpl implements ServerService {
         ssh.connect(server.getIp(), server.getPort().intValue());
         // 配置身份验证使用的私钥
         if (StrUtil.isNotBlank(server.getKey())){
-            OpenSSHKeyFile privateKey = new OpenSSHKeyFile();
-            privateKey.init(server.getKey(), null);
-            ssh.authPublickey(server.getUsername(), privateKey);
+            ssh.authPublickey(server.getUsername(), ssh.loadKeys(server.getKey(), null, null));
         }else {
             ssh.authPassword(server.getUsername(), server.getPassword());
         }

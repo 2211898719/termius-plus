@@ -9,6 +9,7 @@ import {bootFilters} from "@/boot/bootFilters";
 import '@wangeditor/editor/dist/css/style.css' // 引入 css
 import SplitBox from '@headerless/split-box'
 import '@headerless/split-box/style.css'
+import  'resize-observer-polyfill';
 const app = createApp(App);
 app.use(router);
 
