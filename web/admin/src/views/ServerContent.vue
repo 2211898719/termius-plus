@@ -114,7 +114,7 @@ defineExpose({
   <div class="split-box">
     <p-flip ref="flip" :operation-id="server.operationId">
       <template #back>
-        <div v-show="sftpEnable">
+        <div v-if="sftpEnable">
           <div class="sftp-content">
             <a-card title="sftp">
               <template #extra>
@@ -132,6 +132,7 @@ defineExpose({
                     </svg>
                   </template>
                 </a-button>
+                <div class="center-name">{{ server.name }}</div>
 
                 <a-button type="link" @click="reloadSftp">
                   <template v-slot:icon>
@@ -164,7 +165,7 @@ defineExpose({
                   </svg>
                 </template>
               </a-button>
-
+              <div class="center-name">{{ server.name }}</div>
               <a-button type="link" @click="reloadServer">
                 <template v-slot:icon>
                   <reload-outlined/>
@@ -247,7 +248,7 @@ defineExpose({
   .ssh-content {
     .ssh {
       width: 100%;
-      height: 500px;
+      height: calc(@height - 100px);
       border: none;
       //resize: vertical; /* 可以调整宽度和高度 */
     }
@@ -255,7 +256,7 @@ defineExpose({
     .remark {
       transition: all 0.3s;
       overflow: scroll;
-      max-height: 500px;
+      height: calc(@height - 100px);
       width: 0;
     }
 
@@ -276,7 +277,6 @@ defineExpose({
   }
 
   .sftp-content {
-    margin-top: 12px;
 
     .sftp {
       width: 100%;
@@ -294,5 +294,6 @@ defineExpose({
     width: 100% !important;
   }
 }
+
 
 </style>

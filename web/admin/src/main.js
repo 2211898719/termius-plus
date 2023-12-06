@@ -10,8 +10,10 @@ import '@wangeditor/editor/dist/css/style.css' // 引入 css
 import SplitBox from '@headerless/split-box'
 import '@headerless/split-box/style.css'
 import  'resize-observer-polyfill';
+import { autoAnimatePlugin } from '@formkit/auto-animate/vue'
 const app = createApp(App);
 app.use(router);
+app.use(autoAnimatePlugin);
 
 app.component('SplitBox', SplitBox)
 

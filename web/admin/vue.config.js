@@ -32,6 +32,8 @@ module.exports = defineConfig({
     css: {
         loaderOptions: {
             less: {
+                //全局引入less文件
+                additionalData: `@import "@/layouts/main.less";`,
                 lessOptions: {
                     javascriptEnabled: true,
                 },

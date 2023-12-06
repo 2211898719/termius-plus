@@ -37,13 +37,14 @@ defineExpose({
 </script>
 <style lang="less">
 
+
 .flip-container {
   perspective: 1000px;
 }
 
 .flipper {
   width: 100%;
-  height: 650px;
+  height: @height;
   overflow: hidden;
   position: relative;
   transform-style: preserve-3d;

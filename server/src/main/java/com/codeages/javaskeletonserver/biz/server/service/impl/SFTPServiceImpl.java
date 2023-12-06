@@ -22,7 +22,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
 
@@ -64,7 +66,7 @@ public class SFTPServiceImpl implements SFTPService {
         if (sftp == null) {
             log.info("SFTP连接已失效：{}", id);
             String[] split = id.split("-");
-            sftp = new SFTPBean(createSftp(Long.valueOf(split[split.length-1])), System.currentTimeMillis());
+            sftp = new SFTPBean(createSftp(Long.valueOf(split[split.length - 1])), System.currentTimeMillis());
         }
 
         sftp.setTime(System.currentTimeMillis());
@@ -82,8 +84,8 @@ public class SFTPServiceImpl implements SFTPService {
     @SneakyThrows
     public List<RemoteResourceInfo> ls(String id, String path) {
         try {
-        return getSftp(id).ls(path);
-        }catch (Exception e){
+            return getSftp(id).ls(path);
+        } catch (Exception e) {
             throw new AppException(ErrorCode.INTERNAL_ERROR, e.getMessage());
         }
     }

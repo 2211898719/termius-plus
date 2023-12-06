@@ -212,6 +212,7 @@ const proxyCreation = () => {
   <div class="server-root">
     <a-spin :spinning="spinning" tip="等待中...">
       <a-tabs style="width: 100%;"
+              class="server-content-tabs"
               type="editable-card"
               :tabBarGutter="8"
               :hideAdd="true"
@@ -311,6 +312,15 @@ const proxyCreation = () => {
   svg {
     fill: #1daa6c;
   }
+}
+
+.server-content-tabs{
+  height: @height;
+}
+
+:deep(.ant-tabs-tab-with-remove){
+  display: flex;
+  justify-content: space-between;
 }
 
 </style>

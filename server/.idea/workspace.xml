@@ -5,16 +5,18 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="0de18e6e-97dd-4171-a773-cfeff3460ad8" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/1/9/19d2432018cfb75ca338e54f9077373f64e85a5b" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/2/4/2469b10afb8e42fc3357890275e723f409cffc74" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/2/4/2469b10afb8e42fc3357890275e723f409cffc74" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/4/9/4927d144509494c0929f9bd26aef9ba795e6a00c" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/4/9/4927d144509494c0929f9bd26aef9ba795e6a00c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/c/a/ca73be8043833776a2f1ea08d02567654fb998e9" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/c/a/ca73be8043833776a2f1ea08d02567654fb998e9" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/index.pb" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/index.pb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/securityhotspotstore/1/9/19d2432018cfb75ca338e54f9077373f64e85a5b" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/securityhotspotstore/index.pb" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/securityhotspotstore/index.pb" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../web/admin/src/layouts/main.less" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/job/SFTPTimeOutJob.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/job/SFTPTimeOutJob.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/impl/SFTPServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/impl/SFTPServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../web/admin/src/views/ServerListPage.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/views/ServerListPage.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/src/components/p-flip.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/components/p-flip.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/src/components/p-sftp.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/components/p-sftp.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/src/main.js" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/main.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/src/views/ServerContent.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/views/ServerContent.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/src/views/ServerPage.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/views/ServerPage.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/vue.config.js" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/vue.config.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/yarn.lock" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/yarn.lock" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -186,7 +188,7 @@
       <workItem from="1701653804384" duration="10547000" />
       <workItem from="1701739988353" duration="4737000" />
       <workItem from="1701751577458" duration="6156000" />
-      <workItem from="1701826412550" duration="5408000" />
+      <workItem from="1701826412550" duration="10249000" />
     </task>
     <servers />
   </component>

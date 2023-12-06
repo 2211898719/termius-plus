@@ -1,0 +1,13 @@
+//定义变量高度
+@height: calc(100vh - 100px);
+:deep(.ant-card-head-wrapper) {
+  position: relative;
+
+  .center-name {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%) translateY(-50%);
+    top: 50%;
+    color: rgba(0, 0, 0, .45);
+  }
+}
