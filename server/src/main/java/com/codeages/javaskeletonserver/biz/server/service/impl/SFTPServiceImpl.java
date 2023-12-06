@@ -22,10 +22,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.List;
+
 
 @Slf4j
 @Service
@@ -140,10 +139,13 @@ public class SFTPServiceImpl implements SFTPService {
                 response
         );
 
-        InputStream is = readFile.new RemoteFileInputStream(0);
-        IoUtil.copy(is, outputStream);
+        RemoteFile.ReadAheadRemoteFileInputStream readAheadRemoteFileInputStream = readFile.new ReadAheadRemoteFileInputStream(
+                15);
 
-        IoUtil.close(is);
+        BufferedInputStream inputStream = new BufferedInputStream(readAheadRemoteFileInputStream, 1024 * 1024);
+        inputStream.transferTo(outputStream);
+
+        IoUtil.close(inputStream);
         IoUtil.close(outputStream);
     }
 

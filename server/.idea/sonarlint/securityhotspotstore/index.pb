@@ -149,8 +149,6 @@ Ssrc/main/java/com/codeages/javaskeletonserver/biz/snippet/mapper/CommandMapper.
 [src/main/java/com/codeages/javaskeletonserver/biz/snippet/repository/CommandRepository.java,8/b/8b0edee41d64aba0e913b5ae93f3042a266e2aa0
 Ž
 ^src/main/java/com/codeages/javaskeletonserver/biz/snippet/service/impl/CommandServiceImpl.java,a/4/a42c5619b44761e0eddfbcd0f9d8b738e087a636
-‹
-[src/main/java/com/codeages/javaskeletonserver/biz/snippet/controller/CommandController.java,1/9/19d2432018cfb75ca338e54f9077373f64e85a5b
 ‰
 Ysrc/main/java/com/codeages/javaskeletonserver/biz/server/entity/ServerServiceMonitor.java,d/8/d83137008e8ad9ebad6568a94a5d3ae668621a40
 {
@@ -159,3 +157,7 @@ Ksrc/main/java/com/codeages/javaskeletonserver/security/AuthTokenFilter.java,e/
 Ssrc/main/java/com/codeages/javaskeletonserver/biz/user/service/UserAuthService.java,9/5/9565535eb392b8cdae80190d644d616bd6e8d0d6
 Œ
 \src/main/java/com/codeages/javaskeletonserver/biz/user/service/impl/UserAuthServiceImpl.java,b/d/bd17f5ed1ecdae55da71c528186f823e3b92b301
+~
+Nsrc/main/java/com/codeages/javaskeletonserver/api/admin/CommandController.java,e/d/eda9821a179d01bd518f149972bd7f02fc89fb46
+z
+Jsrc/main/java/com/codeages/javaskeletonserver/biz/server/enums/OSEnum.java,6/d/6dcbec231514f4d823fdfb95aee7721633006e05
