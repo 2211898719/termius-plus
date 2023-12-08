@@ -11,9 +11,14 @@ import SplitBox from '@headerless/split-box'
 import '@headerless/split-box/style.css'
 import  'resize-observer-polyfill';
 import { autoAnimatePlugin } from '@formkit/auto-animate/vue'
+import { Splitpanes, Pane } from 'splitpanes'
+import 'splitpanes/dist/splitpanes.css'
+
 const app = createApp(App);
 app.use(router);
 app.use(autoAnimatePlugin);
+app.component('Splitpanes', Splitpanes)
+app.component('Pane', Pane)
 
 app.component('SplitBox', SplitBox)
 

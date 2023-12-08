@@ -5,17 +5,54 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="0de18e6e-97dd-4171-a773-cfeff3460ad8" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/../web/admin/src/layouts/main.less" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../.idea/modules.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../.idea/termius-plus.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../docs/img.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../docs/img0.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../docs/img_1.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../docs/img_10.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../docs/img_11.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../docs/img_12.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../docs/img_13.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../docs/img_2.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../docs/img_3.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../docs/img_4.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../docs/img_5.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../docs/img_6.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../docs/img_7.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../docs/img_8.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../docs/img_9.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../scripts/docker/.env" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/ws/EventType.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/ws/MessageDto.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/ws/ResizeDto.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/ws/SshHandler.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../web/admin/src/components/SplitRoot.vue" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../web/admin/src/components/p-term.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../README.md" beforeDir="false" afterPath="$PROJECT_DIR$/../README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../esee/server/.idea/workspace.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../esee/web/.idea/workspace.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/1/4/1434d07d9a8baec07a462d977dc56d6447531438" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/1/4/1434d07d9a8baec07a462d977dc56d6447531438" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/4/9/4927d144509494c0929f9bd26aef9ba795e6a00c" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/4/9/4927d144509494c0929f9bd26aef9ba795e6a00c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/c/a/ca73be8043833776a2f1ea08d02567654fb998e9" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/c/a/ca73be8043833776a2f1ea08d02567654fb998e9" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/job/SFTPTimeOutJob.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/job/SFTPTimeOutJob.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/impl/SFTPServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/impl/SFTPServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docker.tar.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/docker/.env" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/docker/docker-compose.yml" beforeDir="false" afterPath="$PROJECT_DIR$/../scripts/docker/docker-compose.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docker/mysql-init/init.sql" beforeDir="false" afterPath="$PROJECT_DIR$/../scripts/docker/mysql-init/init.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docker/server.env" beforeDir="false" afterPath="$PROJECT_DIR$/../scripts/docker/server.env" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/ServerService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/ServerService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/config/WebSocketConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/config/WebSocketConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/security/SecurityConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/security/SecurityConfig.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../web/admin/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../web/admin/src/components/p-flip.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/components/p-flip.vue" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../web/admin/src/components/p-sftp.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/components/p-sftp.vue" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../web/admin/src/main.js" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/main.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/src/views/ProxyListPage.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/views/ProxyListPage.vue" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../web/admin/src/views/ServerContent.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/views/ServerContent.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/src/views/ServerListPage.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/views/ServerListPage.vue" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../web/admin/src/views/ServerPage.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/views/ServerPage.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../web/admin/vue.config.js" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/vue.config.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/src/views/SnippetListPage.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/views/SnippetListPage.vue" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../web/admin/yarn.lock" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/yarn.lock" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -27,6 +64,7 @@
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="package-info" />
+        <option value="Enum" />
         <option value="Class" />
       </list>
     </option>
@@ -188,7 +226,8 @@
       <workItem from="1701653804384" duration="10547000" />
       <workItem from="1701739988353" duration="4737000" />
       <workItem from="1701751577458" duration="6156000" />
-      <workItem from="1701826412550" duration="10249000" />
+      <workItem from="1701826412550" duration="10593000" />
+      <workItem from="1701999150252" duration="15839000" />
     </task>
     <servers />
   </component>
@@ -213,11 +252,10 @@
           <line>569</line>
           <option name="timeStamp" value="9" />
         </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-field">
-          <url>jar://$MAVEN_REPOSITORY$/com/hierynomus/sshj/0.37.0/sshj-0.37.0-sources.jar!/net/schmizz/sshj/userauth/keyprovider/BaseFileKeyProvider.java</url>
-          <line>28</line>
-          <properties field="resource" class="net.schmizz.sshj.userauth.keyprovider.BaseFileKeyProvider" />
-          <option name="timeStamp" value="10" />
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/ws/SshHandler.java</url>
+          <line>177</line>
+          <option name="timeStamp" value="24" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

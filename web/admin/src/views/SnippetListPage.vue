@@ -130,7 +130,7 @@ defineExpose({
         </a-card>
         <a-drawer
             v-model:visible="commandCreationVisible"
-            title="新增代理"
+            :title="creationCommandType ==='create'?'新增命令片段':'修改命令片段'"
             placement="right"
             width="70%"
             size="large"

@@ -422,7 +422,7 @@ defineExpose({
       </a-space>
       <a-drawer
           v-model:visible="creationVisible"
-          title="新增服务器"
+          :title="creationType==='create'?'新增':'修改'"
           placement="right"
           width="80%"
           size="large"

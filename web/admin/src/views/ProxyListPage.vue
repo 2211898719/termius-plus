@@ -155,7 +155,7 @@ defineExpose({
         </a-card>
         <a-drawer
             v-model:visible="proxyCreationVisible"
-            title="新增代理"
+            :title="creationProxyType ==='create'?'新增代理':'修改代理'"
             placement="right"
             width="40%"
             size="large"

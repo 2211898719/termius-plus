@@ -141,7 +141,7 @@ defineExpose({
 })
 
 const handleDownload = (file) => {
-  window.open(sftpApi.download({id: sessionId.value,remotePath: currentPath.value + '/' + file.name}))
+  window.open(sftpApi.download({id: sessionId.value, remotePath: currentPath.value + '/' + file.name}))
 }
 
 
@@ -338,6 +338,12 @@ const handleChangeSort = (e) => {
     sortFun = dateSort
   } else if (e === 'type') {
     sortFun = typeSort
+  }else if (e === 'size') {
+    sortFun = (files) => {
+      return _.orderBy(files, (file) => {
+        return file.attributes.size
+      }, ['desc'])
+    }
   }
 
   currentFiles.value = sortFun(currentFiles.value)
@@ -377,6 +383,7 @@ onUnmounted(async () => {
                 <a-select-option value="normal">默认排序</a-select-option>
                 <a-select-option value="date">按时间排序</a-select-option>
                 <a-select-option value="type">按类型排序</a-select-option>
+                <a-select-option value="size">按大小排序</a-select-option>
               </a-select>
             </div>
 
@@ -385,50 +392,56 @@ onUnmounted(async () => {
         <div ref="parent">
           <a-card-grid :bordered="false" :hoverable="false" v-for="(file,index) in searchFiles" :key="file.name"
                        @click="handleClickFile(file)" :title="file.name">
-          <a-dropdown :trigger="['contextmenu']">
-            <div>
+            <a-dropdown :trigger="['contextmenu']">
               <div>
-                <a-image class="icon" :preview="false" :src="fileIcon" v-if="file.attributes.type==='DIRECTORY'"></a-image>
-                <svg v-else-if="file.attributes.type==='SYMLINK'" class="icon"
-                     style="width:40%;height:40%;vertical-align: middle;fill: currentColor;overflow: hidden;"
-                     viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="24103">
-                  <path
-                      d="M625.792 302.912V64L1024 482.112l-398.208 418.176V655.36C341.312 655.36 142.208 750.912 0 960c56.896-298.688 227.584-597.312 625.792-657.088z"
-                      fill="#262626" p-id="24104"></path>
-                </svg>
-                <a-image class="icon" :preview="false" :src="dirIcon" v-else></a-image>
-              </div>
-              <div>
-                <a-input ref="renameInputs" @blur="confirmRename" @pressEnter="confirmRename"
-                         v-if="currentRenameFileIndex===index" v-model:value="newFileName"
-                         style="text-align: center"/>
-                <p v-else class="fileName">
-                  {{ file.name }}
-                </p>
-              </div>
-              <div class="time">
-                {{ $f.datetime(file.attributes.mtime * 1000) }}
-              </div>
-            </div>
-            <template #overlay>
-              <a-menu>
-                <a-menu-item v-if="!file.directory" key="4" @click="handleDownload(file)">
-                  <cloud-download-outlined/>
-                  下载
-                </a-menu-item>
-                <a-menu-item key="3" @click="handleRename(file,index)">
-                  <edit-outlined/>
-                  重命名
-                </a-menu-item>
+                <div>
+                  <a-image class="icon" :preview="false" :src="fileIcon"
+                           v-if="file.attributes.type==='DIRECTORY'"></a-image>
+                  <svg v-else-if="file.attributes.type==='SYMLINK'" class="icon"
+                       style="width:40%;height:40%;vertical-align: middle;fill: currentColor;overflow: hidden;"
+                       viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="24103">
+                    <path
+                        d="M625.792 302.912V64L1024 482.112l-398.208 418.176V655.36C341.312 655.36 142.208 750.912 0 960c56.896-298.688 227.584-597.312 625.792-657.088z"
+                        fill="#262626" p-id="24104"></path>
+                  </svg>
+                  <a-image class="icon" :preview="false" :src="dirIcon" v-else></a-image>
+                </div>
+                <div>
+                  <a-input ref="renameInputs" @blur="confirmRename" @pressEnter="confirmRename"
+                           v-if="currentRenameFileIndex===index" v-model:value="newFileName"
+                           style="text-align: center"/>
+                  <p v-else class="fileName">
+                    {{ file.name }}
+                  </p>
+                </div>
 
-                <a-menu-item key="1" @click="handleDel(file)">
-                  <DeleteOutlined/>
-                  删除
-                </a-menu-item>
-              </a-menu>
-            </template>
-          </a-dropdown>
-        </a-card-grid>
+                  <div class="size">
+                    {{ computedFileSize(file.attributes.size) }}
+                  </div>
+                  <div class="time">
+                    {{ $f.datetime(file.attributes.mtime * 1000) }}
+                  </div>
+
+              </div>
+              <template #overlay>
+                <a-menu>
+                  <a-menu-item v-if="!file.directory" key="4" @click="handleDownload(file)">
+                    <cloud-download-outlined/>
+                    下载
+                  </a-menu-item>
+                  <a-menu-item key="3" @click="handleRename(file,index)">
+                    <edit-outlined/>
+                    重命名
+                  </a-menu-item>
+
+                  <a-menu-item key="1" @click="handleDel(file)">
+                    <DeleteOutlined/>
+                    删除
+                  </a-menu-item>
+                </a-menu>
+              </template>
+            </a-dropdown>
+          </a-card-grid>
         </div>
       </a-card>
     </a-spin>
@@ -474,7 +487,7 @@ onUnmounted(async () => {
 
   min-height: @height;
 
-  :deep(.ant-card-body){
+  :deep(.ant-card-body) {
     margin-top: 24px;
     height: calc(@height - 180px);
     overflow: scroll;
@@ -527,7 +540,7 @@ onUnmounted(async () => {
     box-shadow: none;
 
     width: calc(100% / 6);
-    height: 130px;
+    height: 150px;
     text-align: center;
     padding: 8px;
     font-size: 16px;
@@ -565,11 +578,20 @@ onUnmounted(async () => {
     white-space: normal;
   }
 
-  .time {
-    color: rgba(0, 0, 0, .45);
-    font-size: 12px;
-    text-align: center;
-  }
+
+    .time {
+      color: rgba(0, 0, 0, .45);
+      font-size: 12px;
+      text-align: center;
+    }
+
+    .size {
+      color: rgba(0, 0, 0, .45);
+      font-size: 12px;
+      text-align: center;
+    }
+
+
 }
 
 .ml10 {

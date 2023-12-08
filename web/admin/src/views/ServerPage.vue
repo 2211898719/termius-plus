@@ -21,7 +21,7 @@ let currentServerContent = computed(() =>
 
 
 const handleOpenServer = (item) => {
-  spinning.value = true;
+  // spinning.value = true;
   let uuid = v4();
   while (serverList.value.findIndex(e => e.operationId === uuid) !== -1) {
     uuid = v4();

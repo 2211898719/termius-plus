@@ -5,6 +5,8 @@ import {message} from "ant-design-vue";
 import {defineExpose, defineProps, nextTick, ref} from "vue";
 import {useStorage} from "@vueuse/core";
 import {commandApi} from "@/api/command";
+import SplitRoot from "@/components/SplitRoot.vue";
+import PTerm from "@/components/p-term.vue";
 
 const props = defineProps({
   server: {
@@ -71,8 +73,10 @@ const reloadServer = () => {
   server.url = server.url + "&reload=1"
 }
 
+let fullscreenRef = ref(null)
+
 const handleRequestFullscreen = () => {
-  iframeRef.value.requestFullscreen()
+  fullscreenRef.value.$el.requestFullscreen()
 }
 
 const handleExecCommand = (command) => {
@@ -175,12 +179,18 @@ defineExpose({
 
             <div style="display: flex">
               <div style="width: 100%;position: relative;">
-                <iframe class="ssh"
-                        title="ssh"
-                        ref="iframeRef"
-                        :id="server.operationId"
-                        :src="server.url+'&bgcolor='+hexToRgb(backColor)+'&fontcolor='+hexToRgb(frontColor)">
-                </iframe>
+<!--                <split-root>-->
+<!--                  <template #content>-->
+<!--&lt;!&ndash;                    <iframe class="ssh"&ndash;&gt;-->
+<!--&lt;!&ndash;                            title="ssh"&ndash;&gt;-->
+<!--&lt;!&ndash;                            ref="iframeRef"&ndash;&gt;-->
+<!--&lt;!&ndash;                            :id="server.operationId"&ndash;&gt;-->
+<!--&lt;!&ndash;                            :src="server.url+'&bgcolor='+hexToRgb(backColor)+'&fontcolor='+hexToRgb(frontColor)">&ndash;&gt;-->
+<!--&lt;!&ndash;                    </iframe>&ndash;&gt;-->
+<!--    -->
+<!--                  </template>-->
+<!--                </split-root>-->
+                <p-term class="ssh" :server="server"></p-term>
                 <div style="position: absolute;right: 16px;top: calc(50% - 1em / 2);color: aliceblue"
                      @click="remarkStatus=!remarkStatus" v-if="server.remark">
                   <left-outlined :class="{'button-action':remarkStatus,'left':true}"/>
@@ -204,9 +214,7 @@ defineExpose({
                     <a-list style="padding: 8px" item-layout="horizontal" :data-source="commandData">
                       <template #renderItem="{ item }">
                         <a-list-item >
-                          <a-list-item-meta
-
-                          >
+                          <a-list-item-meta>
                             <template #title>
                               {{ item.name }}
                             </template>

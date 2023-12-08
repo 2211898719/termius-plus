@@ -21,8 +21,6 @@ public interface ServerService {
 
     ServerDto findById(Long id);
 
-//    Session createSession(Long id);
-
     SSHClient createSSHClient(Long id);
 
     Proxy createProxy(ServerDto server);
