@@ -2,11 +2,11 @@
 import PFlip from "@/components/p-flip.vue";
 import PSftp from "@/components/p-sftp.vue";
 import {message} from "ant-design-vue";
-import {defineExpose, defineProps, nextTick, ref} from "vue";
+import {defineExpose, defineProps, nextTick, ref, watch} from "vue";
 import {useStorage} from "@vueuse/core";
 import {commandApi} from "@/api/command";
-import SplitRoot from "@/components/SplitRoot.vue";
 import PTerm from "@/components/p-term.vue";
+import SplitRoot from "@/components/SplitRoot.vue";
 
 const props = defineProps({
   server: {
@@ -62,21 +62,15 @@ const changeDir = (dir) => {
   }
 }
 
+let PTermRef = ref(null)
 const reloadServer = () => {
-  // spinning.value = true;
-  let server = props.server
-  let reloadIndex = server.url.indexOf("&reload=1");
-  if (reloadIndex !== -1) {
-    server.url = server.url.slice(0, reloadIndex)
-    return
-  }
-  server.url = server.url + "&reload=1"
+  PTermRef.value.reload()
 }
 
-let fullscreenRef = ref(null)
+// let fullscreenRef = ref(null)
 
 const handleRequestFullscreen = () => {
-  fullscreenRef.value.$el.requestFullscreen()
+  PTermRef.value.$el.requestFullscreen()
 }
 
 const handleExecCommand = (command) => {
@@ -179,18 +173,11 @@ defineExpose({
 
             <div style="display: flex">
               <div style="width: 100%;position: relative;">
-<!--                <split-root>-->
-<!--                  <template #content>-->
-<!--&lt;!&ndash;                    <iframe class="ssh"&ndash;&gt;-->
-<!--&lt;!&ndash;                            title="ssh"&ndash;&gt;-->
-<!--&lt;!&ndash;                            ref="iframeRef"&ndash;&gt;-->
-<!--&lt;!&ndash;                            :id="server.operationId"&ndash;&gt;-->
-<!--&lt;!&ndash;                            :src="server.url+'&bgcolor='+hexToRgb(backColor)+'&fontcolor='+hexToRgb(frontColor)">&ndash;&gt;-->
-<!--&lt;!&ndash;                    </iframe>&ndash;&gt;-->
-<!--    -->
-<!--                  </template>-->
-<!--                </split-root>-->
-                <p-term class="ssh" :server="server"></p-term>
+                <split-root>
+                  <template #content>
+                    <p-term class="ssh" :server="server" ref="PTermRef" :background="backColor" :foreground="frontColor"></p-term>
+                  </template>
+                </split-root>
                 <div style="position: absolute;right: 16px;top: calc(50% - 1em / 2);color: aliceblue"
                      @click="remarkStatus=!remarkStatus" v-if="server.remark">
                   <left-outlined :class="{'button-action':remarkStatus,'left':true}"/>
@@ -255,8 +242,9 @@ defineExpose({
 
   .ssh-content {
     .ssh {
-      width: 100%;
-      height: calc(@height - 100px);
+      //width: 100%;
+      //height: calc(@height - 120px);
+      height: 100%;
       border: none;
       //resize: vertical; /* 可以调整宽度和高度 */
     }
@@ -301,6 +289,10 @@ defineExpose({
     table-layout: fixed;
     width: 100% !important;
   }
+}
+
+:deep(#split_window .split_view .split_content_wrapper .split_view_label_wrapper){
+  display: none;
 }
 
 

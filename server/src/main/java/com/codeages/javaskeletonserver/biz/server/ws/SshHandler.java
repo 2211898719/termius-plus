@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 @Component
-@ServerEndpoint("/ws/ssh/{serverId}")
+@ServerEndpoint("/socket/ssh/{serverId}")
 public class SshHandler {
 
     private static final ConcurrentHashMap<String, HandlerItem> HANDLER_ITEM_CONCURRENT_HASH_MAP = new ConcurrentHashMap<>();
@@ -63,6 +63,7 @@ public class SshHandler {
     public void onClose(javax.websocket.Session session) {
         SessionSet.remove(session);
         int cnt = OnlineCount.decrementAndGet();
+        HANDLER_ITEM_CONCURRENT_HASH_MAP.remove(session.getId());
         log.info("有连接关闭，当前连接数为：{}", cnt);
     }
 

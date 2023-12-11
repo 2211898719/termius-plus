@@ -1,168 +1,193 @@
-<script>
+<script setup>
 import "xterm/css/xterm.css";
 import {Terminal} from "xterm";
 import {FitAddon} from "xterm-addon-fit";
 import {AttachAddon} from "xterm-addon-attach";
-import {nextTick} from "vue";
+import {nextTick, onMounted, ref, watch} from "vue";
+import _ from "lodash";
+import {useWebSocket} from "@vueuse/core";
+import {useStorage} from "@vueuse/core/index";
 
-export default {
-  props: {
-    server: {
-      type: Object,
-      default: () => {
-      }
+let props = defineProps({
+  server: {
+    type: Object,
+    default: () => {
     }
   },
-  data() {
-    return {
-      term: null,
-      socket: null,
-      rows: 32,
-      cols: 200,
-      SetOut: false,
-      isKey: false,
-      style: {}
-    };
+  foreground: {
+    type: String,
+    default: "white"
   },
-  mounted() {
-    this.initSocket();
-
+  background: {
+    type: String,
+    default: "#060101"
   },
-  beforeUnmount() {
-    this.socket.close();
-    // this.term.dispose();
-  },
-  methods: {
-    //Xterm主题
-    initTerm() {
-      const term = new Terminal({
-        rendererType: "canvas", //渲染类型
-        // rows: this.rows, //行数
-        // cols: this.cols,// 设置之后会输入多行之后覆盖现象
-        // convertEol: true, //启用时，光标将设置为下一行的开头
-        // scrollback: 10,//终端中的回滚量
-        fontSize: 14, //字体大小
-        // disableStdin: false, //是否应禁用输入。
-        // cursorStyle: "block", //光标样式
-        cursorBlink: true, //光标闪烁
-        // scrollback: 30,
-        // tabStopWidth: 4,
-        theme: {
-          foreground: "white", //字体
-          background: "#060101", //背景色
-          cursor: "white" //设置光标
-        }
-      });
-      const attachAddon = new AttachAddon(this.socket);
+});
 
-      const fitAddon = new FitAddon();
-      term.fitAddon = fitAddon;
-      term.loadAddon(attachAddon);
-      term.loadAddon(fitAddon);
-
-      term.open(document.getElementById("terminal"));
-
-      term.focus();
-      // let _this = this;
-      //限制和后端交互，只有输入回车键才显示结果
-      // term.prompt = () => {
-      //   term.write("\r\n$ ");
-      // };
-      // term.prompt();
-
-      nextTick(() => {
-        this.resize_terminal(term);
-      });
-    },
-    //webShell主题
-    initSocket() {
-      // const WebSocketUrl = "ws://localhost:8080/ws/ssh";
-      const WebSocketUrl = "ws://localhost:8080/ws/ssh/" + this.server.id;
-      this.socket = new WebSocket(
-          WebSocketUrl
-      );
-      this.socketOnClose(); //关闭
-      this.socketOnOpen(); //
-      this.socketOnError();
-    },
-    //webshell链接成功之后操作
-    socketOnOpen() {
-      this.socket.onopen = () => {
-        // 链接成功后
-        this.initTerm();
-      };
-    },
-    //webshell关闭之后操作
-    socketOnClose() {
-      this.socket.onclose = () => {
-        console.log("close socket");
-      };
-    },
-    //webshell错误信息
-    socketOnError() {
-      this.socket.onerror = () => {
-        console.log("socket 链接失败");
-      };
-    },
-    //特殊处理
-    onSend(data) {
-      data = this.base.isObject(data) ? JSON.stringify(data) : data;
-      data = this.base.isArray(data) ? data.toString() : data;
-      data = data.replace(/\\\\/, "\\");
-      this.shellWs.onSend(data);
-    },
-    //删除左右两端的空格
-    trim(str) {
-      return str.replace(/(^\s*)|(\s*$)/g, "");
-    },
-    resize_terminal(term) {
-      var content = document.getElementById('log');
-      setTimeout(() => {
-        // document.getElementById('terminal').getElementsByClassName('terminal')[0].classList.add('fullscreen');
-        term.fitAddon.fit();
-        // this.handleResize(term)
-      }, 200)
-
-      const resizeObserver = new ResizeObserver((entries) => {
-        entries.forEach((entry) => {
-          const {width, height} = entry.contentRect;
-          const size = {
-            cols: parseInt(width / term._core._renderService._renderer.dimensions.actualCellWidth, 10) - 1,
-            rows: parseInt(height / term._core._renderService._renderer.dimensions.actualCellHeight, 10)
-          };
-
-          term.resize(size.cols, size.rows)
-        });
-      });
-
-      term.onResize((size) => {
-        this.socket.send(JSON.stringify({
-          event: "resize",
-          data: {
-            cols: size.cols,
-            rows: size.rows,
-            width: term._core._renderService._renderer.dimensions.actualCellWidth,
-            height: term._core._renderService._renderer.dimensions.actualCellHeight
-          }
-        }));
-      });
-
-      resizeObserver.observe(content);
-    },
+let options = {
+  rendererType: "canvas", //渲染类型canvas或者dom
+  // rows: this.rows, //行数
+  // cols: this.cols,// 设置之后会输入多行之后覆盖现象
+  // convertEol: true, //启用时，光标将设置为下一行的开头
+  // scrollback: 10,//终端中的回滚量
+  fontSize: 14, //字体大小
+  // disableStdin: false, //是否应禁用输入。
+  // cursorStyle: "block", //光标样式
+  cursorBlink: true, //光标闪烁
+  // scrollback: 30,
+  // tabStopWidth: 4,
+  theme: {
+    foreground: props.foreground, //前景色
+    background: props.background, //背景色
+    cursor: "white" //设置光标
   }
-};
+}
+
+let term = null;
+let socket = null;
+let terminal = ref()
+let log = ref()
+let loading = ref(false)
+
+onMounted(() => {
+  initSocket();
+});
+
+const initSocket = () => {
+  if (socket) {
+    socket.close();
+  }
+  if (term) {
+    term.dispose();
+  }
+  if (terminal.value) {
+    terminal.value.innerHTML = "";
+  }
+  loading.value = true
+  let wsProtocol = 'ws';
+  if (window.location.protocol === 'https:') {
+    wsProtocol = 'wss';
+  }
+  const host = window.location.host;
+  const useSocket = useWebSocket(wsProtocol + '://' + host + '/socket/ssh/' + props.server.id, {
+    autoReconnect: {
+      onFailed: (e) => {
+        console.log(e)
+      }
+    },
+    onConnected: () => {
+      socket = useSocket.ws.value;
+      initTerm();
+      loading.value = false
+    },
+  });
+}
+
+const initTerm = () => {
+  term = new Terminal(options);
+  const attachAddon = new AttachAddon(socket);
+
+  const fitAddon = new FitAddon();
+  term.fitAddon = fitAddon;
+  term.loadAddon(attachAddon);
+  term.loadAddon(fitAddon);
+
+  terminal.value.innerHTML = "";
+  term.open(terminal.value);
+
+  term.focus();
+
+  nextTick(() => {
+    resizeTerminal(term);
+  });
+}
+
+let frontColor = useStorage('frontColor', "#ffffff")
+let backColor = useStorage('backColor', "#000000")
+
+watch(() => frontColor, () => {
+  console.log(123)
+  if (term) {
+    term.setOption("theme", {
+      foreground: frontColor.value, //前景色
+      background: backColor.value, //背景色
+      cursor: "white" //设置光标
+    });
+  }
+})
+
+watch(() => backColor, () => {
+  console.log(123)
+  if (term) {
+    term.setOption("theme", {
+      foreground: frontColor.value, //前景色
+      background: backColor.value, //背景色
+      cursor: "white" //设置光标
+    });
+  }
+})
+
+const resizeTerminal = () => {
+  let content = log.value;
+
+  let resizeFun = _.debounce(() => {
+    const {width, height} = content.getBoundingClientRect();
+    if (width === 0 || height === 0) return
+    term.fitAddon.fit();
+    const size = {
+      cols: parseInt(width / term._core._renderService._renderer.dimensions.actualCellWidth, 10) - 1,
+      rows: parseInt(height / term._core._renderService._renderer.dimensions.actualCellHeight, 10)
+    };
+
+    term.resize(size.cols, size.rows)
+  }, 100, {leading: false, trailing: true})
+
+  nextTick(() => {
+    resizeFun()
+  })
+
+  const resizeObserver = new ResizeObserver(() => {
+    resizeFun()
+  });
+
+  resizeObserver.observe(content);
+
+  term.onResize((size) => {
+    socket.send(JSON.stringify({
+      event: "resize",
+      data: {
+        cols: size.cols,
+        rows: size.rows,
+        width: term._core._renderService._renderer.dimensions.actualCellWidth,
+        height: term._core._renderService._renderer.dimensions.actualCellHeight
+      }
+    }));
+  });
+}
+
+defineExpose({
+  reload: () => {
+    initSocket();
+  }
+})
+
 </script>
 
 
 <template>
-  <div id="log" style="margin:10px auto;">
-    <div class="console" id="terminal"></div>
+
+  <div ref="log">
+    <a-spin :spinning="loading">
+      <div class="console" ref="terminal"></div>
+    </a-spin>
   </div>
+
 </template>
 
 <style scoped lang="less">
 .console {
   width: 100%;
   height: 100%;
+  background-color: #060101;
 }
 </style>

@@ -2,14 +2,15 @@
 
 import {message} from "ant-design-vue";
 import {ref} from "vue";
+import {useStorage} from "@vueuse/core";
 
-let frontColor = ref(localStorage.getItem("frontColor") ?? "#ffffff")
-let backColor = ref(localStorage.getItem("backColor") ?? "#000000")
+
+
+let frontColor = useStorage("frontColor", "#ffffff")
+let backColor = useStorage("backColor", "#000000")
 
 //把样式保存到本地
 const saveStyle = () => {
-  localStorage.setItem('frontColor', frontColor.value)
-  localStorage.setItem('backColor', backColor.value)
   message.success("保存成功");
 }
 

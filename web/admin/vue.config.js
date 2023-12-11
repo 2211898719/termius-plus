@@ -13,6 +13,11 @@ module.exports = defineConfig({
             '/api-admin': {
                 target: process.env.VUE_APP_PROXY_FOR_API,
                 changeOrigin: true,
+            },
+            '/socket': {
+                target: process.env.VUE_APP_PROXY_FOR_API,
+                changeOrigin: true,
+                ws: true,
             }
         },
         client: {
