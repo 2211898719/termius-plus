@@ -21,9 +21,9 @@ const remarkStatus = ref(false)
 let flipStatus = ref(false)
 
 // let fullscreenContent = ref(null)
-
-let frontColor = useStorage('frontColor', "#ffffff")
-let backColor = useStorage('backColor', "#000000")
+//
+// let frontColor = useStorage('frontColor', "#ffffff")
+// let backColor = useStorage('backColor', "#000000")
 
 const hexToRgb = (hex) => {
   let rgb = [];
@@ -175,7 +175,7 @@ defineExpose({
               <div style="width: 100%;position: relative;">
                 <split-root>
                   <template #content>
-                    <p-term class="ssh" :server="server" ref="PTermRef" :background="backColor" :foreground="frontColor"></p-term>
+                    <p-term class="ssh" :server="server" ref="PTermRef"></p-term>
                   </template>
                 </split-root>
                 <div style="position: absolute;right: 16px;top: calc(50% - 1em / 2);color: aliceblue"

@@ -5,8 +5,7 @@ import {FitAddon} from "xterm-addon-fit";
 import {AttachAddon} from "xterm-addon-attach";
 import {nextTick, onMounted, ref, watch} from "vue";
 import _ from "lodash";
-import {useWebSocket} from "@vueuse/core";
-import {useStorage} from "@vueuse/core/index";
+import {useWebSocket,useStorage} from "@vueuse/core";
 
 let props = defineProps({
   server: {
