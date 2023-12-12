@@ -1,5 +1,6 @@
 package com.codeages.javaskeletonserver.biz.server.ws;
 
+import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.extra.spring.SpringUtil;
@@ -9,9 +10,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import net.schmizz.sshj.SSHClient;
 import org.springframework.stereotype.Component;
-import org.springframework.web.socket.BinaryMessage;
 
-import javax.annotation.PostConstruct;
 import javax.websocket.*;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
@@ -30,25 +29,16 @@ public class SshHandler {
 
     private static final ConcurrentHashMap<String, HandlerItem> HANDLER_ITEM_CONCURRENT_HASH_MAP = new ConcurrentHashMap<>();
 
-    @PostConstruct
-    public void init() {
-        System.out.println("websocket 加载");
-    }
-
     private static final AtomicInteger OnlineCount = new AtomicInteger(0);
 
     private static CopyOnWriteArraySet<Session> SessionSet = new CopyOnWriteArraySet<>();
 
 
-    /**
-     * 连接建立成功调用的方法
-     */
     @OnOpen
     public void onOpen(javax.websocket.Session session, @PathParam("serverId") Long serverId) {
         SessionSet.add(session);
-        int cnt = OnlineCount.incrementAndGet(); // 在线数加1
+        int cnt = OnlineCount.incrementAndGet();
         log.info("有连接加入，当前连接数为：{},sessionId={}", cnt, session.getId());
-//        SendMessage(session, "连接成功，sessionId=" + session.getId());
         HandlerItem handlerItem = new HandlerItem(
                 session,
                 SpringUtil.getBean(ServerService.class).createSSHClient(serverId)
@@ -56,25 +46,17 @@ public class SshHandler {
         HANDLER_ITEM_CONCURRENT_HASH_MAP.put(session.getId(), handlerItem);
     }
 
-    /**
-     * 连接关闭调用的方法
-     */
     @OnClose
     public void onClose(javax.websocket.Session session) {
         SessionSet.remove(session);
         int cnt = OnlineCount.decrementAndGet();
+        HANDLER_ITEM_CONCURRENT_HASH_MAP.get(session.getId()).close();
         HANDLER_ITEM_CONCURRENT_HASH_MAP.remove(session.getId());
         log.info("有连接关闭，当前连接数为：{}", cnt);
     }
 
-    /**
-     * 收到客户端消息后调用的方法
-     *
-     * @param message 客户端发送过来的消息
-     */
     @OnMessage
     public void onMessage(String message, javax.websocket.Session session) throws Exception {
-        log.info("来自客户端的消息：{}", message);
         HandlerItem handlerItem = HANDLER_ITEM_CONCURRENT_HASH_MAP.get(session.getId());
         if (message.contains(EventType.RESIZE.name().toLowerCase())) {
             MessageDto messageDto = MessageDto.parse(message);
@@ -82,16 +64,9 @@ public class SshHandler {
             handlerItem.reSize(resizeDto.getCols(), resizeDto.getRows(), resizeDto.getWidth(), resizeDto.getHeight());
             return;
         }
-
         this.sendCommand(handlerItem, message);
     }
 
-    /**
-     * 出现错误
-     *
-     * @param session
-     * @param error
-     */
     @OnError
     public void onError(javax.websocket.Session session, Throwable error) {
         log.error("发生错误：{}，Session ID： {}", error.getMessage(), session.getId());
@@ -109,12 +84,6 @@ public class SshHandler {
         handlerItem.outputStream.flush();
     }
 
-    /**
-     * 发送消息，实践表明，每次浏览器刷新，session会发生变化。
-     *
-     * @param session
-     * @param message
-     */
     public static void SendMessage(javax.websocket.Session session, String message) {
         try {
             session.getBasicRemote().sendText(message);
@@ -144,7 +113,6 @@ public class SshHandler {
 
             this.inputStream = shell.getInputStream();
             this.outputStream = shell.getOutputStream();
-
 
             this.openSession = shellSession;
             ThreadUtil.execute(this);
@@ -177,6 +145,17 @@ public class SshHandler {
         public void reSize(int col, int row, int width, int height) {
             try {
                 shell.changeWindowDimensions(col, row, width, height);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        public void close() {
+            try {
+                IoUtil.close(this.inputStream);
+                IoUtil.close(this.outputStream);
+                this.shell.close();
+                this.openSession.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -221,11 +200,11 @@ public class SshHandler {
         }
 
         synchronized (session.getId()) {
-            BinaryMessage byteBuffer = new BinaryMessage(msg.getBytes());
+//            BinaryMessage byteBuffer = new BinaryMessage(msg.getBytes());
             try {
-                System.out.println("#####:" + msg);
                 session.getBasicRemote().sendText(msg);
             } catch (IOException e) {
+                log.error("发送消息出错：{}", e.getMessage());
             }
         }
     }

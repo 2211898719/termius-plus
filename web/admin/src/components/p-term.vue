@@ -5,7 +5,7 @@ import {FitAddon} from "xterm-addon-fit";
 import {AttachAddon} from "xterm-addon-attach";
 import {nextTick, onMounted, ref, watch} from "vue";
 import _ from "lodash";
-import {useWebSocket,useStorage} from "@vueuse/core";
+import {useStorage, useWebSocket} from "@vueuse/core";
 
 let props = defineProps({
   server: {
@@ -105,7 +105,6 @@ let frontColor = useStorage('frontColor', "#ffffff")
 let backColor = useStorage('backColor', "#000000")
 
 watch(() => frontColor, () => {
-  console.log(123)
   if (term) {
     term.setOption("theme", {
       foreground: frontColor.value, //前景色
@@ -174,13 +173,9 @@ defineExpose({
 
 
 <template>
-
   <div ref="log">
-    <a-spin :spinning="loading">
       <div class="console" ref="terminal"></div>
-    </a-spin>
   </div>
-
 </template>
 
 <style scoped lang="less">

@@ -7,24 +7,23 @@
   >
     <template #Tab="win">
             <p style="color: white; font-size: 12px">{{ win.label }}</p>
-      <p></p>
     </template>
     <template #CloseBtn>
       <span></span>
     </template>
-    <template #AddBtn>
-      <span></span>
-    </template>
-    <!--    <template #TabActions>-->
-    <!--      <span></span>-->
-    <!--    </template>-->
-    <!--    <template #placeHolder>-->
-    <!--      <span></span>-->
-    <!--    </template>-->
+<!--    <template #AddBtn>-->
+<!--      <span></span>-->
+<!--    </template>-->
+<!--        <template #TabActions>-->
+<!--          <span></span>-->
+<!--        </template>-->
+<!--        <template #placeHolder>-->
+<!--          <span></span>-->
+<!--        </template>-->
     <template #TabView="win">
       <span>
       <slot name="content" :win="win"></slot>
-      </span>
+        </span>
     </template>
   </VueDragSplit>
 </template>
@@ -33,9 +32,8 @@
 import {ref} from "vue";
 
 // 引入样式文件
-import "vue-drag-split/dist/style.css";
-// 引入组件
-import {VueDragSplit} from "vue-drag-split";
+import "@/components/VueDragSplit/style.css";
+import VueDragSplit from "@/components/VueDragSplit/index.vue";
 
 const activeTabKey = ref("");
 const windowList = ref([

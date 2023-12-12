@@ -33,6 +33,7 @@ import {
 import icons from '@/icons';
 
 export function bootAntDesignVue(app) {
+
     app
         .use(ProLayout)
         .use(PageContainer)

@@ -10,6 +10,7 @@ import ProxyListPage from "@/views/ProxyListPage.vue";
 import SettingPage from "@/views/SettingPage.vue";
 import ServerContent from "@/views/ServerContent.vue";
 import SnippetListPage from "@/views/SnippetListPage.vue";
+import SplitRoot from "@/components/SplitRoot.vue";
 
 let spinning = ref(false)
 
@@ -219,7 +220,7 @@ const proxyCreation = () => {
               v-model:activeKey="tagActiveKey"
               :tab-position="'left'">
 
-        <a-tab-pane  tab="服务器" class="server-pane" key="server" :closable="false">
+        <a-tab-pane tab="服务器" class="server-pane" key="server" :closable="false">
           <ServerListPage ref="serverListRef" @openServer="handleOpenServer"
                           @proxyCreation="proxyCreation"></ServerListPage>
         </a-tab-pane>
@@ -275,7 +276,11 @@ const proxyCreation = () => {
             <template v-slot:closeIcon>
               <close-outlined @click="onCloseServer(server.operationId)"/>
             </template>
-            <server-content ref="serverContentList" :server="server"></server-content>
+            <split-root>
+              <template #content>
+                <server-content ref="serverContentList" :server="server"></server-content>
+              </template>
+            </split-root>
           </a-tab-pane>
         </template>
       </a-tabs>
@@ -314,11 +319,11 @@ const proxyCreation = () => {
   }
 }
 
-.server-content-tabs{
+.server-content-tabs {
   height: @height;
 }
 
-:deep(.ant-tabs-tab-with-remove){
+:deep(.ant-tabs-tab-with-remove) {
   display: flex;
   justify-content: space-between;
 }

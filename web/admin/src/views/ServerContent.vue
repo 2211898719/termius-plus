@@ -2,11 +2,26 @@
 import PFlip from "@/components/p-flip.vue";
 import PSftp from "@/components/p-sftp.vue";
 import {message} from "ant-design-vue";
-import {defineExpose, defineProps, nextTick, ref, watch} from "vue";
-import {useStorage} from "@vueuse/core";
+import {defineExpose, defineProps, nextTick, ref} from "vue";
 import {commandApi} from "@/api/command";
 import PTerm from "@/components/p-term.vue";
-import SplitRoot from "@/components/SplitRoot.vue";
+import "@/components/VueDragSplit/style.css";
+
+const activeTabKey = ref("");
+const windowList = ref([
+  {
+    key: "1",
+    label: "标签一",
+  },
+]);
+
+function generateWindowConfig(params) {
+  console.log(params)
+  return {
+    key: Date.now(),
+    label: "标签" + Date.now(),
+  };
+}
 
 const props = defineProps({
   server: {
@@ -67,10 +82,10 @@ const reloadServer = () => {
   PTermRef.value.reload()
 }
 
-// let fullscreenRef = ref(null)
+let fullscreenRef = ref(null)
 
 const handleRequestFullscreen = () => {
-  PTermRef.value.$el.requestFullscreen()
+  fullscreenRef.value.$el.requestFullscreen()
 }
 
 const handleExecCommand = (command) => {
@@ -173,16 +188,42 @@ defineExpose({
 
             <div style="display: flex">
               <div style="width: 100%;position: relative;">
-                <split-root>
-                  <template #content>
-                    <p-term class="ssh" :server="server" ref="PTermRef"></p-term>
-                  </template>
-                </split-root>
-                <div style="position: absolute;right: 16px;top: calc(50% - 1em / 2);color: aliceblue"
+                <!--                <VueDragSplit-->
+                <!--                    ref="fullscreenRef"-->
+                <!--                    class="drag-root"-->
+                <!--                    :generateWindowConfig="generateWindowConfig"-->
+                <!--                    v-model:windowListSync="windowList"-->
+                <!--                    v-model:activeTabKeySync="activeTabKey"-->
+                <!--                >-->
+                <!--                  <template #Tab="win">-->
+                <!--                    <p style="color: white; font-size: 12px">{{ win.label }}</p>-->
+                <!--                    <p></p>-->
+                <!--                  </template>-->
+                <!--                  &lt;!&ndash;    <template #CloseBtn>&ndash;&gt;-->
+                <!--                  &lt;!&ndash;      <span></span>&ndash;&gt;-->
+                <!--                  &lt;!&ndash;    </template>&ndash;&gt;-->
+                <!--&lt;!&ndash;                  <template #AddBtn>&ndash;&gt;-->
+                <!--&lt;!&ndash;                    <span></span>&ndash;&gt;-->
+                <!--&lt;!&ndash;                  </template>&ndash;&gt;-->
+                <!--                  &lt;!&ndash;    <template #TabActions>&ndash;&gt;-->
+                <!--                  &lt;!&ndash;      <span></span>&ndash;&gt;-->
+                <!--                  &lt;!&ndash;    </template>&ndash;&gt;-->
+                <!--                  &lt;!&ndash;    <template #placeHolder>&ndash;&gt;-->
+                <!--                  &lt;!&ndash;      <span></span>&ndash;&gt;-->
+                <!--                  &lt;!&ndash;    </template>&ndash;&gt;-->
+                <!--                  <template #TabView="win">-->
+                <!--                      <span>-->
+                <!--            -->
+                <!--                      </span>-->
+                <!--                  </template>-->
+                <!--                </VueDragSplit>-->
+
+                <p-term class="ssh" :server="server" ref="PTermRef"></p-term>
+                <div style="position: absolute;right: 16px;top: calc(50% - 1em / 2);color: aliceblue;z-index: 100"
                      @click="remarkStatus=!remarkStatus" v-if="server.remark">
                   <left-outlined :class="{'button-action':remarkStatus,'left':true}"/>
                 </div>
-                <div style="position: absolute;right: 16px;top: 16px;color: aliceblue" class="left"
+                <div style="position: absolute;right: 16px;top: 16px;color: aliceblue;z-index: 100" class="left"
                      @click="handleRequestFullscreen">
                   <fullscreen-outlined/>
                 </div>
@@ -200,13 +241,13 @@ defineExpose({
                   <a-tab-pane key="command" tab="命令" force-render>
                     <a-list style="padding: 8px" item-layout="horizontal" :data-source="commandData">
                       <template #renderItem="{ item }">
-                        <a-list-item >
+                        <a-list-item>
                           <a-list-item-meta>
                             <template #title>
                               {{ item.name }}
                             </template>
                             <template #avatar>
-                              <mac-command-outlined style="color: #F6C445;" />
+                              <mac-command-outlined style="color: #F6C445;"/>
                             </template>
                             <template #description>
                               <a-collapse v-model:activeKey="item.activeKey">
@@ -216,7 +257,10 @@ defineExpose({
 
                                     </div>
                                   </div>
-                                  <template #extra><check-circle-outlined style="color: #A0E548" @click="handleExecCommand(item.command)" /></template>
+                                  <template #extra>
+                                    <check-circle-outlined style="color: #A0E548"
+                                                           @click="handleExecCommand(item.command)"/>
+                                  </template>
                                 </a-collapse-panel>
                               </a-collapse>
                             </template>
@@ -291,9 +335,33 @@ defineExpose({
   }
 }
 
-:deep(#split_window .split_view .split_content_wrapper .split_view_label_wrapper){
-  display: none;
+//:deep(.header_item) {
+//  max-width: none !important;
+//}
+
+:deep(#split_window .split_view .split_content_wrapper .split_view_label_wrapper .split_view_label_box .header_item p, #split_window .split_view .split_content_wrapper .split_view_label_wrapper .split_view_label_box .header_item span) {
+  margin: 0;
+  text-align: center;
 }
 
+:deep(.drag-root) {
+  height: calc(@height - 100px) !important;
+}
+
+:deep(.split_view_content) {
+  background-color: #000 !important;
+}
+
+:deep(#split_window .drag_modal_wrapper) {
+  background-color: #1daa6c !important;
+  //透明度
+  opacity: 0.6 !important;
+  //毛玻璃
+  backdrop-filter: blur(30px) !important;
+}
+
+:deep(#split_window .split_view .split_content_wrapper .split_view_label_wrapper .split_view_label_box .header_item.label_active) {
+  background-color: #27664C !important;
+}
 
 </style>

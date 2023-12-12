@@ -14,13 +14,16 @@ import { autoAnimatePlugin } from '@formkit/auto-animate/vue'
 import { Splitpanes, Pane } from 'splitpanes'
 import 'splitpanes/dist/splitpanes.css'
 
-const app = createApp(App);
+const app = createApp(App,{
+    compilerOptions: {
+        isCustomElement: (tag) => tag.startsWith('a-'),
+    },
+});
 app.use(router);
 app.use(autoAnimatePlugin);
-app.component('Splitpanes', Splitpanes)
-app.component('Pane', Pane)
-
-app.component('SplitBox', SplitBox)
+// app.component('Splitpanes', Splitpanes)
+// app.component('Pane', Pane)
+// app.component('SplitBox', SplitBox)
 
 bootAntDesignVue(app);
 bootAxios(app);
