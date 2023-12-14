@@ -5,16 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="0de18e6e-97dd-4171-a773-cfeff3460ad8" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/../web/admin/src/components/p-blank.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../.idea/sonarlint/issuestore/index.pb" beforeDir="false" afterPath="$PROJECT_DIR$/../.idea/sonarlint/issuestore/index.pb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../.idea/sonarlint/securityhotspotstore/index.pb" beforeDir="false" afterPath="$PROJECT_DIR$/../.idea/sonarlint/securityhotspotstore/index.pb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/2/e/2e36f8b34495aa90527d851b5091127e8fcd0f42" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/2/e/2e36f8b34495aa90527d851b5091127e8fcd0f42" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../web/admin/src/components/SplitRoot.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/components/SplitRoot.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../web/admin/src/components/VueDragSplit/index.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/components/VueDragSplit/index.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../web/admin/src/main.js" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/main.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../web/admin/src/views/ServerContent.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/views/ServerContent.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../web/admin/src/views/ServerPage.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/views/ServerPage.vue" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -197,7 +188,7 @@
       <workItem from="1702449645578" duration="3565000" />
       <workItem from="1702518801081" duration="282000" />
       <workItem from="1702519797564" duration="2139000" />
-      <workItem from="1702527710757" duration="1051000" />
+      <workItem from="1702527710757" duration="1761000" />
     </task>
     <servers />
   </component>

@@ -864,6 +864,7 @@ export default {
 };
 </script>
 <style lang="less">
+@import "style.css";
 #split_window {
   width: 100%;
   height: 100%;

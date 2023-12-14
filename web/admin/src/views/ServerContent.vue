@@ -206,7 +206,7 @@ defineExpose({
                   <!--    </template>-->
                   <!--                  <template #AddBtn>-->
                   <!--                    <span></span>-->
-                <!--                  </template>-->
+                  <!--                  </template>-->
                   <!--    <template #TabActions>-->
                   <!--      <span></span>-->
                   <!--    </template>-->
@@ -234,11 +234,11 @@ defineExpose({
 
                 <a-tabs v-model:activeKey="rightTabKey" style="margin-left: 8px" type="card">
                   <a-tab-pane key="remark" tab="备注">
-                      <div class="w-e-text-container">
-                        <div data-slate-editor v-html="server.remark">
+                    <div class="w-e-text-container">
+                      <div data-slate-editor v-html="server.remark">
 
-                        </div>
                       </div>
+                    </div>
                   </a-tab-pane>
                   <a-tab-pane key="command" tab="命令" force-render>
                     <a-list style="padding: 8px" item-layout="horizontal" :data-source="commandData">
