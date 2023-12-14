@@ -23,6 +23,7 @@ import {
   splitDirectionMap,
   SplitWindow
 } from "./components/index.js";
+import blank from "@/components/p-blank.vue";
 
 
 const componentIns = getCurrentInstance();
@@ -535,7 +536,7 @@ const templateLabel = (win) => {
 };
 const templateContent = (win) => {
   let res= h(
-      "div",
+      blank,
       {
         class: "split_view_content",
         tabViewKey: win.key,
@@ -543,7 +544,7 @@ const templateContent = (win) => {
           labelClick(win.key, event);
         }
       },
-      [renderSlot(TabView, win) || createTabView(win) || tabViewDefault(win)]
+      {content: () => renderSlot(TabView, win) || createTabView(win) || tabViewDefault(win)}
   )
   res.appContext = componentIns.appContext
   return res
@@ -629,6 +630,7 @@ const templateSplitView = (label, content) => {
 };
 const templateLayout = (win) => {
   const split_view = templateSplitView(templateLabel(win), templateContent(win));
+
   const paneVnode = h(
       Split,
       {
@@ -694,16 +696,17 @@ function newWindow(win) {
         tabKeyEl,
         "split_content_wrapper"
     );
-    console.log(split_view_content_wrapper.value)
+    console.log("splitContainer :>> ",)
 
     addTabEl(
         splitContentWrapper.querySelector(".split_view_label_wrapper.flex"),
         vnode2dom(templateLabel(win))
     );
+
     splitContentWrapper
         .querySelector(".split_view_content_wrapper")
         .appendChild(vnode2dom(templateContent(win)));
-
+  // .appendChild(vnode2dom(templateLayout(win)).querySelector(".split_view_content_wrapper"));
   }
   activeTab(win.key);
 }

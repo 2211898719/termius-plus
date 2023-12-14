@@ -6,6 +6,7 @@ import {defineExpose, defineProps, nextTick, ref} from "vue";
 import {commandApi} from "@/api/command";
 import PTerm from "@/components/p-term.vue";
 import "@/components/VueDragSplit/style.css";
+import VueDragSplit from "@/components/VueDragSplit/index.vue";
 
 const activeTabKey = ref("");
 const windowList = ref([
@@ -188,39 +189,40 @@ defineExpose({
 
             <div style="display: flex">
               <div style="width: 100%;position: relative;">
-                <!--                <VueDragSplit-->
-                <!--                    ref="fullscreenRef"-->
-                <!--                    class="drag-root"-->
-                <!--                    :generateWindowConfig="generateWindowConfig"-->
-                <!--                    v-model:windowListSync="windowList"-->
-                <!--                    v-model:activeTabKeySync="activeTabKey"-->
-                <!--                >-->
-                <!--                  <template #Tab="win">-->
-                <!--                    <p style="color: white; font-size: 12px">{{ win.label }}</p>-->
-                <!--                    <p></p>-->
-                <!--                  </template>-->
-                <!--                  &lt;!&ndash;    <template #CloseBtn>&ndash;&gt;-->
-                <!--                  &lt;!&ndash;      <span></span>&ndash;&gt;-->
-                <!--                  &lt;!&ndash;    </template>&ndash;&gt;-->
-                <!--&lt;!&ndash;                  <template #AddBtn>&ndash;&gt;-->
-                <!--&lt;!&ndash;                    <span></span>&ndash;&gt;-->
-                <!--&lt;!&ndash;                  </template>&ndash;&gt;-->
-                <!--                  &lt;!&ndash;    <template #TabActions>&ndash;&gt;-->
-                <!--                  &lt;!&ndash;      <span></span>&ndash;&gt;-->
-                <!--                  &lt;!&ndash;    </template>&ndash;&gt;-->
-                <!--                  &lt;!&ndash;    <template #placeHolder>&ndash;&gt;-->
-                <!--                  &lt;!&ndash;      <span></span>&ndash;&gt;-->
-                <!--                  &lt;!&ndash;    </template>&ndash;&gt;-->
-                <!--                  <template #TabView="win">-->
-                <!--                      <span>-->
-                <!--            -->
-                <!--                      </span>-->
-                <!--                  </template>-->
-                <!--                </VueDragSplit>-->
+                <VueDragSplit
+                    ref="fullscreenRef"
+                    class="drag-root"
+                    :generateWindowConfig="generateWindowConfig"
+                    v-model:windowListSync="windowList"
+                    v-model:activeTabKeySync="activeTabKey"
 
-                <p-term class="ssh" :server="server" ref="PTermRef"></p-term>
+                >
+                  <template #Tab="win">
+                    <p style="color: white; font-size: 12px">{{ win.label }}</p>
+                    <p></p>
+                  </template>
+                  <!--    <template #CloseBtn>-->
+                  <!--      <span></span>-->
+                  <!--    </template>-->
+                  <!--                  <template #AddBtn>-->
+                  <!--                    <span></span>-->
+                <!--                  </template>-->
+                  <!--    <template #TabActions>-->
+                  <!--      <span></span>-->
+                  <!--    </template>-->
+                  <!--    <template #placeHolder>-->
+                  <!--      <span></span>-->
+                  <!--    </template>-->
+                  <template #TabView="win">
+                                      <span>
+                                            <p-term class="ssh" :server="server" ref="PTermRef"></p-term>
+                                      </span>
+                  </template>
+                </VueDragSplit>
+
+                <!--                <p-term class="ssh" :server="server" ref="PTermRef"></p-term>-->
                 <div style="position: absolute;right: 16px;top: calc(50% - 1em / 2);color: aliceblue;z-index: 100"
-                     @click="remarkStatus=!remarkStatus" v-if="server.remark">
+                     @click="remarkStatus=!remarkStatus">
                   <left-outlined :class="{'button-action':remarkStatus,'left':true}"/>
                 </div>
                 <div style="position: absolute;right: 16px;top: 16px;color: aliceblue;z-index: 100" class="left"
@@ -335,9 +337,9 @@ defineExpose({
   }
 }
 
-//:deep(.header_item) {
-//  max-width: none !important;
-//}
+:deep(.header_item) {
+  max-width: none !important;
+}
 
 :deep(#split_window .split_view .split_content_wrapper .split_view_label_wrapper .split_view_label_box .header_item p, #split_window .split_view .split_content_wrapper .split_view_label_wrapper .split_view_label_box .header_item span) {
   margin: 0;

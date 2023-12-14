@@ -276,11 +276,11 @@ const proxyCreation = () => {
             <template v-slot:closeIcon>
               <close-outlined @click="onCloseServer(server.operationId)"/>
             </template>
-            <split-root>
-              <template #content>
+<!--            <split-root>-->
+<!--              <template #content>-->
                 <server-content ref="serverContentList" :server="server"></server-content>
-              </template>
-            </split-root>
+<!--              </template>-->
+<!--            </split-root>-->
           </a-tab-pane>
         </template>
       </a-tabs>

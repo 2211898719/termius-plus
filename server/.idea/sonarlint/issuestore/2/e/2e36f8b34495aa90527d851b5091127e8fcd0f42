@@ -1,19 +1,12 @@
 
-b	java:S112e"FDefine and throw a dedicated exception instead of using a generic one.(ã™½Ü8íÉÂÄ1
+b	java:S112L"FDefine and throw a dedicated exception instead of using a generic one.(ã™½Ü8©–ÃçÅ1
 w
-java:S3008("URename this field "SessionSet" to match the regular expression '^[a-z][a-zA-Z0-9]*$'.(“™Øûùÿÿÿÿ8÷ÉÂÄ1
-G	java:S106#"+Replace this use of System.out by a logger.(±‹Ä8ûÉÂÄ1
-]	java:S1253"<This block of commented-out lines of code should be removed.(èÅÒàşÿÿÿÿ8Á´šÂÄ1
-j	java:S100v"NRename this method name to match the regular expression '^[a-z][a-zA-Z0-9]*$'.(ÙƒŠß8şÉÂÄ1
+java:S3008""URename this field "SessionSet" to match the regular expression '^[a-z][a-zA-Z0-9]*$'.(“™Øûùÿÿÿÿ8±–ÃçÅ1
+j	java:S100W"NRename this method name to match the regular expression '^[a-z][a-zA-Z0-9]*$'.(ÙƒŠß8·–ÃçÅ1
 H
-java:S1172­"*Remove this unused method parameter "msg".(„™¼´8ÊÂÄ1
-a
-java:S1854à">Remove this useless assignment to local variable "byteBuffer".(¢Äí·úÿÿÿÿ8ƒÊÂÄ1
+java:S1172"*Remove this unused method parameter "msg".(„™¼´8¹–ÃçÅ1
 D
-java:S1860ß"&Synchronize on a new "Object" instead.(í÷¿È8„ÊÂÄ1
-R
-java:S1481à"/Remove this unused "byteBuffer" local variable.(¢Äí·úÿÿÿÿ8„ÊÂÄ1
-M	java:S106â"+Replace this use of System.out by a logger.(…í¥µøÿÿÿÿ8„ÊÂÄ1
-F	java:S108ä")Either remove or fill this block of code.(ï­£Ä8„ÊÂÄ1
-N
-java:S1144Ÿ"+Remove this unused private "append" method.(€À²ôøÿÿÿÿ8„ÊÂÄ1
+java:S1860Ê"&Synchronize on a new "Object" instead.(í÷¿È8¼–ÃçÅ1
+Y	java:S125Ë"<This block of commented-out lines of code should be removed.(¹†Åƒ8¼–ÃçÅ1
+M
+java:S1144"+Remove this unused private "append" method.(€À²ôøÿÿÿÿ8¼–ÃçÅ1
