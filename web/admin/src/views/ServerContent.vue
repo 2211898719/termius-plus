@@ -7,6 +7,9 @@ import {commandApi} from "@/api/command";
 import PTerm from "@/components/p-term.vue";
 import "@/components/VueDragSplit/style.css";
 import VueDragSplit from "@/components/VueDragSplit/index.vue";
+import linuxDoc from "@/assets/linux-doc.json";
+
+let searchLinuxDoc = ref(JSON.parse(JSON.stringify(linuxDoc)))
 
 const activeTabKey = ref("");
 const windowList = ref([
@@ -90,7 +93,8 @@ const handleRequestFullscreen = () => {
 }
 
 const handleExecCommand = (command) => {
-  iframeRef.value.contentWindow.postMessage({command: command}, '*')
+  // iframeRef.value.contentWindow.postMessage({command: command}, '*')
+  PTermRef.value.execCommand(command)
 }
 
 const changeSftpEnable = () => {
@@ -113,6 +117,8 @@ const getCommandData = async () => {
   commandData.value = await commandApi.list()
 }
 
+let activeKey = ref("")
+
 getCommandData()
 
 defineExpose({
@@ -120,6 +126,29 @@ defineExpose({
   changeDir,
   server: props.server
 })
+
+let linuxDocSearch = ref("")
+//高亮搜索
+const handleChangeSearch = (e) => {
+  linuxDocSearch.value = e.target.value
+  let search = e.target.value
+  searchLinuxDoc.value = JSON.parse(JSON.stringify(linuxDoc))
+
+  searchLinuxDoc.value = searchLinuxDoc.value.filter(item => {
+    return item.title.includes(search) || item.des.includes(search)
+  })
+
+  //标题和描述按照关键字相似度排序
+  searchLinuxDoc.value.sort((a, b) => {
+    return (a.title+a.des).indexOf(search) - (b.title+b.des).indexOf(search)
+  })
+
+   searchLinuxDoc.value.forEach(item => {
+    item.title = item.title.replace(search, `<span style="color: #1890ff">${search}</span>`)
+    item.des = item.des.replace(search, `<span style="color: #1890ff">${search}</span>`)
+  })
+
+}
 
 
 </script>
@@ -195,7 +224,6 @@ defineExpose({
                     :generateWindowConfig="generateWindowConfig"
                     v-model:windowListSync="windowList"
                     v-model:activeTabKeySync="activeTabKey"
-
                 >
                   <template #Tab="win">
                     <p style="color: white; font-size: 12px">{{ win.label }}</p>
@@ -220,7 +248,6 @@ defineExpose({
                   </template>
                 </VueDragSplit>
 
-                <!--                <p-term class="ssh" :server="server" ref="PTermRef"></p-term>-->
                 <div style="position: absolute;right: 16px;top: calc(50% - 1em / 2);color: aliceblue;z-index: 100"
                      @click="remarkStatus=!remarkStatus">
                   <left-outlined :class="{'button-action':remarkStatus,'left':true}"/>
@@ -249,6 +276,7 @@ defineExpose({
                               {{ item.name }}
                             </template>
                             <template #avatar>
+
                               <mac-command-outlined style="color: #F6C445;"/>
                             </template>
                             <template #description>
@@ -260,8 +288,15 @@ defineExpose({
                                     </div>
                                   </div>
                                   <template #extra>
-                                    <check-circle-outlined style="color: #A0E548"
-                                                           @click="handleExecCommand(item.command)"/>
+                                    <a-popconfirm
+                                        title="确定执行吗?"
+                                        ok-text="Yes"
+                                        cancel-text="No"
+                                        @click.stop
+                                        @confirm="handleExecCommand(item.command)"
+                                    >
+                                    <a-button type="link">执行</a-button>
+                                    </a-popconfirm>
                                   </template>
                                 </a-collapse-panel>
                               </a-collapse>
@@ -270,6 +305,25 @@ defineExpose({
                         </a-list-item>
                       </template>
                     </a-list>
+                  </a-tab-pane>
+                  <a-tab-pane key="linux-doc" tab="Linux文档">
+                    <div class="linux-doc">
+                      <a-input-search class="search" @change="handleChangeSearch" allow-clear></a-input-search>
+                      <a-collapse v-model:activeKey="activeKey" accordion>
+                        <a-collapse-panel v-for="item in searchLinuxDoc" :key="item.title">
+                          <template #header>
+                            <div >
+                              <span class="title" v-html="item.title"></span>
+                              <span class="des" v-html="item.des"></span>
+                            </div>
+                          </template>
+                          <transition>
+                            <div v-html="item.body" v-if="activeKey===item.title">
+                            </div>
+                          </transition>
+                        </a-collapse-panel>
+                      </a-collapse>
+                    </div>
                   </a-tab-pane>
                 </a-tabs>
               </div>
@@ -341,6 +395,10 @@ defineExpose({
   max-width: none !important;
 }
 
+:deep(#split_window .split_view .split_content_wrapper .split_view_label_wrapper){
+  display: none;
+}
+
 :deep(#split_window .split_view .split_content_wrapper .split_view_label_wrapper .split_view_label_box .header_item p, #split_window .split_view .split_content_wrapper .split_view_label_wrapper .split_view_label_box .header_item span) {
   margin: 0;
   text-align: center;
@@ -366,4 +424,106 @@ defineExpose({
   background-color: #27664C !important;
 }
 
+:deep(.linux-doc) {
+  .search {
+    margin-bottom: 16px;
+  }
+
+  .title {
+
+  }
+
+  .des {
+    margin-left: 16px;
+    color: #00000040;
+  }
+
+  h1, h2, h3, h4, h5, h6, p {
+    margin-top: 8px;
+  }
+
+  .blockquote {
+
+  }
+
+  pre {
+    background: rgb(242, 242, 242);
+    color: rgb(102, 102, 102);
+    padding: 20px;
+  }
+
+  ul, ol {
+    list-style-position: inside;
+  }
+
+  pre code.hljs {
+    display: block;
+    overflow-x: auto;
+    padding: 1em
+  }
+
+  code.hljs {
+    padding: 3px 5px
+  }
+
+  .hljs {
+    background: #f3f3f3;
+    color: #444
+  }
+
+  .hljs-comment {
+    color: #697070
+  }
+
+  .hljs-punctuation, .hljs-tag {
+    color: #444a
+  }
+
+  .hljs-tag .hljs-attr, .hljs-tag .hljs-name {
+    color: #444
+  }
+
+  .hljs-attribute, .hljs-doctag, .hljs-keyword, .hljs-meta .hljs-keyword, .hljs-name, .hljs-selector-tag {
+    font-weight: 700
+  }
+
+  .hljs-deletion, .hljs-number, .hljs-quote, .hljs-selector-class, .hljs-selector-id, .hljs-string, .hljs-template-tag, .hljs-type {
+    color: #800
+  }
+
+  .hljs-section, .hljs-title {
+    color: #800;
+    font-weight: 700
+  }
+
+  .hljs-link, .hljs-operator, .hljs-regexp, .hljs-selector-attr, .hljs-selector-pseudo, .hljs-symbol, .hljs-template-variable, .hljs-variable {
+    color: #ab5656
+  }
+
+  .hljs-literal {
+    color: #695
+  }
+
+  .hljs-addition, .hljs-built_in, .hljs-bullet, .hljs-code {
+    color: #397300
+  }
+
+  .hljs-meta {
+    color: #1f7199
+  }
+
+  .hljs-meta .hljs-string {
+    color: #38a
+  }
+
+  .hljs-emphasis {
+    font-style: italic
+  }
+
+  .hljs-strong {
+    font-weight: 700
+  }
+}
+
 </style>
+

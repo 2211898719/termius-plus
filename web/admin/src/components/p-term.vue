@@ -166,6 +166,9 @@ const resizeTerminal = () => {
 defineExpose({
   reload: () => {
     initSocket();
+  },
+  execCommand: (command) => {
+    socket.send(command);
   }
 })
 

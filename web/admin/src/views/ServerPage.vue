@@ -10,7 +10,7 @@ import ProxyListPage from "@/views/ProxyListPage.vue";
 import SettingPage from "@/views/SettingPage.vue";
 import ServerContent from "@/views/ServerContent.vue";
 import SnippetListPage from "@/views/SnippetListPage.vue";
-import SplitRoot from "@/components/SplitRoot.vue";
+import PortForwarderPage from "@/views/PortForwarderPage.vue";
 
 let spinning = ref(false)
 
@@ -226,6 +226,9 @@ const proxyCreation = () => {
         </a-tab-pane>
         <a-tab-pane class="proxy-pane" tab="代理" key="proxy" :closable="false" :forceRender="true">
           <proxy-list-page ref="proxyListRef" @createSuccess="handleProxyCreateSuccess"></proxy-list-page>
+        </a-tab-pane>
+        <a-tab-pane tab="端口转发" key="portForwarder" :closable="false" :forceRender="true">
+          <port-forwarder-page></port-forwarder-page>
         </a-tab-pane>
         <a-tab-pane tab="命令" key="snippet" :closable="false" :forceRender="true">
           <snippet-list-page ref="snippetListRef" @createSuccess="handleProxyCreateSuccess"></snippet-list-page>
