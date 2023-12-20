@@ -28,17 +28,6 @@ services:
       - edu-admin
     depends_on:
       - server
-  webssh:
-    image: registry.cn-hangzhou.aliyuncs.com/education-portal/termius-plus:webssh-${VERSION:?error}
-    restart: unless-stopped
-    environment:
-      - TZ=Asia/Shanghai
-    ports:
-      - 8888:8888
-    networks:
-      - edu-admin
-    depends_on:
-      - server
 
   redis:
     image: redis:5
