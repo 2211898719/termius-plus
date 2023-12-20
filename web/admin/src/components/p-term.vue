@@ -23,21 +23,25 @@ let props = defineProps({
   },
 });
 
+let frontColor = useStorage('frontColor', "#ffffff")
+let backColor = useStorage('backColor', "#000000")
+
 let options = {
   rendererType: "canvas", //渲染类型canvas或者dom
-  // rows: this.rows, //行数
-  // cols: this.cols,// 设置之后会输入多行之后覆盖现象
-  // convertEol: true, //启用时，光标将设置为下一行的开头
+  // rows: 123, //行数
+  // cols: 321,// 设置之后会输入多行之后覆盖现象
+  convertEol: true, //启用时，光标将设置为下一行的开头
   // scrollback: 10,//终端中的回滚量
   fontSize: 14, //字体大小
   // disableStdin: false, //是否应禁用输入。
   // cursorStyle: "block", //光标样式
   cursorBlink: true, //光标闪烁
   // scrollback: 30,
-  // tabStopWidth: 4,
+  tabStopWidth: 1,
+  screenReaderMode: true,
   theme: {
-    foreground: props.foreground, //前景色
-    background: props.background, //背景色
+    foreground: frontColor.value, //前景色
+    background: backColor.value, //背景色
     cursor: "white" //设置光标
   }
 }
@@ -99,31 +103,34 @@ const initTerm = () => {
   nextTick(() => {
     resizeTerminal(term);
   });
+
+  if (props.server.autoSudo && props.server.username !== 'root') {
+    nextTick(() => {
+      execCommand("echo \"" + props.server.password + "\" | sudo -S ls && sudo -i\n")
+    })
+  }
+
+  if (props.server.firstCommand) {
+    nextTick(() => {
+      execCommand(props.server.firstCommand + "\n")
+    })
+  }
+
+  setInterval(() => {
+    execCommand("")
+  }, 1000 * 60 * 5);
 }
 
-let frontColor = useStorage('frontColor', "#ffffff")
-let backColor = useStorage('backColor', "#000000")
-
-watch(() => frontColor, () => {
-  if (term) {
-    term.setOption("theme", {
-      foreground: frontColor.value, //前景色
-      background: backColor.value, //背景色
-      cursor: "white" //设置光标
-    });
-  }
-})
-
-watch(() => backColor, () => {
-  console.log(123)
-  if (term) {
-    term.setOption("theme", {
-      foreground: frontColor.value, //前景色
-      background: backColor.value, //背景色
-      cursor: "white" //设置光标
-    });
-  }
-})
+let channel = new BroadcastChannel("theme")
+channel.onmessage = (e) => {
+  frontColor.value = e.data.frontColor
+  backColor.value = e.data.backColor
+  term.setOption("theme", {
+    foreground: frontColor.value, //前景色
+    background: backColor.value, //背景色
+    cursor: "white" //设置光标
+  });
+}
 
 const resizeTerminal = () => {
   let content = log.value;
@@ -163,13 +170,15 @@ const resizeTerminal = () => {
   });
 }
 
+const execCommand = (command) => {
+  socket.send(command);
+}
+
 defineExpose({
   reload: () => {
     initSocket();
   },
-  execCommand: (command) => {
-    socket.send(command);
-  }
+  execCommand
 })
 
 </script>
@@ -185,6 +194,6 @@ defineExpose({
 .console {
   width: 100%;
   height: 100%;
-  background-color: #060101;
+  background-color: #fff;
 }
 </style>

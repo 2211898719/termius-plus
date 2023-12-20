@@ -16,11 +16,6 @@ let spinning = ref(false)
 
 let serverContentList = ref(null)
 
-let currentServerContent = computed(() =>
-    serverContentList.value.find(item => item.server.operationId === tagActiveKey.value)
-)
-
-
 const handleOpenServer = (item) => {
   // spinning.value = true;
   let uuid = v4();
@@ -32,53 +27,6 @@ const handleOpenServer = (item) => {
   copyItem.operationId = uuid;
   serverList.value.push(copyItem)
   tagActiveKey.value = copyItem.operationId
-}
-
-
-//监听iframe加载完成，执行sudo等初始化命令
-window.onmessage = (e) => {
-  if (e.data.event === 'connected') {
-    spinning.value = false
-    let server = serverList.value.find(item => item.operationId === tagActiveKey.value)
-    if (!server) {
-      return;
-    }
-    if (server.autoSudo && server.username !== 'root') {
-      nextTick(() => {
-        currentServerContent.value.handleExecCommand("echo \"" + server.password + "\" | sudo -S ls && sudo -i")
-      })
-    }
-
-    if (server.firstCommand) {
-      nextTick(() => {
-        currentServerContent.value.handleExecCommand(server.firstCommand)
-      })
-    }
-
-    nextTick(() => {
-      //可以用来实现拖拽分屏
-      // createSortEl(document.getElementsByClassName('split-box')[0])
-    })
-  }
-
-  let rule = /^\/[^\0]+$/;
-  if (e.data.event === 'command') {
-    // 判断e.data.data是不是一个标准的linux路径 比如 /root , /home ，/var/www，如果是就保存下来留着sftp用
-    let command = e.data.data.replaceAll('\r\n', '')
-    if (rule.test(command)) {
-      console.log("监测到命令", command)
-      currentServerContent.value.changeDir(command)
-    }
-    // let data = e.data.data.split('\r\n')
-    // for (let i = 0; i < data.length; i++) {
-    //   if (rule.test(data[i])) {
-    //     // console.log("监测到命令",data[i])
-    //     currentServerContent.value.changeDir(data[i])
-    //     break
-    //   }
-    // }
-
-  }
 }
 
 onMounted(() => {

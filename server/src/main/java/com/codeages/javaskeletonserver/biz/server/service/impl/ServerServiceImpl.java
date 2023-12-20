@@ -258,7 +258,9 @@ public class ServerServiceImpl implements ServerService {
     public SSHClient createSSHClient(Long id) {
         ServerDto server = findById(id);
         SSHClient ssh = new SSHClient();
-
+        ssh.setTimeout(3600 * 1000);
+        ssh.setConnectTimeout(3600 * 1000);
+        ssh.getConnection().getKeepAlive().setKeepAliveInterval(60);
         //设置sshj代理
         if (server.getProxy() != null) {
             ssh.setSocketFactory(new SocketFactory() {

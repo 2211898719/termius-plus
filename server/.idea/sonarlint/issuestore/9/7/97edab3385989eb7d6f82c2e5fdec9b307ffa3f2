@@ -1,5 +1,5 @@
 
-b	java:S1126"FDefine and throw a dedicated exception instead of using a generic one.(¯ÇğÅ8éê½ıÇ1
-b	java:S112;"FDefine and throw a dedicated exception instead of using a generic one.(Õ‘á½8êê½ıÇ1
-n
-java:S2175V"QA "Map<Integer, PortForwarderDto>" cannot contain a "String" in a "Integer" type.(Ö¯µ½8ë½ıÇ1
+i
+java:S2095K"GUse try-with-resources or close this "SSHClient" in a "finally" clause.(ì³—àøÿÿÿÿ8‰‘§È1
+M
+java:S1068$"0Remove this unused "serverSocket" private field.(÷à×İ8è‘§È1

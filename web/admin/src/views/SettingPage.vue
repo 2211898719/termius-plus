@@ -4,13 +4,19 @@ import {message} from "ant-design-vue";
 import {ref} from "vue";
 import {useStorage} from "@vueuse/core";
 
-
-
 let frontColor = useStorage("frontColor", "#ffffff")
 let backColor = useStorage("backColor", "#000000")
 
+let channel = new BroadcastChannel("theme")
+
+channel.onmessage = (e) => {
+  frontColor.value = e.data.frontColor
+  backColor.value = e.data.backColor
+}
+
 //把样式保存到本地
 const saveStyle = () => {
+  channel.postMessage({frontColor: frontColor.value, backColor: backColor.value})
   message.success("保存成功");
 }
 

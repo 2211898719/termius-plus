@@ -65,3 +65,9 @@ S
 #web/admin/src/assets/linux-doc.json,e/b/eb09a5a044e412d193359c72b5b748348ad8eab1
 S
 #web/admin/src/components/p-sftp.vue,3/9/395dd4f36c3e537f7d17e0a8fd844f1b7de2d956
+S
+#web/admin/src/views/SettingPage.vue,f/6/f689747448fc2320bf4bb1aa5a340cec4a25abe2
+W
+'web/admin/src/components/p-cascader.vue,c/c/ccf7028413cb1f2caa12dabd083959f0f30406fa
+K
+web/admin/docker/nginx.conf,9/a/9a2d096f002e7aedc98944d1d982f7f9fa36a24e

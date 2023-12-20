@@ -14,7 +14,19 @@ import _ from "lodash";
 import PEnumSelect from "@/components/p-enum-select.vue";
 import OsEnum from "@/enums /OsEnum";
 
-const emit = defineEmits(['openServer', 'proxyCreation'])
+const emit = defineEmits(['openServer', 'proxyCreation', 'update:value', 'change'])
+
+const props = defineProps({
+  column: {
+    type: Number, default: 4,
+  },
+  select: {
+    type: Boolean, default: false,
+  },
+  value: {
+    type: [Object,String,Number], default: null,
+  }
+})
 
 const creationVisible = ref(false);
 const creationType = ref('create');
@@ -236,6 +248,12 @@ const handleDblclick = (item) => {
     return
   }
 
+  if (props.select) {
+    emit('update:value', item)
+    emit('change', item)
+    return
+  }
+
   if (item.os === OsEnum.WINDOWS.value) {
     windowsInfoVisible.value = true
     windowsInfoState.value = item
@@ -331,7 +349,6 @@ const downloadWindowsRdpConfig = (item) => {
 
   copyToClipboard(item.password)
   message.success("密码已复制到剪贴板");
-
 }
 
 defineExpose({
@@ -360,7 +377,7 @@ defineExpose({
             </div>
           </div>
           <div class="mt30 server">
-            <a-list :grid="{ gutter: 16, column: 4 }" :data-source="currentData" row-key="id">
+            <a-list :grid="{ gutter: 16, column: props.column }" :data-source="currentData" row-key="id">
               <template #renderItem="{ item }">
                 <a-dropdown :trigger="['contextmenu']">
                   <a-list-item class="sortEl" @dblclick="handleDblclick(item)">

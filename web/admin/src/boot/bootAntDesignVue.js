@@ -28,7 +28,9 @@ import {
     Popover,
     Modal,
     Collapse,
-    Cascader
+    Cascader,
+    Tag,
+    InputNumber
 } from 'ant-design-vue';
 import icons from '@/icons';
 
@@ -42,6 +44,7 @@ export function bootAntDesignVue(app) {
 
     app
         .use(Button)
+        .use(InputNumber)
         .use(Card)
         .use(Form)
         .use(Input)
@@ -68,5 +71,6 @@ export function bootAntDesignVue(app) {
         .use(Modal)
         .use(Cascader)
         .use(Collapse)
+        .use(Tag)
     ;
 }

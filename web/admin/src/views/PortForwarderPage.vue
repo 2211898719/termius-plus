@@ -3,33 +3,25 @@ import {defineEmits, defineExpose, reactive, ref, watch} from "vue";
 import {useForm} from "ant-design-vue/es/form";
 import {portForwardingApi} from "@/api/port-forwarding";
 import {message} from "ant-design-vue";
+import ServerListPage from "@/views/ServerListPage.vue";
 
 const creationPortForwardingType = ref('create');
 const creationPortForwardingState = reactive({
   forwardingName: "",
   localPort: "",
   serverId: "",
+  serverDto: {},
   remotePort: "",
 });
 
 const creationPortForwardingRules = reactive({
-  name: [
+  forwardingName: [
     {
       required: true,
       message: "请输入名称",
     }
   ],
-  ip: [
-    {
-      required: true,
-      message: "请输入host",
-    },
-    {
-      pattern: /^(?:(?:[0-9]{1,3}\.){3}[0-9]{1,3}|(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,})$/,
-      message: "host格式不正确"
-    }
-  ],
-  port: [
+  localPort: [
     {
       required: true,
       message: "请输入端口",
@@ -39,10 +31,20 @@ const creationPortForwardingRules = reactive({
       message: "端口格式不正确"
     }
   ],
-  type: [
+  remotePort: [
     {
       required: true,
-      message: "请选择类型",
+      message: "请输入端口",
+    },
+    {
+      pattern: /^\d+$/,
+      message: "端口格式不正确"
+    }
+  ],
+  serverId: [
+    {
+      required: true,
+      message: "请选择服务器",
     }
   ],
 });
@@ -87,7 +89,13 @@ const handlePortForwardingCreate = async () => {
     return false;
   }
 
-  let res = await portForwardingApi[creationPortForwardingType.value](creationPortForwardingState);
+  let res;
+  try {
+    res = await portForwardingApi[creationPortForwardingType.value](creationPortForwardingState);
+  } catch (e) {
+    message.error(e.message)
+    return
+  }
   emit('createSuccess', res)
   await getPortForwardingData();
 
@@ -105,6 +113,14 @@ const handleEditPortForwarding = (row) => {
 const portForwardingCreation = () => {
   portForwardingCreationVisible.value = true;
   creationPortForwardingType.value = 'create'
+}
+
+let selectServerVisible = ref(false);
+
+const handleSelectServer = (server) => {
+  creationPortForwardingState.serverId = server.id;
+  creationPortForwardingState.serverDto = server;
+  selectServerVisible.value = false;
 }
 
 defineExpose({
@@ -181,15 +197,30 @@ defineExpose({
               <a-input v-model:value="creationPortForwardingState.forwardingName"/>
             </a-form-item>
             <a-form-item label="本地端口：" v-bind="portForwardingCreationValidations.localPort">
-              <a-input v-model:value="creationPortForwardingState.localPort"/>
+              <a-input-number v-model:value="creationPortForwardingState.localPort" :min="8200" :max="8500"></a-input-number>
             </a-form-item>
             <a-form-item label="服务器：" v-bind="portForwardingCreationValidations.serverId">
-              <a-input v-model:value="creationPortForwardingState.serverId"/>
+              <div @click="selectServerVisible = true">
+              <span v-if="creationPortForwardingState.serverId">
+
+                <a-tag>{{ creationPortForwardingState.serverDto.name }}</a-tag>
+              </span>
+                <a-button v-else>选择服务器</a-button>
+              </div>
             </a-form-item>
             <a-form-item label="服务器端口：" v-bind="portForwardingCreationValidations.remotePort">
-              <a-input v-model:value="creationPortForwardingState.remotePort"/>
+              <a-input-number v-model:value="creationPortForwardingState.remotePort" :min="1" :max="65535"></a-input-number>
             </a-form-item>
           </a-form>
+          <a-drawer
+              v-model:visible="selectServerVisible"
+              :title="'选择服务器'"
+              placement="right"
+              width="80%"
+              size="large"
+          >
+            <server-list-page :column="4" @change="handleSelectServer" :select="true"></server-list-page>
+          </a-drawer>
         </a-drawer>
       </a-space>
     </div>

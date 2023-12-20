@@ -4,6 +4,8 @@ import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONUtil;
+import com.codeages.javaskeletonserver.biz.log.dto.CommandLogCreateParams;
+import com.codeages.javaskeletonserver.biz.log.service.CommandLogService;
 import com.codeages.javaskeletonserver.biz.server.service.ServerService;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -17,8 +19,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.Map;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
@@ -32,13 +34,13 @@ public class SshHandler {
 
     private static CopyOnWriteArraySet<Session> SessionSet = new CopyOnWriteArraySet<>();
 
-
     @OnOpen
     public void onOpen(javax.websocket.Session session, @PathParam("serverId") Long serverId) {
         SessionSet.add(session);
         int cnt = OnlineCount.incrementAndGet();
         log.info("有连接加入，当前连接数为：{},sessionId={}", cnt, session.getId());
         HandlerItem handlerItem = new HandlerItem(
+                serverId,
                 session,
                 SpringUtil.getBean(ServerService.class).createSSHClient(serverId)
         );
@@ -57,13 +59,15 @@ public class SshHandler {
     @OnMessage
     public void onMessage(String message, javax.websocket.Session session) throws Exception {
         HandlerItem handlerItem = HANDLER_ITEM_CONCURRENT_HASH_MAP.get(session.getId());
-        if (message.contains(EventType.RESIZE.name().toLowerCase())) {
+
+        try {
             MessageDto messageDto = MessageDto.parse(message);
             ResizeDto resizeDto = JSONUtil.toBean(messageDto.getData(), ResizeDto.class);
             handlerItem.reSize(resizeDto.getCols(), resizeDto.getRows(), resizeDto.getWidth(), resizeDto.getHeight());
             return;
+        } catch (Exception e) {
+            this.sendCommand(handlerItem, message);
         }
-        this.sendCommand(handlerItem, message);
     }
 
     @OnError
@@ -75,6 +79,7 @@ public class SshHandler {
     private void sendCommand(HandlerItem handlerItem, String data) throws Exception {
         if (handlerItem.checkInput(data)) {
             handlerItem.outputStream.write(data.getBytes());
+            handlerItem.append(data);
         } else {
             handlerItem.outputStream.write("没有执行相关命令权限".getBytes());
             handlerItem.outputStream.flush();
@@ -94,20 +99,24 @@ public class SshHandler {
 
     private class HandlerItem implements Runnable {
         private final javax.websocket.Session session;
+        private final Long serverId;
         private final InputStream inputStream;
         private final OutputStream outputStream;
         private final net.schmizz.sshj.connection.channel.direct.Session openSession;
         private final StringBuilder nowLineInput = new StringBuilder();
+        private final Map<Long, String> commandMap = new ConcurrentHashMap<>();
         private final net.schmizz.sshj.connection.channel.direct.Session.Shell shell;
-
+        private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
         @SneakyThrows
-        HandlerItem(javax.websocket.Session session, SSHClient sshClient) {
+        HandlerItem(Long serverId, javax.websocket.Session session, SSHClient sshClient) {
             this.session = session;
+            this.serverId = serverId;
 
-            net.schmizz.sshj.connection.channel.direct.Session shellSession = sshClient.startSession();
-            shellSession.allocateDefaultPTY();
             sshClient.useCompression();
+            net.schmizz.sshj.connection.channel.direct.Session shellSession = sshClient.startSession();
+            shellSession.allocatePTY("xterm", 80, 24, 640, 480, Map.of());
+            shellSession.setAutoExpand(true);
             this.shell = shellSession.startShell();
 
             this.inputStream = shell.getInputStream();
@@ -123,18 +132,20 @@ public class SshHandler {
          * @param msg 输入
          * @return 当前待确认待所有命令
          */
-        private String append(String msg) {
-            char[] x = msg.toCharArray();
-            if (x.length == 1 && x[0] == 127) {
-                // 退格键
-                int length = nowLineInput.length();
-                if (length > 0) {
-                    nowLineInput.delete(length - 1, length);
-                }
-            } else {
-                nowLineInput.append(msg);
-            }
-            return nowLineInput.toString();
+        private void append(String msg) {
+//            char[] x = msg.toCharArray();
+//            if (x.length == 1 && x[0] == 127) {
+//                // 退格键
+//                int length = nowLineInput.length();
+//                if (length > 0) {
+//                    nowLineInput.delete(length - 1, length);
+//                }
+//            } else {
+//                nowLineInput.append(msg);
+//            }
+//            log.info("当前输入：{}", nowLineInput);
+//            return nowLineInput.toString();
+            commandMap.put(System.currentTimeMillis(), msg);
         }
 
         public boolean checkInput(String msg) {
@@ -155,6 +166,11 @@ public class SshHandler {
                 IoUtil.close(this.outputStream);
                 this.shell.close();
                 this.openSession.close();
+                SpringUtil.getBean(CommandLogService.class).create(new CommandLogCreateParams(
+                        this.session.getId(),
+                        this.serverId,
+                        JSONUtil.toJsonStr(commandMap)
+                ));
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -184,10 +200,9 @@ public class SshHandler {
     public void destroy(javax.websocket.Session session) {
         HandlerItem handlerItem = HANDLER_ITEM_CONCURRENT_HASH_MAP.get(session.getId());
         if (handlerItem != null) {
-            IoUtil.close(handlerItem.inputStream);
-            IoUtil.close(handlerItem.outputStream);
-            handlerItem.openSession.close();
+            handlerItem.close();
         }
+
         IoUtil.close(session);
         HANDLER_ITEM_CONCURRENT_HASH_MAP.remove(session.getId());
     }
@@ -198,8 +213,7 @@ public class SshHandler {
             return;
         }
 
-        synchronized (session.getId()) {
-//            BinaryMessage byteBuffer = new BinaryMessage(msg.getBytes());
+        synchronized (session.getId().intern()) {
             try {
                 session.getBasicRemote().sendText(msg);
             } catch (IOException e) {
