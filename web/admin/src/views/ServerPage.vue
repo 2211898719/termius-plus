@@ -16,6 +16,13 @@ let spinning = ref(false)
 
 let serverContentList = ref(null)
 
+let tagActiveKey = ref()
+
+let serverList = ref([])
+
+let serverListRef = ref()
+let proxyListRef = ref()
+
 const handleOpenServer = (item) => {
   // spinning.value = true;
   let uuid = v4();
@@ -51,12 +58,7 @@ const onCloseServer = (item) => {
   }
 }
 
-let tagActiveKey = ref()
 
-let serverList = ref([])
-
-let serverListRef = ref()
-let proxyListRef = ref()
 
 const handleCopy = (server) => {
   handleOpenServer(server)

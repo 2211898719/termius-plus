@@ -229,22 +229,22 @@ const handleChangeSearch = (e) => {
                     <p style="color: white; font-size: 12px">{{ win.label }}</p>
                     <p></p>
                   </template>
-                  <!--    <template #CloseBtn>-->
-                  <!--      <span></span>-->
-                  <!--    </template>-->
-                  <!--                  <template #AddBtn>-->
-                  <!--                    <span></span>-->
-                  <!--                  </template>-->
-                  <!--    <template #TabActions>-->
-                  <!--      <span></span>-->
-                  <!--    </template>-->
-                  <!--    <template #placeHolder>-->
-                  <!--      <span></span>-->
-                  <!--    </template>-->
+                  <template #CloseBtn>
+                    <span></span>
+                  </template>
+                  <template #AddBtn>
+                    <span></span>
+                  </template>
+                  <template #TabActions>
+                    <span></span>
+                  </template>
+                  <template #placeHolder>
+                    <span></span>
+                  </template>
                   <template #TabView="win">
-                                      <span>
-                                            <p-term class="ssh" :server="server" ref="PTermRef"></p-term>
-                                      </span>
+                    <span>
+                      <p-term class="ssh" :server="server" ref="PTermRef"></p-term>
+                    </span>
                   </template>
                 </VueDragSplit>
 

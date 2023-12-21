@@ -48,9 +48,6 @@ public class ServerServiceImpl implements ServerService {
 
     private final ProxyService proxyService;
 
-    @Value("${webssh.url}")
-    private String websshUrl;
-
     public ServerServiceImpl(ServerRepository serverRepository, ServerMapper serverMapper, Validator validator,
                              ProxyService proxyService) {
         this.serverRepository = serverRepository;
@@ -192,15 +189,6 @@ public class ServerServiceImpl implements ServerService {
                                                            );
 
                                                            longTreeNode.setExtra(BeanUtil.beanToMap(e));
-                                                           String url = websshUrl +
-                                                                   "?hostname=" + e.getIp() +
-                                                                   "&username=" + e.getUsername() +
-                                                                   "&privatekey=" + URLUtil.encode(e.getKey()) +
-                                                                   "&port=" + e.getPort() +
-                                                                   "&password=" + encoder.encodeToString(e.getPassword()
-                                                                                                          .getBytes());
-
-                                                           longTreeNode.getExtra().put("url", url);
                                                            return longTreeNode;
                                                        })
                                                        .collect(Collectors.toList());
@@ -240,15 +228,6 @@ public class ServerServiceImpl implements ServerService {
             ProxyDto proxyDto = proxyIdProxyMap.get(proxyId);
             if (proxyDto != null) {
                 serverTree.put("proxy", proxyDto);
-                String url = (String) serverTree.get("url");
-
-                url += "&proxyType=" + proxyDto.getType().getCode() +
-                        "&proxyIp=" + proxyDto.getIp() +
-                        "&proxyPort=" + proxyDto.getPort() +
-                        "&proxyRdns=true" +
-                        "&proxyUser=" + proxyDto.getUsername() +
-                        "&proxyPass=" + proxyDto.getPassword();
-                serverTree.put("url", url);
             }
         }
 

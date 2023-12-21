@@ -5,39 +5,55 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="0de18e6e-97dd-4171-a773-cfeff3460ad8" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/api/admin/CommandLogController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/log/dto/CommandLogCreateParams.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/log/dto/CommandLogDto.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/log/dto/CommandLogSearchParams.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/log/dto/CommandLogUpdateParams.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/log/entity/CommandLog.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/log/mapper/CommandLogMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/log/repository/CommandLogRepository.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/log/service/CommandLogService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/log/service/impl/CommandLogServiceImpl.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../web/admin/src/components/p-cascader.vue" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../.idea/sonarlint/issuestore/9/7/97273d2c0a540376d36c80b3d3051d449b03b9cb" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../.idea/sonarlint/issuestore/b/3/b36cb4dfc3086409d9d160f8284648f2b56a5b3c" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../.idea/sonarlint/issuestore/c/7/c72de7bf9c8094132e608164a4a24c3e3e22fca0" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../.idea/sonarlint/securityhotspotstore/1/d/1da6861b1d7c432eb167e9a7a18e4d95fc4e651c" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../.idea/sonarlint/securityhotspotstore/8/d/8dced2763e8b7dc8870f51251de4bb2655143073" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../.idea/sonarlint/securityhotspotstore/9/7/97273d2c0a540376d36c80b3d3051d449b03b9cb" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../.idea/sonarlint/securityhotspotstore/b/3/b36cb4dfc3086409d9d160f8284648f2b56a5b3c" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../.idea/sonarlint/securityhotspotstore/c/7/c72de7bf9c8094132e608164a4a24c3e3e22fca0" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../scripts/docker/mysql-data/binlog.000003" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../scripts/docker/mysql-data/binlog.000004" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../scripts/docker/mysql-data/binlog.000005" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../scripts/docker/mysql-data/binlog.000006" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../scripts/docker/mysql-data/binlog.000007" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../scripts/docker/mysql-data/termius@002dplus/command_log.ibd" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/2/f/2f56536b5519fd41094d52f51bb5093ab8249b0a" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/sonarlint/securityhotspotstore/2/f/2f56536b5519fd41094d52f51bb5093ab8249b0a" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../.idea/sonarlint/issuestore/1/c/1c0a5a2a26a86d077e1beb0044a039bb290cc6d5" beforeDir="false" afterPath="$PROJECT_DIR$/../.idea/sonarlint/issuestore/1/c/1c0a5a2a26a86d077e1beb0044a039bb290cc6d5" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../.idea/sonarlint/issuestore/e/9/e96fd5e75e2928c8ac4ac37cd475dad413d3c21c" beforeDir="false" afterPath="$PROJECT_DIR$/../.idea/sonarlint/issuestore/e/9/e96fd5e75e2928c8ac4ac37cd475dad413d3c21c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../.idea/sonarlint/issuestore/index.pb" beforeDir="false" afterPath="$PROJECT_DIR$/../.idea/sonarlint/issuestore/index.pb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../.idea/sonarlint/securityhotspotstore/index.pb" beforeDir="false" afterPath="$PROJECT_DIR$/../.idea/sonarlint/securityhotspotstore/index.pb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../scripts/docker/.env" beforeDir="false" afterPath="$PROJECT_DIR$/../scripts/docker/.env" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../scripts/docker/mysql-data/#ib_16384_0.dblwr" beforeDir="false" afterPath="$PROJECT_DIR$/../scripts/docker/mysql-data/#ib_16384_0.dblwr" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../scripts/docker/mysql-data/#innodb_redo/#ib_redo10" beforeDir="false" afterPath="$PROJECT_DIR$/../scripts/docker/mysql-data/#innodb_redo/#ib_redo10" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../scripts/docker/mysql-data/#innodb_redo/#ib_redo41_tmp" beforeDir="false" afterPath="$PROJECT_DIR$/../scripts/docker/mysql-data/#innodb_redo/#ib_redo41_tmp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../scripts/docker/mysql-data/binlog.index" beforeDir="false" afterPath="$PROJECT_DIR$/../scripts/docker/mysql-data/binlog.index" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../scripts/docker/mysql-data/ib_buffer_pool" beforeDir="false" afterPath="$PROJECT_DIR$/../scripts/docker/mysql-data/ib_buffer_pool" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../scripts/docker/mysql-data/ibdata1" beforeDir="false" afterPath="$PROJECT_DIR$/../scripts/docker/mysql-data/ibdata1" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../scripts/docker/mysql-data/mysql.ibd" beforeDir="false" afterPath="$PROJECT_DIR$/../scripts/docker/mysql-data/mysql.ibd" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../scripts/docker/mysql-data/termius@002dplus/flyway_schema_history.ibd" beforeDir="false" afterPath="$PROJECT_DIR$/../scripts/docker/mysql-data/termius@002dplus/flyway_schema_history.ibd" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../scripts/docker/mysql-data/undo_001" beforeDir="false" afterPath="$PROJECT_DIR$/../scripts/docker/mysql-data/undo_001" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../scripts/docker/mysql-data/undo_002" beforeDir="false" afterPath="$PROJECT_DIR$/../scripts/docker/mysql-data/undo_002" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources/7a2d8a16-7a99-4d59-9724-de92db928614.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/7a2d8a16-7a99-4d59-9724-de92db928614.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources/7a2d8a16-7a99-4d59-9724-de92db928614/storage_v2/_src_/schema/termius-plus.TJMRtA.meta" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/7a2d8a16-7a99-4d59-9724-de92db928614/storage_v2/_src_/schema/termius-plus.TJMRtA.meta" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/easyCodeTableSetting.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/easyCodeTableSetting.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/2/e/2e36f8b34495aa90527d851b5091127e8fcd0f42" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/2/e/2e36f8b34495aa90527d851b5091127e8fcd0f42" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/6/3/63b0726c17d3430806c020828500208ed179743f" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/6/3/63b0726c17d3430806c020828500208ed179743f" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/9/7/97edab3385989eb7d6f82c2e5fdec9b307ffa3f2" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/9/7/97edab3385989eb7d6f82c2e5fdec9b307ffa3f2" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/3/2/3217179cd71990472bcf8d9c7ca636e6c2fbc737" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/3/2/3217179cd71990472bcf8d9c7ca636e6c2fbc737" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/9/a/9adb1d5ce8b756dee3d57e2d99d63334c7a87194" beforeDir="false" afterPath="$PROJECT_DIR$/../.idea/sonarlint/issuestore/1/d/1da6861b1d7c432eb167e9a7a18e4d95fc4e651c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/c/a/ca73be8043833776a2f1ea08d02567654fb998e9" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/c/a/ca73be8043833776a2f1ea08d02567654fb998e9" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/index.pb" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/index.pb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/securityhotspotstore/9/a/9adb1d5ce8b756dee3d57e2d99d63334c7a87194" beforeDir="false" afterPath="$PROJECT_DIR$/../.idea/sonarlint/issuestore/8/d/8dced2763e8b7dc8870f51251de4bb2655143073" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/sonarlint/securityhotspotstore/index.pb" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/securityhotspotstore/index.pb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/impl/PortForWardingServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/impl/PortForWardingServiceImpl.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/impl/ServerServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/impl/ServerServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/ws/SshHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/ws/SshHandler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../web/admin/src/boot/bootAntDesignVue.js" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/boot/bootAntDesignVue.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../web/admin/src/components/p-term.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/components/p-term.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../web/admin/src/views/PortForwarderPage.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/views/PortForwarderPage.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../web/admin/src/views/ServerListPage.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/views/ServerListPage.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/src/components/VueDragSplit/components/index.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/components/VueDragSplit/components/index.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/src/components/VueDragSplit/components/pane.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/components/VueDragSplit/components/pane.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/src/components/VueDragSplit/index.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/components/VueDragSplit/index.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/src/views/ServerContent.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/views/ServerContent.vue" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../web/admin/src/views/ServerPage.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/views/ServerPage.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../web/admin/src/views/SettingPage.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/views/SettingPage.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/src/views/SystemLogPage.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/views/SystemLogPage.vue" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -137,8 +153,8 @@
   <component name="RunAnythingCache">
     <option name="myCommands">
       <command value="mvn clean" />
-      <command value="mvn compile jib:build  -Djib.to.auth.username=洪俊龙哈哈1  -Djib.to.auth.password=z13867013469[" />
       <command value="mvn compile" />
+      <command value="mvn compile jib:build  -Djib.to.auth.username=洪俊龙哈哈1  -Djib.to.auth.password=z13867013469[" />
     </option>
   </component>
   <component name="RunManager" selected="Spring Boot.JavaSkeletonServerApplication">
@@ -224,7 +240,8 @@
       <workItem from="1702863265884" duration="269000" />
       <workItem from="1702864398112" duration="11793000" />
       <workItem from="1702949233154" duration="10442000" />
-      <workItem from="1703036495398" duration="11201000" />
+      <workItem from="1703036495398" duration="12691000" />
+      <workItem from="1703122876227" duration="3017000" />
     </task>
     <servers />
   </component>

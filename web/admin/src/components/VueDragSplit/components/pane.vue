@@ -4,8 +4,8 @@
     </div>
 </template>
 <script setup>
-import { ref, toRefs } from "@vue/reactivity";
-import { watch } from "@vue/runtime-core";
+import {ref, watch} from "vue";
+
 const props = defineProps({
     split: {
         validator(value) {
@@ -15,9 +15,8 @@ const props = defineProps({
     },
 });
 const classes = ref("");
-const { split } = toRefs(props);
 watch(
-    split,
+    () => props.split,
     (nv) => {
         classes.value = nv;
     },

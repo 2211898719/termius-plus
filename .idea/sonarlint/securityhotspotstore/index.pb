@@ -75,3 +75,13 @@ Q
 !web/admin/docker/.env.placeholder,2/d/2d998acb03be971c83134f62eb11510032c75681
 g
 7web/admin/docker/99-replace-vue-env-var-placeholders.sh,f/2/f2085af3728d8e83c8f9e7a28d6f30f49d1d0cad
+Q
+!web/admin/src/views/LoginPage.vue,c/7/c72de7bf9c8094132e608164a4a24c3e3e22fca0
+U
+%web/admin/src/views/SystemLogPage.vue,9/7/97273d2c0a540376d36c80b3d3051d449b03b9cb
+T
+$web/admin/src/views/UserRolePage.vue,8/d/8dced2763e8b7dc8870f51251de4bb2655143073
+P
+ web/admin/src/views/UserPage.vue,1/d/1da6861b1d7c432eb167e9a7a18e4d95fc4e651c
+G
+web/admin/vue.config.js,b/3/b36cb4dfc3086409d9d160f8284648f2b56a5b3c

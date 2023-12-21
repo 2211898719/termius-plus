@@ -183,5 +183,5 @@ Rsrc/main/java/com/codeages/javaskeletonserver/biz/log/mapper/CommandLogMapper.j
 Tsrc/main/java/com/codeages/javaskeletonserver/biz/log/service/CommandLogService.java,5/3/53e911cfef57921057399ef5f1dcbbb1c9088b9f
 ç
 ]src/main/java/com/codeages/javaskeletonserver/biz/log/service/impl/CommandLogServiceImpl.java,a/0/a0b01d0c1ae0fa2b8cc8689208908aee2486938a
-ä
-Zsrc/main/java/com/codeages/javaskeletonserver/biz/log/controller/CommandLogController.java,9/a/9adb1d5ce8b756dee3d57e2d99d63334c7a87194
+Å
+Qsrc/main/java/com/codeages/javaskeletonserver/api/admin/CommandLogController.java,2/f/2f56536b5519fd41094d52f51bb5093ab8249b0a

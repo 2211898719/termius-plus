@@ -123,6 +123,16 @@ const handleSelectServer = (server) => {
   selectServerVisible.value = false;
 }
 
+
+const handleCloseServer = (item) => {
+  portForwardingApi.stop({localPort: item.localPort}).then(() => {
+    message.success("操作成功");
+    getPortForwardingData()
+  }).catch(e => {
+    message.error(e.message)
+  })
+}
+
 defineExpose({
   portForwardingCreation
 })
@@ -147,6 +157,7 @@ defineExpose({
           <div class="mt30 server">
             <a-list :grid="{ gutter: 16, column: 4 }" :data-source="portForwardingData" row-key="id">
               <template #renderItem="{ item }">
+                <a-dropdown :trigger="['contextmenu']">
                 <a-list-item>
                   <template #actions>
                     <a key="list-loadmore-edit">
@@ -170,6 +181,15 @@ defineExpose({
                   </a-card>
 
                 </a-list-item>
+                  <template #overlay>
+                    <a-menu>
+                      <a-menu-item key="close" @click="handleCloseServer(item)">
+                        <DeleteOutlined/>
+                        关闭
+                      </a-menu-item>
+                    </a-menu>
+                  </template>
+                </a-dropdown>
               </template>
             </a-list>
           </div>

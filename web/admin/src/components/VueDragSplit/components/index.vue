@@ -37,7 +37,7 @@
 <script setup>
 import Resizer from "./resizer.vue"
 import Pane from "./pane.vue";
-import { ref, toRefs, watch } from "vue-demi";
+import { ref, watch } from "vue";
 
 const props = defineProps({
     layout: {
@@ -59,7 +59,7 @@ const props = defineProps({
         required: true,
     },
 });
-const { layout, minPercent, defaultPercent, split } = toRefs(props);
+// const { layout, minPercent, defaultPercent, split } = toRefs(props);
 
 const type = ref("width");
 const resizeType = ref("left");
@@ -67,7 +67,7 @@ const resizing = ref(false);
 const percent = ref(50);
 
 watch(
-    split,
+    ()=>props.split,
     (nv) => {
         type.value = nv === "horizontal" ? "width" : "height";
         resizeType.value = nv === "horizontal" ? "left" : "top";
@@ -75,7 +75,7 @@ watch(
     { immediate: true }
 );
 watch(
-    defaultPercent,
+    ()=>props.defaultPercent,
     (nv) => {
         percent.value = nv;
     },
@@ -110,7 +110,7 @@ function onMouseMove(e) {
     if (!resizing.value) return;
     let offset = 0;
     let target = e.currentTarget;
-    if (split.value === "horizontal") {
+    if (props.split === "horizontal") {
         while (target) {
             offset += target.offsetLeft;
             target = target.offsetParent;
@@ -121,14 +121,14 @@ function onMouseMove(e) {
             target = target.offsetParent;
         }
     }
-    const currentPage = split.value === "horizontal" ? e.pageX : e.pageY;
+    const currentPage = props.split === "horizontal" ? e.pageX : e.pageY;
     const targetOffset =
-        split.value === "horizontal"
+        props.split === "horizontal"
             ? e.currentTarget.offsetWidth
             : e.currentTarget.offsetHeight;
     const _percent =
         Math.floor(((currentPage - offset) / targetOffset) * 10000) / 100;
-    if (_percent > minPercent.value && _percent < 100 - minPercent.value) {
+    if (_percent > props.minPercent && _percent < 100 - props.minPercent) {
         percent.value = _percent;
     }
 

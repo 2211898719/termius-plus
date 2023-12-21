@@ -14,7 +14,7 @@
 </template>
 
 <script setup>
-import {getCurrentInstance, h, nextTick, onMounted, reactive, ref, render, useSlots, watch} from "vue";
+import {getCurrentInstance, h, onMounted, reactive, ref, render, useSlots, watch} from "vue";
 import {
   dropPositionMap,
   formatInsetCss,
@@ -27,10 +27,6 @@ import blank from "@/components/p-blank.vue";
 
 
 const componentIns = getCurrentInstance();
-
-nextTick(() => {
-  console.log(componentIns);
-});
 
 const {AddBtn, CloseBtn, Tab, TabActions, TabView} = useSlots();
 
@@ -446,13 +442,10 @@ function addTabEl(tabWrapper, tab) {
     tabWrapper.appendChild(tab);
   }
 
-  // console.log("tabWrapper :>> ", [tabWrapper]);
-  // console.log("tabWrapper :>> ", [tabWrapper.parentElement]);
 }
 
 // 创建布局 移动目标dom
 function createAndMove(target, dragData) {
-  console.log("split_view_label_wrapper :>> ", split_view_label_wrapper);
   let targetElClass = ".horizontal.split_pane";
   let targetPane = getParentElByClname(target, "split_pane");
   let dropSplitViewViewWrapper = getParentElByClname(target, "split_container");
@@ -535,7 +528,7 @@ const templateLabel = (win) => {
   );
 };
 const templateContent = (win) => {
-  let res= h(
+  let res = h(
       blank,
       {
         class: "split_view_content",
@@ -576,8 +569,7 @@ const templateSplitView = (label, content) => {
           {
             class: "split_view_label_wrapper flex",
             ondragover: handleDragOver,
-            ondrop: handleDragDrop,
-            ref: split_view_label_wrapper
+            ondrop: handleDragDrop
           },
           [
             // h(
@@ -620,8 +612,7 @@ const templateSplitView = (label, content) => {
           {
             class: "split_view_content_wrapper",
             ondragover: handleDragOver,
-            ondrop: handleDragDrop,
-            ref: split_view_content_wrapper
+            ondrop: handleDragDrop
           },
           [content]
       )
@@ -642,7 +633,7 @@ const templateLayout = (win) => {
       },
       {paneL: () => split_view}
   );
-  paneVnode.appContext = componentIns.appContext;
+  // paneVnode.appContext = componentIns.appContext;
   return paneVnode;
 };
 
@@ -650,10 +641,6 @@ const templateLayout = (win) => {
 function scrollLabelBox(e, direction = "pre") {
   const labelParentWrapper = getParentElByClname(e.target, "split_view_label_wrapper");
   const labelWrapper = labelParentWrapper.querySelector(".split_view_label_box.flex");
-  // console.log("labelWrapper :>> ", labelWrapper);
-  // console.log("offsetX :>> ", labelWrapper.offsetX);
-  // console.log("left :>> ", labelWrapper.left);
-  // console.log("getBoundingClientRect :>> ", labelWrapper.getBoundingClientRect());
   switch (direction) {
     case "pre":
       labelWrapper.style.transform = `translateX(200px)`;
@@ -696,7 +683,6 @@ function newWindow(win) {
         tabKeyEl,
         "split_content_wrapper"
     );
-    console.log("splitContainer :>> ",)
 
     addTabEl(
         splitContentWrapper.querySelector(".split_view_label_wrapper.flex"),
@@ -706,7 +692,6 @@ function newWindow(win) {
     splitContentWrapper
         .querySelector(".split_view_content_wrapper")
         .appendChild(vnode2dom(templateContent(win)));
-  // .appendChild(vnode2dom(templateLayout(win)).querySelector(".split_view_content_wrapper"));
   }
   activeTab(win.key);
 }
@@ -865,6 +850,7 @@ export default {
 </script>
 <style lang="less">
 @import "style.css";
+
 #split_window {
   width: 100%;
   height: 100%;

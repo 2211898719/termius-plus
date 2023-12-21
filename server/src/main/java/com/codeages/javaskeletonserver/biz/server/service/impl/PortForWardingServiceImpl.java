@@ -14,6 +14,7 @@ import net.schmizz.sshj.connection.channel.direct.LocalPortForwarder;
 import net.schmizz.sshj.connection.channel.direct.Parameters;
 import net.schmizz.sshj.connection.channel.forwarded.RemotePortForwarder;
 import net.schmizz.sshj.connection.channel.forwarded.SocketForwardingConnectListener;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
@@ -36,6 +37,9 @@ public class PortForWardingServiceImpl implements PortForWardingService {
     private final ServerSocket serverSocket;
 
     private final Map<Integer, PortForwarderDto> localPortForwarderMap;
+
+    @Value("${current.ip}")
+    private String currentIp;
 
     public PortForWardingServiceImpl(ServerService serverService,
                                      HttpServletRequest httpServletRequest,
@@ -74,7 +78,7 @@ public class PortForWardingServiceImpl implements PortForWardingService {
 
         LocalPortForwarder localPortForwarder = serverService.createSSHClient(serverId)
                                                              .newLocalPortForwarder(new Parameters(
-                                                                     httpServletRequest.getRemoteHost(),
+                                                                     currentIp,
                                                                      localPort,
                                                                      serverDto.getIp(),
                                                                      remotePort
@@ -86,6 +90,11 @@ public class PortForWardingServiceImpl implements PortForWardingService {
                 }, "测试"));
             } catch (IOException e) {
                 log.error("端口转发失败", e);
+                try {
+                    localPortForwarder.close();
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
                 localPortForwarderMap.remove(localPort);
             }
         });
@@ -97,7 +106,7 @@ public class PortForWardingServiceImpl implements PortForWardingService {
                         forwardingName,
                         localPortForwarder,
                         localPort,
-                        httpServletRequest.getRemoteHost(),
+                        currentIp,
                         remotePort,
                         serverId,
                         serverDto

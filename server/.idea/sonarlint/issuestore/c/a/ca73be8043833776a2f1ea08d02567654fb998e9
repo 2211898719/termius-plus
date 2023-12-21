@@ -1,14 +1,14 @@
 
+g
+java:S2095­"DUse try-with-resources or close this "Socket" in a "finally" clause.(‚úßıÿÿÿÿ8¯ü”¿Ã1
 j
 java:S2095„"GUse try-with-resources or close this "SSHClient" in a "finally" clause.(şüìøÿÿÿÿ8®ü”¿Ã1
 g
-java:S2095«"DUse try-with-resources or close this "Socket" in a "finally" clause.(‚úßıÿÿÿÿ8¯ü”¿Ã1
+java:S2095œ"DUse try-with-resources or close this "Socket" in a "finally" clause.(‚úßıÿÿÿÿ8¯ü”¿Ã1
 g
-java:S2095š"DUse try-with-resources or close this "Socket" in a "finally" clause.(‚úßıÿÿÿÿ8¯ü”¿Ã1
+java:S2095’"DUse try-with-resources or close this "Socket" in a "finally" clause.(‚úßıÿÿÿÿ8¯ü”¿Ã1
 g
-java:S2095"DUse try-with-resources or close this "Socket" in a "finally" clause.(‚úßıÿÿÿÿ8¯ü”¿Ã1
-g
-java:S2095¡"DUse try-with-resources or close this "Socket" in a "finally" clause.(‚úßıÿÿÿÿ8¯ü”¿Ã1
+java:S2095£"DUse try-with-resources or close this "Socket" in a "finally" clause.(‚úßıÿÿÿÿ8¯ü”¿Ã1
 g
 java:S3252|"JUse static access with "cn.hutool.core.collection.CollUtil" for "isEmpty".(­ßû˜8µü”¿Ã1
 k
@@ -18,6 +18,6 @@ java:S3252Æ"GUse static access with "cn.hutool.core.net.URLEncodeUtil" for "en
 h
 java:S3252Û"JUse static access with "cn.hutool.core.collection.CollUtil" for "isEmpty".(‚äÕ§8ºü”¿Ã1
 X
-java:S1161Š":Add the "@Override" annotation above this method signature(ÆĞæ–8¿ü”¿Ã1
+java:S1161Œ":Add the "@Override" annotation above this method signature(ÆĞæ–8¿ü”¿Ã1
 r
-java:S3252¶"OUse static access with "cn.hutool.core.text.CharSequenceUtil" for "isNotBlank".(Ü¡›¨ÿÿÿÿÿ8Âü”¿Ã1
+java:S3252¸"OUse static access with "cn.hutool.core.text.CharSequenceUtil" for "isNotBlank".(Ü¡›¨ÿÿÿÿÿ8Âü”¿Ã1

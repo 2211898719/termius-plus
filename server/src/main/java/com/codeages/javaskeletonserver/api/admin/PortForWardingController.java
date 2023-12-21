@@ -33,8 +33,8 @@ public class PortForWardingController {
     }
 
     @PostMapping("/stop")
-    public void stopPortForwarding(@RequestParam Integer localPort) {
-        portForWardingService.stopPortForwarding(localPort);
+    public void stopPortForwarding(@RequestBody PortForwarderDto portForwarderDto) {
+        portForWardingService.stopPortForwarding(portForwarderDto.getLocalPort());
     }
 
     @GetMapping("/isRunning")
