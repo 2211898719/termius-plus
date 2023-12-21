@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.codeages</groupId>
 	<artifactId>java-skeleton-project</artifactId>
-	<version>v1.0.3</version>
+	<version>v1.0.4</version>
 	<name>java-skeleton-project</name>
 	<description>Java Skeleton Project</description>
 	<properties>
