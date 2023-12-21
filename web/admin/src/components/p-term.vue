@@ -31,7 +31,7 @@ let options = {
   // rows: 123, //行数
   // cols: 321,// 设置之后会输入多行之后覆盖现象
   convertEol: true, //启用时，光标将设置为下一行的开头
-  // scrollback: 10,//终端中的回滚量
+  scrollback: 50000,//终端中的回滚量
   fontSize: 14, //字体大小
   // disableStdin: false, //是否应禁用输入。
   // cursorStyle: "block", //光标样式

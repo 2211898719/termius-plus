@@ -85,3 +85,9 @@ P
  web/admin/src/views/UserPage.vue,1/d/1da6861b1d7c432eb167e9a7a18e4d95fc4e651c
 G
 web/admin/vue.config.js,b/3/b36cb4dfc3086409d9d160f8284648f2b56a5b3c
+C
+web/admin/yarn.lock,9/b/9bb55845423c1cab0887942c33ba9ec2aad63d19
+S
+#web/admin/src/views/CronJobPage.vue,7/6/76c9497d1056c01abf09361aa580350d3fd77376
+K
+web/admin/src/api/quartz.js,5/0/5029f43ff486d40ae0601eee60f37d89f7d39ab7

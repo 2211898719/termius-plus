@@ -11,6 +11,7 @@ import SettingPage from "@/views/SettingPage.vue";
 import ServerContent from "@/views/ServerContent.vue";
 import SnippetListPage from "@/views/SnippetListPage.vue";
 import PortForwarderPage from "@/views/PortForwarderPage.vue";
+import CronJobPage from "@/views/CronJobPage.vue";
 
 let spinning = ref(false)
 
@@ -180,7 +181,10 @@ const proxyCreation = () => {
         <a-tab-pane tab="端口转发" key="portForwarder" :closable="false" :forceRender="true">
           <port-forwarder-page></port-forwarder-page>
         </a-tab-pane>
-        <a-tab-pane tab="命令" key="snippet" :closable="false" :forceRender="true">
+        <a-tab-pane tab="定时任务" key="cronJob" :closable="false" :forceRender="true">
+          <cron-job-page></cron-job-page>
+        </a-tab-pane>
+        <a-tab-pane tab="命令片段" key="snippet" :closable="false" :forceRender="true">
           <snippet-list-page ref="snippetListRef" @createSuccess="handleProxyCreateSuccess"></snippet-list-page>
         </a-tab-pane>
         <a-tab-pane class="setting-pane" tab="设置" key="setting" :closable="false" :forceRender="true">

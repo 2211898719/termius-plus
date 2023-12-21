@@ -1,0 +1,90 @@
+app:
+    secret: java_skeleton_dev_secret
+cache:
+    namespace: skeleton
+    ttl: 7200
+current:
+    ip: ${CURRENT_IP:0.0.0.0}
+file:
+    dir: ${FILE_DIR:/var/www/data}
+queue:
+    mock: true
+    rocketmq:
+        delay-consumer-group: skeleton_delay_consumer
+        delay-topic: skeleton_delay
+        normal-consumer-group: skeleton_normal_consumer
+        normal-topic: skeleton_normal
+        orderly-consumer-group: skeleton_orderly_consumer
+        orderly-topic: skeleton_orderly
+rocketmq:
+    producer:
+        group: skeleton
+server:
+    forward-headers-strategy: native
+    port: 8080
+    servlet:
+        session:
+            timeout: 1200
+spring:
+    application:
+        name: termius-plus
+    config:
+        import: optional:file:.env[.properties]
+    datasource:
+        password: ${DB_PASSWORD:root}
+        url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:termius-plus}?characterEncoding=utf-8
+        username: ${DB_USER:root}
+    dinger:
+        dingers:
+            dingtalk:
+                secret: ${DINGTALK_SECRET}
+                token-id: ${DINGTALK_TOKEN_ID}
+        project-id: ${spring.application.name}
+    flyway:
+        out-of-order: true
+    jpa:
+        open-in-view: false
+    profiles:
+        active: dev
+    quartz:
+        # 使用数据库存储
+        job-store-type: jdbc
+        # 初始化完成后自动启动调度程序
+        autoStartup: true
+        jdbc:
+            initialize-schema: EMBEDDED
+        properties:
+            org:
+                quartz:
+                    # 调度器配置
+                    scheduler:
+                        instanceName: Message_Job_Scheduler
+                        instanceId: AUTO
+                    # 存储配置
+                    jobStore:
+                        class: org.springframework.scheduling.quartz.LocalDataSourceJobStore
+                        driverDelegateClass: org.quartz.impl.jdbcjobstore.StdJDBCDelegate
+                        tablePrefix: QRTZ_
+                        isClustered: true
+                        misfireThreshold: 12000
+                        clusterCheckinInterval: 15000
+                        useProperties: false
+                        dataSource: ${DB_NAME:education_portal}
+                    # 线程池配置
+                    threadPool:
+                        threadNamePrefix: Message_Job_Pool
+                        threadPriority: 30
+                        threadCount: 50
+                        class: org.quartz.simpl.SimpleThreadPool
+                        threadsInheritContextClassLoaderOfInitializingThread: true
+    redis:
+        database: ${REDIS_DATABASE:0}
+        host: ${REDIS_HOST:localhost}
+        password: ${REDIS_PASSWORD:}
+        port: ${REDIS_PORT:6379}
+        timeout: 3000
+    servlet:
+        multipart:
+            enabled: true
+            max-file-size: 1000MB
+            max-request-size: 1000MB

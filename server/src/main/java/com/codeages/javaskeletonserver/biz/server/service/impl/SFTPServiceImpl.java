@@ -9,6 +9,9 @@ import com.codeages.javaskeletonserver.biz.server.dto.SFTPBean;
 import com.codeages.javaskeletonserver.biz.server.service.SFTPService;
 import com.codeages.javaskeletonserver.biz.server.service.ServerService;
 import com.codeages.javaskeletonserver.exception.AppException;
+import com.github.jaemon.dinger.DingerSender;
+import com.github.jaemon.dinger.core.entity.DingerRequest;
+import com.github.jaemon.dinger.core.entity.enums.MessageSubType;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import net.schmizz.sshj.SSHClient;
@@ -17,6 +20,7 @@ import net.schmizz.sshj.sftp.RemoteFile;
 import net.schmizz.sshj.sftp.RemoteResourceInfo;
 import net.schmizz.sshj.sftp.SFTPClient;
 import net.schmizz.sshj.sftp.StatefulSFTPClient;
+import org.mvel2.MVEL;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -26,6 +30,7 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 
 @Slf4j
@@ -34,9 +39,11 @@ public class SFTPServiceImpl implements SFTPService {
 
     private final ServerService serverService;
 
+    private final DingerSender dingerSender;
 
-    public SFTPServiceImpl(ServerService serverService) {
+    public SFTPServiceImpl(ServerService serverService, DingerSender dingerSender) {
         this.serverService = serverService;
+        this.dingerSender = dingerSender;
     }
 
     @SneakyThrows
@@ -52,11 +59,15 @@ public class SFTPServiceImpl implements SFTPService {
     @SneakyThrows
     private StatefulSFTPClient createSftp(Long serverId) {
         SSHClient sshClient = serverService.createSSHClient(serverId);
-        Session session = sshClient.startSession();
-        session.allocateDefaultPTY();
-        //压缩传输
+        MVEL.eval(
+                "dingerSender.send(MessageSubType.TEXT, DingerRequest.request(\"Hello World, Hello Dinger\"));",
+                Map.of(
+                        "dingerSender", dingerSender,
+                        "MessageSubType", MessageSubType.class,
+                        "DingerRequest", DingerRequest.class
+                )
+        );
         sshClient.useCompression();
-
         return sshClient.newStatefulSFTPClient();
     }
 
