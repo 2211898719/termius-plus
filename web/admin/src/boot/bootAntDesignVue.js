@@ -31,7 +31,7 @@ import {
     Collapse,
     Cascader,
     Tag,
-    InputNumber
+    InputNumber,
 } from 'ant-design-vue';
 import icons from '@/icons';
 

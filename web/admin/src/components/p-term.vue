@@ -6,7 +6,9 @@ import {AttachAddon} from "xterm-addon-attach";
 import {nextTick, onMounted, ref, watch} from "vue";
 import _ from "lodash";
 import {useStorage, useWebSocket} from "@vueuse/core";
-
+import {
+  Spin,
+} from 'ant-design-vue';
 let props = defineProps({
   server: {
     type: Object,
@@ -33,6 +35,7 @@ let options = {
   convertEol: true, //启用时，光标将设置为下一行的开头
   scrollback: 50000,//终端中的回滚量
   fontSize: 14, //字体大小
+  height: "100%", //终端高度
   // disableStdin: false, //是否应禁用输入。
   // cursorStyle: "block", //光标样式
   cursorBlink: true, //光标闪烁
@@ -78,10 +81,19 @@ const initSocket = () => {
         console.log(e)
       }
     },
+    onMessage: (e) => {
+      if (loading.value) {
+        loading.value = false
+      }
+    },
     onConnected: () => {
       socket = useSocket.ws.value;
       initTerm();
-      loading.value = false
+      // nextTick(() => {
+      //   setTimeout(() => {
+      //     loading.value = false
+      //   }, 200)
+      // });
     },
   });
 }
@@ -186,7 +198,9 @@ defineExpose({
 
 <template>
   <div ref="log">
+    <spin class="console" :spinning="loading">
       <div class="console" ref="terminal"></div>
+    </spin>
   </div>
 </template>
 
