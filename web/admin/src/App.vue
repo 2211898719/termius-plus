@@ -37,6 +37,7 @@ store.$onAction(({name, after}) => {
 </template>
 
 <style lang="less">
+//@import '~ant-design-vue/dist/antd.dark.less';
 #app {
     height: 100%;
 }

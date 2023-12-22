@@ -35,5 +35,8 @@ export const fileApi = {
     },
     isTranscodeSuccess: async (uuid) => {
         return client.get(`/api-admin/file/isTranscodeSuccess/${uuid}`)
-    }
+    },
+    back: async () => {
+        return client.get(`/api-admin/back/back`)
+    },
 }

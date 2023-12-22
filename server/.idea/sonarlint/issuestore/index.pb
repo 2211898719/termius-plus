@@ -117,8 +117,6 @@ Rsrc/main/java/com/codeages/javaskeletonserver/api/admin/AdminPublicController.j
 Lsrc/main/java/com/codeages/javaskeletonserver/api/app/AppUserController.java,5/f/5fc276398223e7b15bfba3cd340a9941462fc69d
 Å
 Qsrc/main/java/com/codeages/javaskeletonserver/api/admin/AdminQueueController.java,2/b/2b58bc21e45aa51a969ba208821dcc1e688bfd76
-Y
-)src/main/resources/application.properties,0/6/06f65155ec73600b9fc5c4dc2883d4bb84d8e284
 ã
 [src/main/java/com/codeages/javaskeletonserver/biz/server/service/PortForWardingService.java,f/c/fc9754ba3d9cf779bc7a9c32f00fde68c0f8cba1
 î
@@ -185,12 +183,6 @@ Tsrc/main/java/com/codeages/javaskeletonserver/biz/log/service/CommandLogService
 ]src/main/java/com/codeages/javaskeletonserver/biz/log/service/impl/CommandLogServiceImpl.java,a/0/a0b01d0c1ae0fa2b8cc8689208908aee2486938a
 Å
 Qsrc/main/java/com/codeages/javaskeletonserver/api/admin/CommandLogController.java,2/f/2f56536b5519fd41094d52f51bb5093ab8249b0a
-o
-?src/main/java/com/codeages/javaskeletonserver/biz/job/Mvel.java,b/9/b988d3b40002fe5c283e80f844556424e511390e
-q
-Asrc/main/java/com/codeages/javaskeletonserver/biz/job/asdsad.java,b/2/b20ed48ece8de5ecebc7fb704b12d354fd666bc7
-Ñ
-Tsrc/main/java/com/codeages/javaskeletonserver/biz/job/service/QuartzServiceImpl.java,5/a/5a81af96e1cd98243ac9106a7cfb376f528d9de4
 v
 Fsrc/main/java/com/codeages/javaskeletonserver/config/QuartzConfig.java,d/4/d4f792ff4eba392b384c59354bbb61e09e95049d
 u
@@ -205,3 +197,5 @@ Psrc/main/java/com/codeages/javaskeletonserver/biz/job/dto/MvelCronCreateDto.jav
 Ysrc/main/java/com/codeages/javaskeletonserver/biz/job/service/impl/QuartzServiceImpl.java,0/4/04746ca4331f06fbac296ed398067a96170acd7a
 z
 Jsrc/main/java/com/codeages/javaskeletonserver/biz/job/dto/MySSHClient.java,4/b/4b61b76caead7de13801c2824b4a8d2b632f2ae9
+}
+Msrc/main/java/com/codeages/javaskeletonserver/api/admin/BackUpController.java,4/c/4c62b0ac311d8441250c43c8a67aa0d9acbe59fc

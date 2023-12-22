@@ -91,3 +91,13 @@ S
 #web/admin/src/views/CronJobPage.vue,7/6/76c9497d1056c01abf09361aa580350d3fd77376
 K
 web/admin/src/api/quartz.js,5/0/5029f43ff486d40ae0601eee60f37d89f7d39ab7
+O
+web/admin/src/boot/bootAxios.js,e/0/e0344f6d8617ee68dc86f1f41e02987e2d379586
+E
+web/admin/src/App.vue,0/c/0cf6b3599d2cddbd556c5fdb942636d6d2fc4e43
+I
+web/admin/build-docker.sh,0/f/0fa15ce897c5df24f2f5d9ffa74f24a2c77fa416
+I
+web/admin/babel.config.js,a/9/a980e844f2665393130cb137403910b86710f54f
+G
+web/admin/jsconfig.json,1/9/19811927a6dcf2c8f61baef715de0b92ccd88518
