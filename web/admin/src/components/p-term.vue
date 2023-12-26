@@ -188,7 +188,6 @@ const execCommand = (command) => {
 }
 
 const close = () => {
-  console.log(12312)
   if (useSocket) {
     useSocket.close();
   }
