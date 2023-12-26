@@ -1,5 +1,5 @@
 <script setup>
-import {computed, createVNode, nextTick, onMounted, ref} from "vue";
+import {createVNode, nextTick, onMounted, ref} from "vue";
 import Sortable from 'sortablejs';
 import _ from "lodash";
 import {Input, Modal} from "ant-design-vue";
@@ -53,13 +53,20 @@ onMounted(() => {
 })
 
 const onCloseServer = (item) => {
+  let index = serverList.value.findIndex(e => e.operationId === item)
+  if (index === -1) {
+    return
+  }
+
+  nextTick(() => {
+    serverContentList.value[index].close()
+  })
+
   _.remove(serverList.value, i => i.operationId === item)
   if (item === tagActiveKey.value) {
     tagActiveKey.value = 'server'
   }
 }
-
-
 
 const handleCopy = (server) => {
   handleOpenServer(server)
@@ -157,6 +164,17 @@ const proxyCreation = () => {
   proxyListRef.value.proxyCreation()
 }
 
+const handleChangeTab = (item) => {
+  let index = serverList.value.findIndex(e => e.operationId === item)
+  if (index === -1) {
+    return
+  }
+
+  nextTick(() => {
+    serverContentList.value[index].focus()
+  })
+}
+
 
 </script>
 
@@ -169,6 +187,7 @@ const proxyCreation = () => {
               :tabBarGutter="8"
               :hideAdd="true"
               v-model:activeKey="tagActiveKey"
+              @change="handleChangeTab"
               :tab-position="'left'">
 
         <a-tab-pane tab="服务器" class="server-pane" key="server" :closable="false">

@@ -7,6 +7,7 @@ import org.quartz.JobDetail;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
@@ -26,8 +27,9 @@ public class QuartzController {
         return currentlyExecutingJobs.stream().map(jobDetail -> new MvelCronCreateDto(
                 jobDetail.getKey().getName(),
                 jobDetail.getKey().getGroup(),
-                jobDetail.getJobDataMap().getLong("serverId"),
-                serverService.findById(jobDetail.getJobDataMap().getLong("serverId")),
+                (List<Long>) jobDetail.getJobDataMap().get("serverIds"),
+                serverService.findByIdIn((List<Long>) jobDetail.getJobDataMap().get("serverIds")),
+                (List<String>) jobDetail.getJobDataMap().get("params"),
                 jobDetail.getJobDataMap().getString("mvelScript"),
                 jobDetail.getJobDataMap().getString("cronExpression")
         )).collect(Collectors.toList());

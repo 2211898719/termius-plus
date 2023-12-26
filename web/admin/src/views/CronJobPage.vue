@@ -7,13 +7,15 @@ import ServerListPage from "@/views/ServerListPage.vue";
 import {Codemirror} from "vue-codemirror";
 import {oneDark} from '@codemirror/theme-one-dark'
 import {java} from "@codemirror/lang-java";
+import {json} from "@codemirror/lang-json";
 
 const creationCronJobType = ref('create');
 const creationCronJobState = reactive({
   jobName: "",
   jobGroup: "",
-  serverId: "",
-  serverDto: {},
+  serverIds: [],
+  serverDtos: [],
+  params: [],
   cronExpression: "",
   mvelScript: "",
 });
@@ -120,8 +122,12 @@ const cronJobCreation = () => {
 let selectServerVisible = ref(false);
 
 const handleSelectServer = (server) => {
-  creationCronJobState.serverId = server.id;
-  creationCronJobState.serverDto = server;
+  if (creationCronJobState.serverIds.includes(server.id)) {
+    message.error("已经选择了该服务器");
+    return
+  }
+  creationCronJobState.serverIds.push(server.id);
+  creationCronJobState.serverDtos.push(server);
   selectServerVisible.value = false;
 }
 
@@ -135,6 +141,11 @@ const handleCloseServer = (item) => {
   })
 }
 
+const removeServer = (id) => {
+  creationCronJobState.serverIds = creationCronJobState.serverIds.filter(item => item !== id);
+  creationCronJobState.serverDtos = creationCronJobState.serverDtos.filter(item => item.id !== id);
+}
+
 const extensions = [java(), oneDark]
 
 let editorOptions = ref({
@@ -144,6 +155,17 @@ let editorOptions = ref({
   tabSize: 4,
   autoCloseBrackets: true,
 });
+
+const extensionsJson = [json(), oneDark]
+
+let editorOptionsJson = ref({
+  mode: 'text/x-json',
+  theme: 'default',
+  lineNumbers: true,
+  tabSize: 4,
+  autoCloseBrackets: true,
+});
+
 
 let example = ref(`String script = "df -h | awk '$NF==\\"/\\"{printf \\"%s\\\\n\\", $5}' | cut -d'%' -f1";
 res = Integer.parseInt(session.executeCommand(script));
@@ -188,7 +210,7 @@ defineExpose({
                     <a-card>
                       <a-skeleton avatar :title="false" :loading="!!item.loading" active>
                         <a-list-item-meta
-                            :description="item.jobGroup+'：'+item.serverDto.name+'，'+item.cronExpression"
+                            :description="item.jobGroup+'：'+item.serverDtos[0].name+'，'+item.cronExpression"
                         >
                           <template #title>
                             <span>{{ item.jobName }}</span>
@@ -244,13 +266,21 @@ defineExpose({
               <a-input v-model:value="creationCronJobState.cronExpression"/>
             </a-form-item>
             <a-form-item label="服务器：" v-bind="cronJobCreationValidations.serverId">
-              <div @click="selectServerVisible = true">
-              <span v-if="creationCronJobState.serverId">
-
-                <a-tag>{{ creationCronJobState.serverDto.name }}</a-tag>
+              <div>
+              <span v-if="creationCronJobState.serverIds.length">
+                <a-tag v-for="item in creationCronJobState.serverDtos" :key="item.id" closable
+                       @close="removeServer(item.id)">{{ item.name }}</a-tag>
               </span>
-                <a-button v-else>选择服务器</a-button>
+                <a-button type="link" @click="selectServerVisible = true">添加服务器</a-button>
               </div>
+            </a-form-item>
+            <a-form-item label="参数集：" v-bind="cronJobCreationValidations.params">
+              <div style="margin: 5px 0">填写json从脚本中可以param获取</div>
+              <a-form-item :label="item.name" v-for="(item,index) in creationCronJobState.serverDtos" :key="item.id">
+              <codemirror
+                          v-model:model-value="creationCronJobState.params[index]" :extensions="extensionsJson"
+                          :options="editorOptionsJson"></codemirror>
+              </a-form-item>
             </a-form-item>
             <a-form-item label="脚本：" v-bind="cronJobCreationValidations.mvelScript">
               <codemirror v-model:model-value="creationCronJobState.mvelScript" :extensions="extensions"

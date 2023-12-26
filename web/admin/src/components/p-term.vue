@@ -3,12 +3,11 @@ import "xterm/css/xterm.css";
 import {Terminal} from "xterm";
 import {FitAddon} from "xterm-addon-fit";
 import {AttachAddon} from "xterm-addon-attach";
-import {nextTick, onMounted, ref, watch} from "vue";
+import {nextTick, onBeforeUnmount, onMounted, ref} from "vue";
 import _ from "lodash";
 import {useStorage, useWebSocket} from "@vueuse/core";
-import {
-  Spin,
-} from 'ant-design-vue';
+import {Spin,} from 'ant-design-vue';
+
 let props = defineProps({
   server: {
     type: Object,
@@ -54,6 +53,7 @@ let socket = null;
 let terminal = ref()
 let log = ref()
 let loading = ref(false)
+let useSocket = null
 
 onMounted(() => {
   initSocket();
@@ -75,7 +75,7 @@ const initSocket = () => {
     wsProtocol = 'wss';
   }
   const host = window.location.host;
-  const useSocket = useWebSocket(wsProtocol + '://' + host + '/socket/ssh/' + props.server.id, {
+  useSocket = useWebSocket(wsProtocol + '://' + host + '/socket/ssh/' + props.server.id, {
     autoReconnect: {
       onFailed: (e) => {
         console.log(e)
@@ -96,6 +96,7 @@ const initSocket = () => {
       // });
     },
   });
+
 }
 
 const initTerm = () => {
@@ -186,10 +187,31 @@ const execCommand = (command) => {
   socket.send(command);
 }
 
+const close = () => {
+  console.log(12312)
+  if (useSocket) {
+    useSocket.close();
+  }
+  if (term) {
+    term.dispose();
+  }
+  if (terminal.value) {
+    terminal.value.innerHTML = "";
+  }
+}
+
+onBeforeUnmount(() => {
+  close()
+})
+
 defineExpose({
   reload: () => {
     initSocket();
   },
+  focus: () => {
+    term.focus();
+  },
+  close,
   execCommand
 })
 

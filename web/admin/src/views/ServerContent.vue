@@ -44,20 +44,6 @@ let flipStatus = ref(false)
 // let frontColor = useStorage('frontColor', "#ffffff")
 // let backColor = useStorage('backColor', "#000000")
 
-const hexToRgb = (hex) => {
-  let rgb = [];
-  hex = hex.substr(1);//去除前缀 # 号
-
-  if (hex.length === 3) { // 处理 "#abc" 成 "#aabbcc"
-    hex = hex.replace(/(.)/g, '$1$1');
-  }
-
-  hex.replace(/../g, function (color) {
-    rgb.push(parseInt(color, 0x10));//按16进制将字符串转换为数字
-  });
-
-  return `rgb(${rgb.join(", ")})`;
-}
 
 let sftpEnable = ref(false)
 
@@ -67,9 +53,6 @@ let flip = ref(null)
 
 
 let sftpEl = ref([])
-
-let iframeRef = ref(null)
-
 
 const reloadSftp = () => {
   sftpEl.value.init()
@@ -124,7 +107,13 @@ getCommandData()
 defineExpose({
   handleExecCommand,
   changeDir,
-  server: props.server
+  server: props.server,
+  focus: () => {
+    PTermRef.value.focus()
+  },
+  close: () => {
+    PTermRef.value.close()
+  },
 })
 
 let linuxDocSearch = ref("")

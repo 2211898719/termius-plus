@@ -11,6 +11,7 @@
     "@ant-design-vue/pro-layout": "^3.2.0-rc.1",
     "@ant-design/icons-vue": "^6.0.1",
     "@codemirror/lang-java": "^6.0.1",
+    "@codemirror/lang-json": "^6.0.1",
     "@codemirror/theme-one-dark": "^6.1.2",
     "@formkit/auto-animate": "^0.8.1",
     "@headerless/split-box": "^0.2.8",

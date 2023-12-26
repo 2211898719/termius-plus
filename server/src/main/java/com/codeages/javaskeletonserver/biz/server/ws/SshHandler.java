@@ -32,11 +32,8 @@ public class SshHandler {
 
     private static final AtomicInteger OnlineCount = new AtomicInteger(0);
 
-    private static CopyOnWriteArraySet<Session> SessionSet = new CopyOnWriteArraySet<>();
-
     @OnOpen
     public void onOpen(javax.websocket.Session session, @PathParam("serverId") Long serverId) {
-        SessionSet.add(session);
         int cnt = OnlineCount.incrementAndGet();
         log.info("有连接加入，当前连接数为：{},sessionId={}", cnt, session.getId());
         HandlerItem handlerItem = new HandlerItem(
@@ -49,7 +46,6 @@ public class SshHandler {
 
     @OnClose
     public void onClose(javax.websocket.Session session) {
-        SessionSet.remove(session);
         int cnt = OnlineCount.decrementAndGet();
         HANDLER_ITEM_CONCURRENT_HASH_MAP.get(session.getId()).close();
         HANDLER_ITEM_CONCURRENT_HASH_MAP.remove(session.getId());
@@ -103,10 +99,7 @@ public class SshHandler {
         private final InputStream inputStream;
         private final OutputStream outputStream;
         private final net.schmizz.sshj.connection.channel.direct.Session openSession;
-        private final StringBuilder nowLineInput = new StringBuilder();
-        private final Map<Long, String> commandMap = new ConcurrentHashMap<>();
         private final net.schmizz.sshj.connection.channel.direct.Session.Shell shell;
-        private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
         @SneakyThrows
         HandlerItem(Long serverId, javax.websocket.Session session, SSHClient sshClient) {
@@ -133,19 +126,7 @@ public class SshHandler {
          * @return 当前待确认待所有命令
          */
         private void append(String msg) {
-//            char[] x = msg.toCharArray();
-//            if (x.length == 1 && x[0] == 127) {
-//                // 退格键
-//                int length = nowLineInput.length();
-//                if (length > 0) {
-//                    nowLineInput.delete(length - 1, length);
-//                }
-//            } else {
-//                nowLineInput.append(msg);
-//            }
-//            log.info("当前输入：{}", nowLineInput);
-//            return nowLineInput.toString();
-            commandMap.put(System.currentTimeMillis(), msg);
+//            commandMap.put(System.currentTimeMillis(), msg);
         }
 
         public boolean checkInput(String msg) {
@@ -166,11 +147,11 @@ public class SshHandler {
                 IoUtil.close(this.outputStream);
                 this.shell.close();
                 this.openSession.close();
-                SpringUtil.getBean(CommandLogService.class).create(new CommandLogCreateParams(
-                        this.session.getId(),
-                        this.serverId,
-                        JSONUtil.toJsonStr(commandMap)
-                ));
+//                SpringUtil.getBean(CommandLogService.class).create(new CommandLogCreateParams(
+//                        this.session.getId(),
+//                        this.serverId,
+//                        JSONUtil.toJsonStr(commandMap)
+//                ));
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -212,6 +193,7 @@ public class SshHandler {
             // 会话关闭不能发送消息
             return;
         }
+
 
         synchronized (session.getId().intern()) {
             try {

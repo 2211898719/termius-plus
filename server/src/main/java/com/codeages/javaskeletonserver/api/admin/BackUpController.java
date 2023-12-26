@@ -79,8 +79,6 @@ public class BackUpController {
         FileUtil.mkdir(backUri);
 
         String sqlDir = backUri + "sql.sql";
-        String fileDir = backUri + FileUtil.FILE_SEPARATOR + "file" + FileUtil.FILE_SEPARATOR;
-        FileUtil.mkdir(fileDir);
 
         backSql(sqlDir);
 

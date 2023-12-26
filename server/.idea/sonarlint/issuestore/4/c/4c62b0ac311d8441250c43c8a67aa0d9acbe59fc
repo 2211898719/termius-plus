@@ -1,9 +1,7 @@
 
-m	java:S116="XRename this field "CORP_DUMP_SQL" to match the regular expression '^[a-z][a-zA-Z0-9]*$'.(©¾Úå
-t	java:S116?"ZRename this field "PUBLIC_DUMP_SQL" to match the regular expression '^[a-z][a-zA-Z0-9]*$'.(‘şÒÍıÿÿÿÿ
-p	java:S116A"[Rename this field "CORP_TABLE_NAMES" to match the regular expression '^[a-z][a-zA-Z0-9]*$'.(©–³ô
-m	java:S116C"XRename this field "DATABASE_NAME" to match the regular expression '^[a-z][a-zA-Z0-9]*$'.(Œ Èº
-u
-java:S1450A"_Remove the "CORP_TABLE_NAMES" field and declare it as a local variable in the relevant methods.(©–³ô
-p
-java:S3252¤"TUse static access with "cn.hutool.core.text.CharSequenceUtil" for "toUnderlineCase".(¨üåĞşÿÿÿÿ
+d
+java:S20957"HUse try-with-resources or close this "Connection" in a "finally" clause.(ñè8áò’õÉ1
+o	java:S1160"SRename this field "DUMP_SQL" to match the regular expression '^[a-z][a-zA-Z0-9]*$'.(”­‰8âò’õÉ1
+m	java:S1162"XRename this field "DATABASE_NAME" to match the regular expression '^[a-z][a-zA-Z0-9]*$'.(Œ Èº
+^
+java:S1128"<Remove this unused import 'javax.persistence.EntityManager'.(ğàËÒıÿÿÿÿ8ïò’õÉ1

@@ -21,6 +21,8 @@ public interface ServerService {
 
     ServerDto findById(Long id);
 
+    List<ServerDto> findByIdIn(List<Long> ids);
+
     SSHClient createSSHClient(Long id);
 
     Proxy createProxy(ServerDto server);

@@ -117,6 +117,11 @@ public class ServerServiceImpl implements ServerService {
         return serverDto;
     }
 
+    @Override
+    public List<ServerDto> findByIdIn(List<Long> ids) {
+        return serverRepository.findAllById(ids).stream().map(serverMapper::toDto).collect(Collectors.toList());
+    }
+
     private List<Server> toUpdateAllEntity(List<TreeSortParams> serverUpdateParams) {
         if (CollectionUtil.isEmpty(serverUpdateParams)) {
             return Collections.emptyList();
