@@ -1,7 +1,9 @@
 
 d
-java:S20957"HUse try-with-resources or close this "Connection" in a "finally" clause.(ñè8áò’õÉ1
-o	java:S1160"SRename this field "DUMP_SQL" to match the regular expression '^[a-z][a-zA-Z0-9]*$'.(”­‰8âò’õÉ1
-m	java:S1162"XRename this field "DATABASE_NAME" to match the regular expression '^[a-z][a-zA-Z0-9]*$'.(Œ Èº
+java:S20958"HUse try-with-resources or close this "Connection" in a "finally" clause.(ñè8‘ÒôÉÊ1
+o	java:S1161"SRename this field "DUMP_SQL" to match the regular expression '^[a-z][a-zA-Z0-9]*$'.(”­‰8’ÒôÉÊ1
+t	java:S1163"XRename this field "DATABASE_NAME" to match the regular expression '^[a-z][a-zA-Z0-9]*$'.(Œ Èº8’ÒôÉÊ1
+R
+java:S1128"0Remove this unused import 'cn.hutool.db.DbUtil'.(ƒ‹‘Âøÿÿÿÿ8 ÒôÉÊ1
 ^
-java:S1128"<Remove this unused import 'javax.persistence.EntityManager'.(ğàËÒıÿÿÿÿ8ïò’õÉ1
+java:S1128"<Remove this unused import 'javax.persistence.EntityManager'.(ğàËÒıÿÿÿÿ8 ÒôÉÊ1

@@ -182,7 +182,6 @@ public class ServerServiceImpl implements ServerService {
                                                                   Function.identity()
                                                           ));
 
-        Base64.Encoder encoder = Base64.getEncoder();
         List<TreeNode<Long>> servers = serverRepository.findAll(Sort.by("sort"))
                                                        .stream()
                                                        .map(e -> {

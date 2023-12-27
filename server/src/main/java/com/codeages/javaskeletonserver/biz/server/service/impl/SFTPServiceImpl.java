@@ -59,14 +59,7 @@ public class SFTPServiceImpl implements SFTPService {
     @SneakyThrows
     private StatefulSFTPClient createSftp(Long serverId) {
         SSHClient sshClient = serverService.createSSHClient(serverId);
-        MVEL.eval(
-                "dingerSender.send(MessageSubType.TEXT, DingerRequest.request(\"Hello World, Hello Dinger\"));",
-                Map.of(
-                        "dingerSender", dingerSender,
-                        "MessageSubType", MessageSubType.class,
-                        "DingerRequest", DingerRequest.class
-                )
-        );
+
         sshClient.useCompression();
         return sshClient.newStatefulSFTPClient();
     }

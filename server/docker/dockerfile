@@ -1,0 +1,9 @@
+FROM openjdk:11-jre
+
+RUN cp /etc/apt/sources.list /etc/apt/sources.list.bak
+RUN sed -i 's/https:\/\/mirrors.aliyun.com/http:\/\/mirrors.cloud.aliyuncs.com/g' /etc/apt/sources.list
+
+# 安装 MySQL 客户端
+RUN apt-get update
+
+RUN apt-get install -y mariadb-server mariadb-client --no-install-recommends

@@ -106,5 +106,6 @@ export default function usePaginationQuery(router, searchForm, searchMethod) {
         fetchPaginationData,
         onPaginationChange,
         onSearchSubmit,
+        pullQueryParams,
     }
 }

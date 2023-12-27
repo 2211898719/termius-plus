@@ -5,13 +5,14 @@ import _ from "lodash";
 import {Input, Modal} from "ant-design-vue";
 import {ExclamationCircleOutlined} from "@ant-design/icons-vue";
 import {v4} from 'uuid'
-import ServerListPage from "@/views/ServerListPage.vue";
-import ProxyListPage from "@/views/ProxyListPage.vue";
-import SettingPage from "@/views/SettingPage.vue";
-import ServerContent from "@/views/ServerContent.vue";
-import SnippetListPage from "@/views/SnippetListPage.vue";
-import PortForwarderPage from "@/views/PortForwarderPage.vue";
-import CronJobPage from "@/views/CronJobPage.vue";
+import ServerListPage from "@/views/server/ServerListPage.vue";
+import ProxyListPage from "@/views/server/ProxyListPage.vue";
+import SettingPage from "@/views/server/SettingPage.vue";
+import ServerContent from "@/views/server/ServerContent.vue";
+import SnippetListPage from "@/views/server/SnippetListPage.vue";
+import PortForwarderPage from "@/views/server/PortForwarderPage.vue";
+import CronJobPage from "@/views/server/CronJobPage.vue";
+import DbListPage from "@/views/db/DbListPage.vue";
 
 let spinning = ref(false)
 
@@ -21,10 +22,10 @@ let tagActiveKey = ref()
 
 let serverList = ref([])
 
-let serverListRef = ref()
+let dbListRef = ref()
 let proxyListRef = ref()
 
-const handleOpenServer = (item) => {
+const handleOpenDb = (item) => {
   // spinning.value = true;
   let uuid = v4();
   while (serverList.value.findIndex(e => e.operationId === uuid) !== -1) {
@@ -69,7 +70,7 @@ const onCloseServer = (item) => {
 }
 
 const handleCopy = (server) => {
-  handleOpenServer(server)
+  handleOpenDb(server)
 }
 
 const handleRename = (server) => {
@@ -154,9 +155,9 @@ let tags = ref([
 ])
 
 const handleProxyCreateSuccess = async (res) => {
-  if (serverListRef.value) {
-    await serverListRef.value.getProxyData()
-    serverListRef.value.setProxyId(res.id)
+  if (dbListRef.value) {
+    await dbListRef.value.getProxyData()
+    dbListRef.value.setProxyId(res.id)
   }
 }
 
@@ -190,24 +191,8 @@ const handleChangeTab = (item) => {
               @change="handleChangeTab"
               :tab-position="'left'">
 
-        <a-tab-pane tab="服务器" class="server-pane" key="server" :closable="false">
-          <ServerListPage ref="serverListRef" @openServer="handleOpenServer"
-                          @proxyCreation="proxyCreation"></ServerListPage>
-        </a-tab-pane>
-        <a-tab-pane class="proxy-pane" tab="代理" key="proxy" :closable="false" :forceRender="true">
-          <proxy-list-page ref="proxyListRef" @createSuccess="handleProxyCreateSuccess"></proxy-list-page>
-        </a-tab-pane>
-        <a-tab-pane tab="端口转发" key="portForwarder" :closable="false" :forceRender="true">
-          <port-forwarder-page></port-forwarder-page>
-        </a-tab-pane>
-        <a-tab-pane tab="定时任务" key="cronJob" :closable="false" :forceRender="true">
-          <cron-job-page></cron-job-page>
-        </a-tab-pane>
-        <a-tab-pane tab="命令片段" key="snippet" :closable="false" :forceRender="true">
-          <snippet-list-page ref="snippetListRef" @createSuccess="handleProxyCreateSuccess"></snippet-list-page>
-        </a-tab-pane>
-        <a-tab-pane class="setting-pane" tab="设置" key="setting" :closable="false" :forceRender="true">
-          <setting-page></setting-page>
+        <a-tab-pane tab="数据库" class="server-pane" key="server" :closable="false">
+          <DbListPage ref="dbListRef" @openServer="handleOpenDb"></DbListPage>
         </a-tab-pane>
         <template v-for="server in serverList" :key="server.operationId">
           <a-tab-pane>

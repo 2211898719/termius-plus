@@ -3,7 +3,7 @@ import {defineEmits, defineExpose, reactive, ref, watch} from "vue";
 import {useForm} from "ant-design-vue/es/form";
 import {portForwardingApi} from "@/api/port-forwarding";
 import {message} from "ant-design-vue";
-import ServerListPage from "@/views/ServerListPage.vue";
+import ServerListPage from "@/views/server/ServerListPage.vue";
 
 const creationPortForwardingType = ref('create');
 const creationPortForwardingState = reactive({
@@ -248,6 +248,6 @@ defineExpose({
 </template>
 
 <style scoped lang="less">
-@import url('./css/termius');
+@import url('../css/termius');
 
 </style>

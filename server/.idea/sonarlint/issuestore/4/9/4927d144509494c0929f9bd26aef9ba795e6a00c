@@ -1,5 +1,7 @@
 
 }
-java:S1488«"_Immediately return this expression instead of assigning it to the temporary variable "tmpFile".(ÎßÏ¦8…îÄíÃ1
+java:S1488¯"_Immediately return this expression instead of assigning it to the temporary variable "tmpFile".(ÎßÏ¦8…îÄíÃ1
 i
-java:S20956"GUse try-with-resources or close this "SSHClient" in a "finally" clause.(ÌœÍôùÿÿÿÿ8îÄíÃ1
+java:S2095="GUse try-with-resources or close this "SSHClient" in a "finally" clause.(ÌœÍôùÿÿÿÿ8îÄíÃ1
+M
+java:S1068*"0Remove this unused "dingerSender" private field.(€ğ€—8é“­ÕÊ1

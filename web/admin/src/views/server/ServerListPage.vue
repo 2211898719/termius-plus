@@ -46,6 +46,8 @@ const creationState = reactive({
   username: "",
   remark: "<div></div>",
   autoSudo: true,
+  isDb: false,
+  dbPort: []
 });
 
 
@@ -128,6 +130,7 @@ const handleEditServer = (row) => {
   creationVisible.value = true;
   creationType.value = 'update'
   Object.assign(creationState, row)
+  creationState.dbPort = row.dbPort.split(',')
 }
 
 const handleBreadcrumbData = (item) => {
@@ -185,7 +188,12 @@ const submitCreate = async () => {
     return;
   }
 
-  await serverApi[creationType.value](creationState);
+  let submitData = {...creationState}
+  submitData.dbPort = new Set(submitData.dbPort)
+  submitData.dbPort = [...submitData.dbPort].join(',')
+  console.log(submitData)
+
+  await serverApi[creationType.value](submitData);
   message.success("操作成功");
 
   creationVisible.value = false;
@@ -496,6 +504,21 @@ defineExpose({
             <a-form-item label="私钥" v-bind="creationValidations.key">
               <a-textarea v-model:value="creationState.key"></a-textarea>
             </a-form-item>
+            <a-form-item label="是否db服务器" v-bind="creationValidations.isDb">
+              <a-switch v-model:checked="creationState.isDb"></a-switch>
+            </a-form-item>
+            <a-form-item label="db端口" v-bind="creationValidations.dbPort" v-if="creationState.isDb">
+              <div :class="{mt5:index!==0}" v-for="(item,index) in creationState.dbPort" :key="index">
+                <a-input-number v-model:value="creationState.dbPort[index]"
+                                :min="1" :max="65535"/>
+                <a-button type="link" @click="creationState.dbPort.splice(index,1)">
+                  <delete-outlined/>
+                </a-button>
+              </div>
+              <div class="mt5">
+                <a-button @click="creationState.dbPort.push(3306)">+1</a-button>
+              </div>
+            </a-form-item>
           </template>
           <a-form-item label="代理" v-bind="creationValidations.proxyId">
             <p-select ref="proxyRef" :api="proxyApi.list" v-model:value="creationState.proxyId"
@@ -506,6 +529,7 @@ defineExpose({
               </template>
             </a-button>
           </a-form-item>
+
           <a-form-item label="备注" v-bind="creationValidations.remark">
             <p-editor v-model:value="creationState.remark"></p-editor>
           </a-form-item>
@@ -539,6 +563,6 @@ defineExpose({
 </template>
 
 <style scoped lang="less">
-@import url('./css/termius');
+@import url('../css/termius');
 
 </style>

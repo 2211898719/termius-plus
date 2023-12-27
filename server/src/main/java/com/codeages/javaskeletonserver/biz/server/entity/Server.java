@@ -52,6 +52,8 @@ public class Server {
      */
     private String username;
     private Boolean autoSudo;
+    private Boolean isDb;
+    private String dbPort;
     /**
      * 密钥
      */

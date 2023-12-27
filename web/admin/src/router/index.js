@@ -42,8 +42,14 @@ const routes = [
       {
         path: '/server',
         name: 'server',
-        meta: { title: '服务器', icon: 'SettingOutlined' },
-        component:  () => import('../views/ServerPage.vue'),
+        meta: { title: '服务器', icon: 'DesktopOutlined' },
+        component:  () => import('../views/server/ServerPage.vue'),
+      },
+      {
+        path: '/db',
+        name: 'db',
+        meta: { title: '数据库', icon: 'DatabaseOutlined' },
+        component:  () => import('../views/db/DbPage.vue'),
       },
       {
         path: '/system',
@@ -66,7 +72,7 @@ const routes = [
     path: '/login',
     name: 'login',
     meta: {title: '登录', requiredAuth: false},
-    component: () => import('../views/LoginPage.vue'),
+    component: () => import('../views/server/LoginPage.vue'),
   },
 ]
 

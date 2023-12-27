@@ -13,6 +13,8 @@ public class ServerCreateParams {
     private String name;
     private String username;
     private String ip;
+    private Boolean isDb;
+    private String dbPort;
     private String firstCommand;
     private Long port;
     private Long sort;

@@ -199,6 +199,6 @@ defineExpose({
 </template>
 
 <style scoped lang="less">
-@import url('./css/termius');
+@import url('../css/termius');
 
 </style>

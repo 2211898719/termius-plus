@@ -22,6 +22,8 @@ public class ServerUpdateParams {
     private Long port;
     private String password;
     private String key;
+    private Boolean isDb;
+    private String dbPort;
     private String remark;
     private Long proxyId;
 }

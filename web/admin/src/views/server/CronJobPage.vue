@@ -3,7 +3,7 @@ import {defineEmits, reactive, ref, watch} from "vue";
 import {useForm} from "ant-design-vue/es/form";
 import {quartzApi} from "@/api/quartz";
 import {message} from "ant-design-vue";
-import ServerListPage from "@/views/ServerListPage.vue";
+import ServerListPage from "@/views/server/ServerListPage.vue";
 import {Codemirror} from "vue-codemirror";
 import {oneDark} from '@codemirror/theme-one-dark'
 import {java} from "@codemirror/lang-java";
@@ -339,6 +339,6 @@ defineExpose({
 </template>
 
 <style scoped lang="less">
-@import url('./css/termius');
+@import url('../css/termius');
 
 </style>

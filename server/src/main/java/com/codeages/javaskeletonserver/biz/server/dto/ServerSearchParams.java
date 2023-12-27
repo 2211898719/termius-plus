@@ -21,6 +21,8 @@ public class ServerSearchParams {
     private Long port;
     private String password;
     private String key;
+    private Boolean isDb;
+    private String dbPort;
     private Long proxyId;
 }
 

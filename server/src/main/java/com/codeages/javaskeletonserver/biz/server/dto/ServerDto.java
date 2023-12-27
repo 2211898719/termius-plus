@@ -21,6 +21,8 @@ public class ServerDto {
     private Long port;
     private OSEnum os;
     private String password;
+    private Boolean isDb;
+    private String dbPort;
     private String key;
     private String remark;
     private Long proxyId;

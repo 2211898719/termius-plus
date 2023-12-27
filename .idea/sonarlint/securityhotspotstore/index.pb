@@ -109,3 +109,25 @@ U
 %web/admin/src/layouts/BasicLayout.vue,a/5/a56d4f138c0a4bfc2ba5bb3674f2059581371606
 U
 %web/admin/src/layouts/BlankLayout.vue,6/e/6ef18016c57d104e1fa5b5f91770aab628d1044d
+G
+web/admin/src/api/db.js,3/e/3e72955f73c6b1347d8b692b4a9c6d624f23a21b
+S
+#web/admin/src/views/db/UserPage.vue,2/d/2da3e42ce6b7bf4a2034d3e3295f2873f9a8d006
+Q
+!web/admin/src/views/db/DbPage.vue,4/c/4c6b0bc155c2bdf71e72bcdaf7879a450a9f0fb2
+Y
+)web/admin/src/views/server/ServerPage.vue,1/4/14881957ebee142a3a1002edbb08aeb51f2da8e7
+P
+ web/shared/usePaginationQuery.js,f/2/f21fb90c8f4dbbb08413ac2b9e27e8b816bf76ea
+]
+-web/admin/src/views/server/ServerListPage.vue,a/8/a8c7e447a02f5856ee2e629c22e51ecee41cfa5d
+U
+%web/admin/src/views/db/DbListPage.vue,3/c/3c860cc65f812ebf4096d98f1f2acb08b87b2132
+\
+,web/admin/src/views/server/ProxyListPage.vue,d/4/d4dbbe21401b8e0e5bff2aa1a41db28f049b719b
+U
+%web/admin/src/views/db/DBListPage.vue,3/a/3ae904ea5eef2242f448e4227561295d3ad0da15
+U
+%web/admin/src/views/db/ServerPage.vue,0/9/091c9a8c9a41f679d4dadad0f4d4634af1b4d3cb
+\
+,web/admin/src/views/server/ServerContent.vue,f/b/fbee3d0d2f878ddbb21fbbb3c7bc6c810314b11a
