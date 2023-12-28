@@ -17,8 +17,6 @@ O
 web/admin/src/layouts/main.less,7/4/74c4bba57d6bf9986bc4e1d0e63304a9303a29eb
 _
 /web/admin/src/components/VueDragSplit/style.css,f/f/ffeaa80868e0cf06c9484f7d4c218261cde66d72
-V
-&web/admin/src/views/ServerListPage.vue,7/5/755e37d390c04a198a15eb6e1ca0767eb19c9956
 S
 #web/admin/src/components/p-term.vue,d/d/dd205df40473a83572df8d4627703f3c2605a565
 V
@@ -27,16 +25,12 @@ l
 <web/admin/src/components/VueDragSplit/components/resizer.vue,e/2/e21ea539342d915a8b6f24982fb860807779fb09
 E
 web/admin/src/main.js,1/f/1fba0c032afbc29db6ea17ea61bcfbb051599e8f
-U
-%web/admin/src/views/ServerContent.vue,1/c/1c0a5a2a26a86d077e1beb0044a039bb290cc6d5
 i
 9web/admin/src/components/VueDragSplit/components/index.js,e/b/eb0eef253a37b76534113f048ada0224fdc8cb24
 j
 :web/admin/src/components/VueDragSplit/components/index.vue,6/7/67b2e4776532de2287daac941cc0ee1c1f16e157
 k
 ;web/admin/src/components/VueDragSplit/components/window.vue,d/a/daa8f8d07361d55e4159711b583071f3572e9212
-R
-"web/admin/src/views/ServerPage.vue,e/9/e96fd5e75e2928c8ac4ac37cd475dad413d3c21c
 V
 &web/admin/src/components/SplitRoot.vue,1/9/19cc168909267be0f808e5e38cf29019f0b24caf
 i
@@ -45,12 +39,8 @@ _
 /web/admin/src/components/VueDragSplit/index.vue,6/2/622b1a439324f365419621dc0a89a43b9bab9ee6
 T
 $web/admin/src/components/p-blank.vue,e/f/efb0dda2dd44406ebb358d0fe0a51771ace813ed
-Y
-)web/admin/src/views/PortForwarderPage.vue,a/7/a7102a0c59c5c50463b95eaa60ccbb77d9804ba9
 M
 web/admin/src/router/index.js,7/e/7e877993b9616232c10c4d84b0b4d7faaaaf3ea4
-U
-%web/admin/src/views/ProxyListPage.vue,8/0/80422c73c07170564502eadd3be1370cd675e0d0
 T
 $web/admin/src/views/css/termius.less,a/0/a0b5375bb3a6497bb94fdd55a5d1ac31a6da05b1
 T
@@ -65,8 +55,6 @@ S
 #web/admin/src/assets/linux-doc.json,e/b/eb09a5a044e412d193359c72b5b748348ad8eab1
 S
 #web/admin/src/components/p-sftp.vue,3/9/395dd4f36c3e537f7d17e0a8fd844f1b7de2d956
-S
-#web/admin/src/views/SettingPage.vue,f/6/f689747448fc2320bf4bb1aa5a340cec4a25abe2
 W
 'web/admin/src/components/p-cascader.vue,c/c/ccf7028413cb1f2caa12dabd083959f0f30406fa
 K
@@ -75,8 +63,6 @@ Q
 !web/admin/docker/.env.placeholder,2/d/2d998acb03be971c83134f62eb11510032c75681
 g
 7web/admin/docker/99-replace-vue-env-var-placeholders.sh,f/2/f2085af3728d8e83c8f9e7a28d6f30f49d1d0cad
-Q
-!web/admin/src/views/LoginPage.vue,c/7/c72de7bf9c8094132e608164a4a24c3e3e22fca0
 U
 %web/admin/src/views/SystemLogPage.vue,9/7/97273d2c0a540376d36c80b3d3051d449b03b9cb
 T
@@ -87,8 +73,6 @@ G
 web/admin/vue.config.js,b/3/b36cb4dfc3086409d9d160f8284648f2b56a5b3c
 C
 web/admin/yarn.lock,9/b/9bb55845423c1cab0887942c33ba9ec2aad63d19
-S
-#web/admin/src/views/CronJobPage.vue,7/6/76c9497d1056c01abf09361aa580350d3fd77376
 K
 web/admin/src/api/quartz.js,5/0/5029f43ff486d40ae0601eee60f37d89f7d39ab7
 O
@@ -111,8 +95,6 @@ U
 %web/admin/src/layouts/BlankLayout.vue,6/e/6ef18016c57d104e1fa5b5f91770aab628d1044d
 G
 web/admin/src/api/db.js,3/e/3e72955f73c6b1347d8b692b4a9c6d624f23a21b
-S
-#web/admin/src/views/db/UserPage.vue,2/d/2da3e42ce6b7bf4a2034d3e3295f2873f9a8d006
 Q
 !web/admin/src/views/db/DbPage.vue,4/c/4c6b0bc155c2bdf71e72bcdaf7879a450a9f0fb2
 Y
@@ -127,7 +109,7 @@ U
 ,web/admin/src/views/server/ProxyListPage.vue,d/4/d4dbbe21401b8e0e5bff2aa1a41db28f049b719b
 U
 %web/admin/src/views/db/DBListPage.vue,3/a/3ae904ea5eef2242f448e4227561295d3ad0da15
-U
-%web/admin/src/views/db/ServerPage.vue,0/9/091c9a8c9a41f679d4dadad0f4d4634af1b4d3cb
 \
 ,web/admin/src/views/server/ServerContent.vue,f/b/fbee3d0d2f878ddbb21fbbb3c7bc6c810314b11a
+X
+(web/admin/src/views/db/DbContentPage.vue,f/9/f95298436718ac57371d61f31f9a99b894eb0799

@@ -3,6 +3,7 @@ package com.codeages.javaskeletonserver.api.admin;
 import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.util.ZipUtil;
 import cn.hutool.db.DbUtil;
 import com.codeages.javaskeletonserver.biz.storage.enums.FileTargetTypeEnum;
@@ -100,6 +101,7 @@ public class BackUpController {
         Map<String, String> param = Map.of( "uri", sqlUri);
 
         String backCommand = new StringSubstitutor(param).replace(DUMP_SQL);
+        log.info("执行命令：{}", backCommand);
 
         exec(backCommand);
     }
@@ -113,6 +115,9 @@ public class BackUpController {
         ProcessBuilder pb = new ProcessBuilder(cmds);
         Process p = pb.start();
         p.waitFor();
+        //获取命令执行的结果
+        String result = IoUtil.readUtf8(p.getInputStream());
+        log.info("执行结果：{}", result);
     }
 
 

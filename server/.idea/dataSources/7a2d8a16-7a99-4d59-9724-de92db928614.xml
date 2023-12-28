@@ -1,11 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <dataSource name="termius-plus@localhost">
-  <database-model serializer="dbm" dbms="MYSQL" family-id="MYSQL" format-version="4.49">
-    <root id="1">
-      <DefaultEngine>InnoDB</DefaultEngine>
-      <DefaultTmpEngine>InnoDB</DefaultTmpEngine>
-      <ServerVersion>8.0.19</ServerVersion>
-    </root>
+  <database-model serializer="dbm" dbms="MYSQL" family-id="MYSQL" format-version="4.51">
+    <root id="1"/>
     <collation id="2" parent="1" name="utf8mb4_lt_0900_as_cs">
       <Charset>utf8mb4</Charset>
     </collation>
@@ -922,8 +918,7 @@
     </schema>
     <schema id="293" parent="1" name="termius-plus">
       <Current>1</Current>
-      <IntrospectionTimestamp>2023-12-27.22:09:27</IntrospectionTimestamp>
-      <LocalIntrospectionTimestamp>2023-12-27.06:09:27</LocalIntrospectionTimestamp>
+      <LastIntrospectionLocalTimestamp>2023-12-27.06:09:27</LastIntrospectionLocalTimestamp>
       <CollationName>utf8mb4_bin</CollationName>
     </schema>
     <user id="294" parent="1" name="mysql.session">
