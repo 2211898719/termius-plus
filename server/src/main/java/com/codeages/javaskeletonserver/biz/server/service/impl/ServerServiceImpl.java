@@ -6,10 +6,10 @@ import cn.hutool.core.lang.tree.Tree;
 import cn.hutool.core.lang.tree.TreeNode;
 import cn.hutool.core.lang.tree.TreeUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.core.util.URLUtil;
 import cn.hutool.extra.servlet.ServletUtil;
 import com.codeages.javaskeletonserver.biz.ErrorCode;
 import com.codeages.javaskeletonserver.biz.server.dto.*;
+import com.codeages.javaskeletonserver.biz.server.entity.QServer;
 import com.codeages.javaskeletonserver.biz.server.entity.Server;
 import com.codeages.javaskeletonserver.biz.server.mapper.ServerMapper;
 import com.codeages.javaskeletonserver.biz.server.repository.ServerRepository;
@@ -17,10 +17,10 @@ import com.codeages.javaskeletonserver.biz.server.service.ProxyService;
 import com.codeages.javaskeletonserver.biz.server.service.ServerService;
 import com.codeages.javaskeletonserver.biz.util.TreeUtils;
 import com.codeages.javaskeletonserver.exception.AppException;
+import com.querydsl.core.BooleanBuilder;
 import lombok.SneakyThrows;
 import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.transport.verification.PromiscuousVerifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -31,7 +31,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
 import java.io.IOException;
-import java.net.*;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
+import java.net.Socket;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -202,6 +205,50 @@ public class ServerServiceImpl implements ServerService {
 
         return treeList;
     }
+
+    public List<Tree<Long>> findAllDb() {
+        QServer q = QServer.server;
+        BooleanBuilder builder = new BooleanBuilder();
+
+        builder.and(q.isDb.eq(true));
+
+
+        List<TreeNode<Long>> servers = findAllParent(serverRepository.findAll(builder, Pageable.unpaged()).getContent())
+                .stream()
+                .map(e -> {
+                    TreeNode<Long> longTreeNode = new TreeNode<>(
+                            e.getId(),
+                            e.getParentId(),
+                            e.getName(),
+                            e.getSort()
+                    );
+
+                    longTreeNode.setExtra(BeanUtil.beanToMap(e));
+                    return longTreeNode;
+                })
+                .collect(Collectors.toList());
+
+        return TreeUtil.build(servers, 0L);
+    }
+
+    public List<Server> findAllParent(List<Server> servers) {
+        List<Server> parentServers = new ArrayList<>(servers);
+        List<Long> parentIds = servers.stream()
+                                      .map(Server::getParentId)
+                                      .filter(pId -> pId != 0)
+                                      .collect(Collectors.toList());
+        while (CollectionUtil.isNotEmpty(parentIds)) {
+            List<Server> parentServer = serverRepository.findAllById(parentIds);
+            parentServers.addAll(parentServer);
+            parentIds = parentServer.stream()
+                                    .map(Server::getParentId)
+                                    .filter(pId -> pId != 0)
+                                    .collect(Collectors.toList());
+        }
+
+        return parentServers;
+    }
+
 
     /**
      * 递归构建每个节点的代理，子节点的代理会覆盖父节点的代理，取就近原则

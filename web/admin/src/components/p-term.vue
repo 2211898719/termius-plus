@@ -122,7 +122,6 @@ const initTerm = () => {
   term.focus();
 
   nextTick(() => {
-    attachAddon.uploadFiles()
     resizeTerminal(term);
   });
 

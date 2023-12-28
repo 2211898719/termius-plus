@@ -11,6 +11,8 @@ public interface ServerService {
 
     List<Tree<Long>> findAll();
 
+    List<Tree<Long>> findAllDb();
+
     void create(ServerCreateParams serverCreateParams);
 
     void update(ServerUpdateParams serverUpdateParams);

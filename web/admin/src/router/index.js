@@ -49,7 +49,7 @@ const routes = [
         path: '/db',
         name: 'db',
         meta: { title: '数据库', icon: 'DatabaseOutlined' },
-        component:  () => import('../views/db/DbContentPage.vue'),
+        component:  () => import('../views/db/DbPage.vue'),
       },
       {
         path: '/system',

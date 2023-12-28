@@ -16,4 +16,7 @@ export const dbApi = {
     selectTableData: async (params) => {
         return client.get("/api-admin/dbConnOperation/selectTableData", {params: params});
     },
+    findAllDbServer: async () => {
+        return client.get("/api-admin/dbConn/findAllDbServer");
+    }
 }
