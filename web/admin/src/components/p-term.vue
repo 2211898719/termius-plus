@@ -1,12 +1,17 @@
 <script setup>
 import "xterm/css/xterm.css";
-import {Terminal} from "xterm";
+import Terminal from '../utils/zmodem.js';
+// import {Terminal} from "xterm";
 import {FitAddon} from "xterm-addon-fit";
 import {AttachAddon} from "xterm-addon-attach";
 import {nextTick, onBeforeUnmount, onMounted, ref} from "vue";
 import _ from "lodash";
 import {useStorage, useWebSocket} from "@vueuse/core";
 import {Spin,} from 'ant-design-vue';
+import {SearchAddon} from "xterm-addon-search";
+import { TrzszAddon } from 'trzsz';
+
+// let networkInfo = useNetwork()
 
 let props = defineProps({
   server: {
@@ -61,7 +66,7 @@ onMounted(() => {
 
 const initSocket = () => {
   if (socket) {
-    socket.close();
+    useSocket.close();
   }
   if (term) {
     term.dispose();
@@ -77,23 +82,23 @@ const initSocket = () => {
   const host = window.location.host;
   useSocket = useWebSocket(wsProtocol + '://' + host + '/socket/ssh/' + props.server.id, {
     autoReconnect: {
+      retries: 3,
+      delay: 3000,
       onFailed: (e) => {
-        console.log(e)
+        loading.value = false
       }
     },
-    onMessage: (e) => {
+    onMessage: (w, e) => {
       if (loading.value) {
         loading.value = false
       }
     },
+    onError: (e) => {
+
+    },
     onConnected: () => {
       socket = useSocket.ws.value;
       initTerm();
-      // nextTick(() => {
-      //   setTimeout(() => {
-      //     loading.value = false
-      //   }, 200)
-      // });
     },
   });
 
@@ -101,12 +106,15 @@ const initSocket = () => {
 
 const initTerm = () => {
   term = new Terminal(options);
-  const attachAddon = new AttachAddon(socket);
+  const attachAddon = new TrzszAddon(socket);
+
 
   const fitAddon = new FitAddon();
   term.fitAddon = fitAddon;
-  term.loadAddon(attachAddon);
   term.loadAddon(fitAddon);
+  term.loadAddon(attachAddon);
+  const searchAddon = new SearchAddon();
+  term.loadAddon(searchAddon);
 
   terminal.value.innerHTML = "";
   term.open(terminal.value);
@@ -114,6 +122,7 @@ const initTerm = () => {
   term.focus();
 
   nextTick(() => {
+    attachAddon.uploadFiles()
     resizeTerminal(term);
   });
 

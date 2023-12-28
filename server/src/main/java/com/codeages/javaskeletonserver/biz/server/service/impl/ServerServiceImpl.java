@@ -7,6 +7,7 @@ import cn.hutool.core.lang.tree.TreeNode;
 import cn.hutool.core.lang.tree.TreeUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.core.util.URLUtil;
+import cn.hutool.extra.servlet.ServletUtil;
 import com.codeages.javaskeletonserver.biz.ErrorCode;
 import com.codeages.javaskeletonserver.biz.server.dto.*;
 import com.codeages.javaskeletonserver.biz.server.entity.Server;
@@ -26,13 +27,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.net.SocketFactory;
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
-import java.net.Socket;
+import java.net.*;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -334,6 +333,51 @@ public class ServerServiceImpl implements ServerService {
         root.setChildren(TreeUtil.build(servers, 0L));
         return List.of(root);
     }
+
+    /**
+     * 获取网络延迟
+     */
+    public int getNetworkDelay(ServerDto serverDto) {
+        return getNetworkDelay(serverDto.getIp());
+    }
+
+    /**
+     * 获取当前请求的网络延迟
+     */
+    public int getCurrentRequestNetworkDelay(HttpServletRequest request) {
+        return getNetworkDelay(ServletUtil.getClientIP(request));
+    }
+
+    /**
+     * 获取使用代理后 到服务器的网络延迟
+     */
+    @SneakyThrows
+    public int getNetworkDelay(Long id) {
+        Socket socket = new Socket();
+        ServerDto serverDto = findById(id);
+
+        Proxy proxy = createProxy(serverDto);
+        socket.connect(new InetSocketAddress(serverDto.getIp(), serverDto.getPort().intValue()), 5000);
+        socket = new Socket(proxy);
+        socket.connect(new InetSocketAddress(serverDto.getIp(), serverDto.getPort().intValue()), 5000);
+        return (int) (System.currentTimeMillis() - socket.getSoTimeout());
+    }
+
+    private int getNetworkDelay(String ip) {
+        try {
+            long start = System.currentTimeMillis();
+            InetAddress address = InetAddress.getByName(ip);
+
+            boolean reachable = address.isReachable(5000);
+            if (reachable) {
+                return (int) (System.currentTimeMillis() - start);
+            }
+        } catch (Exception e) {
+            return -1;
+        }
+        return -1;
+    }
+
 
 
 }

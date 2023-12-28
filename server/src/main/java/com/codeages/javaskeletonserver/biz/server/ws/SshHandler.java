@@ -10,6 +10,7 @@ import com.codeages.javaskeletonserver.biz.server.service.ServerService;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import net.schmizz.sshj.SSHClient;
+import net.schmizz.sshj.userauth.UserAuthException;
 import org.springframework.stereotype.Component;
 
 import javax.websocket.*;
@@ -18,6 +19,7 @@ import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.ConnectException;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.*;
@@ -69,6 +71,15 @@ public class SshHandler {
     @OnError
     public void onError(javax.websocket.Session session, Throwable error) {
         log.error("发生错误：{}，Session ID： {}", error.getMessage(), session.getId());
+
+        if (error instanceof  UserAuthException){
+            sendBinary(session, "用户认证错误");
+        } else if (error instanceof ConnectException) {
+            sendBinary(session, "网络连接错误，检查ip和端口是否正确");
+        }else {
+            sendBinary(session, "发生错误：" + error.getMessage());
+        }
+
         error.printStackTrace();
     }
 

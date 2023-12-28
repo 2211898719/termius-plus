@@ -5,44 +5,19 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="0de18e6e-97dd-4171-a773-cfeff3460ad8" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/../.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../.idea/sonarlint/issuestore/0/9/091c9a8c9a41f679d4dadad0f4d4634af1b4d3cb" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../.idea/sonarlint/issuestore/1/c/1c0a5a2a26a86d077e1beb0044a039bb290cc6d5" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../.idea/sonarlint/issuestore/2/d/2da3e42ce6b7bf4a2034d3e3295f2873f9a8d006" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../.idea/sonarlint/issuestore/3/c/3c860cc65f812ebf4096d98f1f2acb08b87b2132" beforeDir="false" afterPath="$PROJECT_DIR$/../.idea/sonarlint/issuestore/3/c/3c860cc65f812ebf4096d98f1f2acb08b87b2132" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../.idea/sonarlint/issuestore/7/5/755e37d390c04a198a15eb6e1ca0767eb19c9956" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../.idea/sonarlint/issuestore/7/6/76c9497d1056c01abf09361aa580350d3fd77376" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../.idea/sonarlint/issuestore/8/0/80422c73c07170564502eadd3be1370cd675e0d0" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../.idea/sonarlint/issuestore/a/7/a7102a0c59c5c50463b95eaa60ccbb77d9804ba9" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../.idea/sonarlint/issuestore/c/7/c72de7bf9c8094132e608164a4a24c3e3e22fca0" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../.idea/sonarlint/issuestore/e/9/e96fd5e75e2928c8ac4ac37cd475dad413d3c21c" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../.idea/sonarlint/issuestore/f/6/f689747448fc2320bf4bb1aa5a340cec4a25abe2" beforeDir="false" />
+      <change afterPath="$PROJECT_DIR$/../web/admin/src/utils/zmodem.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../.idea/sonarlint/issuestore/index.pb" beforeDir="false" afterPath="$PROJECT_DIR$/../.idea/sonarlint/issuestore/index.pb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../.idea/sonarlint/securityhotspotstore/0/9/091c9a8c9a41f679d4dadad0f4d4634af1b4d3cb" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../.idea/sonarlint/securityhotspotstore/1/c/1c0a5a2a26a86d077e1beb0044a039bb290cc6d5" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../.idea/sonarlint/securityhotspotstore/2/d/2da3e42ce6b7bf4a2034d3e3295f2873f9a8d006" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../.idea/sonarlint/securityhotspotstore/7/5/755e37d390c04a198a15eb6e1ca0767eb19c9956" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../.idea/sonarlint/securityhotspotstore/7/6/76c9497d1056c01abf09361aa580350d3fd77376" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../.idea/sonarlint/securityhotspotstore/8/0/80422c73c07170564502eadd3be1370cd675e0d0" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../.idea/sonarlint/securityhotspotstore/a/7/a7102a0c59c5c50463b95eaa60ccbb77d9804ba9" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../.idea/sonarlint/securityhotspotstore/c/7/c72de7bf9c8094132e608164a4a24c3e3e22fca0" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../.idea/sonarlint/securityhotspotstore/e/9/e96fd5e75e2928c8ac4ac37cd475dad413d3c21c" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../.idea/sonarlint/securityhotspotstore/f/6/f689747448fc2320bf4bb1aa5a340cec4a25abe2" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/../.idea/sonarlint/securityhotspotstore/index.pb" beforeDir="false" afterPath="$PROJECT_DIR$/../.idea/sonarlint/securityhotspotstore/index.pb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources/7a2d8a16-7a99-4d59-9724-de92db928614.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/7a2d8a16-7a99-4d59-9724-de92db928614.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/7/c/7c5818269a707df238fb4a5c6e4bdd3435edb208" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/9/e/9e8bcdc4684bb6c3ecdb7c03cc71ee3cefd0ec24" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/b/9/b9e20a335ca3ad95434d7e02ebb08d9efb9bd487" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/index.pb" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/index.pb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/securityhotspotstore/7/c/7c5818269a707df238fb4a5c6e4bdd3435edb208" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/securityhotspotstore/9/e/9e8bcdc4684bb6c3ecdb7c03cc71ee3cefd0ec24" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/securityhotspotstore/b/9/b9e20a335ca3ad95434d7e02ebb08d9efb9bd487" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/securityhotspotstore/index.pb" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/securityhotspotstore/index.pb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/c/a/ca73be8043833776a2f1ea08d02567654fb998e9" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/c/a/ca73be8043833776a2f1ea08d02567654fb998e9" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/api/admin/BackUpController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/api/admin/BackUpController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../web/admin/src/router/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/router/index.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/impl/ServerServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/impl/ServerServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/ws/SshHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/ws/SshHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/sql/controller/DbConnOperationController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/sql/controller/DbConnOperationController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/config/WebSocketConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/config/WebSocketConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/src/components/p-sftp.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/components/p-sftp.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/src/components/p-term.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/components/p-term.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/yarn.lock" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/yarn.lock" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -101,6 +76,7 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
+    "Maven.java-skeleton-project [compile,jib:build...].executor": "Run",
     "RequestMappingsPanelOrder0": "0",
     "RequestMappingsPanelOrder1": "1",
     "RequestMappingsPanelWidth0": "75",
@@ -108,7 +84,7 @@
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "Spring Boot.JavaSkeletonServerApplication.executor": "Run",
+    "Spring Boot.JavaSkeletonServerApplication.executor": "Debug",
     "WebServerToolWindowFactoryState": "false",
     "git-widget-placeholder": "master-termius-plus",
     "kotlin-language-version-configured": "true",

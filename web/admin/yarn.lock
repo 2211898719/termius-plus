@@ -3069,6 +3069,11 @@ cosmiconfig@^7.0.0:
     path-type "^4.0.0"
     yaml "^1.10.0"
 
+crc-32@^1.1.1:
+  version "1.2.2"
+  resolved "https://registry.npmmirror.com/crc-32/-/crc-32-1.2.2.tgz#3cad35a934b8bf71f25ca524b6da51fb7eace2ff"
+  integrity sha512-ROmzCKrTnOwybPcJApAA6WBWij23HVfGVNKqqrZpuyZOHqK2CwHSvpGuyt/UNNvaIjEd8X5IFGp4Mh+Ie1IHJQ==
+
 crelt@^1.0.5:
   version "1.0.6"
   resolved "https://registry.npmmirror.com/crelt/-/crelt-1.0.6.tgz#7cc898ea74e190fb6ef9dae57f8f81cf7302df72"
@@ -5207,6 +5212,13 @@ node-releases@^2.0.13:
   resolved "https://registry.npmmirror.com/node-releases/-/node-releases-2.0.13.tgz#d5ed1627c23e3461e819b02e57b75e4899b1c81d"
   integrity sha512-uYr7J37ae/ORWdZeQ1xxMJe3NtdmqMC/JZK+geofDrkLUApKRHPd18/TxtBOJ4A0/+uUIliorNrfYV6s1b02eQ==
 
+nora-zmodemjs@^1.1.1:
+  version "1.1.1"
+  resolved "https://registry.npmmirror.com/nora-zmodemjs/-/nora-zmodemjs-1.1.1.tgz#0b473c4510cc0a41ea90cf8d5e06c5fe831e897c"
+  integrity sha512-iUyKDEIsYIpdnLru+cr4C6WXeUn2t+jVlYTrK8IeA8uPAHXqnvUy62YuFOSezzdugDNiEpbAH1y2Bhv/fYXWkw==
+  dependencies:
+    crc-32 "^1.1.1"
+
 normalize-package-data@^2.5.0:
   version "2.5.0"
   resolved "https://registry.npmmirror.com/normalize-package-data/-/normalize-package-data-2.5.0.tgz#e66db1838b200c1dfc233225d12cb36520e234a8"
@@ -6720,6 +6732,11 @@ tr46@~0.0.3:
   resolved "https://registry.npmmirror.com/tr46/-/tr46-0.0.3.tgz#8184fd347dac9cdc185992f3a6622e14b9d9ab6a"
   integrity sha512-N3WMsuqV66lT30CrXNbEjx4GEwlow3v6rr4mCcv6prnfwhS01rkgyFdjPNBYd9br7LpXV1+Emh01fHnq2Gdgrw==
 
+trzsz@^1.1.4:
+  version "1.1.4"
+  resolved "https://registry.npmmirror.com/trzsz/-/trzsz-1.1.4.tgz#c2bd395b96225cf8449e2d297dc73bee2af85041"
+  integrity sha512-tikjmBhVT1poC9Cu2ekmWRZ/U+8P6XgDKuiEhQRG4wByVGjSyUuhtOKIw5qHcosuUoAtGNRf4IV5hGvwK2SsdQ==
+
 tslib@^2.0.3, tslib@^2.3.0:
   version "2.6.2"
   resolved "https://registry.npmmirror.com/tslib/-/tslib-2.6.2.tgz#703ac29425e7b37cd6fd456e92404d46d1f3e4ae"
@@ -7193,6 +7210,11 @@ xterm-addon-fit@0.6.0:
   version "0.6.0"
   resolved "https://registry.npmmirror.com/xterm-addon-fit/-/xterm-addon-fit-0.6.0.tgz#142e1ce181da48763668332593fc440349c88c34"
   integrity sha512-9/7A+1KEjkFam0yxTaHfuk9LEvvTSBi0PZmEkzJqgafXPEXL9pCMAVV7rB09sX6ATRDXAdBpQhZkhKj7CGvYeg==
+
+xterm-addon-search@0.8.2:
+  version "0.8.2"
+  resolved "https://registry.npmmirror.com/xterm-addon-search/-/xterm-addon-search-0.8.2.tgz#be7aa74d5ff12c901707c6ff674229f214318032"
+  integrity sha512-I1863mjn8P6uVrqm/X+btalVsqjAKLhnhpbP7SavAOpEkI1jJhbHU2UTp7NjeRtcKTks6UWk/ycgds5snDSejg==
 
 xterm@4.19.0:
   version "4.19.0"

@@ -10,8 +10,6 @@ import {ExclamationCircleOutlined} from "@ant-design/icons-vue";
 import {computedFileSize} from "@/components/tinymce/File";
 import {useAutoAnimate} from "@formkit/auto-animate/vue";
 
-console.log(fileIcon)
-
 const props = defineProps({
   serverId: {
     type: [Number], default: undefined,
