@@ -233,3 +233,6 @@ z
 Jsrc/main/java/com/codeages/javaskeletonserver/biz/sql/dto/DatabaseDto.java,2/1/21eb127667c225dfba6e94fbcee0a2fa4af030a8
 }
 Msrc/main/java/com/codeages/javaskeletonserver/biz/sql/dto/SelectTableDTO.java,7/a/7ab6ebe9e6b662203a0b4e6efd015ede782161f8
+:
+
+.gitignore,a/5/a5cc2925ca8258af241be7e5b0381edf30266302

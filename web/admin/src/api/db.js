@@ -4,6 +4,9 @@ export const dbApi = {
     getDbConnInfo: async (id) => {
         return client.get(`/api-admin/dbConn/get/${id}`);
     },
+    list: async () => {
+        return client.get(`/api-admin/dbConn/list`);
+    },
     showDatabase: async (params) => {
         return client.get("/api-admin/dbConnOperation/showDatabase", {params: params});
     },
@@ -18,5 +21,8 @@ export const dbApi = {
     },
     findAllDbServer: async () => {
         return client.get("/api-admin/dbConn/findAllDbServer");
+    },
+    executeSql: async (params) => {
+        return client.post("/api-admin/dbConnOperation/executeSql", params);
     }
 }

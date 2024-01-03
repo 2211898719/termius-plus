@@ -37,7 +37,7 @@ public class DbConnOperationController {
     }
 
     @GetMapping("/getTableColumns")
-    public List<String> getTableColumns(SelectTableDTO searchParams) {
+    public List<Entity> getTableColumns(SelectTableDTO searchParams) {
         return dbConnectOperationService.getTableColumns(searchParams);
     }
 
@@ -45,6 +45,11 @@ public class DbConnOperationController {
     public PagerResponse<Entity> selectTableData(SelectTableDTO searchParams,
                                                  @PageableDefault(size = 20) Pageable pager) {
         return dbConnectOperationService.selectTableData(searchParams, pager);
+    }
+
+    @GetMapping("/executeSql")
+    public List<Entity> executeSql(DbTableQueryDTO searchParams) {
+        return dbConnectOperationService.executeSql(searchParams.getDbId(), searchParams.getSql());
     }
 
 

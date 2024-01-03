@@ -5,16 +5,35 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="0de18e6e-97dd-4171-a773-cfeff3460ad8" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/../.idea/sonarlint/issuestore/4/c/4c6b0bc155c2bdf71e72bcdaf7879a450a9f0fb2" beforeDir="false" afterPath="$PROJECT_DIR$/../.idea/sonarlint/issuestore/4/c/4c6b0bc155c2bdf71e72bcdaf7879a450a9f0fb2" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../web/admin/src/components/p-code-edit.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../.idea/sonarlint/issuestore/index.pb" beforeDir="false" afterPath="$PROJECT_DIR$/../.idea/sonarlint/issuestore/index.pb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../.idea/sonarlint/securityhotspotstore/index.pb" beforeDir="false" afterPath="$PROJECT_DIR$/../.idea/sonarlint/securityhotspotstore/index.pb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../.idea/termius-plus.iml" beforeDir="false" afterPath="$PROJECT_DIR$/../.idea/termius-plus.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/7a2d8a16-7a99-4d59-9724-de92db928614.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/0/a/0ac23d5b075112de94809cdea1dc0b4da982394c" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/0/a/0ac23d5b075112de94809cdea1dc0b4da982394c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/1/4/1434d07d9a8baec07a462d977dc56d6447531438" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/1/4/1434d07d9a8baec07a462d977dc56d6447531438" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/4/2/42ebe2d33d781b55356b69700a1a3a69ddede46c" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/4/2/42ebe2d33d781b55356b69700a1a3a69ddede46c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/4/b/4bef646907e6b0113d46a125718bf4a66ae0475c" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/4/b/4bef646907e6b0113d46a125718bf4a66ae0475c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/6/5/65c2c329a317bb37ced6778d32210ebbe7678a30" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/6/5/65c2c329a317bb37ced6778d32210ebbe7678a30" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/9/8/98f46e63805191577d3337ddbe4b6266f29093c6" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/9/8/98f46e63805191577d3337ddbe4b6266f29093c6" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/a/4/a42c5619b44761e0eddfbcd0f9d8b738e087a636" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/a/4/a42c5619b44761e0eddfbcd0f9d8b738e087a636" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/c/a/ca73be8043833776a2f1ea08d02567654fb998e9" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/c/a/ca73be8043833776a2f1ea08d02567654fb998e9" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/issuestore/index.pb" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/issuestore/index.pb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/sonarlint/securityhotspotstore/index.pb" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sonarlint/securityhotspotstore/index.pb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/repository/ServerRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/repository/ServerRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/ServerService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/ServerService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/impl/ServerServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/server/service/impl/ServerServiceImpl.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/sql/controller/DbConnController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/sql/controller/DbConnController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/sql/controller/DbConnOperationController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/sql/controller/DbConnOperationController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/sql/dto/DbTableQueryDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/sql/dto/DbTableQueryDTO.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/sql/service/impl/DbConnectOperationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/codeages/javaskeletonserver/biz/sql/service/impl/DbConnectOperationService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/package.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../web/admin/src/api/db.js" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/api/db.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../web/admin/src/components/p-term.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/components/p-term.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../web/admin/src/router/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/router/index.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/src/views/db/DbContentPage.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/views/db/DbContentPage.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/src/views/db/DbListPage.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/views/db/DbListPage.vue" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../web/admin/src/views/db/DbPage.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/src/views/db/DbPage.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/vue.config.js" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/vue.config.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/admin/yarn.lock" beforeDir="false" afterPath="$PROJECT_DIR$/../web/admin/yarn.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/shared/usePaginationQuery.js" beforeDir="false" afterPath="$PROJECT_DIR$/../web/shared/usePaginationQuery.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -85,7 +104,7 @@
     "WebServerToolWindowFactoryState": "false",
     "git-widget-placeholder": "master-termius-plus",
     "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "/Users/hjl/package/termius-plus/server/src/main/resources",
+    "last_opened_file_path": "/Users/hongjunlong/Documents/workspace/termius-plus/server/src/main/resources",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -96,6 +115,7 @@
     "project.structure.side.proportion": "0.0",
     "settings.editor.selected.configurable": "preferences.pluginManager",
     "spring.configuration.checksum": "4cc366ba2178339e1ebe998b9e57e535",
+    "ts.external.directory.path": "/Users/hongjunlong/Applications/IntelliJ IDEA Ultimate.app/Contents/plugins/javascript-impl/jsLanguageServicesImpl/external",
     "vue.rearranger.settings.migration": "true"
   },
   "keyToStringList": {
@@ -264,6 +284,9 @@
       <workItem from="1703641284199" duration="3116000" />
       <workItem from="1703653832226" duration="12260000" />
       <workItem from="1703727312879" duration="104000" />
+      <workItem from="1703821665144" duration="1823000" />
+      <workItem from="1703824762728" duration="27000" />
+      <workItem from="1703824817057" duration="4367000" />
     </task>
     <servers />
   </component>

@@ -1,8 +1,8 @@
-import { reactive, ref, onMounted } from 'vue';
+import {onMounted, reactive, ref} from 'vue';
 import {onBeforeRouteUpdate} from 'vue-router';
 import _ from "lodash";
 
-export default function usePaginationQuery(router, searchForm, searchMethod) {
+export default function usePaginationQuery(router, searchForm, searchMethod, needUrlQueryParams = true) {
 
     const rows = ref([]);
     const sort = ref('');
@@ -11,7 +11,7 @@ export default function usePaginationQuery(router, searchForm, searchMethod) {
         current: 1,
         pageSize: 20,
         total: 0,
-        pageSizeOptions: ['10', '20', '50', '100'],
+        pageSizeOptions: ['10', '20', '50', '100','200','400'],
         showSizeChanger: true,
         showTotal: (total) => `共 ${total} 条`,
         showQuickJumper: true,
@@ -19,7 +19,12 @@ export default function usePaginationQuery(router, searchForm, searchMethod) {
 
     const pullQueryParams = (query) => {
         for (let key in searchForm) {
-            searchForm[key] = query[key] ? query[key] : '';
+            if (!query[key]) {
+                searchForm[key] = undefined;
+                continue
+            }
+
+            searchForm[key] = conversionType(query[key], typeof searchForm[key]);
         }
 
         if (query.page) {
@@ -33,6 +38,15 @@ export default function usePaginationQuery(router, searchForm, searchMethod) {
         if (query.sort) {
             sort.value = query.sort;
         }
+    }
+
+    //todo 丰富这里的类型转化
+    const conversionType = (data, type) => {
+        if (type === 'number') {
+            return Number(data);
+        }
+
+        return data;
     }
 
     const buildQueryParams = () => {
@@ -51,7 +65,6 @@ export default function usePaginationQuery(router, searchForm, searchMethod) {
     }
 
     const onPaginationChange = async (page, filters, sorter) => {
-        console.log("onPaginationChange", page, filters, sorter);
         let sortParams;
         if (sorter.field && sorter.order) {
             sort.value = sorter.field + ',' + (sorter.order === 'ascend' ? 'asc' : 'desc');
@@ -59,7 +72,7 @@ export default function usePaginationQuery(router, searchForm, searchMethod) {
             sort.value = '';
         }
 
-        if (router) {
+        if (router && needUrlQueryParams) {
             const route = router.currentRoute.value;
             const query = _.assign({}, route.query, {page: page.current, size: page.pageSize}, {sort: sort.value});
             await router.push({name: route.name, query: query});
@@ -75,9 +88,9 @@ export default function usePaginationQuery(router, searchForm, searchMethod) {
 
         if (router) {
             const route = router.currentRoute.value;
-            const query = _.assign({}, searchForm, {page: _.toString(pagination.current), size: _.toString(pagination.pageSize)});
+            const query = _.assign({}, _.pickBy({...searchForm}), {page: _.toString(pagination.current), size: _.toString(pagination.pageSize)});
 
-            if (_.isEqual(route.query, query)) {
+            if (_.isEqual(route.query, query) || !needUrlQueryParams) {
                 await fetchPaginationData();
             } else {
                 await router.push({name: route.name, query: query});
@@ -88,9 +101,10 @@ export default function usePaginationQuery(router, searchForm, searchMethod) {
     };
 
     onMounted(async () => {
-        if (router) {
+        if (router && needUrlQueryParams) {
             pullQueryParams(router.currentRoute.value.query);
         }
+
         await fetchPaginationData();
     });
 
@@ -106,6 +120,5 @@ export default function usePaginationQuery(router, searchForm, searchMethod) {
         fetchPaginationData,
         onPaginationChange,
         onSearchSubmit,
-        pullQueryParams,
     }
 }

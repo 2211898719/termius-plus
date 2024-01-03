@@ -12,4 +12,5 @@ public class DbTableQueryDTO {
     private String schemaName;
     private String tableName;
     private String tableComment;
+    private String sql;
 }

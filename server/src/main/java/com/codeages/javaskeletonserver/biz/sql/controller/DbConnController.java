@@ -31,13 +31,9 @@ public class DbConnController {
         this.serverService = serverService;
     }
 
-    @GetMapping("/search")
-    public PagerResponse<DbConnDto> search(DbConnSearchParams searchParams,
-                                           @PageableDefault(size = 20, sort = {"createdAt"}, direction = Sort.Direction.DESC) Pageable pager) {
-        return new PagerResponse<>(
-                dbConnService.search(searchParams, pager),
-                pager
-        );
+    @GetMapping("/list")
+    public List<DbConnDto> list(DbConnSearchParams searchParams) {
+        return dbConnService.search(searchParams, Pageable.unpaged()).getContent();
     }
 
     @PostMapping("/create")

@@ -119,15 +119,33 @@ public class DbConnectOperationService {
     }
 
     @SneakyThrows
-    public List<String> getTableColumns(SelectTableDTO searchParams) {
+    public List<Entity> getTableColumns(SelectTableDTO searchParams) {
         Db db = Db.use(getDsById(searchParams.getDbId()));
         Entity condition = Entity.create();
         condition.setTableName("`information_schema`.`COLUMNS`");
         condition.set("`TABLE_SCHEMA`", searchParams.getSchemaName());
         condition.set("`TABLE_NAME`", searchParams.getTableName());
         List<Entity> entities = db.find(condition);
+        return entities;
+    }
+
+    @SneakyThrows
+    public String getTableKeyColumns(SelectTableDTO searchParams){
+        Db db = Db.use(getDsById(searchParams.getDbId()));
+        Entity condition = Entity.create();
+        condition.setTableName("`information_schema`.`COLUMNS`");
+        condition.set("`TABLE_SCHEMA`", searchParams.getSchemaName());
+        condition.set("`TABLE_NAME`", searchParams.getTableName());
+        condition.set("`COLUMN_KEY`", "PRI");
+        List<Entity> entities = db.find(condition);
         return entities.stream()
                        .map(entity -> entity.getStr("COLUMN_NAME"))
-                       .collect(Collectors.toList());
+                       .collect(Collectors.joining(","));
+    }
+
+    @SneakyThrows
+    public List<Entity> executeSql(Long dbId, String sql) {
+        Db db = Db.use(getDsById(dbId));
+        return db.query(sql);
     }
 }

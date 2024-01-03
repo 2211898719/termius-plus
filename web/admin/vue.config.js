@@ -1,6 +1,7 @@
 const {defineConfig} = require('@vue/cli-service');
 const path = require('path');
 const appConfig = require('./src/config');
+const CopyWebpackPlugin = require('copy-webpack-plugin')
 
 module.exports = defineConfig({
     transpileDependencies: true,
@@ -44,5 +45,5 @@ module.exports = defineConfig({
                 },
             },
         },
-    },
+    }
 })
