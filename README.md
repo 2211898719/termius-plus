@@ -40,7 +40,7 @@
 ```shell
 git clone https://gitee.com/zimehjl/termius-plus.git
 cd termius-plus/scripts/docker
-#修改server.env文件中的配置WEBSSH_URL为你的服务器地址
+#修改server.env文件中的配置
 docker-compose up -d
 #根据docker-compose.yml中的front配置，访问http://ip:9999
 ```
