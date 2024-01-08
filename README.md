@@ -75,3 +75,9 @@ ssh连接，sftp，端口转发等功能使用 sshj
 
 钉钉机器人通知 dinger
 
+#### 运行
+建立数据库，要求 mysql8.0+
+
+复制 application-dev.properties.dist 为 application-dev.properties
+, 修改其中的数据库配置，启动！
+
