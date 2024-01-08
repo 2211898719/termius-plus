@@ -1,0 +1,6 @@
+.DS_Store
+#忽略以下所有目录中的.idea
+.idea
+*.log
+
+

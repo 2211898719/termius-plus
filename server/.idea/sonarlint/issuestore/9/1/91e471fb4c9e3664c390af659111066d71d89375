@@ -1,11 +1,0 @@
-
-—
-java:S1319"zThe type of "SFTP_POOL" should be an interface such as "ConcurrentMap" rather than the implementation "ConcurrentHashMap".(ÌŞÊå8±ğğĞ¯1
-:
-java:S2386"Make this member "protected".(ÌŞÊå8ŒÛ¼›¸1
-W
-java:S1118	":Add a private constructor to hide the implicit public one.(å…–Ô8íÖğĞ¯1
-W
-java:S1128"5Remove this unused import 'cn.hutool.core.lang.Pair'.(ÚÓáÈúÿÿÿÿ8’Û¼›¸1
-W
-java:S1128"5Remove this unused import 'cn.hutool.extra.ssh.Sftp'.(ÏÓ¢Åşÿÿÿÿ8“Û¼›¸1

@@ -29,7 +29,7 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
-src/main/resources/application-dev.*
+src/main/resources/application-dev.properties
 
 ### VS Code ###
 .vscode/
