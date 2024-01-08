@@ -1,5 +1,8 @@
 
+g	java:S112]"FDefine and throw a dedicated exception instead of using a generic one.(¼ÿ¾¹ÿÿÿÿÿ8¯á×‘Í1
 i
-java:S2095K"GUse try-with-resources or close this "SSHClient" in a "finally" clause.(ì³—àøÿÿÿÿ8‰‘Ž§È1
+java:S2095L"GUse try-with-resources or close this "SSHClient" in a "finally" clause.(ì³—àøÿÿÿÿ8‰‘Ž§È1
+X
+java:S1068 "6Remove this unused "httpServletRequest" private field.(¡ÎÃùýÿÿÿÿ8Åá×‘Í1
 M
-java:S1068$"0Remove this unused "serverSocket" private field.(÷à×Ý8è‘Ž§È1
+java:S1068""0Remove this unused "serverSocket" private field.(÷à×Ý8è‘Ž§È1

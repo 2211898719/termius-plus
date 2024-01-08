@@ -1282,6 +1282,11 @@
   resolved "https://registry.npmmirror.com/@formkit/auto-animate/-/auto-animate-0.8.1.tgz#bcaba2969609ca3a7453eacd42b383a2739dfa35"
   integrity sha512-0/Z2cuNXWVVIG/l0SpcHAWFhGdvLJ8DRvEfRWvmojtmRWfEy+LWNwgDazbZqY0qQYtkHcoEK3jBLkhiZaB/4Ig==
 
+"@gytx/xterm-local-echo@^0.1.8":
+  version "0.1.8"
+  resolved "https://registry.npmmirror.com/@gytx/xterm-local-echo/-/xterm-local-echo-0.1.8.tgz#c93dc00d8d9ab5072cb4aef3880f21493ac4d320"
+  integrity sha512-JKq/J9fLfcP4af+FNv5zW2hzokio/0KO+iOVtuKpCXBCWsShV74n5bZhU8/KiuHquAq7emVHxFCapSZftqrZVg==
+
 "@hapi/hoek@^9.0.0":
   version "9.3.0"
   resolved "https://registry.npmmirror.com/@hapi/hoek/-/hoek-9.3.0.tgz#8368869dcb735be2e7f5cb7647de78e167a251fb"

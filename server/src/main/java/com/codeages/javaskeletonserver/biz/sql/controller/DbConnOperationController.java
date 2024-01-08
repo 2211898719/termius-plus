@@ -28,7 +28,7 @@ public class DbConnOperationController {
 
     @GetMapping("/showDatabase")
     public List<DatabaseDto> showDatabase(DbTableQueryDTO searchParams) {
-        return dbConnectOperationService.getDatabaseNames(searchParams.getDbId());
+        return dbConnectOperationService.getDatabaseNames(searchParams.getDbId(), searchParams.getType());
     }
 
     @GetMapping("/showTables")
@@ -49,7 +49,7 @@ public class DbConnOperationController {
 
     @GetMapping("/executeSql")
     public List<Entity> executeSql(DbTableQueryDTO searchParams) {
-        return dbConnectOperationService.executeSql(searchParams.getDbId(), searchParams.getSql());
+        return dbConnectOperationService.executeSql(searchParams.getDbId(),searchParams.getType(), searchParams.getSql());
     }
 
 

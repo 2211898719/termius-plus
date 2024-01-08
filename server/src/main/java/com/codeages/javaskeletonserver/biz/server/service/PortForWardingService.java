@@ -13,6 +13,10 @@ public interface PortForWardingService {
                              Long serverId,
                              Integer remotePort);
 
+    Integer startPortForwarding(String forwardingName,
+                             Long serverId,
+                             Integer remotePort);
+
     void stopPortForwarding(Integer localPort);
 
     boolean isRunning(Integer localPort);

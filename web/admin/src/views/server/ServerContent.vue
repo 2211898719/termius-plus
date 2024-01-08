@@ -8,6 +8,7 @@ import PTerm from "@/components/p-term.vue";
 import "@/components/VueDragSplit/style.css";
 import VueDragSplit from "@/components/VueDragSplit/index.vue";
 import linuxDoc from "@/assets/linux-doc.json";
+import {useStorage} from "@vueuse/core";
 
 let searchLinuxDoc = ref(JSON.parse(JSON.stringify(linuxDoc)))
 
@@ -115,6 +116,8 @@ defineExpose({
     PTermRef.value.close()
   },
 })
+
+let backColor = useStorage('backColor', "#000000")
 
 let linuxDocSearch = ref("")
 //高亮搜索
@@ -397,10 +400,6 @@ const handleChangeSearch = (e) => {
   height: calc(@height - 100px) !important;
 }
 
-:deep(.split_view_content) {
-  background-color: #000 !important;
-}
-
 :deep(#split_window .drag_modal_wrapper) {
   background-color: #1daa6c !important;
   //透明度
@@ -512,6 +511,10 @@ const handleChangeSearch = (e) => {
   .hljs-strong {
     font-weight: 700
   }
+}
+
+:deep(#split_window .split_view .split_content_wrapper .split_view_content_wrapper .split_view_content) {
+  background-color: v-bind(backColor);
 }
 
 </style>

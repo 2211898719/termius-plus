@@ -9,10 +9,10 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.codeages</groupId>
-	<artifactId>java-skeleton-project</artifactId>
-	<version>v1.0.8</version>
-	<name>java-skeleton-project</name>
-	<description>Java Skeleton Project</description>
+	<artifactId>termius-plus</artifactId>
+	<version>v1.1.0</version>
+	<name>termius-plus</name>
+	<description>termius plus</description>
 	<properties>
 		<java.version>11</java.version>
 		<org.mapstruct.version>1.4.2.Final</org.mapstruct.version>

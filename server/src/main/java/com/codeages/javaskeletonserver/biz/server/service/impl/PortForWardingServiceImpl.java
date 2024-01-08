@@ -12,14 +12,11 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import net.schmizz.sshj.connection.channel.direct.LocalPortForwarder;
 import net.schmizz.sshj.connection.channel.direct.Parameters;
-import net.schmizz.sshj.connection.channel.forwarded.RemotePortForwarder;
-import net.schmizz.sshj.connection.channel.forwarded.SocketForwardingConnectListener;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.util.List;
 import java.util.Map;
@@ -112,6 +109,13 @@ public class PortForWardingServiceImpl implements PortForWardingService {
                         serverDto
                 )
         );
+    }
+
+    @Override
+    public Integer startPortForwarding(String forwardingName, Long serverId, Integer remotePort) {
+        Integer localPort = NetUtil.getUsableLocalPort(8200, 8500);
+        startPortForwarding(forwardingName, localPort, serverId, remotePort);
+        return localPort;
     }
 
     @SneakyThrows

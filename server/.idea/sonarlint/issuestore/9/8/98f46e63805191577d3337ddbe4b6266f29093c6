@@ -1,7 +1,5 @@
 
-¤
-java:S1186‡"€Add a nested comment explaining why this method is empty, throw an UnsupportedOperationException or complete the implementation.(ÎÑÔ·şÿÿÿÿ8„¹ÙË1
-u
-java:S1128"SRemove this unused import 'org.springframework.beans.factory.annotation.Autowired'.(¡¸Îùÿÿÿÿ8“¹ÙË1
-S
-java:S1068%"1Remove this unused "serverService" private field.(ØíÂûıÿÿÿÿ8“¹ÙË1
+o
+java:S1192m"MDefine a constant instead of duplicating this literal "`TABLE_NAME`" 3 times.(‘ç¯²ÿÿÿÿÿ8Ì¤èÌ1
+l
+java:S1192k"ODefine a constant instead of duplicating this literal "`TABLE_SCHEMA`" 3 times.(øÒ¸ä8Í¤èÌ1

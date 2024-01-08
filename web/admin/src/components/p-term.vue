@@ -10,6 +10,7 @@ import {useStorage, useWebSocket} from "@vueuse/core";
 import {Spin,} from 'ant-design-vue';
 import {SearchAddon} from "xterm-addon-search";
 import { TrzszAddon } from 'trzsz';
+import { LocalEchoAddon } from "@gytx/xterm-local-echo";
 
 // let networkInfo = useNetwork()
 
@@ -44,6 +45,7 @@ let options = {
   // cursorStyle: "block", //光标样式
   cursorBlink: true, //光标闪烁
   // scrollback: 30,
+  fastScrollModifier: "alt", //快速滚动时要使用的修饰符
   tabStopWidth: 1,
   screenReaderMode: true,
   theme: {
@@ -108,13 +110,15 @@ const initTerm = () => {
   term = new Terminal(options);
   const attachAddon = new TrzszAddon(socket);
 
-
   const fitAddon = new FitAddon();
   term.fitAddon = fitAddon;
   term.loadAddon(fitAddon);
   term.loadAddon(attachAddon);
   const searchAddon = new SearchAddon();
   term.loadAddon(searchAddon);
+
+  const localEcho = new LocalEchoAddon();
+  term.loadAddon(localEcho);
 
   terminal.value.innerHTML = "";
   term.open(terminal.value);
@@ -127,7 +131,8 @@ const initTerm = () => {
 
   if (props.server.autoSudo && props.server.username !== 'root') {
     nextTick(() => {
-      execCommand("echo \"" + props.server.password + "\" | sudo -S ls && sudo -i\n")
+      // execCommand("echo \"" + props.server.password + "\" | sudo -S ls && sudo -i\n")
+      execCommand(`echo '${props.server.password}' | sudo -S ls && sudo -i && ls\n`)
     })
   }
 
@@ -170,6 +175,7 @@ const resizeTerminal = () => {
 
   nextTick(() => {
     resizeFun()
+    term.focus();
   })
 
   const resizeObserver = new ResizeObserver(() => {
@@ -239,4 +245,5 @@ defineExpose({
   height: 100%;
   background-color: #fff;
 }
+
 </style>

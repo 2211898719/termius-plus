@@ -17,6 +17,8 @@ public class Role {
 
     private String name;
 
+    private String serverPermission;
+
     @CreatedDate
     private Long createdAt;
 

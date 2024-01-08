@@ -11,4 +11,5 @@ public class SelectTableDTO {
     private Long dbId;
     private String schemaName;
     private String tableName;
+    private Boolean type;
 }

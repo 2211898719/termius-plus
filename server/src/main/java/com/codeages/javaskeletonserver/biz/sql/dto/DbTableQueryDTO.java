@@ -13,4 +13,5 @@ public class DbTableQueryDTO {
     private String tableName;
     private String tableComment;
     private String sql;
+    private Boolean type;
 }

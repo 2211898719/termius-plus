@@ -1,18 +1,18 @@
 
 b
-java:S2095“"DUse try-with-resources or close this "Socket" in a "finally" clause.(ø×†é8‚ŸìçÌ1
-g
-java:S2095¹"DUse try-with-resources or close this "Socket" in a "finally" clause.(‚úßıÿÿÿÿ8¯ü”¿Ã1
-g
-java:S2095À"DUse try-with-resources or close this "Socket" in a "finally" clause.(‚úßıÿÿÿÿ8¯ü”¿Ã1
-g
-java:S2095¯"DUse try-with-resources or close this "Socket" in a "finally" clause.(‚úßıÿÿÿÿ8¯ü”¿Ã1
-b
 java:S2095˜"DUse try-with-resources or close this "Socket" in a "finally" clause.(ñËÓÈ8€ŸìçÌ1
+g
+java:S2095Ê"DUse try-with-resources or close this "Socket" in a "finally" clause.(‚úßıÿÿÿÿ8¯ü”¿Ã1
 j
 java:S2095¡"GUse try-with-resources or close this "SSHClient" in a "finally" clause.(şüìøÿÿÿÿ8®ü”¿Ã1
 g
-java:S2095Ê"DUse try-with-resources or close this "Socket" in a "finally" clause.(‚úßıÿÿÿÿ8¯ü”¿Ã1
+java:S2095¯"DUse try-with-resources or close this "Socket" in a "finally" clause.(‚úßıÿÿÿÿ8¯ü”¿Ã1
+g
+java:S2095¹"DUse try-with-resources or close this "Socket" in a "finally" clause.(‚úßıÿÿÿÿ8¯ü”¿Ã1
+b
+java:S2095“"DUse try-with-resources or close this "Socket" in a "finally" clause.(ø×†é8‚ŸìçÌ1
+g
+java:S2095À"DUse try-with-resources or close this "Socket" in a "finally" clause.(‚úßıÿÿÿÿ8¯ü”¿Ã1
 h
 java:S3252€"JUse static access with "cn.hutool.core.collection.CollUtil" for "isEmpty".(­ßû˜8µü”¿Ã1
 k

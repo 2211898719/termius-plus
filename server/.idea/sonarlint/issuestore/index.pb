@@ -236,3 +236,13 @@ Msrc/main/java/com/codeages/javaskeletonserver/biz/sql/dto/SelectTableDTO.java,
 :
 
 .gitignore,a/5/a5cc2925ca8258af241be7e5b0381edf30266302
+w
+Gsrc/main/java/com/codeages/javaskeletonserver/biz/user/entity/Role.java,6/b/6b54c9b3acc329dad1616f0c9959a3de3a83eb60
+{
+Ksrc/main/java/com/codeages/javaskeletonserver/biz/user/entity/UserRole.java,5/6/564156fcad05bdef84645e087989ca90eee152fd
+w
+Gsrc/main/java/com/codeages/javaskeletonserver/biz/user/entity/User.java,e/8/e84726bb41cd3e6bca0a38c14be996425c4506bb
+4
+mvnw,5/d/5d837c4ed85ecaaf932c506e80ff5d7b9f3d590d
+I
+java-skeleton-project.iml,2/7/27e56a6fe39afcc0dd2c198470d06640dfc4ef05

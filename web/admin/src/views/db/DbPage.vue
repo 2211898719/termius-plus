@@ -231,7 +231,7 @@ const handleChangeTab = (item) => {
             <template v-slot:closeIcon>
               <close-outlined @click="onCloseServer(server.operationId)"/>
             </template>
-            <db-content-page :db="server"></db-content-page>
+            <db-content-page :db="server" :type="server.isDb"></db-content-page>
           </a-tab-pane>
         </template>
       </a-tabs>

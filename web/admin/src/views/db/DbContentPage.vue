@@ -48,7 +48,7 @@
 
 <script setup>
 
-import {onMounted, reactive, ref} from "vue";
+import {reactive, ref} from "vue";
 import {onBeforeRouteUpdate, useRouter} from "vue-router";
 import {dbApi} from "@/api/db";
 import usePaginationQuery from "@shared/usePaginationQuery";
@@ -57,20 +57,23 @@ const router = useRouter();
 
 const props = defineProps({
   db: {
-    type: [Number, Object], default: 1,
-  }
+    type: [Number, Object], default: () => {
+      return {}
+    }
+  },
+  type: {type: Boolean, default: false}
 })
 
-let dbConnInfo = ref({})
-const getDbConnInfo = async () => {
-  dbConnInfo.value = await dbApi.getDbConnInfo(props.db.id)
-}
-
-getDbConnInfo()
+// let dbConnInfo = ref({})
+// const getDbConnInfo = async () => {
+//   dbConnInfo.value = await dbApi.getDbConnInfo(props.db.id)
+// }
+//
+// getDbConnInfo()
 
 let databases = ref([])
 const getDatabase = async () => {
-  databases.value = await dbApi.showDatabase({dbId: props.db.id})
+  databases.value = await dbApi.showDatabase({dbId: props.db.id, type: props.type})
 }
 
 getDatabase()
@@ -131,14 +134,14 @@ onBeforeRouteUpdate(async (to, from, next) => {
 });
 
 const getTables = async (dbName) => {
-  return await dbApi.showTables({dbId: props.db.id, schemaName: dbName})
+  return await dbApi.showTables({dbId: props.db.id, type: props.type, schemaName: dbName})
 }
 
 const getTableColumns = async (dbId, schemaName, tableName) => {
-  return await dbApi.getTableColumns({dbId, schemaName, tableName})
+  return await dbApi.getTableColumns({dbId, schemaName, tableName, type: props.type})
 }
 const selectTable = async (dbId, schemaName, tableName, params) => {
-  return await dbApi.selectTableData({dbId, schemaName, tableName, ...params})
+  return await dbApi.selectTableData({dbId, type: props.type, schemaName, tableName, ...params})
 }
 
 const searchState = reactive({});
