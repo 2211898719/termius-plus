@@ -13,6 +13,7 @@ import Sortable from "sortablejs";
 import _ from "lodash";
 import PEnumSelect from "@/components/p-enum-select.vue";
 import OsEnum from "@/enums /OsEnum";
+import {download} from "@/utils/File";
 
 const emit = defineEmits(['openServer', 'proxyCreation', 'update:value', 'change'])
 

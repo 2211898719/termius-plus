@@ -281,9 +281,9 @@ const handleDblclick = (item) => {
   emit('openServer', item)
 }
 
-const handleOpenNewWindow = (item) => {
-  window.open(item.url)
-}
+// const handleOpenNewWindow = (item) => {
+//   window.open(item.url)
+// }
 
 onMounted(() => {
   createSortEl(document.getElementsByClassName('ant-row')[0])
@@ -483,10 +483,10 @@ defineExpose({
                         <link-outlined/>
                         连接
                       </a-menu-item>
-                      <a-menu-item v-if="!item.isGroup" key="2" @click="handleOpenNewWindow(item)">
-                        <link-outlined/>
-                        新窗口
-                      </a-menu-item>
+<!--                      <a-menu-item v-if="!item.isGroup" key="2" @click="handleOpenNewWindow(item)">-->
+<!--                        <link-outlined/>-->
+<!--                        新窗口-->
+<!--                      </a-menu-item>-->
                       <a-menu-item key="4" @click="handleEditServer(item)">
                         <edit-outlined/>
                         修改

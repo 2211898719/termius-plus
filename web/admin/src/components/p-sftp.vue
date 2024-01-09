@@ -139,7 +139,9 @@ defineExpose({
 })
 
 const handleDownload = (file) => {
-  window.open(sftpApi.download({id: sessionId.value, remotePath: currentPath.value + '/' + file.name}))
+  const ele = document.createElement('a'); //新建一个a标签
+  ele.setAttribute('href', sftpApi.download({id: sessionId.value, remotePath: currentPath.value + '/' + file.name}));
+  ele.click();
 }
 
 

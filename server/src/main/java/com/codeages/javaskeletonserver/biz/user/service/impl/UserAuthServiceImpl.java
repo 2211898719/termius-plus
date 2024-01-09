@@ -63,7 +63,7 @@ public class UserAuthServiceImpl implements UserAuthService {
 
         cookie.setPath("/");
         cookie.setHttpOnly(true);
-        cookie.setMaxAge(86400000*90);
+        cookie.setMaxAge(60 * 60 * 24 * 90);
 
         response.addCookie(cookie);
 

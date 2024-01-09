@@ -44,6 +44,11 @@ public class AuthTokenFilter extends OncePerRequestFilter {
                 var authentication = new UsernamePasswordAuthenticationToken(authUser, null, authUser.getAuthorities());
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authentication);
+                //给 cookie 里的 token 续期
+                Cookie cookie = new Cookie("token", token);
+                cookie.setPath("/");
+                cookie.setMaxAge(60 * 60 * 24 * 90);
+                response.addCookie(cookie);
             }
 
             filterChain.doFilter(request, response);
