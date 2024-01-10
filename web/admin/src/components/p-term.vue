@@ -3,14 +3,12 @@ import "xterm/css/xterm.css";
 import Terminal from '../utils/zmodem.js';
 // import {Terminal} from "xterm";
 import {FitAddon} from "xterm-addon-fit";
-import {AttachAddon} from "xterm-addon-attach";
 import {nextTick, onBeforeUnmount, onMounted, ref} from "vue";
 import _ from "lodash";
 import {useStorage, useWebSocket} from "@vueuse/core";
 import {Spin,} from 'ant-design-vue';
 import {SearchAddon} from "xterm-addon-search";
-import { TrzszAddon } from 'trzsz';
-import { LocalEchoAddon } from "@gytx/xterm-local-echo";
+import {TrzszAddon} from 'trzsz';
 
 // let networkInfo = useNetwork()
 
@@ -41,13 +39,13 @@ let options = {
   scrollback: 50000,//终端中的回滚量
   fontSize: 14, //字体大小
   height: "100%", //终端高度
-  // disableStdin: false, //是否应禁用输入。
+  disableStdin: false, //是否应禁用输入。
   // cursorStyle: "block", //光标样式
   cursorBlink: true, //光标闪烁
-  // scrollback: 30,
   fastScrollModifier: "alt", //快速滚动时要使用的修饰符
   tabStopWidth: 1,
-  screenReaderMode: true,
+  screenReaderMode: false,
+  drawBoldTextInBrightColors: true,
   theme: {
     foreground: frontColor.value, //前景色
     background: backColor.value, //背景色
@@ -131,7 +129,6 @@ const initTerm = () => {
 
   if (props.server.autoSudo && props.server.username !== 'root') {
     nextTick(() => {
-      // execCommand("echo \"" + props.server.password + "\" | sudo -S ls && sudo -i\n")
       execCommand(`echo '${props.server.password}' | sudo -S ls && sudo -i && ls\n`)
     })
   }

@@ -35,6 +35,7 @@
     "uuid": "^9.0.1",
     "vue": "^3.2.13",
     "vue-codemirror": "^6.1.1",
+    "vue-codemirror6": "^1.2.0",
     "vue-router": "^4.0.14",
     "xterm": "4.19.0",
     "xterm-addon-attach": "^0.9.0",

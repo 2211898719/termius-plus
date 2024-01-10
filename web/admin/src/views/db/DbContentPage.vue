@@ -2,7 +2,12 @@
 
   <a-space direction="vertical" size="middle" style="width: 100%;display: flex">
     <a-card>
-<!--      <textarea ref="sqlEditor" v-model="sql" class="codeSql"></textarea>-->
+      <code-mirror
+          basic
+          :lang="lang"
+          :extensions="[oneDark]"
+          v-model="sqlData">
+      </code-mirror>
     </a-card>
     <div style="display: flex">
       <a-menu
@@ -48,10 +53,14 @@
 
 <script setup>
 
-import {reactive, ref} from "vue";
+import {computed, reactive, ref} from "vue";
 import {onBeforeRouteUpdate, useRouter} from "vue-router";
 import {dbApi} from "@/api/db";
 import usePaginationQuery from "@shared/usePaginationQuery";
+import CodeMirror from 'vue-codemirror6';
+import {MySQL, sql} from "@codemirror/lang-sql";
+// import {sql} from "@codemirror/lang-sql";
+import {oneDark} from '@codemirror/theme-one-dark'
 
 const router = useRouter();
 
@@ -89,7 +98,7 @@ const openTables = async e => {
   let tableColumns = await getTableColumns(props.db.id, databasesName, tableName)
   columns.value = tableColumns.map(item => {
     return {
-      title: item.column_comment || item.column_name,
+      title: item.column_comment ? item.column_comment+`(${item.column_name})` : item.column_name,
       dataIndex: item.column_name,
       key: item.column_name,
       ellipsis: true,
@@ -154,8 +163,36 @@ const columns = ref([]);
 const editableData = reactive({});
 
 const edit = (key) => {
-  console.log(key)
   editableData[key] = _.cloneDeep(usePaginationQueryResult.value.rows.filter(item => key === item.id)[0]);
 };
+
+let lang = computed(() => {
+  let data = JSON.parse(JSON.stringify(databases.value))
+  data.forEach(d => {
+    if (!Array.isArray(d.tables)) {
+      d.tables = []
+    }
+
+    d.tables = d.tables.map(t => {
+      return t.table_name
+    })
+  })
+
+  let res = {}
+  data.forEach(d => {
+    res[d.name] = d.tables
+  })
+
+  console.log(res)
+  return sql({
+    dialect: MySQL,
+    schema: res
+  });
+})
+
+
+let sqlData = ref('')
+
+
 
 </script>

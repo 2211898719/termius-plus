@@ -57,12 +57,10 @@ public class SshHandler {
     @OnMessage
     public void onMessage(String message, javax.websocket.Session session) throws Exception {
         HandlerItem handlerItem = HANDLER_ITEM_CONCURRENT_HASH_MAP.get(session.getId());
-
         try {
             MessageDto messageDto = MessageDto.parse(message);
             ResizeDto resizeDto = JSONUtil.toBean(messageDto.getData(), ResizeDto.class);
             handlerItem.reSize(resizeDto.getCols(), resizeDto.getRows(), resizeDto.getWidth(), resizeDto.getHeight());
-            return;
         } catch (Exception e) {
             this.sendCommand(handlerItem, message);
         }

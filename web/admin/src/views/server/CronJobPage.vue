@@ -8,6 +8,7 @@ import {Codemirror} from "vue-codemirror";
 import {oneDark} from '@codemirror/theme-one-dark'
 import {java} from "@codemirror/lang-java";
 import {json} from "@codemirror/lang-json";
+import CodeMirror from "vue-codemirror6";
 
 const creationCronJobType = ref('create');
 const creationCronJobState = reactive({
@@ -280,6 +281,12 @@ defineExpose({
               <codemirror
                           v-model:model-value="creationCronJobState.params[index]" :extensions="extensionsJson"
                           :options="editorOptionsJson"></codemirror>
+                <code-mirror
+                    basic
+                    :lang="lang"
+                    :extensions="[oneDark]"
+                    v-model="creationCronJobState.params[index]">
+                </code-mirror>
               </a-form-item>
             </a-form-item>
             <a-form-item label="脚本：" v-bind="cronJobCreationValidations.mvelScript">

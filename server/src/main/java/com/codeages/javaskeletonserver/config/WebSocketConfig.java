@@ -9,7 +9,6 @@ import org.springframework.web.socket.server.standard.ServerEndpointExporter;
 import org.springframework.web.util.WebAppRootListener;
 
 import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
 
 @Configuration
 @ComponentScan
@@ -35,7 +34,9 @@ public class WebSocketConfig implements ServletContextInitializer {
     public void onStartup(ServletContext servletContext) {
         servletContext.addListener(WebAppRootListener.class);
         //调整tomcat的websocket缓冲区大小 ，如果要支持 rz sz 之类的命令，需要调整这个缓冲区大小
-//        servletContext.setInitParameter("org.apache.tomcat.websocket.textBufferSize","52428800");
-//        servletContext.setInitParameter("org.apache.tomcat.websocket.binaryBufferSize","52428800");
+        servletContext.setInitParameter("org.apache.tomcat.websocket.textBufferSize",
+                String.valueOf(2 * 1024 * 1024));
+        servletContext.setInitParameter("org.apache.tomcat.websocket.binaryBufferSize",
+                String.valueOf(2 * 1024 * 1024));
     }
 }
