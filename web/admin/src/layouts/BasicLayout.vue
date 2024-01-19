@@ -32,12 +32,22 @@ import {useRouter} from 'vue-router';
 import {clearMenuItem, getMenuData} from '@ant-design-vue/pro-layout';
 import {useAuthStore} from "@shared/store/useAuthStore";
 import config from "@/config";
+import {walk} from "@/utils/treeUtil";
 
 const store = useAuthStore();
 const locale = (i18n) => i18n;
 const router = useRouter();
 
-const { menuData } = getMenuData(clearMenuItem(router.getRoutes()));
+let routerTree = router.getRoutes();
+//过滤routerTree
+
+walk(routerTree, (node) => {
+    if (node.meta && node.meta.hasRole && !store.hasRole(node.meta.hasRole)) {
+      node.meta.hideInMenu = true;
+    }
+})
+
+const {menuData} = getMenuData(clearMenuItem(routerTree));
 
 const state = reactive({
     collapsed: false, // default value

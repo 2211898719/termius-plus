@@ -21,7 +21,7 @@ public class AdminQueueController {
         this.queueService = queueService;
     }
 
-    @RolesAllowed("ROLE_SUPER_ADMIN")
+    
     @PostMapping("/test")
     public OkResponse test() {
         var message = new ExampleMessage();

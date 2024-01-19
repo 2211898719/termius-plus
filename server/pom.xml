@@ -10,9 +10,9 @@
 	</parent>
 	<groupId>com.codeages</groupId>
 	<artifactId>termius-plus</artifactId>
-	<version>v1.1.2</version>
-	<name>termius-plus</name>
-	<description>termius plus</description>
+	<version>v1.1.5</version>
+	<name>Termius Plus</name>
+	<description>Termius Plus</description>
 	<properties>
 		<java.version>11</java.version>
 		<org.mapstruct.version>1.4.2.Final</org.mapstruct.version>
@@ -146,6 +146,11 @@
 			<groupId>com.alibaba</groupId>
 			<artifactId>druid</artifactId>
 			<version>1.2.8</version>
+		</dependency>
+		<dependency>
+			<groupId>org.mitre.dsmiley.httpproxy</groupId>
+			<artifactId>smiley-http-proxy-servlet</artifactId>
+			<version>1.12.1</version>
 		</dependency>
 	</dependencies>
 

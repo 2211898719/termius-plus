@@ -2,20 +2,21 @@ package com.codeages.javaskeletonserver.biz.server.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.codeages.javaskeletonserver.biz.ErrorCode;
-import com.codeages.javaskeletonserver.biz.server.dto.ProxyCreateParams;
-import com.codeages.javaskeletonserver.biz.server.dto.ProxyDto;
-import com.codeages.javaskeletonserver.biz.server.dto.ProxySearchParams;
-import com.codeages.javaskeletonserver.biz.server.dto.ProxyUpdateParams;
+import com.codeages.javaskeletonserver.biz.server.dto.*;
 import com.codeages.javaskeletonserver.biz.server.entity.QProxy;
 import com.codeages.javaskeletonserver.biz.server.mapper.ProxyMapper;
 import com.codeages.javaskeletonserver.biz.server.repository.ProxyRepository;
 import com.codeages.javaskeletonserver.biz.server.service.ProxyService;
 import com.codeages.javaskeletonserver.exception.AppException;
 import com.querydsl.core.BooleanBuilder;
+import org.mitre.dsmiley.httpproxy.ProxyServlet;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.ServletRegistration;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Validator;
 import java.util.Optional;
 
@@ -28,10 +29,14 @@ public class ProxyServiceImpl implements ProxyService {
 
     private final Validator validator;
 
-    public ProxyServiceImpl(ProxyRepository proxyRepository, ProxyMapper proxyMapper, Validator validator) {
+    private final HttpServletResponse response;
+
+    public ProxyServiceImpl(ProxyRepository proxyRepository, ProxyMapper proxyMapper, Validator validator,
+                            HttpServletResponse response) {
         this.proxyRepository = proxyRepository;
         this.proxyMapper = proxyMapper;
         this.validator = validator;
+        this.response = response;
     }
 
     @Override
@@ -88,6 +93,9 @@ public class ProxyServiceImpl implements ProxyService {
     public Optional<ProxyDto> findById(Long proxyId) {
         return proxyRepository.findById(proxyId).map(proxyMapper::toDto);
     }
+
+
+
 }
 
 

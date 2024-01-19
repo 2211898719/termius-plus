@@ -9,7 +9,7 @@ import java.util.List;
 
 public interface ServerService {
 
-    List<Tree<Long>> findAll();
+    List<Tree<Long>> findAll(List<Long> serverIds);
 
     List<Tree<Long>> findAllDb();
 
@@ -30,6 +30,8 @@ public interface ServerService {
     Proxy createProxy(ServerDto server);
 
     List<Tree<Long>> groupList();
+
+    List<Long> findAllTopId();
 }
 
 

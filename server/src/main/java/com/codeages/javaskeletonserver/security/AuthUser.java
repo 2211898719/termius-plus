@@ -1,12 +1,15 @@
 package com.codeages.javaskeletonserver.security;
 
+import cn.hutool.extra.spring.SpringUtil;
 import com.codeages.javaskeletonserver.biz.user.dto.UserAuthedDto;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -25,6 +28,9 @@ public class AuthUser implements UserDetails {
 
     private String ip;
 
+    @Getter
+    private List<Long> roleIds;
+
     public AuthUser(UserAuthedDto userAuthed) {
         id = userAuthed.getId();
         username = userAuthed.getUsername();
@@ -32,6 +38,7 @@ public class AuthUser implements UserDetails {
         authorities = userAuthed.getRoles().stream()
                 .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toList());
+        roleIds = userAuthed.getRoleIds();
     }
 
     public Long getId() {

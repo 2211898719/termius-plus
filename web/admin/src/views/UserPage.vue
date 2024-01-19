@@ -1,7 +1,7 @@
 <template>
     <page-container title="用户">
         <template #extra>
-            <a-button type="primary" @click="creationVisible = true">新增</a-button>
+            <a-button type="primary" @click="creationVisible = true;tag='create'">新增</a-button>
         </template>
 
         <a-space direction="vertical" size="middle" style="width: 100%;">
@@ -12,10 +12,6 @@
                 >
                     <a-form-item>
                         <a-input v-model:value="searchState.username" placeholder="用户名" allow-clear/>
-                    </a-form-item>
-
-                    <a-form-item>
-                        <a-input v-model:value="searchState.email" placeholder="Email" allow-clear/>
                     </a-form-item>
 
                     <a-form-item>
@@ -37,22 +33,7 @@
                         <template v-if="column.key === 'action'">
                             <a @click="showDetail(record)">详情</a>
                             <a-divider type="vertical" />
-                            <a-dropdown>
-                                <a class="ant-dropdown-link" @click.prevent>更多 <DownOutlined /></a>
-                                <template #overlay>
-                                    <a-menu>
-                                        <a-menu-item>
-                                            <a href="javascript:;">重置密码</a>
-                                        </a-menu-item>
-                                        <a-menu-item>
-                                            <a href="javascript:;">修改邮箱</a>
-                                        </a-menu-item>
-                                        <a-menu-item>
-                                            <a href="javascript:;">禁用用户</a>
-                                        </a-menu-item>
-                                    </a-menu>
-                                </template>
-                            </a-dropdown>
+                          <a @click="handleUpdate(record)">修改</a>
                         </template>
                         <template v-else-if="column.key === 'registerAt'">
                             <div>{{ $f.datetime(record.registerAt) }}</div>
@@ -118,9 +99,8 @@
             <a-form-item label="密码" v-bind="creationValidations.password">
                 <a-input-password v-model:value="creationState.password" autocomplete="new-password" />
             </a-form-item>
-
-            <a-form-item label="电子邮箱" v-bind="creationValidations.email">
-                <a-input v-model:value="creationState.email" />
+          <a-form-item label="角色" v-bind="creationValidations.roleIds">
+            <p-select :api="roleApi.list" v-model:value="creationState.roleIds" mode="multiple"></p-select>
             </a-form-item>
 
         </a-form>
@@ -132,11 +112,12 @@
 <script setup>
 
 import {reactive, ref, watch} from "vue";
-import { DownOutlined } from '@ant-design/icons-vue';
 import {useRouter} from "vue-router";
 import usePaginationQuery from "@shared/usePaginationQuery";
 import {userApi} from "@/api/user";
-import { Form, message } from 'ant-design-vue';
+import {Form, message} from 'ant-design-vue';
+import PSelect from "@/components/p-select.vue";
+import {roleApi} from "@/api/role";
 
 const useForm = Form.useForm;
 const router = useRouter();
@@ -151,11 +132,6 @@ const columns = [
         title: '用户名',
         dataIndex: 'username',
         key: 'username',
-    },
-    {
-        title: 'Email',
-        dataIndex: 'email',
-        key: 'email',
     },
     {
         title: '注册时间',
@@ -175,6 +151,8 @@ const columns = [
     },
 ];
 
+let tag = ref('create')
+
 const searchState = reactive({
     username: '',
     email: '',
@@ -192,7 +170,7 @@ const {
 const creationVisible = ref(false);
 const creationState = reactive({
    username: "",
-   email: "",
+   roleIds: [],
    password: "",
 });
 
@@ -203,21 +181,11 @@ const creationRules = reactive({
             message: "请输入用户名",
         }
     ],
-    email: [
-        {
-            required: true,
-            message: "请输入电子邮箱地址",
-        },
-        {
-            type: "email",
-            message: "电子邮箱地址格式不正确"
-        }
-    ],
     password: [
-        {
-            required: true,
-            message: "请输入密码",
-        },
+{
+            min: 6,
+            message: "密码长度不能小于6位",
+      }
     ]
 });
 
@@ -236,7 +204,7 @@ const submitCreate = async () => {
         return;
     }
 
-    await userApi.create(creationState);
+    await userApi[tag.value](creationState);
     message.success("新增用户成功");
 
     creationVisible.value = false;
@@ -249,6 +217,12 @@ const detailTab = ref('base');
 const showDetail = (user) => {
     detailVisible.value = true;
     detailUser.value = user;
+}
+
+const handleUpdate = (row) => {
+  Object.assign(creationState, row);
+  tag.value = 'update';
+  creationVisible.value = true;
 }
 
 </script>

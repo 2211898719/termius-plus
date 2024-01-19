@@ -1,6 +1,7 @@
 package com.codeages.javaskeletonserver.biz.server.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.lang.tree.Tree;
 import cn.hutool.core.lang.tree.TreeNode;
@@ -22,7 +23,6 @@ import lombok.SneakyThrows;
 import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.transport.verification.PromiscuousVerifier;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -176,7 +176,11 @@ public class ServerServiceImpl implements ServerService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Tree<Long>> findAll() {
+    public List<Tree<Long>> findAll(List<Long> serverIds) {
+
+        List<Server> allParent = findAllParent(serverRepository.findAllById(serverIds));
+        allParent.addAll(findAllChildren(serverIds));
+
         List<ProxyDto> proxyDtoList = proxyService.search(new ProxySearchParams(), Pageable.unpaged()).getContent();
         Map<Long, ProxyDto> proxyIdProxyMap = proxyDtoList.stream()
                                                           .collect(Collectors.toMap(
@@ -184,20 +188,22 @@ public class ServerServiceImpl implements ServerService {
                                                                   Function.identity()
                                                           ));
 
-        List<TreeNode<Long>> servers = serverRepository.findAll(Sort.by("sort"))
-                                                       .stream()
-                                                       .map(e -> {
-                                                           TreeNode<Long> longTreeNode = new TreeNode<>(
-                                                                   e.getId(),
-                                                                   e.getParentId(),
-                                                                   e.getName(),
-                                                                   e.getSort()
-                                                           );
+//        List<Server> sort = serverRepository.findAll(Sort.by("sort"));
 
-                                                           longTreeNode.setExtra(BeanUtil.beanToMap(e));
-                                                           return longTreeNode;
-                                                       })
-                                                       .collect(Collectors.toList());
+        List<TreeNode<Long>> servers = allParent
+                .stream()
+                .map(e -> {
+                    TreeNode<Long> longTreeNode = new TreeNode<>(
+                            e.getId(),
+                            e.getParentId(),
+                            e.getName(),
+                            e.getSort()
+                    );
+
+                    longTreeNode.setExtra(BeanUtil.beanToMap(e));
+                    return longTreeNode;
+                })
+                .collect(Collectors.toList());
 
         List<Tree<Long>> treeList = TreeUtil.build(servers, 0L);
 
@@ -247,6 +253,18 @@ public class ServerServiceImpl implements ServerService {
         }
 
         return parentServers;
+    }
+
+    public List<Server> findAllChildren(List<Long> servers) {
+        List<Server> childrenServers = new ArrayList<>();
+        List<Long> childrenIds = servers;
+        while (CollUtil.isNotEmpty(childrenIds)) {
+            List<Server> childrenServer = serverRepository.findAllByParentIdIn(childrenIds);
+            childrenServers.addAll(childrenServer);
+            childrenIds = childrenServer.stream().map(Server::getId).collect(Collectors.toList());
+        }
+
+        return childrenServers;
     }
 
 
@@ -338,9 +356,9 @@ public class ServerServiceImpl implements ServerService {
         ssh.addHostKeyVerifier(new PromiscuousVerifier());
         ssh.connect(server.getIp(), server.getPort().intValue());
         // 配置身份验证使用的私钥
-        if (StrUtil.isNotBlank(server.getKey())){
+        if (StrUtil.isNotBlank(server.getKey())) {
             ssh.authPublickey(server.getUsername(), ssh.loadKeys(server.getKey(), null, null));
-        }else {
+        } else {
             ssh.authPassword(server.getUsername(), server.getPassword());
         }
 
@@ -379,6 +397,11 @@ public class ServerServiceImpl implements ServerService {
         root.setName("all");
         root.setChildren(TreeUtil.build(servers, 0L));
         return List.of(root);
+    }
+
+    @Override
+    public List<Long> findAllTopId() {
+        return serverRepository.findAllByParentId(0L).stream().map(Server::getId).collect(Collectors.toList());
     }
 
     /**
@@ -424,7 +447,6 @@ public class ServerServiceImpl implements ServerService {
         }
         return -1;
     }
-
 
 
 }

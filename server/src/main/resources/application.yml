@@ -21,7 +21,7 @@ rocketmq:
         group: skeleton
 server:
     forward-headers-strategy: native
-    port: 8081
+    port: 8080
     servlet:
         session:
             timeout: 1200

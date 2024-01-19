@@ -9,4 +9,8 @@ import java.util.List;
 public interface UserRoleRepository extends JpaRepository<UserRole, Long>, QuerydslPredicateExecutor<UserRole> {
 
     List<UserRole> findAllByUserId(Long userId);
+
+    List<UserRole> findAllByUserIdIn(List<Long> userIds);
+
+    void deleteAllByUserId(Long id);
 }

@@ -9,7 +9,9 @@ import com.codeages.javaskeletonserver.biz.ErrorCode;
 import com.codeages.javaskeletonserver.biz.user.dto.LoginParams;
 import com.codeages.javaskeletonserver.biz.user.dto.UserAuthedDto;
 import com.codeages.javaskeletonserver.biz.user.dto.UserWithRolesDto;
+import com.codeages.javaskeletonserver.biz.user.entity.UserRole;
 import com.codeages.javaskeletonserver.biz.user.manager.UserCacheManager;
+import com.codeages.javaskeletonserver.biz.user.repository.UserRoleRepository;
 import com.codeages.javaskeletonserver.biz.user.service.UserAuthService;
 import com.codeages.javaskeletonserver.config.AppConfig;
 import com.codeages.javaskeletonserver.exception.AppException;
@@ -19,6 +21,7 @@ import org.springframework.stereotype.Service;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 import java.util.Date;
+import java.util.stream.Collectors;
 
 @Service
 public class UserAuthServiceImpl implements UserAuthService {
@@ -31,12 +34,15 @@ public class UserAuthServiceImpl implements UserAuthService {
 
     private final HttpServletResponse response;
 
+    private final UserRoleRepository userRoleRepository;
+
     public UserAuthServiceImpl(AppConfig config, PasswordEncoder encoder, UserCacheManager cacheManager,
-                               HttpServletResponse response) {
+                               HttpServletResponse response, UserRoleRepository userRoleRepository) {
         this.config = config;
         this.encoder = encoder;
         this.cacheManager = cacheManager;
         this.response = response;
+        this.userRoleRepository = userRoleRepository;
     }
 
     @Override
@@ -108,6 +114,7 @@ public class UserAuthServiceImpl implements UserAuthService {
         userAuthed.setUsername(user.getUsername());
         userAuthed.setRoles(user.getRoles());
         userAuthed.setToken(token);
+        userAuthed.setRoleIds(userRoleRepository.findAllByUserId(user.getId()).stream().map(UserRole::getRoleId).collect(Collectors.toList()));
 
         return userAuthed;
     }

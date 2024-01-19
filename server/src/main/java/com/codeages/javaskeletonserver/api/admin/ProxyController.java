@@ -1,9 +1,6 @@
 package com.codeages.javaskeletonserver.api.admin;
 
-import com.codeages.javaskeletonserver.biz.server.dto.ProxyCreateParams;
-import com.codeages.javaskeletonserver.biz.server.dto.ProxyDto;
-import com.codeages.javaskeletonserver.biz.server.dto.ProxySearchParams;
-import com.codeages.javaskeletonserver.biz.server.dto.ProxyUpdateParams;
+import com.codeages.javaskeletonserver.biz.server.dto.*;
 import com.codeages.javaskeletonserver.biz.server.service.ProxyService;
 import com.codeages.javaskeletonserver.common.IdPayload;
 import com.codeages.javaskeletonserver.common.OkResponse;
@@ -42,13 +39,13 @@ public class ProxyController {
 
 
     @PostMapping("/create")
-    @RolesAllowed("ROLE_ADMIN")
+    
     public ProxyDto create(@RequestBody ProxyCreateParams createParams) {
         return proxyService.create(createParams);
     }
 
     @PostMapping("/update")
-    @RolesAllowed("ROLE_ADMIN")
+    
     public OkResponse update(@RequestBody ProxyUpdateParams updateParams) {
         proxyService.update(updateParams);
 
@@ -56,7 +53,7 @@ public class ProxyController {
     }
 
     @PostMapping("/delete")
-    @RolesAllowed("ROLE_ADMIN")
+    
     public OkResponse delete(@RequestBody IdPayload idPayload) {
         proxyService.delete(idPayload.getId());
 

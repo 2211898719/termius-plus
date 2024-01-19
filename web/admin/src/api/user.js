@@ -8,5 +8,8 @@ export const userApi = {
 
     search: async (params) => {
         return client.get("/api-admin/user/search", {params: params});
-    }
+    },
+    update: async (params) => {
+        return client.post("/api-admin/user/update", params);
+    },
 }

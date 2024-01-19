@@ -68,10 +68,14 @@ watch(() => props.api, () => {
   }
 },)
 
-let currentValue = ref(props.value);
+let currentValue = ref();
+if (props.value){
+  currentValue.value = props.value
+}
 
 watch(() => props.value, (val) => {
   if (_.isNil(val)) {
+    console.log(11111)
     currentValue.value = undefined
     return
   }

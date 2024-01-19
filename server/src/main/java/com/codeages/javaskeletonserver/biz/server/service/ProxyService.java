@@ -1,9 +1,6 @@
 package com.codeages.javaskeletonserver.biz.server.service;
 
-import com.codeages.javaskeletonserver.biz.server.dto.ProxyCreateParams;
-import com.codeages.javaskeletonserver.biz.server.dto.ProxyDto;
-import com.codeages.javaskeletonserver.biz.server.dto.ProxySearchParams;
-import com.codeages.javaskeletonserver.biz.server.dto.ProxyUpdateParams;
+import com.codeages.javaskeletonserver.biz.server.dto.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 

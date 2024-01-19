@@ -4,6 +4,7 @@ import com.codeages.javaskeletonserver.biz.ErrorCode;
 import com.codeages.javaskeletonserver.biz.user.dto.UserCreateParams;
 import com.codeages.javaskeletonserver.biz.user.dto.UserDto;
 import com.codeages.javaskeletonserver.biz.user.dto.UserSearchParams;
+import com.codeages.javaskeletonserver.biz.user.dto.UserUpdateParams;
 import com.codeages.javaskeletonserver.biz.user.service.UserService;
 import com.codeages.javaskeletonserver.common.IdPayload;
 import com.codeages.javaskeletonserver.common.OkResponse;
@@ -28,10 +29,15 @@ public class AdminUserController {
         this.userService = userService;
     }
 
-    @RolesAllowed("ROLE_SUPER_ADMIN")
+
     @PostMapping("/create")
     public UserDto create(@RequestBody UserCreateParams params) {
         return userService.create(params);
+    }
+
+    @PostMapping("/update")
+    public UserDto update(@RequestBody UserUpdateParams params) {
+        return userService.update(params);
     }
 
     @PostMapping("/lock")

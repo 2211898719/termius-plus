@@ -43,7 +43,7 @@ public class CommandController {
     }
 
     @PostMapping("/create")
-    @RolesAllowed("ROLE_ADMIN")
+    
     public OkResponse create(@RequestBody CommandCreateParams createParams) {
         commandService.create(createParams);
 
@@ -51,7 +51,7 @@ public class CommandController {
     }
 
     @PostMapping("/update")
-    @RolesAllowed("ROLE_ADMIN")
+    
     public OkResponse update(@RequestBody CommandUpdateParams updateParams) {
         commandService.update(updateParams);
 
@@ -59,7 +59,7 @@ public class CommandController {
     }
 
     @PostMapping("/delete")
-    @RolesAllowed("ROLE_ADMIN")
+    
     public OkResponse delete(@RequestBody IdPayload idPayload) {
         commandService.delete(idPayload.getId());
 

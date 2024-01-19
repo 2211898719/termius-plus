@@ -11,6 +11,8 @@ public interface UserService {
 
     UserDto create(UserCreateParams params);
 
+    UserDto update(UserUpdateParams params);
+
     void lock(Long id);
 
     void unlock(Long id);

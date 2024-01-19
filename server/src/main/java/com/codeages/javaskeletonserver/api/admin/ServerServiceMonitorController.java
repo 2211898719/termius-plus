@@ -35,7 +35,7 @@ public class ServerServiceMonitorController {
     }
 
     @PostMapping("/create")
-    @RolesAllowed("ROLE_ADMIN")
+    
     public OkResponse create(@RequestBody ServerServiceMonitorCreateParams createParams) {
         serverServiceMonitorService.create(createParams);
 
@@ -43,7 +43,7 @@ public class ServerServiceMonitorController {
     }
 
     @PostMapping("/update")
-    @RolesAllowed("ROLE_ADMIN")
+    
     public OkResponse update(@RequestBody ServerServiceMonitorUpdateParams updateParams) {
         serverServiceMonitorService.update(updateParams);
 
@@ -51,7 +51,7 @@ public class ServerServiceMonitorController {
     }
 
     @PostMapping("/delete")
-    @RolesAllowed("ROLE_ADMIN")
+    
     public OkResponse delete(@RequestBody IdPayload idPayload) {
         serverServiceMonitorService.delete(idPayload.getId());
 

@@ -19,7 +19,7 @@ public class AdminSchedulerController {
         this.schedulerService = schedulerService;
     }
 
-    @RolesAllowed("ROLE_SUPER_ADMIN")
+    
     @PostMapping("/resetSystemJobs")
     public OkResponse resetSystemJobs() {
         schedulerService.resetSystemJobs();

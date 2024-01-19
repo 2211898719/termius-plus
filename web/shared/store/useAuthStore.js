@@ -8,7 +8,7 @@ export const useAuthStore = defineStore('auth', {
     getters: {
         isLogin(state) {
             return !!state.user;
-        }
+        },
     },
 
     actions: {
@@ -21,12 +21,14 @@ export const useAuthStore = defineStore('auth', {
             localStorage.removeItem('AuthUser');
             this.user = undefined;
         },
-
         init() {
             const user = JSON.parse(localStorage.getItem('AuthUser'));
             if (user) {
                 this.user = user;
             }
+        },
+        hasRole(role) {
+            return this.user.roles.includes(role);
         }
     }
 

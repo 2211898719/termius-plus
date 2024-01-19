@@ -1,16 +1,19 @@
 package com.codeages.javaskeletonserver.biz.user.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.codeages.javaskeletonserver.biz.ErrorCode;
 import com.codeages.javaskeletonserver.biz.objectlog.service.ObjectLogService;
-import com.codeages.javaskeletonserver.biz.user.dto.UserCreateParams;
-import com.codeages.javaskeletonserver.biz.user.dto.UserDto;
-import com.codeages.javaskeletonserver.biz.user.dto.UserSearchParams;
+import com.codeages.javaskeletonserver.biz.user.dto.*;
 import com.codeages.javaskeletonserver.biz.user.entity.QUser;
+import com.codeages.javaskeletonserver.biz.user.entity.User;
+import com.codeages.javaskeletonserver.biz.user.entity.UserRole;
 import com.codeages.javaskeletonserver.biz.user.manager.UserCacheManager;
 import com.codeages.javaskeletonserver.biz.user.mapper.UserMapper;
 import com.codeages.javaskeletonserver.biz.user.repository.UserRepository;
+import com.codeages.javaskeletonserver.biz.user.repository.UserRoleRepository;
 import com.codeages.javaskeletonserver.biz.user.service.UserService;
+import com.codeages.javaskeletonserver.biz.util.QueryUtils;
 import com.codeages.javaskeletonserver.exception.AppException;
 import com.codeages.javaskeletonserver.security.SecurityContext;
 import com.querydsl.core.BooleanBuilder;
@@ -18,10 +21,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.validation.Validator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Component
 public class UserServiceImpl implements UserService {
@@ -40,7 +45,16 @@ public class UserServiceImpl implements UserService {
 
     private final ObjectLogService logService;
 
-    public UserServiceImpl(UserRepository repo, UserMapper mapper, UserCacheManager cacheManager, Validator validator, PasswordEncoder encoder, SecurityContext context, ObjectLogService logService) {
+    private final UserRoleRepository userRoleRepository;
+
+    public UserServiceImpl(UserRepository repo,
+                           UserMapper mapper,
+                           UserCacheManager cacheManager,
+                           Validator validator,
+                           PasswordEncoder encoder,
+                           SecurityContext context,
+                           ObjectLogService logService,
+                           UserRoleRepository userRoleRepository) {
         this.repo = repo;
         this.mapper = mapper;
         this.cacheManager = cacheManager;
@@ -48,9 +62,11 @@ public class UserServiceImpl implements UserService {
         this.encoder = encoder;
         this.context = context;
         this.logService = logService;
+        this.userRoleRepository = userRoleRepository;
     }
 
     @Override
+    @Transactional
     public UserDto create(UserCreateParams params) {
         var errors = validator.validate(params);
         if (!errors.isEmpty()) {
@@ -69,6 +85,8 @@ public class UserServiceImpl implements UserService {
 
         repo.save(user);
 
+        handleRoles(user, params.getRoleIds());
+
         cacheManager.removeCache(user);
 
         if (context.getUser() != null) {
@@ -76,6 +94,44 @@ public class UserServiceImpl implements UserService {
         }
 
         return mapper.toDto(user);
+    }
+
+    @Override
+    @Transactional
+    public UserDto update(UserUpdateParams params) {
+        User user = repo.findById(params.getId())
+                              .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "用户不存在"));
+        if (StrUtil.isNotEmpty(params.getPassword())) {
+            user.setPassword(encoder.encode(params.getPassword()));
+        }
+        repo.save(user);
+
+        handleRoles(user, params.getRoleIds());
+
+        cacheManager.removeCache(user);
+
+        if (context.getUser() != null) {
+            logService.info("User", user.getId(), "update", "管理员更新用户");
+        }
+
+        return mapper.toDto(user);
+    }
+
+    private void handleRoles(User user, List<Long> roleIds) {
+        userRoleRepository.deleteAllByUserId(user.getId());
+
+        if (CollUtil.isEmpty(roleIds)) {
+            return;
+        }
+
+        List<UserRole> userRoles = roleIds.stream().map(roleId -> {
+            UserRole userRole = new UserRole();
+            userRole.setUserId(user.getId());
+            userRole.setRoleId(roleId);
+            return userRole;
+        }).collect(Collectors.toList());
+
+        userRoleRepository.saveAll(userRoles);
     }
 
     @Override
@@ -124,8 +180,21 @@ public class UserServiceImpl implements UserService {
         if (StrUtil.isNotEmpty(params.getEmail())) {
             builder.and(q.username.eq(params.getEmail()));
         }
+        Page<UserDto> page = repo.findAll(builder, pager).map(mapper::toDto);
 
-        return repo.findAll(builder, pager).map(mapper::toDto);
+        QueryUtils.batchQueryOneToMany(
+                page.getContent(),
+                UserDto::getId,
+                userRoleRepository::findAllByUserIdIn,
+                UserRole::getUserId,
+                this::setRoleIds
+        );
+
+        return page;
+    }
+
+    private void setRoleIds(UserDto userDto, List<UserRole> roleDto) {
+        userDto.setRoleIds(roleDto.stream().map(UserRole::getRoleId).collect(Collectors.toList()));
     }
 
     @Override

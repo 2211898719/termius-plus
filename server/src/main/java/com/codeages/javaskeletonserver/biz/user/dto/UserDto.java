@@ -2,6 +2,8 @@ package com.codeages.javaskeletonserver.biz.user.dto;
 
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class UserDto {
 
@@ -22,4 +24,6 @@ public class UserDto {
     private Long loginAt;
 
     private String loginIp;
+
+    private List<Long> roleIds;
 }

@@ -4,6 +4,7 @@
       :defaultValue="currentValue"
       :options="options"
       :fieldNames="fieldNames"
+      :multiple="multiple"
       @change="handleChange"
   ></a-cascader>
 </template>
@@ -14,7 +15,7 @@ import {findNodePath} from "@/utils/treeUtil";
 
 const props = defineProps({
   value: {
-    type: [Number,String], default: null,
+    type: [Number, String, Array], default: null,
   },
   module: {
     type: null, default: null,
@@ -32,7 +33,10 @@ const props = defineProps({
   api: {
     type: Function, default: async () => {
     }
-  }
+  },
+  multiple: {
+    type: Boolean, default: false,
+  },
 })
 
 const options = ref([]);
@@ -41,6 +45,12 @@ let currentValue = reactive([])
 
 const loadCurrentValue = () => {
   if (props.value && options.value.length) {
+    if (props.multiple) {
+      currentValue = props.value.map((v) => {
+        return findNodePath(options.value, v);
+      });
+      return
+    }
     currentValue = findNodePath(options.value, props.value);
   }
 }
@@ -68,6 +78,12 @@ watch(() => props.value, (val) => {
 const emit = defineEmits(['update:value', 'change'])
 
 const handleChange = (e, selectedOptions) => {
+  if (props.multiple) {
+    emit("update:value", e.map(v => v[v.length - 1]));
+    emit("change", e.map(v => v[v.length - 1]))
+    return
+  }
+
   if (!e) {
     emit("update:value", null);
     emit("change", null)

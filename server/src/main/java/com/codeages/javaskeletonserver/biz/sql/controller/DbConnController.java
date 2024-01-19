@@ -37,7 +37,7 @@ public class DbConnController {
     }
 
     @PostMapping("/create")
-    @RolesAllowed("ROLE_ADMIN")
+    
     public OkResponse create(@RequestBody DbConnCreateParams createParams) {
         dbConnService.create(createParams);
 
@@ -45,7 +45,7 @@ public class DbConnController {
     }
 
     @PostMapping("/update")
-    @RolesAllowed("ROLE_ADMIN")
+    
     public OkResponse update(@RequestBody DbConnUpdateParams updateParams) {
         dbConnService.update(updateParams);
 
@@ -53,7 +53,7 @@ public class DbConnController {
     }
 
     @PostMapping("/delete")
-    @RolesAllowed("ROLE_ADMIN")
+    
     public OkResponse delete(@RequestBody IdPayload idPayload) {
         dbConnService.delete(idPayload.getId());
 

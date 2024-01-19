@@ -1,10 +1,10 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import {createRouter, createWebHistory} from 'vue-router'
 import BasicLayout from "@/layouts/BasicLayout";
 import BlankLayout from "@/layouts/BlankLayout";
 import config from "@/config";
 import {useAuthStore} from "@shared/store/useAuthStore";
 
-const routes = [
+let routes = [
   {
     path: '/',
     name: 'index',
@@ -21,7 +21,7 @@ const routes = [
       {
         path: '/user',
         name: 'user',
-        meta: { title: '用户', icon: 'UserOutlined' },
+        meta: {title: '用户', icon: 'UserOutlined', hasRole: 'ROLE_SUPER_ADMIN'},
         component: BlankLayout,
         redirect: '/user/index',
         children: [
@@ -35,12 +35,13 @@ const routes = [
             path: '/user/role',
             name: 'user_role',
             meta: { title: '角色' },
-            component: () => import('../views/UserRolePage.vue'),
+            component: () => import('../views/RolePage.vue'),
           },
         ]
       },
       {
         path: '/server',
+
         name: 'server',
         meta: { title: '服务器', icon: 'DesktopOutlined' },
         component:  () => import('../views/server/ServerPage.vue'),
@@ -54,7 +55,7 @@ const routes = [
       {
         path: '/system',
         name: 'system',
-        meta: { title: '系统', icon: 'SettingOutlined' },
+        meta: { title: '系统', icon: 'SettingOutlined', hasRole: 'ROLE_SUPER_ADMIN' },
         component: BlankLayout,
         redirect: '/system/log',
         children: [

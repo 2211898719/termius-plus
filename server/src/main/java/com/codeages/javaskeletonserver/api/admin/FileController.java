@@ -51,7 +51,7 @@ public class FileController {
     @GetMapping("/findFileInfoList")
     public Map<String, FileDto> findFileInfo(FileFindInfoParams fileFindInfoParams) {
         List<FileDto> fileDtoList = storageService.findFileInfo(fileFindInfoParams.getUuids());
-        QueryUtils.batchQueryJoinTable(
+        QueryUtils.batchQueryOneToOne(
                 fileDtoList,
                 FileDto::getUserId,
                 userService::findAllByIdIn,

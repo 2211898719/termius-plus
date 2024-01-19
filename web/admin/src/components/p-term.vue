@@ -115,9 +115,6 @@ const initTerm = () => {
   const searchAddon = new SearchAddon();
   term.loadAddon(searchAddon);
 
-  const localEcho = new LocalEchoAddon();
-  term.loadAddon(localEcho);
-
   terminal.value.innerHTML = "";
   term.open(terminal.value);
 

@@ -36,7 +36,7 @@ public class CommandLogController {
     }
 
     @PostMapping("/create")
-    @RolesAllowed("ROLE_ADMIN")
+    
     public OkResponse create(@RequestBody CommandLogCreateParams createParams) {
         commandLogService.create(createParams);
 
@@ -44,7 +44,7 @@ public class CommandLogController {
     }
 
     @PostMapping("/update")
-    @RolesAllowed("ROLE_ADMIN")
+    
     public OkResponse update(@RequestBody CommandLogUpdateParams updateParams) {
         commandLogService.update(updateParams);
 
@@ -52,7 +52,7 @@ public class CommandLogController {
     }
 
     @PostMapping("/delete")
-    @RolesAllowed("ROLE_ADMIN")
+    
     public OkResponse delete(@RequestBody IdPayload idPayload) {
         commandLogService.delete(idPayload.getId());
 
