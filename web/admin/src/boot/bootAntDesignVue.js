@@ -32,6 +32,7 @@ import {
     Cascader,
     Tag,
     InputNumber,
+    Pagination
 } from 'ant-design-vue';
 import icons from '@/icons';
 
@@ -73,5 +74,6 @@ export function bootAntDesignVue(app) {
         .use(Cascader)
         .use(Collapse)
         .use(Tag)
+        .use(Pagination)
     ;
 }

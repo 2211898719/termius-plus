@@ -24,6 +24,7 @@ let spinTip = ref('')
 const [parent, enable] = useAutoAnimate()
 
 let currentPath = ref("/");
+let currentPathEdit = ref("/")
 let currentPathArray = computed(() => {
   let path = currentPath.value.split("/");
   path = path.filter(item => item !== "")
@@ -96,6 +97,7 @@ const ls = async () => {
   enable(false)
   searchValue.value = ''
   spinTip.value = "正在获取文件列表"
+  page.value = 1
   try {
     currentFiles.value = sortFun(await sftpApi.ls({id: sessionId.value, remotePath: currentPath.value}))
     return true
@@ -113,6 +115,13 @@ const ls = async () => {
 }
 
 const changeDir = async (path) => {
+  if (path === currentPath.value) {
+    // if (!editPathVisible.value) {
+    //   startEditPath()
+    // }
+    return
+  }
+
   let originPath = currentPath.value
   currentPath.value = path
   let res = await ls()
@@ -262,7 +271,6 @@ const search = _.debounce(async (value) => {
   }
   //过滤currentFiles
   searchFiles.value = currentFiles.value.filter(item => item.name.includes(value.target.value))
-  console.log(value.target.value)
 })
 
 let fileViewVisible = ref(false)
@@ -356,6 +364,30 @@ onUnmounted(async () => {
   }
 })
 
+let currentPageData = computed(() => {
+  return searchFiles.value.slice((page.value - 1) * size.value, page.value * size.value)
+})
+
+let page = ref(1)
+let size = ref(100)
+
+let editPathVisible = ref(false)
+
+const handleChangePath = () => {
+  editPathVisible.value = false
+  changeDir(currentPathEdit.value)
+}
+
+let editInput = ref(null)
+const startEditPath = () => {
+  editPathVisible.value = true
+  currentPathEdit.value = currentPath.value
+  nextTick(() => {
+    editInput.value.focus()
+  })
+}
+
+
 </script>
 
 <template>
@@ -364,14 +396,19 @@ onUnmounted(async () => {
       <a-card :bordered="false" :hoverable="false">
         <template v-slot:title>
           <div class="head">
-            <a-breadcrumb>
-              <a-breadcrumb-item v-for="path in currentPathArray" :key="path.path" @click="changeDir(path.path)">
-                <component :is="path.path===currentPath?'span':'a'" v-if="path.name!=='/'">{{ path.name }}</component>
-                <component :is="path.path===currentPath?'span':'a'" v-else>
-                  <home-outlined/>
-                </component>
-              </a-breadcrumb-item>
-            </a-breadcrumb>
+            <a-input ref="editInput" v-if="editPathVisible" v-model:value="currentPathEdit" @blur="handleChangePath"
+                     @keyup.enter="handleChangePath"></a-input>
+            <div v-else style="display: flex;align-items: center;padding-right: 48px" @click="startEditPath">
+              <a-breadcrumb>
+                <a-breadcrumb-item v-for="path in currentPathArray" :key="path.path" @click.stop="changeDir(path.path)">
+                  <component :is="path.path===currentPath?'span':'a'" v-if="path.name!=='/'">{{ path.name }}</component>
+                  <component :is="path.path===currentPath?'span':'a'" v-else>
+                    <home-outlined/>
+                  </component>
+                </a-breadcrumb-item>
+              </a-breadcrumb>
+            </div>
+
 
             <div>
               <a-input-search class="ml10" style="width: 200px" @input="search"
@@ -389,8 +426,8 @@ onUnmounted(async () => {
 
           </div>
         </template>
-        <div ref="parent">
-          <a-card-grid :bordered="false" :hoverable="false" v-for="(file,index) in searchFiles" :key="file.name"
+        <div ref="parent" style="overflow: hidden">
+          <a-card-grid :bordered="false" :hoverable="false" v-for="(file,index) in currentPageData" :key="file.name"
                        @click="handleClickFile(file)" :title="file.name">
             <a-dropdown :trigger="['contextmenu']">
               <div>
@@ -442,6 +479,13 @@ onUnmounted(async () => {
               </template>
             </a-dropdown>
           </a-card-grid>
+        </div>
+        <div v-if="searchFiles.length>50" style="margin-top: 16px;display: flex;flex-direction: row;justify-content: center">
+          <a-pagination
+              v-model:current="page"
+              v-model:page-size="size"
+              :total="searchFiles.length"
+          />
         </div>
       </a-card>
     </a-spin>
@@ -601,5 +645,6 @@ onUnmounted(async () => {
 .ml5 {
   margin-left: 5px;
 }
+
 
 </style>

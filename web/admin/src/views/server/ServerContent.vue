@@ -240,11 +240,11 @@ const handleChangeSearch = (e) => {
                   </template>
                 </VueDragSplit>
 
-                <div style="position: absolute;right: 16px;top: calc(50% - 1em / 2);color: aliceblue;z-index: 100"
+                <div style="position: absolute;right: 16px;top: calc(50% - 1em / 2);color: aliceblue"
                      @click="remarkStatus=!remarkStatus">
                   <left-outlined :class="{'button-action':remarkStatus,'left':true}"/>
                 </div>
-                <div style="position: absolute;right: 16px;top: 16px;color: aliceblue;z-index: 100" class="left"
+                <div style="position: absolute;right: 16px;top: 16px;color: aliceblue" class="left"
                      @click="handleRequestFullscreen">
                   <fullscreen-outlined/>
                 </div>
