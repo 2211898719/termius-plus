@@ -7,8 +7,11 @@ import lombok.SneakyThrows;
 import net.schmizz.sshj.sftp.RemoteResourceInfo;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.InputStream;
 import java.util.List;
 
 @RestController
@@ -56,6 +59,7 @@ public class SFTPController {
         sftpService.rename(id, params.getRemotePath(), params.getNewRemotePath());
     }
 
+    @SneakyThrows
     @PostMapping("/{id}/upload")
     public void upload(@PathVariable String id,
                        @RequestParam("file") MultipartFile file,

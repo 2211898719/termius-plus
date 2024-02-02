@@ -3,6 +3,7 @@ package com.codeages.javaskeletonserver.biz.server.service.impl;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.lang.UUID;
+import cn.hutool.extra.ssh.Sftp;
 import com.codeages.javaskeletonserver.biz.ErrorCode;
 import com.codeages.javaskeletonserver.biz.server.context.ServerContext;
 import com.codeages.javaskeletonserver.biz.server.dto.SFTPBean;
@@ -13,18 +14,14 @@ import com.github.jaemon.dinger.DingerSender;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import net.schmizz.sshj.SSHClient;
-import net.schmizz.sshj.sftp.RemoteFile;
-import net.schmizz.sshj.sftp.RemoteResourceInfo;
-import net.schmizz.sshj.sftp.SFTPClient;
-import net.schmizz.sshj.sftp.StatefulSFTPClient;
+import net.schmizz.sshj.sftp.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
+import java.util.EnumSet;
 import java.util.List;
 
 
@@ -125,9 +122,25 @@ public class SFTPServiceImpl implements SFTPService {
     @Override
     @SneakyThrows
     public void upload(String id, MultipartFile file, String remotePath) {
-        File tmpFile = createTmpFile();
-        file.transferTo(tmpFile);
-        getSftp(id).put(tmpFile.getPath(), remotePath + File.separator + file.getOriginalFilename());
+        StatefulSFTPClient sftp = getSftp(id);
+        String filePath = remotePath + File.separator + file.getOriginalFilename();
+
+        try {
+            sftp.lstat(filePath);
+            throw new AppException(ErrorCode.INTERNAL_ERROR, "文件已存在");
+        } catch (IOException e) {
+            File tmpFile = createTmpFile();
+            sftp.put(tmpFile.getPath(), filePath);
+        }
+
+        RemoteFile remoteFile = sftp.open(filePath, EnumSet.of(OpenMode.WRITE));
+        RemoteFile.RemoteFileOutputStream remoteFileOutputStream = remoteFile.new RemoteFileOutputStream();
+        BufferedOutputStream bufferedOutputStream = IoUtil.toBuffered(remoteFileOutputStream);
+        BufferedInputStream inputStream = new BufferedInputStream(file.getInputStream(), 1024 * 1024);
+        inputStream.transferTo(bufferedOutputStream);
+
+        remoteFileOutputStream.close();
+        inputStream.close();
     }
 
     @Override

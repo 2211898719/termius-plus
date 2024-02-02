@@ -206,12 +206,12 @@ const handleDel = (file) => {
     rmApi = sftpApi.rmDir
   }
 
-  Modal.confirm({
+ let modal =  Modal.confirm({
     title: '确定要删除吗?',
     icon: createVNode(ExclamationCircleOutlined),
     content: file.type === 'DIR' ? '你要删除的是一个文件夹，请小心行事！！!' : '',
     onOk() {
-      rmApi({id: sessionId.value, remotePath: currentPath.value + '/' + file.name})
+      return  rmApi({id: sessionId.value, remotePath: currentPath.value + '/' + file.name})
           .then(() => {
             message.success("删除成功")
             ls()
@@ -219,6 +219,8 @@ const handleDel = (file) => {
           .catch((e) => {
             console.error(e)
             message.error(e.message)
+          }).finally(() => {
+            modal.destroy()
           })
     },
     onCancel() {

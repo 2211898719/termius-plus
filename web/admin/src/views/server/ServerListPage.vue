@@ -13,7 +13,6 @@ import Sortable from "sortablejs";
 import _ from "lodash";
 import PEnumSelect from "@/components/p-enum-select.vue";
 import OsEnum from "@/enums /OsEnum";
-import {download} from "@/utils/File";
 
 const emit = defineEmits(['openServer', 'proxyCreation', 'update:value', 'change'])
 
@@ -168,14 +167,18 @@ const handleCopyServer = async (row) => {
 }
 const handleDelServer = (item) => {
 
-  Modal.confirm({
+  let modal = Modal.confirm({
     title: '确定要删除吗?',
     icon: createVNode(ExclamationCircleOutlined),
     content: item.isGroup ? '删除组会丢失组下所有服务器信息！！' : '',
     onOk: async () => {
-      await serverApi.del(item.id)
-      await getServerList()
-      message.success("操作成功");
+      try {
+        await serverApi.del(item.id)
+        await getServerList()
+        message.success("操作成功");
+      } catch (e) {
+        modal.destroy()
+      }
     },
     onCancel() {
     },

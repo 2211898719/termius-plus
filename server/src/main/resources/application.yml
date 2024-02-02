@@ -86,9 +86,9 @@ spring:
     servlet:
         multipart:
             enabled: true
-            max-file-size: 1000MB
-            max-request-size: 1000MB
-
+            max-file-size: 8000MB
+            max-request-size: 8000MB
+            resolve-lazily: true
 PortForWarding:
     minPort: ${PORT_FOR_WARDING_MIN:8200}
     maxPort: ${PORT_FOR_WARDING_MAX:8500}

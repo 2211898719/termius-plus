@@ -51,8 +51,8 @@ export const upload = (url, file, otherParams) => {
     })
 
     let uploadProgress = 0;
-    let key = 'uploadFileProgress'
-    message.loading({content: `上传中...${uploadProgress}%`, key}, 0);
+    let key = 'uploadFileProgress' + new Date().getTime()
+    notification.info({key, message: `上传中...${uploadProgress}%`, duration: 0});
 
     return client.post(url, data, {
         headers: {
@@ -62,15 +62,19 @@ export const upload = (url, file, otherParams) => {
         onUploadProgress: (progressEvent) => {
             if (progressEvent.lengthComputable) {
                 uploadProgress = progressEvent.loaded / progressEvent.total * 100
-                message.loading({content: `上传中...${uploadProgress.toFixed(2)}%`, key}, 0);
+                if (uploadProgress > 99.9) {
+                    notification.info({key, message: `上传至服务器中...`, duration: 0});
+                } else {
+                    notification.info({key, message: `上传中...${uploadProgress.toFixed(2)}%`, duration: 0});
+                }
             }
         }
     }).then(res => {
-            message.destroy(key);
+        notification.success({key, message: '上传成功', duration: 5});
             return res;
         }
     ).catch(err => {
-        message.destroy(key);
+        notification.error({key, message: '上传失败',description:err.message, duration: 5});
         return Promise.reject(err);
     })
 }
