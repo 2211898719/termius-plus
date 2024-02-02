@@ -27,7 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 @Component
-@ServerEndpoint("/socket/ssh/{serverId}")
+@ServerEndpoint("/socket/ssh/{sessionId}/{serverId}")
 public class SshHandler {
 
     private static final ConcurrentHashMap<String, HandlerItem> HANDLER_ITEM_CONCURRENT_HASH_MAP = new ConcurrentHashMap<>();
@@ -35,14 +35,17 @@ public class SshHandler {
     private static final AtomicInteger OnlineCount = new AtomicInteger(0);
 
     @OnOpen
-    public void onOpen(javax.websocket.Session session, @PathParam("serverId") Long serverId) {
+    public void onOpen(javax.websocket.Session session, @PathParam("sessionId") String sessionId, @PathParam("serverId") Long serverId) {
         int cnt = OnlineCount.incrementAndGet();
         log.info("有连接加入，当前连接数为：{},sessionId={}", cnt, session.getId());
+
         HandlerItem handlerItem = new HandlerItem(
+                sessionId,
                 serverId,
                 session,
-                SpringUtil.getBean(ServerService.class).createSSHClient(serverId)
+                SpringUtil.getBean(ServerService.class).createSSHClient(serverId, sessionId)
         );
+        log.info("创建连接成功：{}", session.getId());
         HANDLER_ITEM_CONCURRENT_HASH_MAP.put(session.getId(), handlerItem);
     }
 
@@ -104,6 +107,7 @@ public class SshHandler {
 
     private class HandlerItem implements Runnable {
         private final javax.websocket.Session session;
+        private final String sessionId;
         private final Long serverId;
         private final InputStream inputStream;
         private final OutputStream outputStream;
@@ -111,7 +115,8 @@ public class SshHandler {
         private final net.schmizz.sshj.connection.channel.direct.Session.Shell shell;
 
         @SneakyThrows
-        HandlerItem(Long serverId, javax.websocket.Session session, SSHClient sshClient) {
+        HandlerItem(String sessionId,Long serverId, javax.websocket.Session session, SSHClient sshClient) {
+            this.sessionId = sessionId;
             this.session = session;
             this.serverId = serverId;
 

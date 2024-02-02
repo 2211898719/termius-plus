@@ -9,7 +9,9 @@ import {useStorage, useWebSocket} from "@vueuse/core";
 import {Spin,} from 'ant-design-vue';
 import {SearchAddon} from "xterm-addon-search";
 import {TrzszAddon} from 'trzsz';
+import {useAuthStore} from "@shared/store/useAuthStore";
 
+let authStore = useAuthStore();
 // let networkInfo = useNetwork()
 
 let props = defineProps({
@@ -79,8 +81,9 @@ const initSocket = () => {
   if (window.location.protocol === 'https:') {
     wsProtocol = 'wss';
   }
+
   const host = window.location.host;
-  useSocket = useWebSocket(wsProtocol + '://' + host + '/socket/ssh/' + props.server.id, {
+  useSocket = useWebSocket(wsProtocol + '://' + host + '/socket/ssh/' + authStore.session + '/' + props.server.id, {
     autoReconnect: {
       retries: 3,
       delay: 3000,
@@ -221,6 +224,7 @@ defineExpose({
   close,
   execCommand
 })
+
 
 </script>
 

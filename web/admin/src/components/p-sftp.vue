@@ -9,6 +9,9 @@ import {uploadFile} from "@/utils/File";
 import {ExclamationCircleOutlined} from "@ant-design/icons-vue";
 import {computedFileSize} from "@/components/tinymce/File";
 import {useAutoAnimate} from "@formkit/auto-animate/vue";
+import {useAuthStore} from "@shared/store/useAuthStore";
+
+let authStore = useAuthStore()
 
 const props = defineProps({
   serverId: {
@@ -55,7 +58,7 @@ const init = async () => {
     if (sessionId.value) {
       await sftpApi.close({id: sessionId.value})
     }
-    sessionId.value = await sftpApi.init({id: props.serverId})
+    sessionId.value = await sftpApi.init({serverId: props.serverId, sessionId:authStore.session})
     currentPath.value = await sftpApi.pwd({id: sessionId.value})
   } catch (e) {
     console.error(e)

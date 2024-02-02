@@ -8,7 +8,9 @@ import cn.hutool.core.lang.tree.TreeNode;
 import cn.hutool.core.lang.tree.TreeUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.servlet.ServletUtil;
+import cn.hutool.json.JSONUtil;
 import com.codeages.javaskeletonserver.biz.ErrorCode;
+import com.codeages.javaskeletonserver.biz.server.context.ServerContext;
 import com.codeages.javaskeletonserver.biz.server.dto.*;
 import com.codeages.javaskeletonserver.biz.server.entity.QServer;
 import com.codeages.javaskeletonserver.biz.server.entity.Server;
@@ -16,12 +18,20 @@ import com.codeages.javaskeletonserver.biz.server.mapper.ServerMapper;
 import com.codeages.javaskeletonserver.biz.server.repository.ServerRepository;
 import com.codeages.javaskeletonserver.biz.server.service.ProxyService;
 import com.codeages.javaskeletonserver.biz.server.service.ServerService;
+import com.codeages.javaskeletonserver.biz.server.ws.AuthKeyBoardHandler;
+import com.codeages.javaskeletonserver.biz.server.ws.EventType;
+import com.codeages.javaskeletonserver.biz.server.ws.MessageDto;
 import com.codeages.javaskeletonserver.biz.util.TreeUtils;
 import com.codeages.javaskeletonserver.exception.AppException;
 import com.querydsl.core.BooleanBuilder;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.transport.verification.PromiscuousVerifier;
+import net.schmizz.sshj.userauth.method.AuthPassword;
+import net.schmizz.sshj.userauth.method.PasswordResponseProvider;
+import net.schmizz.sshj.userauth.password.PasswordFinder;
+import net.schmizz.sshj.userauth.password.Resource;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,9 +46,13 @@ import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.Socket;
 import java.util.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class ServerServiceImpl implements ServerService {
 
@@ -301,12 +315,14 @@ public class ServerServiceImpl implements ServerService {
 
     }
 
+    @Override
     @SneakyThrows
-    public SSHClient createSSHClient(Long id) {
+    public SSHClient createSSHClient(Long id, String sessionId) {
         ServerDto server = findById(id);
         SSHClient ssh = new SSHClient();
         ssh.setTimeout(3600 * 1000);
         ssh.setConnectTimeout(3600 * 1000);
+        ssh.getTransport().setTimeoutMs(0);
         ssh.getConnection().getKeepAlive().setKeepAliveInterval(60);
         //设置sshj代理
         if (server.getProxy() != null) {
@@ -359,11 +375,70 @@ public class ServerServiceImpl implements ServerService {
         if (StrUtil.isNotBlank(server.getKey())) {
             ssh.authPublickey(server.getUsername(), ssh.loadKeys(server.getKey(), null, null));
         } else {
-            ssh.authPassword(server.getUsername(), server.getPassword());
+            PasswordFinder pfinder = new PasswordFinder() {
+
+                @Override
+                public char[] reqPassword(Resource<?> resource) {
+                    return server.getPassword().toCharArray().clone();
+                }
+
+                @Override
+                public boolean shouldRetry(Resource<?> resource) {
+                    return true;
+                }
+
+            };
+
+            log.info("ssh.isAuthenticated() = {}", ssh.isAuthenticated());
+            ssh.auth(
+                    server.getUsername(),
+
+                    new AuthPassword(pfinder),
+                    new CurrentAuthKeyboardInteractive(new PasswordResponseProvider(new PasswordFinder() {
+
+                        @Override
+                        public char[] reqPassword(Resource<?> resource) {
+                            //如果没有sessionId 无从发起获取 keyboard interactive的验证码，所以无法进行登录
+                            if (StrUtil.isBlank(sessionId)) {
+                                return server.getPassword().toCharArray().clone();
+                            }
+
+                            String resourceKey = server.getName() + "-" + sessionId;
+                            MessageDto messageDto = new MessageDto(EventType.AUTH_KEYBOARD, resourceKey);
+                            log.info("向前端发送获取验证码的消息，message 是资源的验证码, messageDto = {}", messageDto);
+                            //向前端发送获取验证码的消息，message 是资源的验证码
+                            AuthKeyBoardHandler.sendMessage(sessionId, JSONUtil.toJsonStr(messageDto));
+                            BlockingQueue<String> queue = ServerContext.AUTH_KEYBOARD_INTERACTIVE_POOL.getOrDefault(
+                                    resourceKey,
+                                    new LinkedBlockingQueue<>()
+                            );
+                            ServerContext.AUTH_KEYBOARD_INTERACTIVE_POOL.put(resourceKey, queue);
+                            try {
+                                String take = queue.take();
+                                log.info("输入的验证码是：{}", take);
+                                return take.toCharArray();
+                            } catch (InterruptedException e) {
+                                throw new RuntimeException(e);
+                            }
+                        }
+
+                        @Override
+                        public boolean shouldRetry(Resource<?> resource) {
+                            return true;
+                        }
+
+                    }, Pattern.compile("P.* ", Pattern.DOTALL)))
+            );
+
         }
 
 
         return ssh;
+    }
+
+    @SneakyThrows
+    public SSHClient createSSHClient(Long id) {
+        return createSSHClient(id, null);
     }
 
     @Override

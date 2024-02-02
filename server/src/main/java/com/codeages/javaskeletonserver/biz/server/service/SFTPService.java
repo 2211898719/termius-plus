@@ -1,19 +1,11 @@
 package com.codeages.javaskeletonserver.biz.server.service;
 
-import cn.hutool.core.lang.tree.Tree;
-import com.codeages.javaskeletonserver.biz.server.dto.LsFileDto;
-import com.codeages.javaskeletonserver.biz.server.dto.ServerCreateParams;
-import com.codeages.javaskeletonserver.biz.server.dto.ServerUpdateParams;
-import com.codeages.javaskeletonserver.biz.server.dto.TreeSortParams;
 import net.schmizz.sshj.sftp.RemoteResourceInfo;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.List;
-import java.util.function.Consumer;
 
 public interface SFTPService {
 
@@ -22,7 +14,7 @@ public interface SFTPService {
      *
      * @return
      */
-    String init(Long serverId);
+    String init(String sessionId, Long serverId);
 
     /**
      * 获取当前目录

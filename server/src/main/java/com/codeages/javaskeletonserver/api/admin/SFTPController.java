@@ -1,15 +1,13 @@
 package com.codeages.javaskeletonserver.api.admin;
 
+import com.codeages.javaskeletonserver.biz.server.dto.SFTPInitParams;
 import com.codeages.javaskeletonserver.biz.server.dto.SFTPParams;
 import com.codeages.javaskeletonserver.biz.server.service.SFTPService;
-import com.codeages.javaskeletonserver.biz.storage.utils.FileUtil;
-import com.codeages.javaskeletonserver.common.IdPayload;
 import lombok.SneakyThrows;
 import net.schmizz.sshj.sftp.RemoteResourceInfo;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
@@ -24,8 +22,8 @@ public class SFTPController {
     }
 
     @PostMapping("/init")
-    public String init(@RequestBody IdPayload idPayload) {
-        return sftpService.init(idPayload.getId());
+    public String init(@RequestBody SFTPInitParams sftpInitParams) {
+        return sftpService.init(sftpInitParams.getSessionId(), sftpInitParams.getServerId());
     }
 
     @GetMapping("/{id}/pwd")

@@ -7,3 +7,5 @@ RUN sed -i 's/https:\/\/mirrors.aliyun.com/http:\/\/mirrors.cloud.aliyuncs.com/g
 RUN apt-get update
 
 RUN apt-get install -y mariadb-server mariadb-client --no-install-recommends
+
+

@@ -27,6 +27,8 @@ public interface ServerService {
 
     SSHClient createSSHClient(Long id);
 
+    SSHClient createSSHClient(Long id,String sessionId);
+
     Proxy createProxy(ServerDto server);
 
     List<Tree<Long>> groupList();

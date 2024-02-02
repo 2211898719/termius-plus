@@ -4,23 +4,19 @@ import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.lang.UUID;
 import com.codeages.javaskeletonserver.biz.ErrorCode;
-import com.codeages.javaskeletonserver.biz.server.context.SFTPContext;
+import com.codeages.javaskeletonserver.biz.server.context.ServerContext;
 import com.codeages.javaskeletonserver.biz.server.dto.SFTPBean;
 import com.codeages.javaskeletonserver.biz.server.service.SFTPService;
 import com.codeages.javaskeletonserver.biz.server.service.ServerService;
 import com.codeages.javaskeletonserver.exception.AppException;
 import com.github.jaemon.dinger.DingerSender;
-import com.github.jaemon.dinger.core.entity.DingerRequest;
-import com.github.jaemon.dinger.core.entity.enums.MessageSubType;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import net.schmizz.sshj.SSHClient;
-import net.schmizz.sshj.connection.channel.direct.Session;
 import net.schmizz.sshj.sftp.RemoteFile;
 import net.schmizz.sshj.sftp.RemoteResourceInfo;
 import net.schmizz.sshj.sftp.SFTPClient;
 import net.schmizz.sshj.sftp.StatefulSFTPClient;
-import org.mvel2.MVEL;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -30,7 +26,6 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 
 
 @Slf4j
@@ -48,17 +43,17 @@ public class SFTPServiceImpl implements SFTPService {
 
     @SneakyThrows
     @Override
-    public String init(Long serverId) {
-        StatefulSFTPClient sftp = createSftp(serverId);
-        String id = UUID.fastUUID() + "-" + serverId;
-        SFTPContext.SFTP_POOL.put(id, new SFTPBean(sftp, System.currentTimeMillis()));
+    public String init(String sessionId, Long serverId) {
+        StatefulSFTPClient sftp = createSftp(sessionId, serverId);
+        String id = UUID.fastUUID() + "-" + serverId + "-" + sessionId;
+        ServerContext.SFTP_POOL.put(id, new SFTPBean(sftp, System.currentTimeMillis()));
 
         return id;
     }
 
     @SneakyThrows
-    private StatefulSFTPClient createSftp(Long serverId) {
-        SSHClient sshClient = serverService.createSSHClient(serverId);
+    private StatefulSFTPClient createSftp(String sessionId, Long serverId) {
+        SSHClient sshClient = serverService.createSSHClient(serverId, sessionId);
 
         sshClient.useCompression();
         return sshClient.newStatefulSFTPClient();
@@ -66,11 +61,14 @@ public class SFTPServiceImpl implements SFTPService {
 
 
     private StatefulSFTPClient getSftp(String id) {
-        SFTPBean sftp = SFTPContext.SFTP_POOL.get(id);
+        SFTPBean sftp = ServerContext.SFTP_POOL.get(id);
         if (sftp == null) {
             log.info("SFTP连接已失效：{}", id);
             String[] split = id.split("-");
-            sftp = new SFTPBean(createSftp(Long.valueOf(split[split.length - 1])), System.currentTimeMillis());
+            sftp = new SFTPBean(
+                    createSftp(split[split.length - 1], Long.valueOf(split[split.length - 2])),
+                    System.currentTimeMillis()
+            );
         }
 
         sftp.setTime(System.currentTimeMillis());
@@ -179,12 +177,12 @@ public class SFTPServiceImpl implements SFTPService {
     @Override
     @SneakyThrows
     public void close(String id) {
-        SFTPBean sftp = SFTPContext.SFTP_POOL.get(id);
+        SFTPBean sftp = ServerContext.SFTP_POOL.get(id);
         if (sftp == null) {
             return;
         }
 
         sftp.getSftp().close();
-        SFTPContext.SFTP_POOL.remove(id);
+        ServerContext.SFTP_POOL.remove(id);
     }
 }

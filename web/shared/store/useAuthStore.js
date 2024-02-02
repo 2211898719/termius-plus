@@ -3,12 +3,16 @@ import {defineStore} from "pinia";
 export const useAuthStore = defineStore('auth', {
     state: () => ({
         user: null,
+        session: ''
     }),
 
     getters: {
         isLogin(state) {
             return !!state.user;
         },
+        getSession(state) {
+            return state.session;
+        }
     },
 
     actions: {
@@ -29,6 +33,9 @@ export const useAuthStore = defineStore('auth', {
         },
         hasRole(role) {
             return this.user.roles.includes(role);
+        },
+        setSession(session) {
+            this.session = session;
         }
     }
 

@@ -24,6 +24,10 @@
       </router-view>
     </pro-layout>
   </keep-alive>
+  <a-modal v-model:visible="authKeyBoardVisible" title="输入服务器二次验证码" @ok="handleOk">
+    {{authKeyBoardServerKey}}
+    <a-input v-model:value="authKeyBoardPassword"></a-input>
+  </a-modal>
 </template>
 
 <script setup>
@@ -33,6 +37,7 @@ import {clearMenuItem, getMenuData} from '@ant-design-vue/pro-layout';
 import {useAuthStore} from "@shared/store/useAuthStore";
 import config from "@/config";
 import {walk} from "@/utils/treeUtil";
+import {useWebSocket} from "@vueuse/core";
 
 const store = useAuthStore();
 const locale = (i18n) => i18n;
@@ -75,6 +80,51 @@ watch(router.currentRoute, () => {
 const onLogout = () => {
     store.logout();
     router.push({name: "login"});
+}
+
+let socket = null;
+let wsProtocol = 'ws';
+if (window.location.protocol === 'https:') {
+  wsProtocol = 'wss';
+}
+const host = window.location.host;
+let useSocket = useWebSocket(wsProtocol + '://' + host + '/socket/authKeyBoard', {
+  autoReconnect: {
+    delay: 500,
+    onFailed: (e) => {
+      console.log(e)
+    }
+  },
+  onMessage: (w, e) => {
+    const message = JSON.parse(e.data);
+    switch (message.event) {
+      case "AUTH_KEYBOARD":
+        authKeyBoardServerKey.value = message.data
+        authKeyBoardVisible.value = true
+        break;
+      case "SESSION":
+        store.setSession(message.data)
+        break;
+      case "close":
+        close();
+        break;
+    }
+  },
+  onError: (e) => {
+    console.log(e)
+  },
+  onConnected: () => {
+    socket = useSocket.ws.value;
+  },
+});
+
+let authKeyBoardServerKey = ref('')
+let authKeyBoardVisible = ref(false)
+let authKeyBoardPassword = ref('')
+
+const handleOk = () => {
+  socket.send(JSON.stringify({serverKey: authKeyBoardServerKey.value, password: authKeyBoardPassword.value}))
+  authKeyBoardVisible.value = false
 }
 
 </script>
