@@ -2,8 +2,8 @@ package com.codeages.javaskeletonserver.security;
 
 import cn.hutool.core.util.StrUtil;
 import com.codeages.javaskeletonserver.biz.user.service.UserAuthService;
-import com.codeages.javaskeletonserver.exception.AppException;
 import com.codeages.javaskeletonserver.exception.AppError;
+import com.codeages.javaskeletonserver.exception.AppException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +28,8 @@ public class AuthTokenFilter extends OncePerRequestFilter {
 
     private final ObjectMapper objectMapper;
 
+    public static final ThreadLocal<Long> userIdThreadLocal = new ThreadLocal<>();
+
     public AuthTokenFilter(UserAuthService userAuthService, ObjectMapper objectMapper) {
         this.userAuthService = userAuthService;
         this.objectMapper = objectMapper;
@@ -41,6 +43,10 @@ public class AuthTokenFilter extends OncePerRequestFilter {
                 var userAuthedDto = userAuthService.auth(token);
                 var authUser = new AuthUser(userAuthedDto);
                 authUser.setIp(request.getRemoteAddr());
+                //如果是websocket请求，需要在这里设置userIdThreadLocal
+                if (request.getRequestURI().startsWith("/socket")) {
+                    userIdThreadLocal.set(authUser.getId());
+                }
                 var authentication = new UsernamePasswordAuthenticationToken(authUser, null, authUser.getAuthorities());
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authentication);

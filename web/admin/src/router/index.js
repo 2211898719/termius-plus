@@ -63,7 +63,7 @@ let routes = [
             path: '/system/log',
             name: 'system_log',
             meta: { title: '系统日志' },
-            component: () => import('../views/SystemLogPage.vue'),
+            component: () => import('../views/log/CommandLogPage.vue'),
           },
         ]
       },

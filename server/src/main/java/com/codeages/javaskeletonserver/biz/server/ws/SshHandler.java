@@ -7,13 +7,18 @@ import cn.hutool.json.JSONUtil;
 import com.codeages.javaskeletonserver.biz.log.dto.CommandLogCreateParams;
 import com.codeages.javaskeletonserver.biz.log.service.CommandLogService;
 import com.codeages.javaskeletonserver.biz.server.service.ServerService;
+import com.codeages.javaskeletonserver.security.AuthTokenFilter;
+import com.codeages.javaskeletonserver.security.SecurityContext;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.userauth.UserAuthException;
 import org.springframework.stereotype.Component;
 
-import javax.websocket.*;
+import javax.websocket.OnClose;
+import javax.websocket.OnError;
+import javax.websocket.OnMessage;
+import javax.websocket.OnOpen;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
@@ -22,7 +27,7 @@ import java.io.OutputStream;
 import java.net.ConnectException;
 import java.util.Arrays;
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
@@ -39,7 +44,9 @@ public class SshHandler {
         int cnt = OnlineCount.incrementAndGet();
         log.info("有连接加入，当前连接数为：{},sessionId={}", cnt, session.getId());
 
+
         HandlerItem handlerItem = new HandlerItem(
+                AuthTokenFilter.userIdThreadLocal.get(),
                 sessionId,
                 serverId,
                 session,
@@ -47,6 +54,9 @@ public class SshHandler {
         );
         log.info("创建连接成功：{}", session.getId());
         HANDLER_ITEM_CONCURRENT_HASH_MAP.put(session.getId(), handlerItem);
+
+        // 为了防止内存泄漏，这里需要手动清理
+        AuthTokenFilter.userIdThreadLocal.remove();
     }
 
     @OnClose
@@ -106,6 +116,7 @@ public class SshHandler {
     }
 
     private class HandlerItem implements Runnable {
+        private final Long userId;
         private final javax.websocket.Session session;
         private final String sessionId;
         private final Long serverId;
@@ -113,9 +124,15 @@ public class SshHandler {
         private final OutputStream outputStream;
         private final net.schmizz.sshj.connection.channel.direct.Session openSession;
         private final net.schmizz.sshj.connection.channel.direct.Session.Shell shell;
+        private final StringBuffer commandBuffer = new StringBuffer();
 
         @SneakyThrows
-        HandlerItem(String sessionId,Long serverId, javax.websocket.Session session, SSHClient sshClient) {
+        HandlerItem(Long userId,
+                    String sessionId,
+                    Long serverId,
+                    javax.websocket.Session session,
+                    SSHClient sshClient) {
+            this.userId = userId;
             this.sessionId = sessionId;
             this.session = session;
             this.serverId = serverId;
@@ -140,7 +157,7 @@ public class SshHandler {
          * @return 当前待确认待所有命令
          */
         private void append(String msg) {
-//            commandMap.put(System.currentTimeMillis(), msg);
+//            commandBuffer.append(msg);
         }
 
         public boolean checkInput(String msg) {
@@ -161,11 +178,12 @@ public class SshHandler {
                 IoUtil.close(this.outputStream);
                 this.shell.close();
                 this.openSession.close();
-//                SpringUtil.getBean(CommandLogService.class).create(new CommandLogCreateParams(
-//                        this.session.getId(),
-//                        this.serverId,
-//                        JSONUtil.toJsonStr(commandMap)
-//                ));
+                SpringUtil.getBean(CommandLogService.class).create(new CommandLogCreateParams(
+                        userId,
+                        this.session.getId(),
+                        this.serverId,
+                        commandBuffer.toString()
+                ));
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -179,7 +197,9 @@ public class SshHandler {
                 int i;
                 //如果没有数据来，线程会一直阻塞在这个地方等待数据。
                 while ((i = inputStream.read(buffer)) != -1) {
-                    sendBinary(session, new String(Arrays.copyOfRange(buffer, 0, i), openSession.getRemoteCharset()));
+                    String s = new String(Arrays.copyOfRange(buffer, 0, i), openSession.getRemoteCharset());
+                    commandBuffer.append(s);
+                    sendBinary(session, s);
                 }
             } catch (Exception e) {
                 if (!this.openSession.isOpen()) {

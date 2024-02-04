@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CommandLogSearchParams {
+    private Long userId;
     private String sessionId;
     private Long serverId;
     private String commandData;

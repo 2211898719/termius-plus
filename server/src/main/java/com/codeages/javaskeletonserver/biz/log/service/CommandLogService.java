@@ -16,6 +16,8 @@ public interface CommandLogService {
     void update(CommandLogUpdateParams updateParams);
 
     void delete(Long id);
+
+    CommandLogDto get(Long id);
 }
 
 

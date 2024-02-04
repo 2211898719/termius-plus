@@ -85,6 +85,13 @@ public class CommandLogServiceImpl implements CommandLogService {
 
         commandLogRepository.deleteById(id);
     }
+
+    @Override
+    public CommandLogDto get(Long id) {
+        return commandLogRepository.findById(id)
+                                  .map(commandLogMapper::toDto)
+                                  .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
+    }
 }
 
 

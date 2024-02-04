@@ -23,6 +23,10 @@ public class CommandLog {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     /**
+     * 用户id
+     */
+    private Long userId;
+    /**
      * 会话id
      */
     private String sessionId;

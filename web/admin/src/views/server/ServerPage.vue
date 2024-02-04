@@ -12,6 +12,7 @@ import ServerContent from "@/views/server/ServerContent.vue";
 import SnippetListPage from "@/views/server/SnippetListPage.vue";
 import PortForwarderPage from "@/views/server/PortForwarderPage.vue";
 import CronJobPage from "@/views/server/CronJobPage.vue";
+import PTermLog from "@/components/p-term-log.vue";
 
 let spinning = ref(false)
 
@@ -252,11 +253,7 @@ const handleChangeTab = (item) => {
             <template v-slot:closeIcon>
               <close-outlined @click="onCloseServer(server.operationId)"/>
             </template>
-<!--            <split-root>-->
-<!--              <template #content>-->
                 <server-content ref="serverContentList" :server="server"></server-content>
-<!--              </template>-->
-<!--            </split-root>-->
           </a-tab-pane>
         </template>
       </a-tabs>

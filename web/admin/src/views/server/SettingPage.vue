@@ -3,6 +3,7 @@
 import {message} from "ant-design-vue";
 import {ref} from "vue";
 import {useStorage} from "@vueuse/core";
+import PTermLog from "@/components/p-term-log.vue";
 
 let frontColor = useStorage("frontColor", "#ffffff")
 let backColor = useStorage("backColor", "#000000")
