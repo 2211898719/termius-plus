@@ -35,8 +35,8 @@ public class WebSocketConfig implements ServletContextInitializer {
         servletContext.addListener(WebAppRootListener.class);
         //调整tomcat的websocket缓冲区大小 ，如果要支持 rz sz 之类的命令，需要调整这个缓冲区大小
         servletContext.setInitParameter("org.apache.tomcat.websocket.textBufferSize",
-                String.valueOf(2 * 1024 * 1024));
+                String.valueOf(8 * 1024 * 1024));
         servletContext.setInitParameter("org.apache.tomcat.websocket.binaryBufferSize",
-                String.valueOf(2 * 1024 * 1024));
+                String.valueOf(8 * 1024 * 1024));
     }
 }

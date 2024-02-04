@@ -122,25 +122,9 @@ public class SFTPServiceImpl implements SFTPService {
     @Override
     @SneakyThrows
     public void upload(String id, MultipartFile file, String remotePath) {
-        StatefulSFTPClient sftp = getSftp(id);
-        String filePath = remotePath + File.separator + file.getOriginalFilename();
-
-        try {
-            sftp.lstat(filePath);
-            throw new AppException(ErrorCode.INTERNAL_ERROR, "文件已存在");
-        } catch (IOException e) {
-            File tmpFile = createTmpFile();
-            sftp.put(tmpFile.getPath(), filePath);
-        }
-
-        RemoteFile remoteFile = sftp.open(filePath, EnumSet.of(OpenMode.WRITE));
-        RemoteFile.RemoteFileOutputStream remoteFileOutputStream = remoteFile.new RemoteFileOutputStream();
-        BufferedOutputStream bufferedOutputStream = IoUtil.toBuffered(remoteFileOutputStream);
-        BufferedInputStream inputStream = new BufferedInputStream(file.getInputStream(), 1024 * 1024);
-        inputStream.transferTo(bufferedOutputStream);
-
-        remoteFileOutputStream.close();
-        inputStream.close();
+        File tmpFile = createTmpFile();
+        file.transferTo(tmpFile);
+        getSftp(id).put(tmpFile.getPath(), remotePath + File.separator + file.getOriginalFilename());
     }
 
     @Override
