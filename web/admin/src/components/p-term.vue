@@ -107,6 +107,9 @@ const initSocket = () => {
 
 }
 
+
+let currentCommand = ref("")
+
 const initTerm = () => {
   term = new Terminal(options);
   const attachAddon = new TrzszAddon(socket);
@@ -122,8 +125,32 @@ const initTerm = () => {
   term.open(terminal.value);
 
   term.focus();
+  term.onData((e) => {
+    if (e === '\x08' || e === '\u007f') {
+      currentCommand.value = currentCommand.value.slice(0, -1);
+    } else {
+      currentCommand.value += e;
+    }
+
+    currentCommand.value = currentCommand.value.split("\n")[0]
+    console.log(currentCommand.value)
+    getCursorPosition()
+  })
+
+  term.onKey(e => {
+    if (e.domEvent.key === 'c' && e.domEvent.ctrlKey) {
+      // 处理 Ctrl+C 的逻辑
+      currentCommand.value = ""
+    }
+    if (e.domEvent.ctrlKey && e.domEvent.key === 'w') {
+      term.write(autoComp)
+      autoEL.innerText = ''
+      currentCommand.value = ""
+    }
+  });
 
   nextTick(() => {
+
     resizeTerminal(term);
   });
 
@@ -209,6 +236,45 @@ const close = () => {
     terminal.value.innerHTML = "";
   }
 }
+
+let autoCompData = ["ps -ef | grep java", "ps -aux | grep php", "lsof -i:3306"]
+
+let autoEL = document.getElementById("auto") || document.createElement("div")
+let autoComp = "";
+
+const getCursorPosition = () => {
+  //xterm-helper-textarea
+  let xtermTextarea = document.getElementsByClassName("xterm-helper-textarea");
+  let console = document.getElementsByClassName("console")[0];
+  if (!xtermTextarea.length) {
+    return
+  }
+  let el = xtermTextarea[0]
+
+
+  let find = autoCompData.find(t => t.startsWith(currentCommand.value))
+  if (!find) {
+    autoEL.innerText = ""
+    return;
+  }
+
+  autoComp = find.substring(find.indexOf(currentCommand.value) + currentCommand.value.length, find.length)
+
+  autoEL.innerText = autoComp
+  autoEL.style.left = el.style.left;
+  autoEL.style.top = el.style.top;
+  autoEL.style.position = 'fixed'
+  autoEL.style.fontSize = '14.7px'
+  autoEL.style.paddingLeft = '8px'
+  autoEL.id = "auto"
+  autoEL.style.lineHeight = "1"
+  autoEL.style.color = "#bbbaba"
+  console.append(autoEL)
+}
+
+setTimeout(() => {
+  getCursorPosition()
+}, 3000)
 
 onBeforeUnmount(() => {
   close()
