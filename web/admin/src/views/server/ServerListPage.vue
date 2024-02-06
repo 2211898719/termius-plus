@@ -156,6 +156,10 @@ const getServerList = async () => {
 
 getServerList()
 
+setInterval(() => {
+  getServerList()
+}, 1000 * 3)
+
 const handleCopyServer = async (row) => {
   creationType.value = 'create'
   Object.assign(creationState, row)
@@ -195,7 +199,6 @@ const submitCreate = async () => {
   let submitData = {...creationState}
   submitData.dbPort = new Set(submitData.dbPort)
   submitData.dbPort = [...submitData.dbPort].join(',')
-  console.log(submitData)
 
   await serverApi[creationType.value](submitData);
   message.success("操作成功");
@@ -242,7 +245,7 @@ const updateSort = _.debounce(async (sortData) => {
 }, 250, {'maxWait': 1000});
 
 
-const handleDblclick = (item) => {
+const handleDblclick = (item, masterSessionId = 0) => {
   if (item.isGroup) {
     //维护面包屑
     let index = groupBreadcrumb.value.findIndex(i => i.id === item.id);
@@ -272,7 +275,7 @@ const handleDblclick = (item) => {
     return
   }
 
-  emit('openServer', item)
+  emit('openServer', item, masterSessionId)
 }
 
 const handleOpenNewWindow = (item) => {
@@ -394,7 +397,17 @@ defineExpose({
                 <a-dropdown :trigger="['contextmenu']">
                   <a-list-item class="sortEl" @dblclick="handleDblclick(item)">
                     <template #actions>
-                      <a key="list-loadmore-edit">
+                      <a-popover v-if="item.onlyConnect?.length" @click.stop title="在线用户" placement="bottom"
+                                 trigger="click">
+                        <template #content>
+                          <p v-for="only in item.onlyConnect" :key="only.user.username"
+                             @click.stop="handleDblclick(item,only.masterSessionId)">{{ only.user.username }}</p>
+                        </template>
+                        <a-avatar style="color: #f56a00; background-color: #fde3cf">
+                          {{ item.onlyConnect[0].user.username }}
+                        </a-avatar>
+                      </a-popover>
+                      <a>
                         <edit-outlined @click="handleEditServer(item)"/>
                       </a>
                     </template>

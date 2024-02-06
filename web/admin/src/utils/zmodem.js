@@ -71,15 +71,8 @@ Object.assign(Terminal.prototype, {
         });
 
         function handleWSMessage(evt) {
-            // In testing with xterm.js’s demo the first message was
-            // always text even if the rest were binary. While that
-            // may be specific to xterm.js’s demo, ultimately we
-            // should reject anything that isn’t binary.
             if (typeof evt.data === 'string') {
-                // console.log(evt.data)
-                // if (_shouldWrite()) {
-                //   term.write(evt.data);
-                // }
+                console.log(evt.data)
             } else {
                 zsentry.consume(evt.data);
             }

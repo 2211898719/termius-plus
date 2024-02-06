@@ -21,12 +21,10 @@ const store = useAuthStore();
 store.$onAction(({name, after}) => {
     if (name === "logout") {
         after(async (result) => {
-            console.log("logout result", result);
             await router.push({name: "login"});
         });
     }
 });
-
 
 </script>
 

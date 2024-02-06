@@ -205,7 +205,6 @@ const submitCreate = async () => {
   let submitData = {...creationState}
   submitData.dbPort = new Set(submitData.dbPort)
   submitData.dbPort = [...submitData.dbPort].join(',')
-  console.log(submitData)
 
   await serverApi[creationType.value](submitData);
   message.success("操作成功");

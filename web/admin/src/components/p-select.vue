@@ -75,7 +75,6 @@ if (props.value){
 
 watch(() => props.value, (val) => {
   if (_.isNil(val)) {
-    console.log(11111)
     currentValue.value = undefined
     return
   }

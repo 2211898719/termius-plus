@@ -1,9 +1,6 @@
 package com.codeages.javaskeletonserver.api.admin;
 
-import com.codeages.javaskeletonserver.biz.log.dto.CommandLogCreateParams;
-import com.codeages.javaskeletonserver.biz.log.dto.CommandLogDto;
-import com.codeages.javaskeletonserver.biz.log.dto.CommandLogSearchParams;
-import com.codeages.javaskeletonserver.biz.log.dto.CommandLogUpdateParams;
+import com.codeages.javaskeletonserver.biz.log.dto.*;
 import com.codeages.javaskeletonserver.biz.log.service.CommandLogService;
 import com.codeages.javaskeletonserver.biz.server.dto.ServerDto;
 import com.codeages.javaskeletonserver.biz.server.service.ServerService;
@@ -39,19 +36,19 @@ public class CommandLogController {
     }
 
     @GetMapping("/search")
-    public PagerResponse<CommandLogDto> search(CommandLogSearchParams searchParams,
+    public PagerResponse<CommandLogSimpleDto> search(CommandLogSearchParams searchParams,
                                                @PageableDefault(size = 20, sort = {"createdAt"}, direction = Sort.Direction.DESC) Pageable pager) {
-        Page<CommandLogDto> page = commandLogService.search(searchParams, pager);
+        Page<CommandLogSimpleDto> page = commandLogService.search(searchParams, pager);
         QueryUtils.batchQueryOneToOne(
                 page.getContent(),
-                CommandLogDto::getServerId,
+                CommandLogSimpleDto::getServerId,
                 serverService::findByIdIn,
                 ServerDto::getId,
                 (log, server) -> log.setServerName(server.getName() + "(" + server.getIp() + ":" + server.getPort() + ")")
         );
         QueryUtils.batchQueryOneToOne(
                 page.getContent(),
-                CommandLogDto::getUserId,
+                CommandLogSimpleDto::getUserId,
                 userService::findAllByIdIn,
                 UserDto::getId,
                 (log, user) -> log.setUserName(user.getUsername())
@@ -63,7 +60,7 @@ public class CommandLogController {
     }
 
     @GetMapping("/list")
-    public List<CommandLogDto> list(CommandLogSearchParams searchParams) {
+    public List<CommandLogSimpleDto> list(CommandLogSearchParams searchParams) {
         return commandLogService.search(searchParams, Pageable.unpaged()).getContent();
     }
 

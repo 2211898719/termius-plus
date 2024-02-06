@@ -1,5 +1,5 @@
 app:
-    secret: java_skeleton_dev_secret
+    secret: ${APP_SECRET:java_skeleton_dev_secret}
 cache:
     namespace: skeleton
     ttl: 7200

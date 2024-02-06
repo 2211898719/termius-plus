@@ -21,7 +21,6 @@ const windowList = ref([
 ]);
 
 function generateWindowConfig(params) {
-  console.log(params)
   return {
     key: Date.now(),
     label: "标签" + Date.now(),
@@ -68,6 +67,7 @@ const changeDir = (dir) => {
 let PTermRef = ref(null)
 const reloadServer = () => {
   PTermRef.value.reload()
+  inputTerm.value = false
 }
 
 let fullscreenRef = ref(null)
@@ -140,6 +140,14 @@ const handleChangeSearch = (e) => {
     item.des = item.des.replace(search, `<span style="color: #1890ff">${search}</span>`)
   })
 
+}
+
+
+let inputTerm = ref(false)
+const handleRequestInputTerm = () => {
+  message.info("向主链接申请输入命令权限")
+  inputTerm.value = !inputTerm.value
+  PTermRef.value.setDisableStdin(!inputTerm.value)
 }
 
 
@@ -235,11 +243,10 @@ const handleChangeSearch = (e) => {
                   </template>
                   <template #TabView="win">
                     <span>
-                      <p-term class="ssh" :server="server" ref="PTermRef"></p-term>
+                      <p-term class="ssh" :server="server" :master-session-id="server.masterSessionId" ref="PTermRef"></p-term>
                     </span>
                   </template>
                 </VueDragSplit>
-
                 <div style="position: absolute;right: 16px;top: calc(50% - 1em / 2);color: aliceblue"
                      @click="remarkStatus=!remarkStatus">
                   <left-outlined :class="{'button-action':remarkStatus,'left':true}"/>
@@ -247,6 +254,11 @@ const handleChangeSearch = (e) => {
                 <div style="position: absolute;right: 16px;top: 16px;color: aliceblue" class="left"
                      @click="handleRequestFullscreen">
                   <fullscreen-outlined/>
+                </div>
+                <div v-if="server.masterSessionId" style="position: absolute;right: 16px;top: 40px;color: aliceblue" class="left enable-line"
+                     :class="{'disable-line':!inputTerm,'enable-line':sftpEnable}"
+                     @click="handleRequestInputTerm">
+                  <edit-outlined style="text-decoration: line-through;" />
                 </div>
               </div>
               <div :class="{remark:true,'remark-enter':remarkStatus}" class="card-container">
@@ -357,6 +369,14 @@ const handleChangeSearch = (e) => {
       mix-blend-mode: difference; /* 使用difference混合模式实现反色效果 */
       color: white; /* 设置图标的颜色为白色 */
       cursor: pointer; /* 设置鼠标样式为手型 */
+    }
+
+    .enable-line {
+      color: #1daa6c !important;
+    }
+
+    .disable-line {
+      color: #f5222d !important;
     }
 
     .button-action {

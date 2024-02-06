@@ -183,7 +183,6 @@ let lang = computed(() => {
     res[d.name] = d.tables
   })
 
-  console.log(res)
   return sql({
     dialect: MySQL,
     schema: res

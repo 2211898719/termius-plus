@@ -6,8 +6,12 @@ import com.codeages.javaskeletonserver.biz.server.dto.ServerCreateParams;
 import com.codeages.javaskeletonserver.biz.server.dto.ServerUpdateParams;
 import com.codeages.javaskeletonserver.biz.server.dto.TreeSortParams;
 import com.codeages.javaskeletonserver.biz.server.service.ServerService;
+import com.codeages.javaskeletonserver.biz.server.ws.SshHandler;
 import com.codeages.javaskeletonserver.biz.user.dto.RoleDto;
+import com.codeages.javaskeletonserver.biz.user.dto.UserDto;
 import com.codeages.javaskeletonserver.biz.user.service.RoleService;
+import com.codeages.javaskeletonserver.biz.user.service.UserService;
+import com.codeages.javaskeletonserver.biz.util.QueryUtils;
 import com.codeages.javaskeletonserver.common.IdPayload;
 import com.codeages.javaskeletonserver.common.OkResponse;
 import com.codeages.javaskeletonserver.security.SecurityContext;
@@ -15,6 +19,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api-admin/server")
@@ -26,10 +32,14 @@ public class ServerController {
 
     private final RoleService roleService;
 
-    public ServerController(ServerService serverService, SecurityContext securityContext, RoleService roleService) {
+    private final UserService userService;
+
+    public ServerController(ServerService serverService, SecurityContext securityContext, RoleService roleService,
+                            UserService userService) {
         this.serverService = serverService;
         this.securityContext = securityContext;
         this.roleService = roleService;
+        this.userService = userService;
     }
 
 
@@ -39,10 +49,45 @@ public class ServerController {
         List<Long> roleIds = securityContext.getUser().getRoleIds();
         List<RoleDto> service = roleService.findByIds(roleIds);
         List<Long> serverIds = new ArrayList<>();
+
         service.stream()
                .map(roleDto -> JSONUtil.parseArray(roleDto.getServerPermission()))
                .forEach(jsonArray -> jsonArray.forEach(o -> serverIds.add(Long.valueOf(o.toString()))));
-        return serverService.findAll(serverIds);
+
+        List<Tree<Long>> treeList = serverService.findAll(serverIds);
+
+        List<SshHandler.HandlerItem> handlerItemArrayList = new ArrayList<>(SshHandler.HANDLER_ITEM_CONCURRENT_HASH_MAP.values());
+        QueryUtils.batchQueryOneToOne(
+                handlerItemArrayList,
+                SshHandler.HandlerItem::getUserId,
+                userService::findAllByIdIn,
+                UserDto::getId,
+                SshHandler.HandlerItem::setUserDto
+        );
+
+        Map<Long, List<SshHandler.HandlerItem>> serverIdMap = handlerItemArrayList.stream()
+                                                                                  .collect(Collectors.groupingBy(
+                                                                                          SshHandler.HandlerItem::getServerId));
+
+        treeList.forEach(tree -> {
+            tree.walk(node -> {
+                List<SshHandler.HandlerItem> handlerItems = serverIdMap.get(node.getId());
+                if (handlerItems != null) {
+                    List<Map<String, Object>> list = handlerItems.stream()
+                                                                 .map(h -> Map.of(
+                                                                         "masterSessionId",
+                                                                         h.getMasterSessionId(),
+                                                                         "user",
+                                                                         h.getUserDto()
+                                                                 ))
+                                                                 .collect(Collectors.toList());
+                    node.putExtra("onlyConnect", list);
+                }
+            });
+        });
+
+
+        return treeList;
     }
 
     @GetMapping("/groupList")

@@ -12,4 +12,7 @@ export const userApi = {
     update: async (params) => {
         return client.post("/api-admin/user/update", params);
     },
+    list: async (params) => {
+        return client.get("/api-admin/user/list", {params: params});
+    },
 }

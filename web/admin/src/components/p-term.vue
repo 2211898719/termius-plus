@@ -20,6 +20,10 @@ let props = defineProps({
     default: () => {
     }
   },
+  masterSessionId: {
+    type: [String,Number],
+    default: "0"
+  },
   foreground: {
     type: String,
     default: "white"
@@ -41,7 +45,7 @@ let options = {
   scrollback: 50000,//终端中的回滚量
   fontSize: 14, //字体大小
   height: "100%", //终端高度
-  disableStdin: false, //是否应禁用输入。
+  disableStdin: !! props.masterSessionId , //禁用输入
   // cursorStyle: "block", //光标样式
   cursorBlink: true, //光标闪烁
   fastScrollModifier: "alt", //快速滚动时要使用的修饰符
@@ -83,10 +87,17 @@ const initSocket = () => {
   }
 
   const host = window.location.host;
-  useSocket = useWebSocket(wsProtocol + '://' + host + '/socket/ssh/' + authStore.session + '/' + props.server.id, {
+  useSocket = useWebSocket(wsProtocol + '://' + host + '/socket/ssh/' + authStore.session + '/' + props.server.id + '/' + props.masterSessionId, {
     autoReconnect: {
-      retries: 3,
-      delay: 3000,
+      /**
+         在代码的世界里追寻，重连九十九次，耐心勤。每次间隔五秒钟的等待，程序员的心绪，静静躁动。
+         连接断开，网络崩溃，错误信息满屏幕跳跃。但我不放弃，不言退缩，调试代码，寻找修复。
+         每次重连，希望重生，服务器响应，灵魂燃。逐渐恢复，网络连通，程序员的坚持，不曾停。
+         无声的代码，编织着梦，每次重连，是一次命运。虽然苦涩，却充满希望，程序员的诗，用心深。
+         99次的重连纪念，程序员的辛劳不言言。温柔的重连，坚韧中，代码世界，永不停。
+       */
+      retries: 99,
+      delay: 5000,
       onFailed: (e) => {
         loading.value = false
       }
@@ -222,7 +233,10 @@ defineExpose({
     term.focus();
   },
   close,
-  execCommand
+  execCommand,
+  setDisableStdin: (value) => {
+    term.setOption("disableStdin", value)
+  }
 })
 
 

@@ -1,13 +1,12 @@
 <script setup>
-
+import "xterm/css/xterm.css";
 import Terminal from "@/utils/zmodem";
-import {onMounted, ref, watch} from "vue";
+import {nextTick, onMounted, ref, watch} from "vue";
 import {useStorage} from "@vueuse/core";
 import {commandLogApi} from "@/api/log";
 
 let frontColor = useStorage('frontColor', "#ffffff")
 let backColor = useStorage('backColor', "#000000")
-
 
 let props = defineProps({
   logId: {
@@ -18,15 +17,15 @@ let props = defineProps({
 
 let options = {
   rendererType: "canvas", //渲染类型canvas或者dom
-  // rows: 123, //行数
-  // cols: 321,// 设置之后会输入多行之后覆盖现象
+  rows: 35, //行数
+  cols: 120,// 设置之后会输入多行之后覆盖现象
   convertEol: true, //启用时，光标将设置为下一行的开头
-  scrollback: 50000,//终端中的回滚量
+  scrollback: 100000,//终端中的回滚量
   fontSize: 14, //字体大小
   height: "600px", //终端高度
   disableStdin: true, //是否应禁用输入。
   // cursorStyle: "block", //光标样式
-  cursorBlink: true, //光标闪烁
+  cursorBlink: false, //光标闪烁
   fastScrollModifier: "alt", //快速滚动时要使用的修饰符
   tabStopWidth: 1,
   screenReaderMode: false,
@@ -40,7 +39,6 @@ let options = {
 
 let terminal = ref()
 const init = async () => {
-  console.log(111)
   let term = new Terminal(options);
 
   terminal.value.innerHTML = "";
@@ -51,7 +49,9 @@ const init = async () => {
 
 onMounted(() => {
   if (props.logId) {
+    nextTick(() => {
     init()
+    })
   }
 })
 
@@ -64,7 +64,9 @@ watch(() => props.logId, async (logId) => {
 </script>
 
 <template>
+  <div>
   <div class="console" ref="terminal"></div>
+  </div>
 </template>
 
 <style scoped lang="less">

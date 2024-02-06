@@ -136,8 +136,6 @@ const changeDir = async (path) => {
 
 const handleUpload = () => {
   uploadFile(sftpApi.upload({id: sessionId.value, remotePath: currentPath.value}), async (res, fileName) => {
-    console.log(res)
-    console.log(fileName)
     await ls()
   }, {remotePath: currentPath.value});
 }

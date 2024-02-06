@@ -12,7 +12,6 @@ import ServerContent from "@/views/server/ServerContent.vue";
 import SnippetListPage from "@/views/server/SnippetListPage.vue";
 import PortForwarderPage from "@/views/server/PortForwarderPage.vue";
 import CronJobPage from "@/views/server/CronJobPage.vue";
-import PTermLog from "@/components/p-term-log.vue";
 
 let spinning = ref(false)
 
@@ -25,7 +24,7 @@ let serverList = ref([])
 let serverListRef = ref()
 let proxyListRef = ref()
 
-const handleOpenServer = (item) => {
+const handleOpenServer = (item, masterSessionId = 0) => {
   // spinning.value = true;
   let uuid = v4();
   while (serverList.value.findIndex(e => e.operationId === uuid) !== -1) {
@@ -34,6 +33,7 @@ const handleOpenServer = (item) => {
 
   let copyItem = JSON.parse(JSON.stringify(item));
   copyItem.operationId = uuid;
+  copyItem.masterSessionId = masterSessionId;
   serverList.value.push(copyItem)
   tagActiveKey.value = copyItem.operationId
 }
@@ -253,7 +253,7 @@ const handleChangeTab = (item) => {
             <template v-slot:closeIcon>
               <close-outlined @click="onCloseServer(server.operationId)"/>
             </template>
-                <server-content ref="serverContentList" :server="server"></server-content>
+                <server-content ref="serverContentList" :server="server" ></server-content>
           </a-tab-pane>
         </template>
       </a-tabs>

@@ -8,16 +8,11 @@
       <a-card>
         <a-form layout="inline" :model="searchState">
           <a-form-item>
-            <a-input v-model:value="searchState.sessionId" placeholder="会话id" allow-clear/>
+            <p-select label="username" placeholder="用户" v-model:value="searchState.userId"
+                      :api="userApi.list"></p-select>
           </a-form-item>
           <a-form-item>
-            <a-input v-model:value="searchState.userId" placeholder="用户ID" allow-clear/>
-          </a-form-item>
-          <a-form-item>
-            <a-input v-model:value="searchState.serverId" placeholder="服务器id" allow-clear/>
-          </a-form-item>
-          <a-form-item>
-            <a-input v-model:value="searchState.commandData" placeholder="命令数据" allow-clear/>
+            <p-cascader placeholder="服务器" v-model:value="searchState.serverId" :api="serverApi.list"></p-cascader>
           </a-form-item>
           <a-form-item>
             <a-button type="primary" html-type="submit" @click="onSearchSubmit">检索</a-button>
@@ -41,11 +36,7 @@
 
   <a-drawer v-model:visible="creationVisible" title="日志详情" placement="right" width="60%"
             size="large" >
-    <div>
-
-
     <p-term-log :log-id="creationState.id"></p-term-log>
-    </div>
   </a-drawer>
 
 </template>
@@ -59,6 +50,10 @@ import {commandLogApi} from "@/api/log";
 import {download} from "@/components/tinymce/File";
 import {fileApi} from "@/api/file";
 import PTermLog from "@/components/p-term-log.vue";
+import {serverApi} from "@/api/server";
+import PCascader from "@/components/p-cascader.vue";
+import PSelect from "@/components/p-select.vue";
+import {userApi} from "@/api/user";
 
 const router = useRouter();
 const route = useRoute();
@@ -93,7 +88,7 @@ const {
   fetchPaginationData,
   onSearchSubmit,
   onPaginationChange,
-} = usePaginationQuery(router, searchState, commandLogApi.search);
+} = usePaginationQuery(router, searchState, commandLogApi.search, false);
 
 const creationVisible = ref(false);
 let creationState = reactive({

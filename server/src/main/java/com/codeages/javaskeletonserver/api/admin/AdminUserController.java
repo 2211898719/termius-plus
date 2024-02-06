@@ -17,6 +17,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.security.RolesAllowed;
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -68,5 +69,10 @@ public class AdminUserController {
     public PagerResponse<UserDto> search(UserSearchParams params, @PageableDefault(size = 20, sort = { "createdAt" }, direction = Sort.Direction.DESC) Pageable pager) {
         var users = userService.search(params, pager);
         return new PagerResponse<>(users, pager);
+    }
+
+    @GetMapping("/list")
+    public List<UserDto> list(UserSearchParams params) {
+        return userService.search(params, Pageable.unpaged()).getContent();
     }
 }
