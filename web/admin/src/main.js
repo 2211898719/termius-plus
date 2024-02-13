@@ -7,6 +7,7 @@ import {bootPinia} from "@/boot/bootPinia";
 import {bootStore} from "@/boot/bootStore";
 import {bootFilters} from "@/boot/bootFilters";
 import '@wangeditor/editor/dist/css/style.css'
+// import _ from 'lodash';
 // import  'resize-observer-polyfill';
 import { autoAnimatePlugin } from '@formkit/auto-animate/vue'
 

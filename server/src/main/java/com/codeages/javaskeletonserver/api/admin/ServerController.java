@@ -69,26 +69,29 @@ public class ServerController {
                                                                                   .collect(Collectors.groupingBy(
                                                                                           SshHandler.HandlerItem::getServerId));
 
-        treeList.forEach(tree -> {
-            tree.walk(node -> {
-                List<SshHandler.HandlerItem> handlerItems = serverIdMap.get(node.getId());
-                if (handlerItems != null) {
-                    List<Map<String, Object>> list = handlerItems.stream()
-                                                                 .map(h -> Map.of(
-                                                                         "masterSessionId",
-                                                                         h.getMasterSessionId(),
-                                                                         "user",
-                                                                         h.getUserDto()
-                                                                 ))
-                                                                 .collect(Collectors.toList());
-                    node.putExtra("onlyConnect", list);
-                }
-            });
-        });
+        treeList.forEach(tree -> tree.walk(node -> {
+            List<SshHandler.HandlerItem> handlerItems = serverIdMap.get(node.getId());
+            if (handlerItems != null) {
+                List<Map<String, Object>> list = handlerItems.stream()
+                                                             .map(h -> Map.of(
+                                                                     "masterSessionId",
+                                                                     h.getMasterSessionId(),
+                                                                     "user",
+                                                                     h.getUserDto()
+                                                             ))
+                                                             .collect(Collectors.toList());
+                node.putExtra("onlyConnect", list);
+            }
+        }));
 
 
         return treeList;
     }
+
+    /**
+     * 给有onlyConnect或者
+     * @return
+     */
 
     @GetMapping("/groupList")
     public List<Tree<Long>> groupList() {
@@ -123,7 +126,10 @@ public class ServerController {
         return OkResponse.TRUE;
     }
 
-
+    @GetMapping("/{serverId}/history")
+    public List<String> getHistory(@PathVariable Long serverId) {
+        return serverService.getHistory(serverId);
+    }
 
 }
 

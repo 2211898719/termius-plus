@@ -3,6 +3,8 @@ package com.codeages.javaskeletonserver.biz.server.service;
 import cn.hutool.core.lang.tree.Tree;
 import com.codeages.javaskeletonserver.biz.server.dto.*;
 import net.schmizz.sshj.SSHClient;
+import net.schmizz.sshj.connection.ConnectionException;
+import net.schmizz.sshj.transport.TransportException;
 
 import java.net.Proxy;
 import java.util.List;
@@ -34,6 +36,11 @@ public interface ServerService {
     List<Tree<Long>> groupList();
 
     List<Long> findAllTopId();
+
+    /**
+     * 获取某个服务器某个用户的 history
+     */
+    List<String> getHistory(Long serverId) ;
 }
 
 

@@ -88,7 +88,7 @@ export default function usePaginationQuery(router, searchForm, searchMethod, nee
 
         if (router) {
             const route = router.currentRoute.value;
-            const query = _.assign({}, _.pickBy({...searchForm}), {page: _.toString(pagination.current), size: _.toString(pagination.pageSize)});
+            const query = _.assign({}, searchForm, {page: _.toString(pagination.current), size: _.toString(pagination.pageSize)});
 
             if (_.isEqual(route.query, query) || !needUrlQueryParams) {
                 await fetchPaginationData();
@@ -108,11 +108,14 @@ export default function usePaginationQuery(router, searchForm, searchMethod, nee
         await fetchPaginationData();
     });
 
-    onBeforeRouteUpdate(async (to, from, next) => {
-        next();
-        pullQueryParams(to.query);
-        await fetchPaginationData();
-    });
+
+    if (needUrlQueryParams) {
+        onBeforeRouteUpdate(async (to, from, next) => {
+            next();
+            pullQueryParams(to.query);
+            await fetchPaginationData();
+        });
+    }
 
     return {
         rows,

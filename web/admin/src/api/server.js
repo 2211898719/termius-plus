@@ -20,5 +20,8 @@ export const serverApi = {
 
     del(id) {
         return client.post("/api-admin/server/delete", {id: id});
-    }
+    },
+    getHistory: async (serverId) => {
+        return client.get(`/api-admin/server/${serverId}/history`);
+    },
 }

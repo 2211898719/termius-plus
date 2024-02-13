@@ -10,6 +10,7 @@ import {Spin,} from 'ant-design-vue';
 import {SearchAddon} from "xterm-addon-search";
 import {TrzszAddon} from 'trzsz';
 import {useAuthStore} from "@shared/store/useAuthStore";
+import {serverApi} from "@/api/server";
 
 let authStore = useAuthStore();
 // let networkInfo = useNetwork()
@@ -38,7 +39,7 @@ let frontColor = useStorage('frontColor', "#ffffff")
 let backColor = useStorage('backColor', "#000000")
 
 let options = {
-  rendererType: "canvas", //渲染类型canvas或者dom
+  rendererType: "dom", //渲染类型canvas或者dom
   // rows: 123, //行数
   // cols: 321,// 设置之后会输入多行之后覆盖现象
   convertEol: true, //启用时，光标将设置为下一行的开头
@@ -65,6 +66,7 @@ let terminal = ref()
 let log = ref()
 let loading = ref(false)
 let useSocket = null
+let history = ref([])
 
 onMounted(() => {
   initSocket();
@@ -105,7 +107,9 @@ const initSocket = () => {
     onMessage: (w, e) => {
       if (loading.value) {
         loading.value = false
+        getCommandByInterval()
       }
+
     },
     onError: (e) => {
 
@@ -116,6 +120,58 @@ const initSocket = () => {
     },
   });
 
+}
+
+/**
+ * 获取当前终端中的命令
+ */
+const getCommand = () => {
+  let row = terminal.value.getElementsByClassName("xterm-rows")[0]?.lastChild;
+  let command = ""
+  row.childNodes.forEach(item => {
+    if (item.innerText) {
+      command += item.innerText
+    } else {
+      command += " "
+    }
+  })
+  console.log(command)
+  return command.trim()
+}
+
+/**
+ * 每隔一秒获取一次终端中的命令，总共获取三次终端中的命令，找到最大前缀类似于root@VM-4-4-ubuntu:~#
+ */
+
+let prefix = ref("")
+const getCommandByInterval = () => {
+  let count = 0;
+  let interval = setInterval(() => {
+    let command = getCommand()
+    if (command) {
+      if (command.startsWith(prefix.value)) {
+        prefix.value = command
+      } else {
+        prefix.value = ""
+      }
+    }
+    count++;
+    if (count === 3) {
+      clearInterval(interval)
+      console.log("获取到的前缀", prefix.value)
+    }
+  }, 1000)
+}
+
+/**
+ * 获取终端中未执行的命令 使用prefix去掉前缀
+ */
+const getUnExecutedCommand = () => {
+  let command = getCommand()
+  if (command.startsWith(prefix.value)) {
+    return command.substring(prefix.value.length).trim()
+  }
+  return ""
 }
 
 const initTerm = () => {
@@ -137,6 +193,8 @@ const initTerm = () => {
   nextTick(() => {
     resizeTerminal(term);
   });
+
+  getHistory();
 
   if (props.server.autoSudo && props.server.username !== 'root') {
     nextTick(() => {
@@ -165,6 +223,30 @@ channel.onmessage = (e) => {
     cursor: "white" //设置光标
   });
 }
+
+const getHistory = async () => {
+  history.value = await serverApi.getHistory(props.server.id);
+}
+
+/**
+ * 根据 history 和 getUnExecutedCommand 获取可能的补全命令
+ */
+const getCompleteCommand = () => {
+  let command = getUnExecutedCommand()
+  console.log("当前命令" + command)
+  let completeCommands = []
+  if (command) {
+    completeCommands = history.value.filter(item => item.startsWith(command))
+  }
+  let completeCommand = [...new Set(completeCommands)]
+  console.log("可能的补全命令",completeCommand )
+  return [...new Set(completeCommand)]
+}
+
+let completeCommand = ref([])
+setInterval(() => {
+  completeCommand.value = getCompleteCommand()
+}, 1000)
 
 const resizeTerminal = () => {
   let content = log.value;
@@ -248,7 +330,9 @@ defineExpose({
     <spin class="console" :spinning="loading">
       <div class="console" ref="terminal"></div>
     </spin>
+
   </div>
+  {{completeCommand}}
 </template>
 
 <style scoped lang="less">

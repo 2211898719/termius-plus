@@ -9,10 +9,7 @@ import com.codeages.javaskeletonserver.biz.ErrorCode;
 import com.codeages.javaskeletonserver.biz.server.dto.ServerDto;
 import com.codeages.javaskeletonserver.biz.server.service.PortForWardingService;
 import com.codeages.javaskeletonserver.biz.server.service.ServerService;
-import com.codeages.javaskeletonserver.biz.sql.dto.DatabaseDto;
-import com.codeages.javaskeletonserver.biz.sql.dto.DbConnDto;
-import com.codeages.javaskeletonserver.biz.sql.dto.DbTableQueryDTO;
-import com.codeages.javaskeletonserver.biz.sql.dto.SelectTableDTO;
+import com.codeages.javaskeletonserver.biz.sql.dto.*;
 import com.codeages.javaskeletonserver.biz.sql.service.DbConnService;
 import com.codeages.javaskeletonserver.common.PagerResponse;
 import com.codeages.javaskeletonserver.exception.AppException;
@@ -98,7 +95,7 @@ public class DbConnectOperationService {
      * 获取数据源所有表名
      */
     @SneakyThrows
-    public List<Entity> getTableNames(DbTableQueryDTO dto) {
+    public DbTablesDto getTableNames(DbTableQueryDTO dto) {
         Db db = Db.use(getDsByIdAndType(dto.getDbId(), dto.getType()));
 
         Entity condition = Entity.create();
@@ -110,7 +107,14 @@ public class DbConnectOperationService {
         if (StringUtils.isNotBlank(dto.getTableComment()))
             condition.put("`TABLE_COMMENT`", "LIKE '%" + dto.getTableComment() + "%'");
 
-        return db.find(condition);
+        List<Entity> entities = db.find(condition);
+
+        //获取所有的表的列信息
+        condition = Entity.create();
+        condition.setTableName("`information_schema`.`COLUMNS`");
+        condition.set("`TABLE_SCHEMA`", dto.getSchemaName());
+        List<Entity> columns = db.find(condition);
+        return new DbTablesDto(entities, columns);
     }
 
     /**
@@ -178,4 +182,5 @@ public class DbConnectOperationService {
         Db db = Db.use(getDsByIdAndType(dbId, type));
         return db.query(sql);
     }
+
 }

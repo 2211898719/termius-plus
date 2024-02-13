@@ -27,6 +27,7 @@ import com.querydsl.core.BooleanBuilder;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import net.schmizz.sshj.SSHClient;
+import net.schmizz.sshj.connection.channel.direct.Session;
 import net.schmizz.sshj.transport.verification.PromiscuousVerifier;
 import net.schmizz.sshj.userauth.method.AuthPassword;
 import net.schmizz.sshj.userauth.method.PasswordResponseProvider;
@@ -40,7 +41,7 @@ import javax.net.SocketFactory;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
-import java.io.IOException;
+import java.io.*;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
@@ -477,6 +478,39 @@ public class ServerServiceImpl implements ServerService {
     @Override
     public List<Long> findAllTopId() {
         return serverRepository.findAllByParentId(0L).stream().map(Server::getId).collect(Collectors.toList());
+    }
+
+    /**
+     * 获取某个服务器root用户的 history
+     */
+    @SneakyThrows
+    @Override
+    public List<String> getHistory(Long serverId) {
+        ServerDto serverDto = findById(serverId);
+        SSHClient sshClient = createSSHClient(serverId);
+        Session session = sshClient.startSession();
+        Session.Command cmd = session.exec("echo " + serverDto.getPassword() + " | sudo -S cat /root/.bash_history \n");
+        InputStream in = cmd.getInputStream();
+        BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+        StringBuilder output = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            output.append(line).append("\n");
+        }
+
+        String originHistoryStr = output.toString();
+        if (StrUtil.isBlank(originHistoryStr)) {
+            return Collections.emptyList();
+        }
+
+        //history 命令的输出格式是： 一行#+时间戳下一行是命令，我们只需要命令
+        String[] split = originHistoryStr.split("\n");
+        List<String> historyList = new ArrayList<>();
+        for (int i = 0; i < split.length; i += 2) {
+            historyList.add(split[i]);
+        }
+
+        return historyList;
     }
 
     /**

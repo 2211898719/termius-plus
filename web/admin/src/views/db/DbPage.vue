@@ -28,6 +28,7 @@ const handleOpenServer = (item) => {
 
   let copyItem = JSON.parse(JSON.stringify(item));
   copyItem.operationId = uuid;
+  copyItem.connName = item.name;
   serverList.value.push(copyItem)
   tagActiveKey.value = copyItem.operationId
 }

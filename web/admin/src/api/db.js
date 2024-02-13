@@ -23,6 +23,6 @@ export const dbApi = {
         return client.get("/api-admin/dbConn/findAllDbServer");
     },
     executeSql: async (params) => {
-        return client.post("/api-admin/dbConnOperation/executeSql", params);
+        return client.get("/api-admin/dbConnOperation/executeSql", {params: params});
     }
 }

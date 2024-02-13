@@ -5,9 +5,14 @@
       <code-mirror
           basic
           :lang="lang"
+          :minimal="true"
           :extensions="[oneDark]"
+
           v-model="sqlData">
       </code-mirror>
+      <div style="display: flex;justify-content: end">
+        <a-button class="mt5" @click="executeSql" type="primary">执行</a-button>
+      </div>
     </a-card>
     <div style="display: flex">
       <a-menu
@@ -37,7 +42,7 @@
             :pagination="usePaginationQueryResult.pagination"
             rowKey="id"
             @change="usePaginationQueryResult.onPaginationChange"
-            :scroll="{ y: 'calc(100vh - 270px)',x: 700 }"
+            :scroll="{ y: 'calc(100vh - 450px)',x: 700 }"
         >
           <!--            <template #bodyCell="{ column, text, record }">-->
           <!--              <a-input v-model:value="record[column.key]" :bordered="false"  />-->
@@ -53,7 +58,7 @@
 
 <script setup>
 
-import {computed, reactive, ref} from "vue";
+import {computed, nextTick, reactive, ref} from "vue";
 import {onBeforeRouteUpdate, useRouter} from "vue-router";
 import {dbApi} from "@/api/db";
 import usePaginationQuery from "@shared/usePaginationQuery";
@@ -126,13 +131,18 @@ const openTables = async e => {
   //根据res中的数据自动列宽
 
 
-  await res.fetchPaginationData()
-  usePaginationQueryResult.value = res
+  await nextTick(async () => {
+    await res.fetchPaginationData()
+    usePaginationQueryResult.value = res
+  })
+
 };
 
 const openDatabases = async (database) => {
   if (!Array.isArray(database.tables)) {
-    database.tables = await getTables(database.name)
+    let dbInfos = await getTables(database.name)
+    database.tables = dbInfos.tables
+    database.columns = dbInfos.columns
   }
 };
 
@@ -174,13 +184,32 @@ let lang = computed(() => {
     }
 
     d.tables = d.tables.map(t => {
-      return t.table_name
+      return {label: t.table_name, detail: t.table_comment}
     })
   })
 
   let res = {}
+  //库.表的提示
   data.forEach(d => {
     res[d.name] = d.tables
+  })
+
+  //库.表.字段的提示
+  databases.value.forEach(d => {
+    if (!Array.isArray(d.columns)) {
+      d.columns = []
+    }
+    d.columns.forEach(c => {
+      let key = c.table_schema + '.' + c.table_name;
+      if (!Array.isArray(res[key])) {
+        res[key] = []
+      }
+
+      res[key].push({
+        label: c.column_name,
+        detail: c.column_comment
+      })
+    })
   })
 
   return sql({
@@ -193,5 +222,30 @@ let lang = computed(() => {
 let sqlData = ref('')
 
 
+const executeSql = () => {
+  dbApi.executeSql({dbId: props.db.id, sql: sqlData.value, type: props.type}).then(res => {
+    if (res.length) {
+      let tableColumns = Object.keys(res[0]).map(item => {
+        return {
+          title: item,
+          dataIndex: item,
+          key: item,
+          ellipsis: true,
+          width: 200,
+        }
+      })
+
+      columns.value = tableColumns
+      usePaginationQueryResult.value.rows = res
+    }
+  })
+}
+
 
 </script>
+
+<style scoped>
+>>> .cm-content{
+  min-height: 100px;
+}
+</style>

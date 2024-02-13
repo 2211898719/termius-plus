@@ -27,6 +27,7 @@ import java.net.ConnectException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -170,6 +171,8 @@ public class SshHandler {
             net.schmizz.sshj.connection.channel.direct.Session shellSession = sshClient.startSession();
             shellSession.allocatePTY("xterm", 80, 24, 640, 480, Map.of());
             shellSession.setAutoExpand(true);
+
+
             this.shell = shellSession.startShell();
 
             this.inputStream = shell.getInputStream();

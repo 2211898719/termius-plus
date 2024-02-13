@@ -4,6 +4,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.db.Entity;
 import com.codeages.javaskeletonserver.biz.sql.dto.DatabaseDto;
 import com.codeages.javaskeletonserver.biz.sql.dto.DbTableQueryDTO;
+import com.codeages.javaskeletonserver.biz.sql.dto.DbTablesDto;
 import com.codeages.javaskeletonserver.biz.sql.dto.SelectTableDTO;
 import com.codeages.javaskeletonserver.biz.sql.service.impl.DbConnectOperationService;
 import com.codeages.javaskeletonserver.common.PagerResponse;
@@ -32,7 +33,7 @@ public class DbConnOperationController {
     }
 
     @GetMapping("/showTables")
-    public List<Entity> showTables(DbTableQueryDTO searchParams) {
+    public DbTablesDto showTables(DbTableQueryDTO searchParams) {
         return dbConnectOperationService.getTableNames(searchParams);
     }
 

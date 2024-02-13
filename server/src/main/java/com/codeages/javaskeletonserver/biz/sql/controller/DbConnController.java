@@ -37,7 +37,6 @@ public class DbConnController {
     }
 
     @PostMapping("/create")
-    
     public OkResponse create(@RequestBody DbConnCreateParams createParams) {
         dbConnService.create(createParams);
 
@@ -45,7 +44,6 @@ public class DbConnController {
     }
 
     @PostMapping("/update")
-    
     public OkResponse update(@RequestBody DbConnUpdateParams updateParams) {
         dbConnService.update(updateParams);
 
@@ -53,7 +51,6 @@ public class DbConnController {
     }
 
     @PostMapping("/delete")
-    
     public OkResponse delete(@RequestBody IdPayload idPayload) {
         dbConnService.delete(idPayload.getId());
 
