@@ -22,7 +22,7 @@ let props = defineProps({
     }
   },
   masterSessionId: {
-    type: [String,Number],
+    type: [String, Number],
     default: "0"
   },
   foreground: {
@@ -46,7 +46,7 @@ let options = {
   scrollback: 50000,//终端中的回滚量
   fontSize: 14, //字体大小
   height: "100%", //终端高度
-  disableStdin: !! props.masterSessionId , //禁用输入
+  disableStdin: !!props.masterSessionId, //禁用输入
   // cursorStyle: "block", //光标样式
   cursorBlink: true, //光标闪烁
   fastScrollModifier: "alt", //快速滚动时要使用的修饰符
@@ -92,11 +92,11 @@ const initSocket = () => {
   useSocket = useWebSocket(wsProtocol + '://' + host + '/socket/ssh/' + authStore.session + '/' + props.server.id + '/' + props.masterSessionId, {
     autoReconnect: {
       /**
-         在代码的世界里追寻，重连九十九次，耐心勤。每次间隔五秒钟的等待，程序员的心绪，静静躁动。
-         连接断开，网络崩溃，错误信息满屏幕跳跃。但我不放弃，不言退缩，调试代码，寻找修复。
-         每次重连，希望重生，服务器响应，灵魂燃。逐渐恢复，网络连通，程序员的坚持，不曾停。
-         无声的代码，编织着梦，每次重连，是一次命运。虽然苦涩，却充满希望，程序员的诗，用心深。
-         99次的重连纪念，程序员的辛劳不言言。温柔的重连，坚韧中，代码世界，永不停。
+       在代码的世界里追寻，重连九十九次，耐心勤。每次间隔五秒钟的等待，程序员的心绪，静静躁动。
+       连接断开，网络崩溃，错误信息满屏幕跳跃。但我不放弃，不言退缩，调试代码，寻找修复。
+       每次重连，希望重生，服务器响应，灵魂燃。逐渐恢复，网络连通，程序员的坚持，不曾停。
+       无声的代码，编织着梦，每次重连，是一次命运。虽然苦涩，却充满希望，程序员的诗，用心深。
+       99次的重连纪念，程序员的辛劳不言言。温柔的重连，坚韧中，代码世界，永不停。
        */
       retries: 99,
       delay: 5000,
@@ -126,7 +126,11 @@ const initSocket = () => {
  * 获取当前终端中的命令
  */
 const getCommand = () => {
-  let row = terminal.value.getElementsByClassName("xterm-rows")[0]?.lastChild;
+  let rows = terminal.value.getElementsByClassName("xterm-rows")[0].childNodes;
+  let row = rows[rows.length - 1];
+  while (row.childNodes.length === 0) {
+    row = row.previousSibling
+  }
   let command = ""
   row.childNodes.forEach(item => {
     if (item.innerText) {
@@ -140,25 +144,46 @@ const getCommand = () => {
 }
 
 /**
- * 每隔一秒获取一次终端中的命令，总共获取三次终端中的命令，找到最大前缀类似于root@VM-4-4-ubuntu:~#
+ * 每隔一秒获取一次终端中的命令，总共获取三次终端中的命令，找到最大公共前缀类似于root@VM-4-4-ubuntu:~#
  */
 
 let prefix = ref("")
 const getCommandByInterval = () => {
   let count = 0;
+  let commands = [];
   let interval = setInterval(() => {
     let command = getCommand()
     if (command) {
-      if (command.startsWith(prefix.value)) {
-        prefix.value = command
-      } else {
-        prefix.value = ""
-      }
+      commands.push(command)
     }
     count++;
     if (count === 3) {
       clearInterval(interval)
-      console.log("获取到的前缀", prefix.value)
+      let prefixs = commands.map(item => {
+        let index = item.indexOf(" ")
+        if (index > 0) {
+          return item.substring(0, index)
+        }
+        return item
+      })
+
+      let prefixMap = {}
+      prefixs.forEach(item => {
+        if (prefixMap[item]) {
+          prefixMap[item]++
+        } else {
+          prefixMap[item] = 1
+        }
+      })
+      let max = 0;
+      let maxPrefix = ""
+      for (let key in prefixMap) {
+        if (prefixMap[key] > max) {
+          max = prefixMap[key]
+          maxPrefix = key
+        }
+      }
+      prefix.value = maxPrefix
     }
   }, 1000)
 }
@@ -189,6 +214,16 @@ const initTerm = () => {
   term.open(terminal.value);
 
   term.focus();
+  term.onData(() => {
+    console.log(getCompleteCommand());
+  })
+
+  term.onKey(e => {
+    if (e.domEvent.ctrlKey && e.domEvent.key === 'w') {
+      execCommand(getCompleteCommand()[0])
+      throw new Error("stop")
+    }
+  });
 
   nextTick(() => {
     resizeTerminal(term);
@@ -239,14 +274,18 @@ const getCompleteCommand = () => {
     completeCommands = history.value.filter(item => item.startsWith(command))
   }
   let completeCommand = [...new Set(completeCommands)]
-  console.log("可能的补全命令",completeCommand )
-  return [...new Set(completeCommand)]
+  console.log("可能的补全命令", completeCommand)
+  let distinctCommand = [...new Set(completeCommand)]
+
+  return distinctCommand.map(item => {
+    return item.substring(command.length)
+  })
 }
 
 let completeCommand = ref([])
-setInterval(() => {
-  completeCommand.value = getCompleteCommand()
-}, 1000)
+// setInterval(() => {
+//   completeCommand.value = getCompleteCommand()
+// }, 1000)
 
 const resizeTerminal = () => {
   let content = log.value;
@@ -330,9 +369,11 @@ defineExpose({
     <spin class="console" :spinning="loading">
       <div class="console" ref="terminal"></div>
     </spin>
-
   </div>
-  {{completeCommand}}
+    <div class="xterm-rows">
+      123
+    </div>
+
 </template>
 
 <style scoped lang="less">
