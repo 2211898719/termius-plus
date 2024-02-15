@@ -22,6 +22,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static com.codeages.javaskeletonserver.biz.server.context.ServerContext.SSH_POOL;
+
 @RestController
 @RequestMapping("/api-admin/server")
 public class ServerController {
@@ -56,7 +58,8 @@ public class ServerController {
 
         List<Tree<Long>> treeList = serverService.findAll(serverIds);
 
-        List<SshHandler.HandlerItem> handlerItemArrayList = new ArrayList<>(SshHandler.HANDLER_ITEM_CONCURRENT_HASH_MAP.values());
+        //拿到当前在线的连接
+        List<SshHandler.HandlerItem> handlerItemArrayList = new ArrayList<>(SSH_POOL.values());
         QueryUtils.batchQueryOneToOne(
                 handlerItemArrayList,
                 SshHandler.HandlerItem::getUserId,

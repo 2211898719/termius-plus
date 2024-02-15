@@ -2,13 +2,15 @@
 import PFlip from "@/components/p-flip.vue";
 import PSftp from "@/components/p-sftp.vue";
 import {message} from "ant-design-vue";
-import {defineExpose, defineProps, nextTick, ref} from "vue";
+import {defineExpose, defineProps, nextTick, onMounted, ref} from "vue";
 import {commandApi} from "@/api/command";
 import PTerm from "@/components/p-term.vue";
 import "@/components/VueDragSplit/style.css";
 import VueDragSplit from "@/components/VueDragSplit/index.vue";
 import linuxDoc from "@/assets/linux-doc.json";
 import {useStorage} from "@vueuse/core";
+import {useShepherd} from 'vue-shepherd'
+
 
 let searchLinuxDoc = ref(JSON.parse(JSON.stringify(linuxDoc)))
 
@@ -64,7 +66,9 @@ const changeDir = (dir) => {
   }
 }
 
+
 let PTermRef = ref(null)
+
 const reloadServer = () => {
   PTermRef.value.reload()
   inputTerm.value = false
@@ -142,13 +146,113 @@ const handleChangeSearch = (e) => {
 
 }
 
-
 let inputTerm = ref(false)
 const handleRequestInputTerm = () => {
   message.info("向主链接申请输入命令权限")
   inputTerm.value = !inputTerm.value
   PTermRef.value.setDisableStdin(!inputTerm.value)
 }
+
+
+let autoComp = useStorage('autoComp', false)
+
+const handleChangeComp = () => {
+  autoComp.value = !autoComp.value
+  PTermRef.value.setAutoComplete(autoComp.value)
+}
+
+
+const defaultConfig = {
+  // 是否显示黑色遮罩层
+  useModalOverlay: true,
+  // 键盘按钮控制步骤
+  keyboardNavigation: true,
+  defaultStepOptions: {
+    // 显示关闭按钮
+    cancelIcon: {
+      enabled: true
+    },
+    scrollTo: {behavior: 'smooth', block: 'center'},
+    // 高亮元素四周要填充的空白像素
+    modalOverlayOpeningPadding: 4,
+    // 空白像素的圆角
+    modalOverlayOpeningRadius: 4,
+    buttons: [{
+      action() {
+        return this.back()
+      },
+      text: '上一步'
+    }, {
+      action() {
+        return this.next()
+      },
+      text: '下一步'
+    }]
+  }
+}
+
+const tour = useShepherd({
+  useModalOverlay: true,
+  ...defaultConfig
+});
+
+let CompChangeEl = ref(null)
+let SftpChangeEl = ref(null)
+let reloadEl = ref(null)
+let openPopover = ref(null)
+let fullscreenEl = ref(null)
+
+let hasSeenTour = useStorage('hasSeenTour', false)
+
+onMounted(() => {
+  if (hasSeenTour.value) {
+    return
+  }
+
+  tour.addSteps([
+    {
+      attachTo: {element: document.getElementsByClassName("ant-tabs-tab-active")[0], on: 'right'},
+      text: '服务器操作标签，可以拖拽排序，右键可以进行复制等操作',
+    },
+    {
+      attachTo: {element: CompChangeEl.value, on: 'bottom'},
+      text: '开启后可根据history提示最接近的命令,使用ctrl+w补全命令',
+    },
+    {
+      attachTo: {element: SftpChangeEl.value, on: 'bottom'},
+      text: '开启sftp,图形化管理文件',
+    },
+    {
+      attachTo: {element: reloadEl.value, on: 'bottom'},
+      text: '重新加载终端',
+    },
+    {
+      attachTo: {element: openPopover.value, on: 'bottom'},
+      text: '展开额外信息面板，包括备注、命令、Linux文档',
+    },
+    {
+      attachTo: {element: fullscreenEl.value, on: 'bottom'},
+      text: '全屏显示终端',
+      buttons: [
+        {
+          action() {
+            return this.back()
+          },
+          text: '上一步'
+        },
+        {
+          action() {
+            hasSeenTour.value = true
+            return this.cancel()
+          },
+          text: '结束'
+        }
+      ]
+    },
+  ])
+
+  tour.start();
+});
 
 
 </script>
@@ -161,6 +265,8 @@ const handleRequestInputTerm = () => {
           <div class="sftp-content">
             <a-card title="sftp">
               <template #extra>
+                <div class="center-name">{{ server.name }}</div>
+
                 <a-button type="link" style="display: flex;justify-content: center;align-items: center"
                           :class="{green:sftpEnable}" @click="changeSftpEnable">
                   <template v-slot:icon>
@@ -175,14 +281,12 @@ const handleRequestInputTerm = () => {
                     </svg>
                   </template>
                 </a-button>
-                <div class="center-name">{{ server.name }}</div>
 
                 <a-button type="link" @click="reloadSftp">
                   <template v-slot:icon>
                     <reload-outlined/>
                   </template>
                 </a-button>
-
               </template>
               <p-sftp class="sftp" ref="sftpEl" :operation-id="server.operationId"
                       :server-id="server.id"></p-sftp>
@@ -194,8 +298,36 @@ const handleRequestInputTerm = () => {
         <div :class="{'ssh-content':true}">
           <a-card title="终端">
             <template #extra>
-              <a-button type="link" style="display: flex;justify-content: center;align-items: center"
-                        :class="{green:sftpEnable}" @click="changeSftpEnable">
+              <div ref="CompChangeEl">
+                <a-popover title="提示">
+                  <template #content>
+                    <p>根据history提示最接近的命令</p>
+                    <p>ctrl+w补全命令</p>
+                  </template>
+                  <a-button type="link" @click="handleChangeComp" :class="{green:autoComp,center:true}">
+                    <template v-slot:icon>
+                      <svg class="tags"
+                           style="vertical-align: middle;fill: currentColor;overflow: hidden;"
+                           viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1494">
+                        <path d="M512 512m-512 0a512 512 0 1 0 1024 0 512 512 0 1 0-1024 0Z"
+                              p-id="1495"></path>
+                        <path d="M651.2 672.7h-548l269.6-321.4h548z" fill="#FFFFFF" p-id="1496"></path>
+                        <path
+                            d="M662.4 696.7H51.7l309.9-369.3h610.7L662.4 696.7z m-507.8-48H640l229.4-273.3H384L154.6 648.7z"
+                            p-id="1497"></path>
+                        <path d="M512 512m-48.2 0a48.2 48.2 0 1 0 96.4 0 48.2 48.2 0 1 0-96.4 0Z"
+                              p-id="1498"></path>
+                        <path
+                            d="M512 584.2c-39.8 0-72.2-32.4-72.2-72.2s32.4-72.2 72.2-72.2 72.2 32.4 72.2 72.2-32.4 72.2-72.2 72.2z m0-96.4c-13.4 0-24.2 10.9-24.2 24.2 0 13.4 10.9 24.2 24.2 24.2 13.4 0 24.2-10.9 24.2-24.2 0-13.4-10.8-24.2-24.2-24.2z"
+                            p-id="1499"></path>
+                      </svg>
+                    </template>
+                  </a-button>
+                </a-popover>
+              </div>
+              <div ref="SftpChangeEl">
+                <a-button type="link"
+                          :class="{green:sftpEnable,center:true}" @click="changeSftpEnable">
                 <template v-slot:icon>
                   <svg t="1696435355552" class="tags" viewBox="0 0 1024 1024" version="1.1"
                        xmlns="http://www.w3.org/2000/svg" p-id="19507" width="200" height="200">
@@ -208,12 +340,15 @@ const handleRequestInputTerm = () => {
                   </svg>
                 </template>
               </a-button>
+              </div>
               <div class="center-name">{{ server.name }}</div>
-              <a-button type="link" @click="reloadServer">
-                <template v-slot:icon>
-                  <reload-outlined/>
-                </template>
-              </a-button>
+              <div ref="reloadEl">
+                <a-button type="link" @click="reloadServer">
+                  <template v-slot:icon>
+                    <reload-outlined/>
+                  </template>
+                </a-button>
+              </div>
             </template>
 
             <div style="display: flex">
@@ -248,10 +383,12 @@ const handleRequestInputTerm = () => {
                   </template>
                 </VueDragSplit>
                 <div style="position: absolute;right: 16px;top: calc(50% - 1em / 2);color: aliceblue"
+                     ref="openPopover"
                      @click="remarkStatus=!remarkStatus">
                   <left-outlined :class="{'button-action':remarkStatus,'left':true}"/>
                 </div>
                 <div style="position: absolute;right: 16px;top: 16px;color: aliceblue" class="left"
+                     ref="fullscreenEl"
                      @click="handleRequestFullscreen">
                   <fullscreen-outlined/>
                 </div>
@@ -345,6 +482,21 @@ const handleRequestInputTerm = () => {
   min-height: auto;
 
   .ssh-content {
+    /deep/ .ant-card-head {
+
+      .ant-card-extra {
+        padding: 0;
+
+        .tags {
+          color: #000000;
+        }
+      }
+
+      .ant-card-head-title {
+        padding: 16px 0;
+      }
+    }
+
     .ssh {
       //width: 100%;
       //height: calc(@height - 120px);
@@ -369,14 +521,6 @@ const handleRequestInputTerm = () => {
       mix-blend-mode: difference; /* 使用difference混合模式实现反色效果 */
       color: white; /* 设置图标的颜色为白色 */
       cursor: pointer; /* 设置鼠标样式为手型 */
-    }
-
-    .enable-line {
-      color: #1daa6c !important;
-    }
-
-    .disable-line {
-      color: #f5222d !important;
     }
 
     .button-action {
@@ -536,6 +680,14 @@ const handleRequestInputTerm = () => {
 :deep(#split_window .split_view .split_content_wrapper .split_view_content_wrapper .split_view_content) {
   background-color: v-bind(backColor);
 }
+
+.center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+
 
 </style>
 

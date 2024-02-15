@@ -2,12 +2,15 @@ package com.codeages.javaskeletonserver.biz.server.ws;
 
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.IoUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.thread.ThreadUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONUtil;
 import com.codeages.javaskeletonserver.biz.log.dto.CommandLogCreateParams;
 import com.codeages.javaskeletonserver.biz.log.dto.CommandLogDto;
 import com.codeages.javaskeletonserver.biz.log.service.CommandLogService;
+import com.codeages.javaskeletonserver.biz.server.dto.ServerDto;
 import com.codeages.javaskeletonserver.biz.server.service.ServerService;
 import com.codeages.javaskeletonserver.biz.user.dto.UserDto;
 import com.codeages.javaskeletonserver.security.AuthTokenFilter;
@@ -27,41 +30,58 @@ import java.net.ConnectException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.codeages.javaskeletonserver.biz.server.context.ServerContext.SSH_POOL;
+
+/**
+ * sessionId用来标识客户端，用于拉起键盘验证授权识别客户端使用
+ * serverId用来标识连接的服务器
+ * masterSessionId用来标识是否为主连接，如果是0，说明是主连接
+ */
 @Slf4j
 @Component
 @ServerEndpoint("/socket/ssh/{sessionId}/{serverId}/{masterSessionId}")
 public class SshHandler {
 
-    public static final ConcurrentHashMap<String, HandlerItem> HANDLER_ITEM_CONCURRENT_HASH_MAP = new ConcurrentHashMap<>();
+    private static final int MAX_LOG_BUFFER_SIZE = 1024 * 1024 * 5;
 
-    private static final AtomicInteger OnlineCount = new AtomicInteger(0);
+    private static final String NONE_MASTER_SESSION_ID = "0";
+
+    private final ServerService serverService;
+
+    private final CommandLogService commandLogService;
+
+    public SshHandler() {
+        this.serverService = SpringUtil.getBean(ServerService.class);
+        this.commandLogService = SpringUtil.getBean(CommandLogService.class);
+    }
 
     @OnOpen
     public void onOpen(javax.websocket.Session session,
                        @PathParam("sessionId") String sessionId,
                        @PathParam("serverId") Long serverId,
                        @PathParam("masterSessionId") String masterSessionId) {
-        int cnt = OnlineCount.incrementAndGet();
-        log.info("有连接加入，当前连接数为：{},sessionId={}", cnt, session.getId());
-        // 如果是0，说明是主连接
-        if ("0".equals(masterSessionId)) {
+        Long userId = AuthTokenFilter.userIdThreadLocal.get();
+        // 为了防止内存泄漏，这里需要手动清理
+        AuthTokenFilter.userIdThreadLocal.remove();
+
+        log.info("有连接加入,sessionId={}", session.getId());
+
+        // 如果是主连接 0，就创建一个新的连接
+        if (isMasterSession(masterSessionId)) {
             HandlerItem handlerItem = new HandlerItem(
-                    AuthTokenFilter.userIdThreadLocal.get(),
+                    userId,
                     serverId,
                     session,
-                    SpringUtil.getBean(ServerService.class).createSSHClient(serverId, sessionId)
+                    serverService.createSSHClient(serverId, sessionId)
             );
 
             log.info("创建连接成功：{}", session.getId());
-            HANDLER_ITEM_CONCURRENT_HASH_MAP.put(session.getId(), handlerItem);
+            SSH_POOL.put(session.getId(), handlerItem);
         } else {
             // 如果不是0，说明是子连接，找到主连接，然后加入到主连接的sessions中
-            HandlerItem handlerItem = HANDLER_ITEM_CONCURRENT_HASH_MAP.get(masterSessionId);
+            HandlerItem handlerItem = SSH_POOL.get(masterSessionId);
             if (handlerItem == null) {
                 log.error("主连接不存在：{}", masterSessionId);
                 sendBinary(session, "主连接不存在或已关闭");
@@ -70,39 +90,17 @@ public class SshHandler {
 
             handlerItem.addSubSession(session);
         }
-
-        // 为了防止内存泄漏，这里需要手动清理
-        AuthTokenFilter.userIdThreadLocal.remove();
     }
 
-    @OnClose
-    public void onClose(javax.websocket.Session session,
-                        @PathParam("masterSessionId") String masterSessionId) {
-        int cnt = OnlineCount.decrementAndGet();
-
-        if (masterSessionId.equals("0")) {
-            HandlerItem handlerItem = HANDLER_ITEM_CONCURRENT_HASH_MAP.get(session.getId());
-            handlerItem.close();
-            HANDLER_ITEM_CONCURRENT_HASH_MAP.remove(session.getId());
-        } else {
-            HandlerItem handlerItem = HANDLER_ITEM_CONCURRENT_HASH_MAP.get(masterSessionId);
-            if (handlerItem != null) {
-                handlerItem.removeSubSession(session);
-            }
-        }
-
-        log.info("有连接关闭，当前连接数为：{}", cnt);
-    }
 
     @OnMessage
     public void onMessage(@PathParam("masterSessionId") String masterSessionId,
                           String message,
-                          javax.websocket.Session session) throws Exception {
-        HandlerItem handlerItem = HANDLER_ITEM_CONCURRENT_HASH_MAP.get(session.getId());
-        if (!"0".equals(masterSessionId)) {
-            handlerItem = HANDLER_ITEM_CONCURRENT_HASH_MAP.get(masterSessionId);
+                          javax.websocket.Session session) {
+        HandlerItem handlerItem = SSH_POOL.get(session.getId());
+        if (!isMasterSession(masterSessionId)) {
+            handlerItem = SSH_POOL.get(masterSessionId);
         }
-
 
         if (handlerItem == null) {
             log.error("主连接不存在：{}", session.getId());
@@ -117,6 +115,23 @@ public class SshHandler {
         } catch (Exception e) {
             this.sendCommand(handlerItem, message);
         }
+    }
+
+    @OnClose
+    public void onClose(javax.websocket.Session session,
+                        @PathParam("masterSessionId") String masterSessionId) {
+        if (isMasterSession(masterSessionId)) {
+            HandlerItem handlerItem = SSH_POOL.get(session.getId());
+            handlerItem.close();
+            SSH_POOL.remove(session.getId());
+        } else {
+            HandlerItem handlerItem = SSH_POOL.get(masterSessionId);
+            if (handlerItem != null) {
+                handlerItem.removeSubSession(session);
+            }
+        }
+
+        log.info("有连接关闭,sessionId={}", session.getId());
     }
 
     @OnError
@@ -134,13 +149,52 @@ public class SshHandler {
         error.printStackTrace();
     }
 
-    private void sendCommand(HandlerItem handlerItem, String data) throws Exception {
-        handlerItem.outputStream.write(data.getBytes());
-        handlerItem.outputStream.flush();
+    private void sendCommand(HandlerItem handlerItem, String data) {
+        try {
+            handlerItem.outputStream.write(data.getBytes());
+            handlerItem.outputStream.flush();
+        } catch (IOException e) {
+            log.error("发送命令失败：{}", e.getMessage());
+        }
+
     }
 
+
+    private static void sendBinary(javax.websocket.Session session, String msg) {
+        if (!session.isOpen()) {
+            // 会话关闭不能发送消息
+            return;
+        }
+
+        synchronized (session.getId().intern()) {
+            try {
+                session.getBasicRemote().sendText(msg);
+            } catch (IOException e) {
+                log.error("发送消息出错：{}", e.getMessage());
+            }
+        }
+    }
+
+    private boolean isMasterSession(String masterSessionId) {
+        return NONE_MASTER_SESSION_ID.equals(masterSessionId);
+    }
+
+    @SneakyThrows
+    public void destroy(javax.websocket.Session session) {
+        HandlerItem handlerItem = SSH_POOL.get(session.getId());
+        if (handlerItem != null) {
+            handlerItem.close();
+        }
+
+        IoUtil.close(session);
+        SSH_POOL.remove(session.getId());
+    }
+
+
     public class HandlerItem implements Runnable {
+        @Getter
         private final Long userId;
+        @Getter
         private final Long serverId;
         @Getter
         @Setter
@@ -165,6 +219,7 @@ public class SshHandler {
             this.sessions.add(session);
             this.userId = userId;
             this.serverId = serverId;
+
             this.masterSessionId = session.getId();
 
             sshClient.useCompression();
@@ -172,15 +227,26 @@ public class SshHandler {
             shellSession.allocatePTY("xterm", 80, 24, 640, 480, Map.of());
             shellSession.setAutoExpand(true);
 
-
             this.shell = shellSession.startShell();
 
             this.inputStream = shell.getInputStream();
             this.outputStream = shell.getOutputStream();
 
+            //auto sudo
+            ServerDto serverDto = serverService.findById(serverId);
+            if (Boolean.TRUE.equals(serverDto.getAutoSudo())) {
+                outputStream.write(("echo " + serverDto.getPassword() + " | sudo -S ls && sudo -i\n").getBytes());
+                outputStream.flush();
+            }
+
+            if (CharSequenceUtil.isNotBlank(serverDto.getFirstCommand())){
+                outputStream.write((serverDto.getFirstCommand()).getBytes());
+                outputStream.flush();
+            }
+
             this.openSession = shellSession;
 
-            CommandLogDto commandLogDto = SpringUtil.getBean(CommandLogService.class)
+            CommandLogDto commandLogDto = commandLogService
                                                     .create(new CommandLogCreateParams(
                                                             userId,
                                                             session.getId(),
@@ -188,10 +254,11 @@ public class SshHandler {
                                                     ));
             log.info("创建命令记录成功：{}", commandLogDto.getId());
             logFile = FileUtil.file(commandLogDto.getCommandData());
-            //5mb的日志缓冲区
+
+            //日志内存缓冲区
             logFileOutputStream = IoUtil.toBuffered(
                     FileUtil.getOutputStream(logFile),
-                    1024 * 1024 * 5
+                    MAX_LOG_BUFFER_SIZE
             );
 
             ThreadUtil.execute(this);
@@ -219,11 +286,13 @@ public class SshHandler {
         }
 
         @SneakyThrows
-        public void addSubSession(javax.websocket.Session session) {
+        public synchronized void addSubSession(javax.websocket.Session session) {
             this.sessions.add(session);
-            //写入之前的数据
+
+            //写入内存缓冲区中的数据到文件
             logFileOutputStream.flush();
 
+            //把之前的服务器上下文的数据发送给新的子连接
             sendBinary(session, FileUtil.readString(logFile, openSession.getRemoteCharset()));
         }
 
@@ -233,17 +302,8 @@ public class SshHandler {
             IoUtil.close(session);
         }
 
-        public Long getServerId() {
-            return serverId;
-        }
-
-        public Long getUserId() {
-            return userId;
-        }
-
         @Override
         public void run() {
-            log.info("开始读取数据");
             try {
                 byte[] buffer = new byte[1024];
                 int i;
@@ -258,33 +318,6 @@ public class SshHandler {
                     return;
                 }
                 sessions.forEach(SshHandler.this::destroy);
-            }
-        }
-    }
-
-    @SneakyThrows
-    public void destroy(javax.websocket.Session session) {
-        HandlerItem handlerItem = HANDLER_ITEM_CONCURRENT_HASH_MAP.get(session.getId());
-        if (handlerItem != null) {
-            handlerItem.close();
-        }
-
-        IoUtil.close(session);
-        HANDLER_ITEM_CONCURRENT_HASH_MAP.remove(session.getId());
-    }
-
-    private static void sendBinary(javax.websocket.Session session, String msg) {
-        if (!session.isOpen()) {
-            // 会话关闭不能发送消息
-            return;
-        }
-
-
-        synchronized (session.getId().intern()) {
-            try {
-                session.getBasicRemote().sendText(msg);
-            } catch (IOException e) {
-                log.error("发送消息出错：{}", e.getMessage());
             }
         }
     }

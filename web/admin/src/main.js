@@ -9,12 +9,13 @@ import {bootFilters} from "@/boot/bootFilters";
 import '@wangeditor/editor/dist/css/style.css'
 // import _ from 'lodash';
 // import  'resize-observer-polyfill';
+import 'shepherd.js/dist/css/shepherd.css';
+
 import { autoAnimatePlugin } from '@formkit/auto-animate/vue'
 
 const app = createApp(App);
 app.use(router);
 app.use(autoAnimatePlugin);
-
 bootAntDesignVue(app);
 bootAxios(app);
 bootPinia(app);

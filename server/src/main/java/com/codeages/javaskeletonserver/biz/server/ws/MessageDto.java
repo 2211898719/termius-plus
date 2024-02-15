@@ -1,6 +1,5 @@
 package com.codeages.javaskeletonserver.biz.server.ws;
 
-import cn.hutool.json.JSON;
 import cn.hutool.json.JSONUtil;
 import lombok.AllArgsConstructor;
 import lombok.Data;

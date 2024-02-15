@@ -3,7 +3,7 @@ import "xterm/css/xterm.css";
 import Terminal from '../utils/zmodem.js';
 // import {Terminal} from "xterm";
 import {FitAddon} from "xterm-addon-fit";
-import {nextTick, onBeforeUnmount, onMounted, ref} from "vue";
+import {nextTick, onBeforeUnmount, onMounted, ref, watch} from "vue";
 import _ from "lodash";
 import {useStorage, useWebSocket} from "@vueuse/core";
 import {Spin,} from 'ant-design-vue';
@@ -67,6 +67,16 @@ let log = ref()
 let loading = ref(false)
 let useSocket = null
 let history = ref([])
+let AutoComplete = useStorage('autoComp', false)
+watch(() => AutoComplete.value, async () => {
+  if (AutoComplete.value) {
+    await getHistory()
+    completeCommand.value = getCompleteCommand();
+    writeCompletionToCursorPosition(completeCommand.value)
+  } else {
+    displayNoneCompletion()
+  }
+})
 
 onMounted(() => {
   initSocket();
@@ -107,7 +117,6 @@ const initSocket = () => {
     onMessage: (w, e) => {
       if (loading.value) {
         loading.value = false
-        getCommandByInterval()
       }
 
     },
@@ -123,7 +132,7 @@ const initSocket = () => {
 }
 
 /**
- * 获取当前终端中的命令
+ * 获取当前终端中最后一行的字符
  */
 const getCommand = () => {
   let rows = terminal.value.getElementsByClassName("xterm-rows")[0].childNodes;
@@ -133,71 +142,34 @@ const getCommand = () => {
   }
   let command = ""
   row.childNodes.forEach(item => {
+    if (item.className) {
+      return
+    }
     if (item.innerText) {
       command += item.innerText
     } else {
       command += " "
     }
   })
-  console.log(command)
-  return command.trim()
+
+  return command
 }
 
-/**
- * 每隔一秒获取一次终端中的命令，总共获取三次终端中的命令，找到最大公共前缀类似于root@VM-4-4-ubuntu:~#
- */
-
-let prefix = ref("")
-const getCommandByInterval = () => {
-  let count = 0;
-  let commands = [];
-  let interval = setInterval(() => {
-    let command = getCommand()
-    if (command) {
-      commands.push(command)
-    }
-    count++;
-    if (count === 3) {
-      clearInterval(interval)
-      let prefixs = commands.map(item => {
-        let index = item.indexOf(" ")
-        if (index > 0) {
-          return item.substring(0, index)
-        }
-        return item
-      })
-
-      let prefixMap = {}
-      prefixs.forEach(item => {
-        if (prefixMap[item]) {
-          prefixMap[item]++
-        } else {
-          prefixMap[item] = 1
-        }
-      })
-      let max = 0;
-      let maxPrefix = ""
-      for (let key in prefixMap) {
-        if (prefixMap[key] > max) {
-          max = prefixMap[key]
-          maxPrefix = key
-        }
-      }
-      prefix.value = maxPrefix
-    }
-  }, 1000)
-}
 
 /**
- * 获取终端中未执行的命令 使用prefix去掉前缀
+ * 获取终端中未执行的命令 例如：root@localhost:~# 则去掉
  */
 const getUnExecutedCommand = () => {
   let command = getCommand()
-  if (command.startsWith(prefix.value)) {
-    return command.substring(prefix.value.length).trim()
+  const regex = /^.*?@.*?:.*?#/
+
+  if (regex.test(command)) {
+    return command.replace(regex, "")
   }
+
   return ""
 }
+
 
 const initTerm = () => {
   term = new Terminal(options);
@@ -215,12 +187,36 @@ const initTerm = () => {
 
   term.focus();
   term.onData(() => {
-    console.log(getCompleteCommand());
+    if (!AutoComplete.value) {
+      return
+    }
+
+    setTimeout(() => {
+      completeCommand.value = getCompleteCommand();
+      writeCompletionToCursorPosition(completeCommand.value)
+    }, 100)
   })
 
   term.onKey(e => {
+    if (!AutoComplete.value) {
+      return
+    }
+
     if (e.domEvent.ctrlKey && e.domEvent.key === 'w') {
-      execCommand(getCompleteCommand()[0])
+      let command = getCompleteCommand()
+      if (command) {
+        execCommand(command)
+        displayNoneCompletion()
+      }
+      /**
+       * 由于xterm.js的实现原理，无法直接阻止事件的默认行为，所以只能抛出一个异常来阻止事件的默认行为
+       */
+      throw new Error("stop")
+    }
+
+    if (e.domEvent.ctrlKey && e.domEvent.key === 'q') {
+      displayNoneCompletion()
+
       throw new Error("stop")
     }
   });
@@ -231,22 +227,16 @@ const initTerm = () => {
 
   getHistory();
 
-  if (props.server.autoSudo && props.server.username !== 'root') {
-    nextTick(() => {
-      execCommand(`echo '${props.server.password}' | sudo -S ls && sudo -i && ls\n`)
-    })
-  }
-
-  if (props.server.firstCommand) {
-    nextTick(() => {
-      execCommand(props.server.firstCommand + "\n")
-    })
-  }
-
   setInterval(() => {
     execCommand("")
   }, 1000 * 60 * 5);
 }
+
+setInterval(() => {
+  if (term) {
+    getHistory()
+  }
+}, 1000 * 60 * 1)
 
 let channel = new BroadcastChannel("theme")
 channel.onmessage = (e) => {
@@ -260,7 +250,7 @@ channel.onmessage = (e) => {
 }
 
 const getHistory = async () => {
-  history.value = await serverApi.getHistory(props.server.id);
+  history.value = _.reverse(await serverApi.getHistory(props.server.id));
 }
 
 /**
@@ -268,24 +258,63 @@ const getHistory = async () => {
  */
 const getCompleteCommand = () => {
   let command = getUnExecutedCommand()
+  //去掉头部的空格，不能去掉尾部的空格
+  command = command.replace(/^\s+/, "")
   console.log("当前命令" + command)
-  let completeCommands = []
   if (command) {
-    completeCommands = history.value.filter(item => item.startsWith(command))
-  }
-  let completeCommand = [...new Set(completeCommands)]
-  console.log("可能的补全命令", completeCommand)
-  let distinctCommand = [...new Set(completeCommand)]
+    let find =history.value.find(item => item.startsWith(command))
+    if (find){
+      return find.substring(command.length)
+    }
 
-  return distinctCommand.map(item => {
-    return item.substring(command.length)
-  })
+    return ""
+  }
+
+  return ""
 }
 
-let completeCommand = ref([])
-// setInterval(() => {
-//   completeCommand.value = getCompleteCommand()
-// }, 1000)
+let completeCommand = ref('')
+
+let autoEL =  document.createElement("div")
+
+const writeCompletionToCursorPosition = (autoComp) => {
+  log.value.getElementsByClassName("xterm-helper-textarea")
+  //xterm-helper-textarea
+  let xtermTextarea = log.value.getElementsByClassName("xterm-helper-textarea");
+  let console = log.value.getElementsByClassName("console")[0];
+  if (!xtermTextarea.length) {
+    return
+  }
+  let el = xtermTextarea[0]
+
+  if (!autoComp) {
+    autoEL.innerText = ""
+    return;
+  }
+
+//计算autoComp前有多少个空格
+  let spaceCount = 0;
+  for (let i = 0; i < autoComp.length; i++) {
+    if (autoComp[i] === " ") {
+      spaceCount++
+    } else {
+      break;
+    }
+  }
+
+  autoEL.innerText = autoComp
+  autoEL.style.left = parseFloat(el.style.left.substring(0, el.style.left.length - 2)) + spaceCount * 14 + "px"
+  autoEL.style.top = parseFloat(el.style.top.substring(0, el.style.top.length - 2)) + 1 + "px"
+  autoEL.style.position = 'fixed'
+  autoEL.id = "auto"
+  autoEL.style.lineHeight = "1"
+  autoEL.className = "auto-complete"
+  console.append(autoEL)
+}
+
+const displayNoneCompletion = () => {
+  autoEL.innerText = ""
+}
 
 const resizeTerminal = () => {
   let content = log.value;
@@ -357,6 +386,9 @@ defineExpose({
   execCommand,
   setDisableStdin: (value) => {
     term.setOption("disableStdin", value)
+  },
+  setAutoComplete: (value) => {
+    AutoComplete.value = value
   }
 })
 
@@ -370,17 +402,20 @@ defineExpose({
       <div class="console" ref="terminal"></div>
     </spin>
   </div>
-    <div class="xterm-rows">
-      123
-    </div>
-
 </template>
 
-<style scoped lang="less">
+<style lang="less" scoped>
 .console {
   width: 100%;
   height: 100%;
   background-color: #fff;
+}
+
+/deep/ .auto-complete {
+  position: absolute;
+  color: #dadada;
+  font-family: courier-new, courier, monospace;
+  font-size: 14px;
 }
 
 </style>

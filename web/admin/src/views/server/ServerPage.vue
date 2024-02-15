@@ -285,10 +285,10 @@ const handleChangeTab = (item) => {
 }
 
 :deep(.green) {
-  color: #1daa6c;
+  color: #1daa6c !important;
   //设置svg颜色
   svg {
-    fill: #1daa6c;
+    fill: #1daa6c !important;
   }
 }
 
