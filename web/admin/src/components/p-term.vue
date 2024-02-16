@@ -303,7 +303,7 @@ const writeCompletionToCursorPosition = (autoComp) => {
   }
 
   autoEL.innerText = autoComp
-  autoEL.style.left = parseFloat(el.style.left.substring(0, el.style.left.length - 2)) + spaceCount * 14 + "px"
+  autoEL.style.left = parseFloat(el.style.left.substring(0, el.style.left.length - 2)) + spaceCount * 8.4 + "px"
   autoEL.style.top = parseFloat(el.style.top.substring(0, el.style.top.length - 2)) + 1 + "px"
   autoEL.style.position = 'fixed'
   autoEL.id = "auto"

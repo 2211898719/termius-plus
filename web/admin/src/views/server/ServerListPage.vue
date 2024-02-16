@@ -397,13 +397,17 @@ defineExpose({
                 <a-dropdown :trigger="['contextmenu']">
                   <a-list-item class="sortEl" @dblclick="handleDblclick(item)">
                     <template #actions>
-                      <a-popover v-if="item.onlyConnect?.length" @click.stop title="在线用户" placement="bottom"
+                      <a-popover v-if="item.onlyConnect?.length" @dblclick.stop @click.stop title="在线用户"
+                                 placement="bottom"
                                  trigger="click">
                         <template #content>
-                          <p v-for="only in item.onlyConnect" :key="only.user.username"
-                             @click.stop="handleDblclick(item,only.masterSessionId)">{{ only.user.username }}</p>
+                          <div class="onlyUser" v-for="only in item.onlyConnect" :key="only.user.username"
+                               @click.stop="handleDblclick(item,only.masterSessionId)">
+                            <span>{{ only.user.username }}</span>
+                            <double-right-outlined/>
+                          </div>
                         </template>
-                        <a-avatar style="color: #f56a00; background-color: #fde3cf">
+                        <a-avatar class="avatar">
                           {{ item.onlyConnect[0].user.username }}
                         </a-avatar>
                       </a-popover>
@@ -582,4 +586,26 @@ defineExpose({
 <style scoped lang="less">
 @import url('../css/termius');
 
+.avatar {
+  cursor: pointer;
+  color: #f56a00;
+  background-color: #fde3cf;
+}
+
+ .ant-popover-inner-content {
+  background-color: #f5f5f5;
+
+  .onlyUser {
+    cursor: pointer;
+    padding: 4px 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+
+    &:hover {
+      background-color: #e6f7ff;
+    }
+  }
+}
 </style>
