@@ -1,10 +1,20 @@
 <script setup>
 import {defineEmits, defineExpose, reactive, ref, watch} from "vue";
-import ProxyTypeEnum from "@/enums /ProxyTypeEnum";
+import ProxyTypeEnum from "@/enums/ProxyTypeEnum";
 import {useForm} from "ant-design-vue/es/form";
 import {proxyApi} from "@/api/proxy";
 import {message} from "ant-design-vue";
 import PEnumSelect from "@/components/p-enum-select.vue";
+
+let termiusStyleColumn =ref(Math.floor(window.innerWidth / 300));
+
+
+const resizeObserver = new ResizeObserver(() => {
+  termiusStyleColumn.value = Math.floor(window.innerWidth / 300);
+});
+
+resizeObserver.observe(window.document.body);
+
 
 const creationProxyType = ref('create');
 const creationProxyState = reactive({
@@ -115,7 +125,7 @@ defineExpose({
     <div class="server-pane">
 
       <a-space direction="vertical" size="middle" style="width: 100%;">
-        <a-card>
+        <a-card :bodyStyle="{padding:'12px 12px'}">
           <div style="display: flex;justify-content: space-between">
             <div>
 
@@ -125,7 +135,7 @@ defineExpose({
             </div>
           </div>
           <div class="mt30 server">
-            <a-list :grid="{ gutter: 16, column: 4 }" :data-source="proxyData" row-key="id">
+            <a-list :grid="{ gutter: 16, column: termiusStyleColumn }" :data-source="proxyData" row-key="id">
               <template #renderItem="{ item }">
                 <a-list-item>
                   <template #actions>

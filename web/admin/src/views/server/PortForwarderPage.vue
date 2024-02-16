@@ -5,6 +5,15 @@ import {portForwardingApi} from "@/api/port-forwarding";
 import {message} from "ant-design-vue";
 import ServerListPage from "@/views/server/ServerListPage.vue";
 
+let termiusStyleColumn =ref(Math.floor(window.innerWidth / 300));
+
+
+const resizeObserver = new ResizeObserver(() => {
+  termiusStyleColumn.value = Math.floor(window.innerWidth / 300);
+});
+
+resizeObserver.observe(window.document.body);
+
 const creationPortForwardingType = ref('create');
 const creationPortForwardingState = reactive({
   forwardingName: "",
@@ -145,7 +154,7 @@ defineExpose({
     <div class="server-pane">
 
       <a-space direction="vertical" size="middle" style="width: 100%;">
-        <a-card>
+        <a-card :bodyStyle="{padding:'12px 12px'}">
           <div style="display: flex;justify-content: space-between">
             <div>
 
@@ -155,7 +164,7 @@ defineExpose({
             </div>
           </div>
           <div class="mt30 server">
-            <a-list :grid="{ gutter: 16, column: 4 }" :data-source="portForwardingData" row-key="id">
+            <a-list :grid="{ gutter: 16, column: termiusStyleColumn }" :data-source="portForwardingData" row-key="id">
               <template #renderItem="{ item }">
                 <a-dropdown :trigger="['contextmenu']">
                 <a-list-item>

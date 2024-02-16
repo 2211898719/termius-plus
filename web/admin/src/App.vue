@@ -1,12 +1,12 @@
 <script setup>
 import {ref} from 'vue';
-import { RouterView } from 'vue-router'
-import { ConfigProvider as AConfigProvider } from 'ant-design-vue'
+import {RouterView, useRouter} from 'vue-router'
+import {ConfigProvider as AConfigProvider} from 'ant-design-vue'
 import zhCN from 'ant-design-vue/es/locale/zh_CN';
 import dayjs from 'dayjs';
 import 'dayjs/locale/zh-cn';
-import {useRouter} from "vue-router";
 import {useAuthStore} from "@shared/store/useAuthStore";
+import {useStorage} from "@vueuse/core";
 
 const router = useRouter();
 
@@ -26,6 +26,7 @@ store.$onAction(({name, after}) => {
     }
 });
 
+
 </script>
 
 <template>
@@ -35,11 +36,12 @@ store.$onAction(({name, after}) => {
 </template>
 
 <style lang="less">
-//@import '~ant-design-vue/dist/antd.dark.less';
 #app {
     height: 100%;
 }
 .ant-popconfirm {
   z-index: 1001 !important;
 }
+
+
 </style>

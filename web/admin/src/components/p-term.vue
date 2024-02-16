@@ -6,7 +6,6 @@ import {FitAddon} from "xterm-addon-fit";
 import {nextTick, onBeforeUnmount, onMounted, ref, watch} from "vue";
 import _ from "lodash";
 import {useStorage, useWebSocket} from "@vueuse/core";
-import {Spin,} from 'ant-design-vue';
 import {SearchAddon} from "xterm-addon-search";
 import {TrzszAddon} from 'trzsz';
 import {useAuthStore} from "@shared/store/useAuthStore";
@@ -33,7 +32,13 @@ let props = defineProps({
     type: String,
     default: "#060101"
   },
+  loading: {
+    type: Boolean,
+    default: true
+  }
 });
+
+const emit = defineEmits(['update:loading'])
 
 let frontColor = useStorage('frontColor', "#ffffff")
 let backColor = useStorage('backColor', "#000000")
@@ -64,7 +69,6 @@ let term = null;
 let socket = null;
 let terminal = ref()
 let log = ref()
-let loading = ref(false)
 let useSocket = null
 let history = ref([])
 let AutoComplete = useStorage('autoComp', false)
@@ -92,7 +96,8 @@ const initSocket = () => {
   if (terminal.value) {
     terminal.value.innerHTML = "";
   }
-  loading.value = true
+  //抛出 loading事件
+  emit("update:loading", true)
   let wsProtocol = 'ws';
   if (window.location.protocol === 'https:') {
     wsProtocol = 'wss';
@@ -111,14 +116,11 @@ const initSocket = () => {
       retries: 99,
       delay: 5000,
       onFailed: (e) => {
-        loading.value = false
+        emit("update:loading", false)
       }
     },
     onMessage: (w, e) => {
-      if (loading.value) {
-        loading.value = false
-      }
-
+        emit("update:loading", false)
     },
     onError: (e) => {
 
@@ -398,9 +400,7 @@ defineExpose({
 
 <template>
   <div ref="log">
-    <spin class="console" :spinning="loading">
       <div class="console" ref="terminal"></div>
-    </spin>
   </div>
 </template>
 
@@ -413,9 +413,13 @@ defineExpose({
 
 /deep/ .auto-complete {
   position: absolute;
-  color: #dadada;
+  color: #00CC74;
   font-family: courier-new, courier, monospace;
   font-size: 14px;
+  opacity: 0.6;
+}
+/deep/ .xterm{
+  height: 100%;
 }
 
 </style>

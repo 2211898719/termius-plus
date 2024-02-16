@@ -12,7 +12,17 @@ import {useForm} from "ant-design-vue/es/form";
 import Sortable from "sortablejs";
 import _ from "lodash";
 import PEnumSelect from "@/components/p-enum-select.vue";
-import OsEnum from "@/enums /OsEnum";
+import OsEnum from "@/enums/OsEnum";
+
+let termiusStyleColumn =ref(Math.floor(window.innerWidth / 300));
+
+
+const resizeObserver = new ResizeObserver(() => {
+  termiusStyleColumn.value = Math.floor(window.innerWidth / 300);
+});
+
+resizeObserver.observe(window.document.body);
+
 
 const emit = defineEmits(['openServer', 'proxyCreation', 'update:value', 'change'])
 
@@ -377,7 +387,7 @@ defineExpose({
   <div class="server-root">
     <div class="server-pane">
       <a-space direction="vertical" size="middle" style="width: 100%;">
-        <a-card>
+        <a-card :bodyStyle="{padding:'12px 12px'}">
           <div style="display: flex;justify-content: space-between">
             <a-breadcrumb>
               <a-breadcrumb-item v-for="item in groupBreadcrumb" :key="item.id" @click="handleDblclick(item)">
@@ -392,7 +402,7 @@ defineExpose({
             </div>
           </div>
           <div class="mt30 server">
-            <a-list :grid="{ gutter: 16, column: props.column }" :data-source="currentData" row-key="id">
+            <a-list :grid="{ gutter: 16, column: termiusStyleColumn }" :data-source="currentData" row-key="id">
               <template #renderItem="{ item }">
                 <a-dropdown :trigger="['contextmenu']">
                   <a-list-item class="sortEl" @dblclick="handleDblclick(item)">

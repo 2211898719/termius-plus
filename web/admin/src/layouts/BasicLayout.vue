@@ -128,3 +128,9 @@ const handleOk = () => {
 }
 
 </script>
+
+<style >
+.ant-space{
+  display: flex !important;
+}
+</style>

@@ -68,6 +68,7 @@ const changeDir = (dir) => {
 
 
 let PTermRef = ref(null)
+let pTermLoading = ref(false)
 
 const reloadServer = () => {
   PTermRef.value.reload()
@@ -295,8 +296,9 @@ onMounted(() => {
         </div>
       </template>
       <template #front>
+        <a-spin :spinning="pTermLoading">
         <div :class="{'ssh-content':true}">
-          <a-card title="终端">
+          <a-card title="终端" :body-style="{background:backColor}">
             <template #extra>
               <div ref="CompChangeEl">
                 <a-popover title="提示">
@@ -378,7 +380,7 @@ onMounted(() => {
                   </template>
                   <template #TabView="win">
                     <span>
-                      <p-term class="ssh" :server="server" :master-session-id="server.masterSessionId" ref="PTermRef"></p-term>
+                      <p-term v-model:loading="pTermLoading" class="ssh" :server="server" :master-session-id="server.masterSessionId" ref="PTermRef"></p-term>
                     </span>
                   </template>
                 </VueDragSplit>
@@ -398,9 +400,9 @@ onMounted(() => {
                   <edit-outlined style="text-decoration: line-through;" />
                 </div>
               </div>
-              <div :class="{remark:true,'remark-enter':remarkStatus}" class="card-container">
 
-                <a-tabs v-model:activeKey="rightTabKey" style="margin-left: 8px" type="card">
+              <div :class="{remark:true,'remark-enter':remarkStatus}" class="card-container">
+                <a-tabs v-model:activeKey="rightTabKey" style="margin: 8px" type="card">
                   <a-tab-pane key="remark" tab="备注">
                     <div class="w-e-text-container">
                       <div data-slate-editor v-html="server.remark">
@@ -471,6 +473,7 @@ onMounted(() => {
             </div>
           </a-card>
         </div>
+        </a-spin>
       </template>
     </p-flip>
   </div>
@@ -482,6 +485,7 @@ onMounted(() => {
   min-height: auto;
 
   .ssh-content {
+
     /deep/ .ant-card-head {
 
       .ant-card-extra {
@@ -510,6 +514,9 @@ onMounted(() => {
       overflow: scroll;
       height: calc(@height - 100px);
       width: 0;
+      background: rgba(255, 255, 255, 0.6); /* 设置元素的背景颜色和透明度 */
+      backdrop-filter: blur(20px); /* 应用模糊效果，值可以调整模糊的程度 */
+      border-radius: 8px; /* 设置元素的圆角 */
     }
 
     .remark-enter {

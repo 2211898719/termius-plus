@@ -12,7 +12,7 @@ import {useForm} from "ant-design-vue/es/form";
 import Sortable from "sortablejs";
 import _ from "lodash";
 import PEnumSelect from "@/components/p-enum-select.vue";
-import OsEnum from "@/enums /OsEnum";
+import OsEnum from "@/enums/OsEnum";
 import {dbApi} from "@/api/db";
 
 const emit = defineEmits(['openServer', 'proxyCreation', 'update:value', 'change'])
