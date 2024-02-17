@@ -10,6 +10,8 @@ import VueDragSplit from "@/components/VueDragSplit/index.vue";
 import linuxDoc from "@/assets/linux-doc.json";
 import {useStorage} from "@vueuse/core";
 import {useShepherd} from 'vue-shepherd'
+import OsEnum from "@/enums/OsEnum";
+import PRdp from "@/components/p-rdp.vue";
 
 
 let searchLinuxDoc = ref(JSON.parse(JSON.stringify(linuxDoc)))
@@ -108,6 +110,8 @@ const getCommandData = async () => {
 
 let activeKey = ref("")
 
+let pRdpEl = ref(null)
+
 getCommandData()
 
 defineExpose({
@@ -115,10 +119,16 @@ defineExpose({
   changeDir,
   server: props.server,
   focus: () => {
-    PTermRef.value.focus()
+    if (props.server.os === OsEnum.LINUX.value) {
+      PTermRef.value.focus()
+    }
   },
   close: () => {
-    PTermRef.value.close()
+    if (props.server.os === OsEnum.LINUX.value) {
+      PTermRef.value.close()
+    } else if (props.server.os === OsEnum.WINDOWS.value) {
+      pRdpEl.value.close()
+    }
   },
 })
 
@@ -137,10 +147,10 @@ const handleChangeSearch = (e) => {
 
   //标题和描述按照关键字相似度排序
   searchLinuxDoc.value.sort((a, b) => {
-    return (a.title+a.des).indexOf(search) - (b.title+b.des).indexOf(search)
+    return (a.title + a.des).indexOf(search) - (b.title + b.des).indexOf(search)
   })
 
-   searchLinuxDoc.value.forEach(item => {
+  searchLinuxDoc.value.forEach(item => {
     item.title = item.title.replace(search, `<span style="color: #1890ff">${search}</span>`)
     item.des = item.des.replace(search, `<span style="color: #1890ff">${search}</span>`)
   })
@@ -260,7 +270,10 @@ onMounted(() => {
 
 <template>
   <div class="split-box">
-    <p-flip ref="flip" :operation-id="server.operationId">
+    <div v-if="server.os===OsEnum.WINDOWS.value">
+      <p-rdp ref="pRdpEl" :server="server"></p-rdp>
+    </div>
+    <p-flip v-else-if="server.os===OsEnum.LINUX.value" ref="flip" :operation-id="server.operationId">
       <template #back>
         <div v-if="sftpEnable">
           <div class="sftp-content">
@@ -297,182 +310,184 @@ onMounted(() => {
       </template>
       <template #front>
         <a-spin :spinning="pTermLoading">
-        <div :class="{'ssh-content':true}">
-          <a-card title="终端" :body-style="{background:backColor}">
-            <template #extra>
-              <div ref="CompChangeEl">
-                <a-popover title="提示">
-                  <template #content>
-                    <p>根据history提示最接近的命令</p>
-                    <p>ctrl+w补全命令</p>
-                  </template>
-                  <a-button type="link" @click="handleChangeComp" :class="{green:autoComp,center:true}">
+          <div :class="{'ssh-content':true}">
+            <a-card title="终端" :body-style="{background:backColor}">
+              <template #extra>
+                <div ref="CompChangeEl">
+                  <a-popover title="提示">
+                    <template #content>
+                      <p>根据history提示最接近的命令</p>
+                      <p>ctrl+w补全命令</p>
+                    </template>
+                    <a-button type="link" @click="handleChangeComp" :class="{green:autoComp,center:true}">
+                      <template v-slot:icon>
+                        <svg class="tags"
+                             style="vertical-align: middle;fill: currentColor;overflow: hidden;"
+                             viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1494">
+                          <path d="M512 512m-512 0a512 512 0 1 0 1024 0 512 512 0 1 0-1024 0Z"
+                                p-id="1495"></path>
+                          <path d="M651.2 672.7h-548l269.6-321.4h548z" fill="#FFFFFF" p-id="1496"></path>
+                          <path
+                              d="M662.4 696.7H51.7l309.9-369.3h610.7L662.4 696.7z m-507.8-48H640l229.4-273.3H384L154.6 648.7z"
+                              p-id="1497"></path>
+                          <path d="M512 512m-48.2 0a48.2 48.2 0 1 0 96.4 0 48.2 48.2 0 1 0-96.4 0Z"
+                                p-id="1498"></path>
+                          <path
+                              d="M512 584.2c-39.8 0-72.2-32.4-72.2-72.2s32.4-72.2 72.2-72.2 72.2 32.4 72.2 72.2-32.4 72.2-72.2 72.2z m0-96.4c-13.4 0-24.2 10.9-24.2 24.2 0 13.4 10.9 24.2 24.2 24.2 13.4 0 24.2-10.9 24.2-24.2 0-13.4-10.8-24.2-24.2-24.2z"
+                              p-id="1499"></path>
+                        </svg>
+                      </template>
+                    </a-button>
+                  </a-popover>
+                </div>
+                <div ref="SftpChangeEl">
+                  <a-button type="link"
+                            :class="{green:sftpEnable,center:true}" @click="changeSftpEnable">
                     <template v-slot:icon>
-                      <svg class="tags"
-                           style="vertical-align: middle;fill: currentColor;overflow: hidden;"
-                           viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1494">
-                        <path d="M512 512m-512 0a512 512 0 1 0 1024 0 512 512 0 1 0-1024 0Z"
-                              p-id="1495"></path>
-                        <path d="M651.2 672.7h-548l269.6-321.4h548z" fill="#FFFFFF" p-id="1496"></path>
+                      <svg t="1696435355552" class="tags" viewBox="0 0 1024 1024" version="1.1"
+                           xmlns="http://www.w3.org/2000/svg" p-id="19507" width="200" height="200">
                         <path
-                            d="M662.4 696.7H51.7l309.9-369.3h610.7L662.4 696.7z m-507.8-48H640l229.4-273.3H384L154.6 648.7z"
-                            p-id="1497"></path>
-                        <path d="M512 512m-48.2 0a48.2 48.2 0 1 0 96.4 0 48.2 48.2 0 1 0-96.4 0Z"
-                              p-id="1498"></path>
+                            d="M972.8 249.856h-14.336l-0.512-108.032c0-25.6-20.992-45.568-46.08-45.568l-413.184 2.56h-3.584l-23.552-25.088c-9.728-10.24-23.04-16.384-37.376-16.384l-381.952-0.512C24.064 56.832 1.536 79.36 1.024 107.52L0 914.432c0 13.824 5.12 26.624 14.848 36.352 9.728 9.728 22.528 14.848 36.352 15.36l921.088 1.024c28.16 0 51.2-22.528 51.2-51.2l0.512-614.912c0-28.16-23.04-50.688-51.2-51.2z m-105.984-61.44l0.512 61.44-232.96-0.512-55.296-59.392 287.744-1.536zM921.088 865.28L102.4 864.256 108.032 158.72l303.616 0.512 162.816 176.128c9.728 10.24 23.04 16.384 37.376 16.384l310.272 0.512-1.024 513.024z"
+                            p-id="19508"></path>
                         <path
-                            d="M512 584.2c-39.8 0-72.2-32.4-72.2-72.2s32.4-72.2 72.2-72.2 72.2 32.4 72.2 72.2-32.4 72.2-72.2 72.2z m0-96.4c-13.4 0-24.2 10.9-24.2 24.2 0 13.4 10.9 24.2 24.2 24.2 13.4 0 24.2-10.9 24.2-24.2 0-13.4-10.8-24.2-24.2-24.2z"
-                            p-id="1499"></path>
+                            d="M531.968 441.344c-9.216 1.536-17.408 7.168-22.528 15.36-9.728 15.872-6.144 36.864 8.192 48.128l28.16 22.016-183.808 1.024c-18.432 0-33.28 16.384-33.28 35.84s15.36 35.328 33.792 35.328l284.16-1.536c18.432 0 33.28-16.384 33.28-35.84 0-9.728-4.096-18.944-10.752-25.6-1.536-2.048-3.584-4.096-5.632-5.632l-106.496-82.944c-7.168-5.632-15.872-7.68-25.088-6.144zM647.168 639.488l-283.648 2.048c-18.432 0-33.28 16.384-33.28 35.84 0 9.728 4.096 18.944 10.752 25.6 1.536 2.048 3.584 4.096 5.632 5.632l106.496 82.944c5.632 4.608 12.8 6.656 19.968 6.656 11.264 0 21.504-6.144 27.648-15.872 4.608-7.68 6.656-16.896 5.12-25.6-1.536-9.216-6.144-17.408-13.312-22.528l-28.16-22.016 183.808-1.024c18.432 0 33.28-16.384 33.28-35.84-1.024-19.968-15.872-35.84-34.304-35.84z"
+                            p-id="19509"></path>
                       </svg>
                     </template>
                   </a-button>
-                </a-popover>
-              </div>
-              <div ref="SftpChangeEl">
-                <a-button type="link"
-                          :class="{green:sftpEnable,center:true}" @click="changeSftpEnable">
-                <template v-slot:icon>
-                  <svg t="1696435355552" class="tags" viewBox="0 0 1024 1024" version="1.1"
-                       xmlns="http://www.w3.org/2000/svg" p-id="19507" width="200" height="200">
-                    <path
-                        d="M972.8 249.856h-14.336l-0.512-108.032c0-25.6-20.992-45.568-46.08-45.568l-413.184 2.56h-3.584l-23.552-25.088c-9.728-10.24-23.04-16.384-37.376-16.384l-381.952-0.512C24.064 56.832 1.536 79.36 1.024 107.52L0 914.432c0 13.824 5.12 26.624 14.848 36.352 9.728 9.728 22.528 14.848 36.352 15.36l921.088 1.024c28.16 0 51.2-22.528 51.2-51.2l0.512-614.912c0-28.16-23.04-50.688-51.2-51.2z m-105.984-61.44l0.512 61.44-232.96-0.512-55.296-59.392 287.744-1.536zM921.088 865.28L102.4 864.256 108.032 158.72l303.616 0.512 162.816 176.128c9.728 10.24 23.04 16.384 37.376 16.384l310.272 0.512-1.024 513.024z"
-                        p-id="19508"></path>
-                    <path
-                        d="M531.968 441.344c-9.216 1.536-17.408 7.168-22.528 15.36-9.728 15.872-6.144 36.864 8.192 48.128l28.16 22.016-183.808 1.024c-18.432 0-33.28 16.384-33.28 35.84s15.36 35.328 33.792 35.328l284.16-1.536c18.432 0 33.28-16.384 33.28-35.84 0-9.728-4.096-18.944-10.752-25.6-1.536-2.048-3.584-4.096-5.632-5.632l-106.496-82.944c-7.168-5.632-15.872-7.68-25.088-6.144zM647.168 639.488l-283.648 2.048c-18.432 0-33.28 16.384-33.28 35.84 0 9.728 4.096 18.944 10.752 25.6 1.536 2.048 3.584 4.096 5.632 5.632l106.496 82.944c5.632 4.608 12.8 6.656 19.968 6.656 11.264 0 21.504-6.144 27.648-15.872 4.608-7.68 6.656-16.896 5.12-25.6-1.536-9.216-6.144-17.408-13.312-22.528l-28.16-22.016 183.808-1.024c18.432 0 33.28-16.384 33.28-35.84-1.024-19.968-15.872-35.84-34.304-35.84z"
-                        p-id="19509"></path>
-                  </svg>
-                </template>
-              </a-button>
-              </div>
-              <div class="center-name">{{ server.name }}</div>
-              <div ref="reloadEl">
-                <a-button type="link" @click="reloadServer">
-                  <template v-slot:icon>
-                    <reload-outlined/>
-                  </template>
-                </a-button>
-              </div>
-            </template>
+                </div>
+                <div class="center-name">{{ server.name }}</div>
+                <div ref="reloadEl">
+                  <a-button type="link" @click="reloadServer">
+                    <template v-slot:icon>
+                      <reload-outlined/>
+                    </template>
+                  </a-button>
+                </div>
+              </template>
 
-            <div style="display: flex">
-              <div style="width: 100%;position: relative;">
-                <VueDragSplit
-                    ref="fullscreenRef"
-                    class="drag-root"
-                    :generateWindowConfig="generateWindowConfig"
-                    v-model:windowListSync="windowList"
-                    v-model:activeTabKeySync="activeTabKey"
-                >
-                  <template #Tab="win">
-                    <p style="color: white; font-size: 12px">{{ win.label }}</p>
-                    <p></p>
-                  </template>
-                  <template #CloseBtn>
-                    <span></span>
-                  </template>
-                  <template #AddBtn>
-                    <span></span>
-                  </template>
-                  <template #TabActions>
-                    <span></span>
-                  </template>
-                  <template #placeHolder>
-                    <span></span>
-                  </template>
-                  <template #TabView="win">
+              <div style="display: flex">
+                <div style="width: 100%;position: relative;">
+                  <VueDragSplit
+                      ref="fullscreenRef"
+                      class="drag-root"
+                      :generateWindowConfig="generateWindowConfig"
+                      v-model:windowListSync="windowList"
+                      v-model:activeTabKeySync="activeTabKey"
+                  >
+                    <template #Tab="win">
+                      <p style="color: white; font-size: 12px">{{ win.label }}</p>
+                      <p></p>
+                    </template>
+                    <template #CloseBtn>
+                      <span></span>
+                    </template>
+                    <template #AddBtn>
+                      <span></span>
+                    </template>
+                    <template #TabActions>
+                      <span></span>
+                    </template>
+                    <template #placeHolder>
+                      <span></span>
+                    </template>
+                    <template #TabView="win">
                     <span>
-                      <p-term v-model:loading="pTermLoading" class="ssh" :server="server" :master-session-id="server.masterSessionId" ref="PTermRef"></p-term>
+                      <p-term v-model:loading="pTermLoading" class="ssh" :server="server"
+                              :master-session-id="server.masterSessionId" ref="PTermRef"></p-term>
                     </span>
-                  </template>
-                </VueDragSplit>
-                <div style="position: absolute;right: 16px;top: calc(50% - 1em / 2);color: aliceblue"
-                     ref="openPopover"
-                     @click="remarkStatus=!remarkStatus">
-                  <left-outlined :class="{'button-action':remarkStatus,'left':true}"/>
+                    </template>
+                  </VueDragSplit>
+                  <div style="position: absolute;right: 16px;top: calc(50% - 1em / 2);color: aliceblue"
+                       ref="openPopover"
+                       @click="remarkStatus=!remarkStatus">
+                    <left-outlined :class="{'button-action':remarkStatus,'left':true}"/>
+                  </div>
+                  <div style="position: absolute;right: 16px;top: 16px;color: aliceblue" class="left"
+                       ref="fullscreenEl"
+                       @click="handleRequestFullscreen">
+                    <fullscreen-outlined/>
+                  </div>
+                  <div v-if="server.masterSessionId" style="position: absolute;right: 16px;top: 40px;color: aliceblue"
+                       class="left enable-line"
+                       :class="{'disable-line':!inputTerm,'enable-line':sftpEnable}"
+                       @click="handleRequestInputTerm">
+                    <edit-outlined style="text-decoration: line-through;"/>
+                  </div>
                 </div>
-                <div style="position: absolute;right: 16px;top: 16px;color: aliceblue" class="left"
-                     ref="fullscreenEl"
-                     @click="handleRequestFullscreen">
-                  <fullscreen-outlined/>
-                </div>
-                <div v-if="server.masterSessionId" style="position: absolute;right: 16px;top: 40px;color: aliceblue" class="left enable-line"
-                     :class="{'disable-line':!inputTerm,'enable-line':sftpEnable}"
-                     @click="handleRequestInputTerm">
-                  <edit-outlined style="text-decoration: line-through;" />
-                </div>
-              </div>
 
-              <div :class="{remark:true,'remark-enter':remarkStatus}" class="card-container">
-                <a-tabs v-model:activeKey="rightTabKey" style="margin: 8px" type="card">
-                  <a-tab-pane key="remark" tab="备注">
-                    <div class="w-e-text-container">
-                      <div data-slate-editor v-html="server.remark">
+                <div :class="{remark:true,'remark-enter':remarkStatus}" class="card-container">
+                  <a-tabs v-model:activeKey="rightTabKey" style="margin: 8px" type="card">
+                    <a-tab-pane key="remark" tab="备注">
+                      <div class="w-e-text-container">
+                        <div data-slate-editor v-html="server.remark">
 
+                        </div>
                       </div>
-                    </div>
-                  </a-tab-pane>
-                  <a-tab-pane key="command" tab="命令" force-render>
-                    <a-list style="padding: 8px" item-layout="horizontal" :data-source="commandData">
-                      <template #renderItem="{ item }">
-                        <a-list-item>
-                          <a-list-item-meta>
-                            <template #title>
-                              {{ item.name }}
-                            </template>
-                            <template #avatar>
+                    </a-tab-pane>
+                    <a-tab-pane key="command" tab="命令" force-render>
+                      <a-list style="padding: 8px" item-layout="horizontal" :data-source="commandData">
+                        <template #renderItem="{ item }">
+                          <a-list-item>
+                            <a-list-item-meta>
+                              <template #title>
+                                {{ item.name }}
+                              </template>
+                              <template #avatar>
 
-                              <mac-command-outlined style="color: #F6C445;"/>
-                            </template>
-                            <template #description>
-                              <a-collapse v-model:activeKey="item.activeKey">
-                                <a-collapse-panel key="1" :header="item.command">
-                                  <div class="w-e-text-container">
-                                    <div data-slate-editor v-html="item.remark">
+                                <mac-command-outlined style="color: #F6C445;"/>
+                              </template>
+                              <template #description>
+                                <a-collapse v-model:activeKey="item.activeKey">
+                                  <a-collapse-panel key="1" :header="item.command">
+                                    <div class="w-e-text-container">
+                                      <div data-slate-editor v-html="item.remark">
 
+                                      </div>
                                     </div>
-                                  </div>
-                                  <template #extra>
-                                    <a-popconfirm
-                                        title="确定执行吗?"
-                                        ok-text="Yes"
-                                        cancel-text="No"
-                                        @click.stop
-                                        @confirm="handleExecCommand(item.command)"
-                                    >
-                                    <a-button type="link">执行</a-button>
-                                    </a-popconfirm>
-                                  </template>
-                                </a-collapse-panel>
-                              </a-collapse>
+                                    <template #extra>
+                                      <a-popconfirm
+                                          title="确定执行吗?"
+                                          ok-text="Yes"
+                                          cancel-text="No"
+                                          @click.stop
+                                          @confirm="handleExecCommand(item.command)"
+                                      >
+                                        <a-button type="link">执行</a-button>
+                                      </a-popconfirm>
+                                    </template>
+                                  </a-collapse-panel>
+                                </a-collapse>
+                              </template>
+                            </a-list-item-meta>
+                          </a-list-item>
+                        </template>
+                      </a-list>
+                    </a-tab-pane>
+                    <a-tab-pane key="linux-doc" tab="Linux文档">
+                      <div class="linux-doc">
+                        <a-input-search class="search" @change="handleChangeSearch" allow-clear></a-input-search>
+                        <a-collapse v-model:activeKey="activeKey" accordion>
+                          <a-collapse-panel v-for="item in searchLinuxDoc" :key="item.title">
+                            <template #header>
+                              <div>
+                                <span class="title" v-html="item.title"></span>
+                                <span class="des" v-html="item.des"></span>
+                              </div>
                             </template>
-                          </a-list-item-meta>
-                        </a-list-item>
-                      </template>
-                    </a-list>
-                  </a-tab-pane>
-                  <a-tab-pane key="linux-doc" tab="Linux文档">
-                    <div class="linux-doc">
-                      <a-input-search class="search" @change="handleChangeSearch" allow-clear></a-input-search>
-                      <a-collapse v-model:activeKey="activeKey" accordion>
-                        <a-collapse-panel v-for="item in searchLinuxDoc" :key="item.title">
-                          <template #header>
-                            <div >
-                              <span class="title" v-html="item.title"></span>
-                              <span class="des" v-html="item.des"></span>
-                            </div>
-                          </template>
-                          <transition>
-                            <div v-html="item.body" v-if="activeKey===item.title">
-                            </div>
-                          </transition>
-                        </a-collapse-panel>
-                      </a-collapse>
-                    </div>
-                  </a-tab-pane>
-                </a-tabs>
+                            <transition>
+                              <div v-html="item.body" v-if="activeKey===item.title">
+                              </div>
+                            </transition>
+                          </a-collapse-panel>
+                        </a-collapse>
+                      </div>
+                    </a-tab-pane>
+                  </a-tabs>
+                </div>
               </div>
-            </div>
-          </a-card>
-        </div>
+            </a-card>
+          </div>
         </a-spin>
       </template>
     </p-flip>
@@ -558,7 +573,7 @@ onMounted(() => {
   max-width: none !important;
 }
 
-:deep(#split_window .split_view .split_content_wrapper .split_view_label_wrapper){
+:deep(#split_window .split_view .split_content_wrapper .split_view_label_wrapper) {
   display: none;
 }
 
@@ -693,7 +708,6 @@ onMounted(() => {
   justify-content: center;
   align-items: center;
 }
-
 
 
 </style>

@@ -32,7 +32,8 @@ import {
     Cascader,
     Tag,
     InputNumber,
-    Pagination
+    Pagination,
+    Result
 } from 'ant-design-vue';
 import icons from '@/icons';
 
@@ -66,6 +67,7 @@ export function bootAntDesignVue(app) {
         .use(Spin)
         .use(Switch)
         .use(Popconfirm)
+        .use(Result)
         .use(Select)
         .use(Image)
         .use(Popover)

@@ -6,7 +6,7 @@ import com.codeages.javaskeletonserver.biz.server.dto.ServerCreateParams;
 import com.codeages.javaskeletonserver.biz.server.dto.ServerUpdateParams;
 import com.codeages.javaskeletonserver.biz.server.dto.TreeSortParams;
 import com.codeages.javaskeletonserver.biz.server.service.ServerService;
-import com.codeages.javaskeletonserver.biz.server.ws.SshHandler;
+import com.codeages.javaskeletonserver.biz.server.ws.ssh.SshHandler;
 import com.codeages.javaskeletonserver.biz.user.dto.RoleDto;
 import com.codeages.javaskeletonserver.biz.user.dto.UserDto;
 import com.codeages.javaskeletonserver.biz.user.service.RoleService;

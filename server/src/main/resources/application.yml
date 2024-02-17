@@ -92,3 +92,8 @@ spring:
 PortForWarding:
     minPort: ${PORT_FOR_WARDING_MIN:8200}
     maxPort: ${PORT_FOR_WARDING_MAX:8500}
+
+guacamole:
+    host: ${GUACAMOLE_HOST:127.0.0.1}
+    port: ${GUACAMOLE_PORT:4822}
+    mapping: ${GUACAMOLE_MAPPING:/tmp}

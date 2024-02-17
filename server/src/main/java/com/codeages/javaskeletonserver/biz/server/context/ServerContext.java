@@ -1,7 +1,7 @@
 package com.codeages.javaskeletonserver.biz.server.context;
 
 import com.codeages.javaskeletonserver.biz.server.dto.SFTPBean;
-import com.codeages.javaskeletonserver.biz.server.ws.SshHandler;
+import com.codeages.javaskeletonserver.biz.server.ws.ssh.SshHandler;
 
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;

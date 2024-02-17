@@ -279,13 +279,12 @@ const handleDblclick = (item, masterSessionId = 0) => {
     return
   }
 
-  if (item.os === OsEnum.WINDOWS.value) {
-    windowsInfoVisible.value = true
-    windowsInfoState.value = item
-    return
-  }
-
   emit('openServer', item, masterSessionId)
+}
+
+const handleDownloadWindowsRdp = (item) => {
+  windowsInfoState.value = item
+  windowsInfoVisible.value = true
 }
 
 const handleOpenNewWindow = (item) => {
@@ -451,9 +450,9 @@ defineExpose({
                         <link-outlined/>
                         连接
                       </a-menu-item>
-                      <a-menu-item v-if="!item.isGroup" key="2" @click="handleOpenNewWindow(item)">
-                        <link-outlined/>
-                        新窗口
+                      <a-menu-item v-if="!item.isGroup&&item.os===OsEnum.WINDOWS.value" key="5" @click="handleDownloadWindowsRdp(item)">
+                        <cloud-download-outlined />
+                        下载本地连接文件
                       </a-menu-item>
                       <a-menu-item key="4" @click="handleEditServer(item)">
                         <edit-outlined/>

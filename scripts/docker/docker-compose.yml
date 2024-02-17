@@ -17,6 +17,7 @@ services:
     depends_on:
       - redis
       - mysql
+      - some-guacd
   front:
     image: registry.cn-hangzhou.aliyuncs.com/education-portal/termius-plus:front-${VERSION:?error}
     restart: unless-stopped
@@ -35,8 +36,6 @@ services:
     command: redis-server --appendonly yes
     networks:
       - edu-admin
-    volumes:
-      - redis_data:/data
   mysql:
     image: mysql:8
     container_name: db
@@ -51,6 +50,14 @@ services:
       - ./mysql-data:/var/log/mysql
       - ./mysql-data:/etc/mysql/conf.d
       - ./mysql-init:/docker-entrypoint-initdb.d
+  some-guacd:
+    image: guacamole/guacd
+    container_name: some-guacd
+    restart: always
+    volumes:
+      - /tmp:/tmp
+    networks:
+      - edu-admin
 
 networks:
   edu-admin:
@@ -58,8 +65,3 @@ networks:
 
 volumes:
   file_data:
-  nginx_config_data:
-  redis_data:
-  mysql_data:
-  mysql_log_data:
-  mysql_config_data:
