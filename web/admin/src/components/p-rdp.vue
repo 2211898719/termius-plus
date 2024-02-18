@@ -52,7 +52,6 @@ const show = () => {
 
   // Error handler message
   guac.onerror = function (error) {
-    console.log(error);
     resultTitle.value = error.message;
     showResult.value = true;
   };
@@ -68,10 +67,7 @@ const show = () => {
     guac.disconnect();
   };
 
-  console.log(guac);
-
   guac.onstatechange = function (state) {
-    console.log(state);
     if (state === 3) {
       // Mouse
       let mouse = new Guacamole.Mouse(guac.getDisplay().getElement());
@@ -100,45 +96,6 @@ const show = () => {
     console.log(mimetype, data);
   }
 
-  // setTimeout(()=>{
-  //   var fileUploadStream = guac.createFileStream("application/octet-stream","C://test.xxx");
-  //
-  //   // 设置文件上传的事件处理程序
-  //   fileUploadStream.onack = function(status) {
-  //     if (status.isComplete()) {
-  //       console.log("文件上传成功");
-  //     } else {
-  //       console.log("文件上传失败");
-  //     }
-  //   };
-  //
-  //   // 通过文件上传流发送文件数据
-  //   var fileData = new Blob([0,1,1,1,1,1,1]);
-  //   fileUploadStream.sendBlob(fileData);
-  // },5000)
-  guac.onconnect = function() {
-    console.log(123123123)
-    // 文件上传
-
-
-    // 文件下载
-    var fileDownloadStream = guac.createFileStream(Guacamole.StreamMimetypes.APPLICATION_OCTET_STREAM);
-
-    // 设置文件下载的事件处理程序
-    fileDownloadStream.onblob = function(blob) {
-      var fileURL = URL.createObjectURL(blob);
-      console.log("文件下载链接：" + fileURL);
-
-      // 创建一个下载链接
-      var link = document.createElement("a");
-      link.href = fileURL;
-      link.download = "下载的文件名";
-      link.click();
-    };
-
-    // 请求下载文件
-    // fileDownloadStream.sendAck("下载的文件路径");
-  };
 }
 
 const close = () => {
@@ -168,10 +125,12 @@ defineExpose({
   <div
       class="remote-desktop"
   >
+    <a-spin :spinning="showResult" :tip="resultTitle.value">
     <div
         ref="display"
     >
     </div>
+    </a-spin>
   </div>
 </template>
 

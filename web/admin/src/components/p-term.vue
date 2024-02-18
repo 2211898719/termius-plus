@@ -238,7 +238,7 @@ setInterval(() => {
   if (term) {
     getHistory()
   }
-}, 1000 * 60 * 1)
+}, 1000 * 60 * 3)
 
 let channel = new BroadcastChannel("theme")
 channel.onmessage = (e) => {
