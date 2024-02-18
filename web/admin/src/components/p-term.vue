@@ -294,7 +294,7 @@ const writeCompletionToCursorPosition = (autoComp) => {
     return;
   }
 
-//计算autoComp前有多少个空格
+  //计算autoComp前有多少个空格
   let spaceCount = 0;
   for (let i = 0; i < autoComp.length; i++) {
     if (autoComp[i] === " ") {
