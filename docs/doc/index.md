@@ -17,9 +17,9 @@ hero:
 features:
   - title: 代理访问
     details: 支持代理访问，支持多种代理方式，支持单独给每个服务器设置代理。
-  - title: Feature B
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
-  - title: Feature C
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
+  - title: 服务器管理
+    details: 团队式服务器分组管理，支持多种服务器类型，多种连接方式。
+  - title: 任务管理
+    details: 强大且灵活的定时任务管理，支持定时任务，结果通知，多服务器设置不同任务参数。
 ---
 

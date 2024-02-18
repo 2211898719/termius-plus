@@ -47,7 +47,6 @@ public class ServerController {
 
     @GetMapping("/list")
     public List<Tree<Long>> findAll() {
-
         List<Long> roleIds = securityContext.getUser().getRoleIds();
         List<RoleDto> service = roleService.findByIds(roleIds);
         List<Long> serverIds = new ArrayList<>();
@@ -86,7 +85,6 @@ public class ServerController {
                 node.putExtra("onlyConnect", list);
             }
         }));
-
 
         return treeList;
     }

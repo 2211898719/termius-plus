@@ -203,8 +203,6 @@ public class ServerServiceImpl implements ServerService {
                                                                   Function.identity()
                                                           ));
 
-//        List<Server> sort = serverRepository.findAll(Sort.by("sort"));
-
         List<TreeNode<Long>> servers = allParent
                 .stream()
                 .map(e -> {
