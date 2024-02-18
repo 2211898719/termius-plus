@@ -34,8 +34,6 @@ jobs:
           fetch-depth: 0 # 如果未启用 lastUpdated，则不需要
       # - uses: pnpm/action-setup@v2 # 如果使用 pnpm，请取消注释
       # - uses: oven-sh/setup-bun@v1 # 如果使用 Bun，请取消注释
-      - name: Set working directory
-        run: cd docs/doc
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -49,7 +47,7 @@ jobs:
       - name: Build with VitePress
         working-directory: docs/doc
         run: |
-          npm run docs/docs:build # 或 pnpm docs:build / yarn docs:build / bun run docs:build
+          npm run docs:build # 或 pnpm docs:build / yarn docs:build / bun run docs:build
           touch .vitepress/dist/.nojekyll
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
