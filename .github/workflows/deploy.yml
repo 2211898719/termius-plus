@@ -25,6 +25,7 @@ concurrency:
 
 jobs:
   # 构建工作
+  working-directory: docs/doc
   build:
     runs-on: ubuntu-latest
     steps:
