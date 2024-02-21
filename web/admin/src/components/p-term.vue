@@ -10,6 +10,7 @@ import {SearchAddon} from "xterm-addon-search";
 import {TrzszAddon} from 'trzsz';
 import {useAuthStore} from "@shared/store/useAuthStore";
 import {serverApi} from "@/api/server";
+import {message} from "ant-design-vue";
 
 let authStore = useAuthStore();
 // let networkInfo = useNetwork()
@@ -120,7 +121,7 @@ const initSocket = () => {
       }
     },
     onMessage: (w, e) => {
-        emit("update:loading", false)
+      emit("update:loading", false)
     },
     onError: (e) => {
 
@@ -163,7 +164,7 @@ const getCommand = () => {
  */
 const getUnExecutedCommand = () => {
   let command = getCommand()
-  const regex = /^.*?@.*?:.*?#/
+  const regex = /^.*?@.*?:.*?[#$]/
 
   if (regex.test(command)) {
     return command.replace(regex, "")
@@ -234,12 +235,6 @@ const initTerm = () => {
   }, 1000 * 60 * 5);
 }
 
-setInterval(() => {
-  if (term) {
-    getHistory()
-  }
-}, 1000 * 60 * 3)
-
 let channel = new BroadcastChannel("theme")
 channel.onmessage = (e) => {
   frontColor.value = e.data.frontColor
@@ -252,7 +247,11 @@ channel.onmessage = (e) => {
 }
 
 const getHistory = async () => {
-  history.value = _.reverse(await serverApi.getHistory(props.server.id));
+  try {
+    history.value = _.reverse(await serverApi.getHistory(props.server.id));
+  } catch (e) {
+    message.error(e.message)
+  }
 }
 
 /**
@@ -264,8 +263,8 @@ const getCompleteCommand = () => {
   command = command.replace(/^\s+/, "")
   console.log("当前命令" + command)
   if (command) {
-    let find =history.value.find(item => item.startsWith(command))
-    if (find){
+    let find = history.value.find(item => item.startsWith(command))
+    if (find) {
       return find.substring(command.length)
     }
 
@@ -277,7 +276,7 @@ const getCompleteCommand = () => {
 
 let completeCommand = ref('')
 
-let autoEL =  document.createElement("div")
+let autoEL = document.createElement("div")
 
 const writeCompletionToCursorPosition = (autoComp) => {
   log.value.getElementsByClassName("xterm-helper-textarea")
@@ -400,7 +399,7 @@ defineExpose({
 
 <template>
   <div ref="log">
-      <div class="console" ref="terminal"></div>
+    <div class="console" ref="terminal"></div>
   </div>
 </template>
 
@@ -413,12 +412,13 @@ defineExpose({
 
 /deep/ .auto-complete {
   position: absolute;
-  color: #00CC74;
+  color: v-bind(frontColor);
   font-family: courier-new, courier, monospace;
   font-size: 14px;
   opacity: 0.6;
 }
-/deep/ .xterm{
+
+/deep/ .xterm {
   height: 100%;
 }
 

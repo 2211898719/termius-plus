@@ -4,6 +4,7 @@ import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.thread.ThreadUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONUtil;
 import com.codeages.javaskeletonserver.biz.log.dto.CommandLogCreateParams;
@@ -233,7 +234,7 @@ public class SshHandler {
 
             //auto sudo
             ServerDto serverDto = serverService.findById(serverId);
-            if (Boolean.TRUE.equals(serverDto.getAutoSudo())) {
+            if (Boolean.TRUE.equals(serverDto.getAutoSudo()) && ObjectUtil.notEqual(serverDto.getUsername(), "root")) {
                 outputStream.write(("echo " + serverDto.getPassword() + " | sudo -S ls && sudo -i\n").getBytes());
                 outputStream.flush();
             }

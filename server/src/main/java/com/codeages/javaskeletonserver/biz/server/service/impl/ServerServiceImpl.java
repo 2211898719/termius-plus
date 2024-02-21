@@ -212,8 +212,9 @@ public class ServerServiceImpl implements ServerService {
                             e.getName(),
                             e.getSort()
                     );
+                    Map<String, Object> beanMap = BeanUtil.beanToMap(e);
 
-                    longTreeNode.setExtra(BeanUtil.beanToMap(e));
+                    longTreeNode.setExtra(beanMap);
                     return longTreeNode;
                 })
                 .collect(Collectors.toList());

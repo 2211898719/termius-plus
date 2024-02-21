@@ -9,10 +9,10 @@ hero:
   actions:
     - theme: brand
       text: 快速开始
-      link: /markdown-examples
+      link: /start
     - theme: alt
-      text: 安装
-      link: /api-examples
+      text: 开发
+      link: /feature
 
 features:
   - title: 代理访问
@@ -21,5 +21,7 @@ features:
     details: 团队式服务器分组管理，支持多种服务器类型，多种连接方式。
   - title: 任务管理
     details: 强大且灵活的定时任务管理，支持定时任务，结果通知，多服务器设置不同任务参数。
+  - title: 事后审计
+    details: 对服务器的每个连接，每个操作都有记录日志，方便事后审计。
 ---
 

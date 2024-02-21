@@ -14,7 +14,7 @@ import _ from "lodash";
 import PEnumSelect from "@/components/p-enum-select.vue";
 import OsEnum from "@/enums/OsEnum";
 
-let termiusStyleColumn =ref(Math.floor(window.innerWidth / 300));
+let termiusStyleColumn = ref(Math.floor(window.innerWidth / 300));
 
 
 const resizeObserver = new ResizeObserver(() => {
@@ -34,7 +34,7 @@ const props = defineProps({
     type: Boolean, default: false,
   },
   value: {
-    type: [Object,String,Number], default: null,
+    type: [Object, String, Number], default: null,
   }
 })
 
@@ -256,6 +256,7 @@ const updateSort = _.debounce(async (sortData) => {
 
 
 const handleDblclick = (item, masterSessionId = 0) => {
+  item.onlyUserVisible = false
   if (item.isGroup) {
     //维护面包屑
     let index = groupBreadcrumb.value.findIndex(i => i.id === item.id);
@@ -285,10 +286,6 @@ const handleDblclick = (item, masterSessionId = 0) => {
 const handleDownloadWindowsRdp = (item) => {
   windowsInfoState.value = item
   windowsInfoVisible.value = true
-}
-
-const handleOpenNewWindow = (item) => {
-  window.open(item.url)
 }
 
 onMounted(() => {
@@ -406,7 +403,8 @@ defineExpose({
                 <a-dropdown :trigger="['contextmenu']">
                   <a-list-item class="sortEl" @dblclick="handleDblclick(item)">
                     <template #actions>
-                      <a-popover v-if="item.onlyConnect?.length" @dblclick.stop @click.stop title="在线用户"
+                      <a-popover :visible="item.onlyUserVisible" v-if="item.onlyConnect?.length" @dblclick.stop
+                                 @click.stop title="在线用户"
                                  placement="bottom"
                                  trigger="click">
                         <template #content>
@@ -450,8 +448,9 @@ defineExpose({
                         <link-outlined/>
                         连接
                       </a-menu-item>
-                      <a-menu-item v-if="!item.isGroup&&item.os===OsEnum.WINDOWS.value" key="5" @click="handleDownloadWindowsRdp(item)">
-                        <cloud-download-outlined />
+                      <a-menu-item v-if="!item.isGroup&&item.os===OsEnum.WINDOWS.value" key="5"
+                                   @click="handleDownloadWindowsRdp(item)">
+                        <cloud-download-outlined/>
                         下载本地连接文件
                       </a-menu-item>
                       <a-menu-item key="4" @click="handleEditServer(item)">
@@ -601,7 +600,7 @@ defineExpose({
   background-color: #fde3cf;
 }
 
- .ant-popover-inner-content {
+.ant-popover-inner-content {
   background-color: #f5f5f5;
 
   .onlyUser {

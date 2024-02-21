@@ -136,8 +136,6 @@ public class WebSocketTunnel extends GuacamoleWebSocketTunnelEndpoint {
         //dest-host
         //dest-port
 
-        //--------------------------windows远程桌面测试--------------------------
-
         GuacamoleSocket socket = new ConfiguredGuacamoleSocket(
                 new InetGuacamoleSocket(host, port),
                 configuration,
