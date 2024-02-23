@@ -422,6 +422,8 @@ defineExpose({
                         <edit-outlined @click="handleEditServer(item)"/>
                       </a>
                     </template>
+
+                  <a-badge-ribbon :text="item.onlyTag" :class="{none:!item.onlyTag}">
                     <a-card>
                       <a-skeleton avatar :title="false" :loading="!!item.loading" active>
                         <a-list-item-meta
@@ -440,7 +442,7 @@ defineExpose({
                         </a-list-item-meta>
                       </a-skeleton>
                     </a-card>
-
+                  </a-badge-ribbon>
                   </a-list-item>
                   <template #overlay>
                     <a-menu>
@@ -615,5 +617,9 @@ defineExpose({
       background-color: #e6f7ff;
     }
   }
+}
+
+/deep/ .none {
+  display: none;
 }
 </style>

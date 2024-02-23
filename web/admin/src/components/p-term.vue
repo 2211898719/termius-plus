@@ -49,7 +49,7 @@ let options = {
   // rows: 123, //行数
   // cols: 321,// 设置之后会输入多行之后覆盖现象
   convertEol: true, //启用时，光标将设置为下一行的开头
-  scrollback: 50000,//终端中的回滚量
+  scrollback: 5000,//终端中的回滚量
   fontSize: 14, //字体大小
   height: "100%", //终端高度
   disableStdin: !!props.masterSessionId, //禁用输入
@@ -108,17 +108,17 @@ const initSocket = () => {
   useSocket = useWebSocket(wsProtocol + '://' + host + '/socket/ssh/' + authStore.session + '/' + props.server.id + '/' + props.masterSessionId, {
     autoReconnect: {
       /**
-       在代码的世界里追寻，重连九十九次，耐心勤。每次间隔五秒钟的等待，程序员的心绪，静静躁动。
+       在代码的世界里追寻，重连五次，耐心勤。每次间隔五秒钟的等待，程序员的心绪，静静躁动。
        连接断开，网络崩溃，错误信息满屏幕跳跃。但我不放弃，不言退缩，调试代码，寻找修复。
        每次重连，希望重生，服务器响应，灵魂燃。逐渐恢复，网络连通，程序员的坚持，不曾停。
        无声的代码，编织着梦，每次重连，是一次命运。虽然苦涩，却充满希望，程序员的诗，用心深。
-       99次的重连纪念，程序员的辛劳不言言。温柔的重连，坚韧中，代码世界，永不停。
+       五次的重连纪念，程序员的辛劳不言言。温柔的重连，坚韧中，代码世界，永不停。
        */
-      retries: 99,
+      retries: 5,
       delay: 5000,
       onFailed: (e) => {
         emit("update:loading", false)
-      }
+      },
     },
     onMessage: (w, e) => {
       emit("update:loading", false)

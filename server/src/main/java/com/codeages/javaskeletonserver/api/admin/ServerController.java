@@ -18,6 +18,7 @@ import com.codeages.javaskeletonserver.security.SecurityContext;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -86,7 +87,29 @@ public class ServerController {
             }
         }));
 
+        buildOnlyTag(treeList);
+
         return treeList;
+    }
+
+    /**
+     * 递归构建在线标记，如果子节点有一个onlyConnect，那么父节点加上onlyTag: 数量
+     *
+     * @param treeList
+     */
+    private int buildOnlyTag(List<Tree<Long>> treeList) {
+        int onlyTag = 0;
+        for (Tree<Long> node : treeList) {
+            int currentTag = node.hasChild() ? buildOnlyTag(node.getChildren()) : ((List) node.getOrDefault(
+                    "onlyConnect",
+                    Collections.emptyList()
+            )).size();
+            node.putExtra("onlyTag", currentTag);
+
+            onlyTag = onlyTag + currentTag;
+        }
+
+        return onlyTag;
     }
 
     /**

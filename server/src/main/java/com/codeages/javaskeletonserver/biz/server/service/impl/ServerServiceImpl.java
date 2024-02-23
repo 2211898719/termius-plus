@@ -41,7 +41,10 @@ import javax.net.SocketFactory;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
@@ -323,7 +326,6 @@ public class ServerServiceImpl implements ServerService {
         ssh.setTimeout(3600 * 1000);
         ssh.setConnectTimeout(3600 * 1000);
         ssh.getTransport().setTimeoutMs(0);
-        ssh.getConnection().getKeepAlive().setKeepAliveInterval(60);
         //设置sshj代理
         if (server.getProxy() != null) {
             ssh.setSocketFactory(new SocketFactory() {
@@ -505,8 +507,13 @@ public class ServerServiceImpl implements ServerService {
         //history 命令的输出格式是： 一行#+时间戳下一行是命令，我们只需要命令
         String[] split = originHistoryStr.split("\n");
         List<String> historyList = new ArrayList<>();
-        for (int i = 0; i < split.length; i += 2) {
-            historyList.add(split[i]);
+        for (String s : split) {
+            //如果是注释行，跳过
+            if (s.startsWith("#")) {
+                continue;
+            }
+
+            historyList.add(s);
         }
 
         return historyList;

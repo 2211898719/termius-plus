@@ -33,7 +33,8 @@ import {
     Tag,
     InputNumber,
     Pagination,
-    Result
+    Result,
+    Badge
 } from 'ant-design-vue';
 import icons from '@/icons';
 
@@ -77,5 +78,6 @@ export function bootAntDesignVue(app) {
         .use(Collapse)
         .use(Tag)
         .use(Pagination)
+        .use(Badge)
     ;
 }
