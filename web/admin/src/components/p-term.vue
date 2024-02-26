@@ -68,6 +68,7 @@ let options = {
 
 let term = null;
 let socket = null;
+let socketSend = null;
 let terminal = ref()
 let log = ref()
 let useSocket = null
@@ -128,6 +129,7 @@ const initSocket = () => {
     },
     onConnected: () => {
       socket = useSocket.ws.value;
+      socketSend = socket.send
       initTerm();
     },
   });
@@ -176,6 +178,67 @@ const getUnExecutedCommand = () => {
 
 const initTerm = () => {
   term = new Terminal(options);
+  socket.send = (data) => {
+    if (socket.readyState === 1) {
+      socketSend.call(socket, JSON.stringify({
+        event: "COMMAND",
+        data: data
+      }));
+    }
+  }
+
+  const originalAddEventListener = socket.addEventListener;
+
+  function preprocessEvent(event) {
+    let data = JSON.parse(event.data);
+    switch (data.event) {
+      case "COMMAND":
+        return {
+          type: "COMMAND",
+          data: data.data
+        }
+      case "REQUEST_AUTH_EDIT_SESSION":
+        console.log("AUTH_JOIN_SESSION")
+        return {
+          type: "AUTH_JOIN_SESSION",
+          data: ""
+        }
+      case "JOIN_SESSION":
+        console.log("JOIN_SESSION")
+        return {
+          type: "JOIN_SESSION",
+          data: ""
+        }
+      case "LEAVE_SESSION":
+        console.log("LEAVE_SESSION")
+        return {
+          type: "LEAVE_SESSION",
+          data: ""
+        }
+    }
+    return event;
+  }
+
+// 重写socket对象的addEventListener方法
+  socket.addEventListener = function (eventName, listener, options) {
+    if (eventName !== 'message') {
+      return originalAddEventListener.call(socket, eventName, listener, options);
+    }
+
+    // 创建一个新的函数作为代理的listener
+    const proxyListener = function (event) {
+      // 进行前置处理
+      const modifiedEvent = preprocessEvent(event);
+
+      // 调用原始的listener，并传入处理后的事件对象
+      return listener(modifiedEvent);
+    };
+
+    // 调用原始的addEventListener方法，并传入代理的listener
+    return originalAddEventListener.call(socket, eventName, proxyListener, options);
+  };
+
+
   const attachAddon = new TrzszAddon(socket);
 
   const fitAddon = new FitAddon();
@@ -344,8 +407,8 @@ const resizeTerminal = () => {
   resizeObserver.observe(content);
 
   term.onResize((size) => {
-    socket.send(JSON.stringify({
-      event: "resize",
+    socketSend.call(socket, JSON.stringify({
+      event: "RESIZE",
       data: {
         cols: size.cols,
         rows: size.rows,
@@ -357,7 +420,10 @@ const resizeTerminal = () => {
 }
 
 const execCommand = (command) => {
-  socket.send(command);
+  socketSend.call(socket, JSON.stringify({
+    event: "COMMAND",
+    data: command
+  }));
 }
 
 const close = () => {

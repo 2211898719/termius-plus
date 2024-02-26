@@ -107,13 +107,24 @@ public class SshHandler {
             return;
         }
 
-        try {
-            //如果是事件，就不发送到服务器
-            MessageDto messageDto = MessageDto.parse(message);
-            ResizeDto resizeDto = JSONUtil.toBean(messageDto.getData(), ResizeDto.class);
-            handlerItem.reSize(resizeDto.getCols(), resizeDto.getRows(), resizeDto.getWidth(), resizeDto.getHeight());
-        } catch (Exception e) {
-            this.sendCommand(handlerItem, message);
+        //如果是事件，就不发送到服务器
+        MessageDto messageDto = MessageDto.parse(message);
+        switch (messageDto.getEvent()) {
+            case COMMAND:
+                sendCommand(handlerItem, messageDto.getData());
+                break;
+            case RESIZE:
+                ResizeDto resizeDto = JSONUtil.toBean(messageDto.getData(), ResizeDto.class);
+                handlerItem.reSize(
+                        resizeDto.getCols(),
+                        resizeDto.getRows(),
+                        resizeDto.getWidth(),
+                        resizeDto.getHeight()
+                );
+                break;
+            default:
+                log.error("未知事件：{}", messageDto.getEvent());
+                break;
         }
     }
 
@@ -292,8 +303,11 @@ public class SshHandler {
             //写入内存缓冲区中的数据到文件
             logFileOutputStream.flush();
 
+            MessageDto messageDto = new MessageDto(EventType.COMMAND, FileUtil.readString(logFile, openSession.getRemoteCharset()));
+            String s = JSONUtil.toJsonStr(messageDto);
+
             //把之前的服务器上下文的数据发送给新的子连接
-            sendBinary(session, FileUtil.readString(logFile, openSession.getRemoteCharset()));
+            sendBinary(session, s);
         }
 
         @SneakyThrows
@@ -309,8 +323,10 @@ public class SshHandler {
                 int i;
                 //如果没有数据来，线程会一直阻塞在这个地方等待数据。
                 while ((i = inputStream.read(buffer)) != -1) {
-                    String s = new String(Arrays.copyOfRange(buffer, 0, i), openSession.getRemoteCharset());
-                    logFileOutputStream.write(s.getBytes());
+                    String originData = new String(Arrays.copyOfRange(buffer, 0, i), openSession.getRemoteCharset());
+                    MessageDto messageDto = new MessageDto(EventType.COMMAND, originData);
+                    String s = JSONUtil.toJsonStr(messageDto);
+                    logFileOutputStream.write(originData.getBytes());
                     sessions.forEach(session -> sendBinary(session, s));
                 }
             } catch (Exception e) {
