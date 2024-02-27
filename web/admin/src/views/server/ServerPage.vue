@@ -34,6 +34,13 @@ const handleOpenServer = (item, masterSessionId = 0) => {
   let copyItem = JSON.parse(JSON.stringify(item));
   copyItem.operationId = uuid;
   copyItem.masterSessionId = masterSessionId;
+  if (Array.isArray(copyItem.onlyConnect)) {
+    let connect = copyItem.onlyConnect.find(e => e.masterSessionId === masterSessionId);
+    if (connect) {
+      copyItem.masterUserInfo = connect.user;
+    }
+  }
+
   serverList.value.push(copyItem)
   tagActiveKey.value = copyItem.operationId
 }

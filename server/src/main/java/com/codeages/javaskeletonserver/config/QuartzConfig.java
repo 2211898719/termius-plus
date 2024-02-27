@@ -24,8 +24,8 @@ public class QuartzConfig {
     @Bean
     public ThreadPoolTaskExecutor taskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(20); // 设置核心线程池大小
-        executor.setMaxPoolSize(50); // 设置最大线程池大小
+        executor.setCorePoolSize(1); // 设置核心线程池大小
+        executor.setMaxPoolSize(1); // 设置最大线程池大小
         executor.setQueueCapacity(1000); // 设置队列容量
         executor.setThreadNamePrefix("QuartzThread-"); // 设置线程名称前缀
         executor.initialize();

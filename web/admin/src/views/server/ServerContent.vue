@@ -84,7 +84,6 @@ const handleRequestFullscreen = () => {
 }
 
 const handleExecCommand = (command) => {
-  // iframeRef.value.contentWindow.postMessage({command: command}, '*')
   PTermRef.value.execCommand(command)
 }
 
@@ -159,11 +158,10 @@ const handleChangeSearch = (e) => {
 
 let inputTerm = ref(false)
 const handleRequestInputTerm = () => {
-  message.info("向主链接申请输入命令权限")
-  inputTerm.value = !inputTerm.value
-  PTermRef.value.setDisableStdin(!inputTerm.value)
+  if (!inputTerm.value) {
+    PTermRef.value.requestAuthEditSession()
+  }
 }
-
 
 let autoComp = useStorage('autoComp', false)
 
@@ -172,6 +170,7 @@ const handleChangeComp = () => {
   PTermRef.value.setAutoComplete(autoComp.value)
 }
 
+let subSessionUsername = ref([])
 
 const defaultConfig = {
   // 是否显示黑色遮罩层
@@ -311,8 +310,15 @@ onMounted(() => {
       <template #front>
         <a-spin :spinning="pTermLoading">
           <div :class="{'ssh-content':true}">
-            <a-card title="终端" :body-style="{background:backColor}">
+            <a-card :title="server.masterUserInfo?('观察'+server.masterUserInfo.username)+'的终端':'终端'" :body-style="{background:backColor}">
               <template #extra>
+                <div>
+                  <a-avatar-group :max-count="2" :max-style="{ color: '#f56a00', backgroundColor: '#fde3cf' }">
+                    <a-avatar v-for="username in subSessionUsername" :key="username" style="background-color: #1890ff">
+                      {{ username }}
+                    </a-avatar>
+                  </a-avatar-group>
+                </div>
                 <div ref="CompChangeEl">
                   <a-popover title="提示">
                     <template #content>
@@ -394,7 +400,10 @@ onMounted(() => {
                     <template #TabView="win">
                     <span>
                       <p-term v-model:loading="pTermLoading" class="ssh" :server="server"
-                              :master-session-id="server.masterSessionId" ref="PTermRef"></p-term>
+                              :master-session-id="server.masterSessionId"
+                              ref="PTermRef"
+                              v-model:inputTerminal="inputTerm"
+                              v-model:sub-session-username="subSessionUsername"></p-term>
                     </span>
                     </template>
                   </VueDragSplit>

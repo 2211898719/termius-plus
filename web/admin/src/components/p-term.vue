@@ -3,14 +3,14 @@ import "xterm/css/xterm.css";
 import Terminal from '../utils/zmodem.js';
 // import {Terminal} from "xterm";
 import {FitAddon} from "xterm-addon-fit";
-import {nextTick, onBeforeUnmount, onMounted, ref, watch} from "vue";
+import {h, nextTick, onBeforeUnmount, onMounted, ref, watch} from "vue";
 import _ from "lodash";
 import {useStorage, useWebSocket} from "@vueuse/core";
 import {SearchAddon} from "xterm-addon-search";
 import {TrzszAddon} from 'trzsz';
 import {useAuthStore} from "@shared/store/useAuthStore";
 import {serverApi} from "@/api/server";
-import {message} from "ant-design-vue";
+import {Button, message, notification} from "ant-design-vue";
 
 let authStore = useAuthStore();
 // let networkInfo = useNetwork()
@@ -36,10 +36,20 @@ let props = defineProps({
   loading: {
     type: Boolean,
     default: true
+  },
+  inputTerminal: {
+    type: Boolean,
+    default: false
+  },
+  subSessionUsername: {
+    type: Array,
+    default: () => {
+      return []
+    }
   }
 });
 
-const emit = defineEmits(['update:loading'])
+const emit = defineEmits(['update:loading', 'update:subSessionUsername', 'update:inputTerminal'])
 
 let frontColor = useStorage('frontColor', "#ffffff")
 let backColor = useStorage('backColor', "#000000")
@@ -175,7 +185,6 @@ const getUnExecutedCommand = () => {
   return ""
 }
 
-
 const initTerm = () => {
   term = new Terminal(options);
   socket.send = (data) => {
@@ -191,28 +200,94 @@ const initTerm = () => {
 
   function preprocessEvent(event) {
     let data = JSON.parse(event.data);
+    console.log("event.data", data)
     switch (data.event) {
       case "COMMAND":
         return {
           type: "COMMAND",
           data: data.data
         }
-      case "REQUEST_AUTH_EDIT_SESSION":
-        console.log("AUTH_JOIN_SESSION")
+      case "RESPONSE_AUTH_EDIT_SESSION": {
+        let m = JSON.parse(data.data)
+        if (m.result) {
+          message.success("申请操作" + props.server.name + "成功")
+        } else {
+          message.error("申请操作" + props.server.name + "拒绝")
+        }
+
+        term.setOption("disableStdin", !m.result)
+        emit("update:inputTerminal", m.result)
+
         return {
-          type: "AUTH_JOIN_SESSION",
+          type: "RESPONSE_AUTH_EDIT_SESSION",
           data: ""
         }
+      }
+      case "REQUEST_AUTH_EDIT_SESSION": {
+        let message = JSON.parse(data.data)
+        let key = `REQUEST_AUTH_EDIT_SESSION-${message.username}-${props.server.name}`;
+        notification.open({
+          message: '提示',
+          duration: 0,
+          description:
+              `${message.username}申请操作你终端${props.server.name}，是否允许？`,
+          btn: () =>
+              [h(
+                  Button,
+                  {
+                    type: 'primary',
+                    size: 'small',
+                    onClick: () => {
+                      socketSend.call(socket, JSON.stringify({
+                        event: "RESPONSE_AUTH_EDIT_SESSION",
+                        data: JSON.stringify({
+                          sessionId: message.sessionId,
+                          username: message.username,
+                          result: true
+                        })
+                      }));
+                      notification.close(key);
+                    },
+                  },
+                  {default: () => '同意'},
+              ),h(
+                  Button,
+                  {
+                    type: 'primary',
+                    size: 'small',
+                    style: 'margin-left: 8px',
+                    onClick: () => {
+                      notification.close(key);
+                    },
+                  },
+                  {default: () => '不同意'},
+              )],
+          key
+        });
+        return {
+          type: "REQUEST_AUTH_EDIT_SESSION",
+          data: ""
+        }
+      }
       case "JOIN_SESSION":
-        console.log("JOIN_SESSION")
+        message.warning(data.data + "正在观察你操作" + props.server.name)
+        emit("update:subSessionUsername", [...props.subSessionUsername, data.data])
         return {
           type: "JOIN_SESSION",
           data: ""
         }
       case "LEAVE_SESSION":
-        console.log("LEAVE_SESSION")
+        message.warning(data.data + "已经停止观察你操作" + props.server.name)
+        var removeIndex = props.subSessionUsername.indexOf(data.data)
+        emit("update:subSessionUsername", [...props.subSessionUsername.slice(0, removeIndex), ...props.subSessionUsername.slice(removeIndex + 1)])
         return {
           type: "LEAVE_SESSION",
+          data: ""
+        }
+      case "MASTER_CLOSE":
+        term.write("\r\n主会话已关闭\r\n")
+        return {
+          type: "MASTER_CLOSE",
           data: ""
         }
     }
@@ -315,6 +390,13 @@ const getHistory = async () => {
   } catch (e) {
     message.error(e.message)
   }
+}
+
+const requestAuthEditSession = () => {
+  message.info("正在申请操作" + props.server.name)
+  socketSend.call(socket, JSON.stringify({
+    event: "REQUEST_AUTH_EDIT_SESSION"
+  }));
 }
 
 /**
@@ -454,6 +536,7 @@ defineExpose({
   setDisableStdin: (value) => {
     term.setOption("disableStdin", value)
   },
+  requestAuthEditSession,
   setAutoComplete: (value) => {
     AutoComplete.value = value
   }

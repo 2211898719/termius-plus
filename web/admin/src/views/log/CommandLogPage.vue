@@ -34,7 +34,7 @@
   </page-container>
 
 
-  <a-drawer v-model:visible="creationVisible" title="日志详情" placement="right" width="60%"
+  <a-drawer v-model:visible="creationVisible" title="日志详情" placement="right" width="90%"
             size="large" >
     <p-term-log :log-id="creationState.id"></p-term-log>
   </a-drawer>

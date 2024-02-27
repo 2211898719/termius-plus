@@ -1,5 +1,6 @@
 package com.codeages.javaskeletonserver.biz.log.service.impl;
 
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
 import com.codeages.javaskeletonserver.biz.ErrorCode;
@@ -11,7 +12,6 @@ import com.codeages.javaskeletonserver.biz.log.repository.CommandLogRepository;
 import com.codeages.javaskeletonserver.biz.log.service.CommandLogService;
 import com.codeages.javaskeletonserver.biz.server.dto.ServerDto;
 import com.codeages.javaskeletonserver.biz.server.service.ServerService;
-import com.codeages.javaskeletonserver.biz.storage.entity.File;
 import com.codeages.javaskeletonserver.exception.AppException;
 import com.querydsl.core.BooleanBuilder;
 import org.apache.commons.text.StringSubstitutor;
@@ -21,6 +21,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import javax.validation.Validator;
+import java.util.Date;
 import java.util.Map;
 
 @Service
@@ -68,8 +69,9 @@ public class CommandLogServiceImpl implements CommandLogService {
 
     @Override
     public CommandLogDto create(CommandLogCreateParams createParams) {
+        String date = DateUtil.format(new Date(), "yyyyMMdd");
         //CommandData存储日志文件地址
-        String logFileName = fileDir + FileUtil.FILE_SEPARATOR + LOG_FILE_PARENT + FileUtil.FILE_SEPARATOR + LOG_FILE_NAME;
+        String logFileName = fileDir + FileUtil.FILE_SEPARATOR + LOG_FILE_PARENT + FileUtil.FILE_SEPARATOR + date + FileUtil.FILE_SEPARATOR + LOG_FILE_NAME;
         ServerDto serverDto = serverService.findById(createParams.getServerId());
         String filePath = StringSubstitutor.replace(
                 logFileName,

@@ -2,6 +2,7 @@ package com.codeages.javaskeletonserver.biz.server.ws.ssh;
 
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.IoUtil;
+import cn.hutool.core.lang.Pair;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -13,6 +14,7 @@ import com.codeages.javaskeletonserver.biz.log.service.CommandLogService;
 import com.codeages.javaskeletonserver.biz.server.dto.ServerDto;
 import com.codeages.javaskeletonserver.biz.server.service.ServerService;
 import com.codeages.javaskeletonserver.biz.user.dto.UserDto;
+import com.codeages.javaskeletonserver.biz.user.service.UserService;
 import com.codeages.javaskeletonserver.security.AuthTokenFilter;
 import lombok.Getter;
 import lombok.Setter;
@@ -52,9 +54,12 @@ public class SshHandler {
 
     private final CommandLogService commandLogService;
 
+    private final UserService userService;
+
     public SshHandler() {
         this.serverService = SpringUtil.getBean(ServerService.class);
         this.commandLogService = SpringUtil.getBean(CommandLogService.class);
+        this.userService = SpringUtil.getBean(UserService.class);
     }
 
     @OnOpen
@@ -66,12 +71,14 @@ public class SshHandler {
         // 为了防止内存泄漏，这里需要手动清理
         AuthTokenFilter.userIdThreadLocal.remove();
 
+        String username = userService.get(userId).map(UserDto::getUsername).orElse("");
+
         log.info("有连接加入,sessionId={}", session.getId());
 
         // 如果是主连接 0，就创建一个新的连接
         if (isMasterSession(masterSessionId)) {
             HandlerItem handlerItem = new HandlerItem(
-                    userId,
+                    userId, username,
                     serverId,
                     session,
                     serverService.createSSHClient(serverId, sessionId)
@@ -88,7 +95,7 @@ public class SshHandler {
                 return;
             }
 
-            handlerItem.addSubSession(session);
+            handlerItem.addSubSession(session, username);
         }
     }
 
@@ -114,13 +121,22 @@ public class SshHandler {
                 sendCommand(handlerItem, messageDto.getData());
                 break;
             case RESIZE:
-                ResizeDto resizeDto = JSONUtil.toBean(messageDto.getData(), ResizeDto.class);
-                handlerItem.reSize(
-                        resizeDto.getCols(),
-                        resizeDto.getRows(),
-                        resizeDto.getWidth(),
-                        resizeDto.getHeight()
-                );
+                //只有主连接才能调整窗口大小
+                if (isMasterSession(masterSessionId)) {
+                    ResizeDto resizeDto = JSONUtil.toBean(messageDto.getData(), ResizeDto.class);
+                    handlerItem.reSize(
+                            resizeDto.getCols(),
+                            resizeDto.getRows(),
+                            resizeDto.getWidth(),
+                            resizeDto.getHeight()
+                    );
+                }
+                break;
+            case REQUEST_AUTH_EDIT_SESSION:
+                handlerItem.reqAuthEditSession(session);
+                break;
+            case RESPONSE_AUTH_EDIT_SESSION:
+                handlerItem.handleResAuthEditSession(session, messageDto);
                 break;
             default:
                 log.error("未知事件：{}", messageDto.getEvent());
@@ -212,7 +228,7 @@ public class SshHandler {
         private UserDto userDto;
         @Getter
         private final String masterSessionId;
-        private final List<Session> sessions = new CopyOnWriteArrayList<>();
+        private final List<Pair<String, Session>> sessions = new CopyOnWriteArrayList<>();
         private final InputStream inputStream;
         private final OutputStream outputStream;
         private final net.schmizz.sshj.connection.channel.direct.Session openSession;
@@ -222,12 +238,11 @@ public class SshHandler {
         private final BufferedOutputStream logFileOutputStream;
 
         @SneakyThrows
-        HandlerItem(Long userId,
+        HandlerItem(Long userId, String username,
                     Long serverId,
                     javax.websocket.Session session,
                     SSHClient sshClient) {
-
-            this.sessions.add(session);
+            this.sessions.add(Pair.of(username, session));
             this.userId = userId;
             this.serverId = serverId;
 
@@ -289,6 +304,12 @@ public class SshHandler {
                 IoUtil.close(this.inputStream);
                 IoUtil.close(this.outputStream);
                 IoUtil.close(this.logFileOutputStream);
+                String message = JSONUtil.toJsonStr(new MessageDto(EventType.MASTER_CLOSE, "主连接已关闭"));
+
+                sessions.stream()
+                        .map(Pair::getValue)
+                        .filter(s -> s.isOpen() && !s.getId().equals(masterSessionId))
+                        .forEach(s -> sendBinary(s, message));
                 this.shell.close();
                 this.openSession.close();
             } catch (IOException e) {
@@ -297,23 +318,50 @@ public class SshHandler {
         }
 
         @SneakyThrows
-        public synchronized void addSubSession(javax.websocket.Session session) {
-            this.sessions.add(session);
+        public synchronized void addSubSession(javax.websocket.Session session, String username) {
+            this.sessions.add(Pair.of(username, session));
 
             //写入内存缓冲区中的数据到文件
             logFileOutputStream.flush();
 
             MessageDto messageDto = new MessageDto(EventType.COMMAND, FileUtil.readString(logFile, openSession.getRemoteCharset()));
-            String s = JSONUtil.toJsonStr(messageDto);
 
             //把之前的服务器上下文的数据发送给新的子连接
-            sendBinary(session, s);
+            sendBinary(session, JSONUtil.toJsonStr(messageDto));
+
+            //发送一个JOIN_SESSION事件，用于前端标识
+            MessageDto joinSessionMessageDto = new MessageDto(EventType.JOIN_SESSION, username);
+
+            sendMasterBinary(JSONUtil.toJsonStr(joinSessionMessageDto));
         }
 
         @SneakyThrows
-        public void removeSubSession(javax.websocket.Session session) {
-            this.sessions.remove(session);
+        public synchronized void removeSubSession(javax.websocket.Session session) {
+            log.info("有连接关闭,session:{}", sessions.size());
+            String username = null;
+            for (int i = 0; i < sessions.size(); i++) {
+                Pair<String, Session> currentSession = sessions.get(i);
+                if (currentSession.getValue() == session) {
+                    username = currentSession.getKey();
+                    sessions.remove(i);
+                    break;
+                }
+            }
+
+            log.info("有连接关闭,session:{}", sessions.size());
             IoUtil.close(session);
+
+            MessageDto joinSessionMessageDto = new MessageDto(EventType.LEAVE_SESSION, username);
+            sendMasterBinary(JSONUtil.toJsonStr(joinSessionMessageDto));
+        }
+
+        private void sendMasterBinary(String msg) {
+            for (Pair<String, Session> session : sessions) {
+                if (session.getValue().getId().equals(masterSessionId)) {
+                    sendBinary(session.getValue(), msg);
+                    break;
+                }
+            }
         }
 
         @Override
@@ -327,14 +375,40 @@ public class SshHandler {
                     MessageDto messageDto = new MessageDto(EventType.COMMAND, originData);
                     String s = JSONUtil.toJsonStr(messageDto);
                     logFileOutputStream.write(originData.getBytes());
-                    sessions.forEach(session -> sendBinary(session, s));
+                    sessions.forEach(session -> sendBinary(session.getValue(), s));
                 }
             } catch (Exception e) {
                 if (!this.openSession.isOpen()) {
                     return;
                 }
-                sessions.forEach(SshHandler.this::destroy);
+
+                sessions.stream().map(Pair::getValue).forEach(SshHandler.this::destroy);
             }
+        }
+
+        public void reqAuthEditSession(Session session) {
+            String username = sessions.stream()
+                                      .filter(s -> s.getValue().getId().equals(session.getId()))
+                                      .map(Pair::getKey)
+                                      .findFirst()
+                                      .orElse("");
+
+            AuthEditSessionDto authEditSessionDto = new AuthEditSessionDto(username, session.getId(), null);
+
+            String message = JSONUtil.toJsonStr(new MessageDto(
+                    EventType.REQUEST_AUTH_EDIT_SESSION,
+                    JSONUtil.toJsonStr(authEditSessionDto)
+            ));
+            sendMasterBinary(message);
+        }
+
+        public void handleResAuthEditSession(Session session, MessageDto messageDto) {
+            AuthEditSessionDto authEditSessionDto = JSONUtil.toBean(messageDto.getData(), AuthEditSessionDto.class);
+            sessions.stream()
+                    .filter(s -> s.getValue().getId().equals(authEditSessionDto.getSessionId()))
+                    .map(Pair::getValue)
+                    .findFirst()
+                    .ifPresent(subSession -> sendBinary(subSession, JSONUtil.toJsonStr(messageDto)));
         }
     }
 }
