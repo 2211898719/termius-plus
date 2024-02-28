@@ -1,10 +1,11 @@
 package com.codeages.javaskeletonserver.biz.server.service;
 
 import cn.hutool.core.lang.tree.Tree;
-import com.codeages.javaskeletonserver.biz.server.dto.*;
+import com.codeages.javaskeletonserver.biz.server.dto.ServerCreateParams;
+import com.codeages.javaskeletonserver.biz.server.dto.ServerDto;
+import com.codeages.javaskeletonserver.biz.server.dto.ServerUpdateParams;
+import com.codeages.javaskeletonserver.biz.server.dto.TreeSortParams;
 import net.schmizz.sshj.SSHClient;
-import net.schmizz.sshj.connection.ConnectionException;
-import net.schmizz.sshj.transport.TransportException;
 
 import java.net.Proxy;
 import java.util.List;
@@ -40,7 +41,9 @@ public interface ServerService {
     /**
      * 获取某个服务器某个用户的 history
      */
-    List<String> getHistory(Long serverId) ;
+    List<String> getHistory(Long serverId);
+
+    List<String> getMysqlHistory(Long serverId);
 }
 
 

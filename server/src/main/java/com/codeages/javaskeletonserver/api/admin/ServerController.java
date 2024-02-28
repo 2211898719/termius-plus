@@ -155,6 +155,11 @@ public class ServerController {
         return serverService.getHistory(serverId);
     }
 
+    @GetMapping("/{serverId}/mysqlHistory")
+    public List<String> getMysqlHistory(@PathVariable Long serverId) {
+        return serverService.getMysqlHistory(serverId);
+    }
+
 }
 
 

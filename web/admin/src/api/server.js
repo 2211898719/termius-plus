@@ -24,4 +24,7 @@ export const serverApi = {
     getHistory: async (serverId) => {
         return client.get(`/api-admin/server/${serverId}/history`);
     },
+    getMysqlHistory: async (serverId) => {
+        return client.get(`/api-admin/server/${serverId}/mysqlHistory`);
+    },
 }

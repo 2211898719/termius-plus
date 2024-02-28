@@ -82,7 +82,13 @@ let socketSend = null;
 let terminal = ref()
 let log = ref()
 let useSocket = null
-let history = ref([])
+let history = ref({
+  bash: [],
+  mysql: [],
+  currentType: "bash",
+  mysqlInit: false
+})
+
 let AutoComplete = useStorage('autoComp', false)
 watch(() => AutoComplete.value, async () => {
   if (AutoComplete.value) {
@@ -176,6 +182,17 @@ const getCommand = () => {
  */
 const getUnExecutedCommand = () => {
   let command = getCommand()
+
+  /**
+   * 如果进入了mysql模式，则获取mysql的历史命令
+   */
+  if (command.startsWith("mysql> ")) {
+    getMysqlHistory()
+    history.value.currentType = "mysql"
+    return command.substring("mysql> ".length)
+  }
+
+  history.value.currentType = "bash"
   const regex = /^.*?@.*?:.*?[#$]/
 
   if (regex.test(command)) {
@@ -184,6 +201,7 @@ const getUnExecutedCommand = () => {
 
   return ""
 }
+
 
 const initTerm = () => {
   term = new Terminal(options);
@@ -368,10 +386,12 @@ const initTerm = () => {
 
   getHistory();
 
-  setInterval(() => {
-    execCommand("")
+  onlyInterval = setInterval(() => {
+    execCommand("\u000b")
   }, 1000 * 60 * 5);
 }
+
+let onlyInterval = null;
 
 let channel = new BroadcastChannel("theme")
 channel.onmessage = (e) => {
@@ -386,7 +406,20 @@ channel.onmessage = (e) => {
 
 const getHistory = async () => {
   try {
-    history.value = _.reverse(await serverApi.getHistory(props.server.id));
+    history.value.bash = _.reverse(await serverApi.getHistory(props.server.id));
+  } catch (e) {
+    message.error(e.message)
+  }
+}
+
+const getMysqlHistory = async () => {
+  if (history.value.mysqlInit) {
+    return
+  }
+
+  history.value.mysqlInit = true
+  try {
+    history.value.mysql = _.reverse(await serverApi.getMysqlHistory(props.server.id));
   } catch (e) {
     message.error(e.message)
   }
@@ -408,7 +441,7 @@ const getCompleteCommand = () => {
   command = command.replace(/^\s+/, "")
   console.log("当前命令" + command)
   if (command) {
-    let find = history.value.find(item => item.startsWith(command))
+    let find = history.value[history.value.currentType].find(item => item.startsWith(command))
     if (find) {
       return find.substring(command.length)
     }
@@ -517,6 +550,9 @@ const close = () => {
   }
   if (terminal.value) {
     terminal.value.innerHTML = "";
+  }
+  if (onlyInterval) {
+    clearInterval(onlyInterval)
   }
 }
 

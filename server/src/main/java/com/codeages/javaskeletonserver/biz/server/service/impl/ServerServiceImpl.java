@@ -484,23 +484,40 @@ public class ServerServiceImpl implements ServerService {
     /**
      * 获取某个服务器root用户的 history
      */
-    @SneakyThrows
+
     @Override
     public List<String> getHistory(Long serverId) {
+        return getHistory(serverId, "bash");
+    }
+
+    @Override
+    public List<String> getMysqlHistory(Long serverId) {
+        return getHistory(serverId, "mysql").stream().map(s -> s.replace("\\040", " ")).collect(Collectors.toList());
+    }
+
+
+    private List<String> getHistory(Long serverId, String type) {
         ServerDto serverDto = findById(serverId);
         SSHClient sshClient = createSSHClient(serverId);
-        Session session = sshClient.startSession();
-        Session.Command cmd = session.exec("echo " + serverDto.getPassword() + " | sudo -S cat /root/.bash_history \n");
-        InputStream in = cmd.getInputStream();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-        StringBuilder output = new StringBuilder();
-        String line;
-        while ((line = reader.readLine()) != null) {
-            output.append(line).append("\n");
-        }
+        String originHistoryStr;
 
-        String originHistoryStr = output.toString();
-        if (StrUtil.isBlank(originHistoryStr)) {
+        try {
+            Session session = sshClient.startSession();
+            Session.Command cmd = session.exec("echo '" + serverDto.getPassword() + "' | sudo -S cat /root/." + type + "_history \n");
+            InputStream in = cmd.getInputStream();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+            StringBuilder output = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                output.append(line).append("\n");
+            }
+
+            originHistoryStr = output.toString();
+            if (StrUtil.isBlank(originHistoryStr)) {
+                return Collections.emptyList();
+            }
+        } catch (Exception e) {
+            log.error("获取服务器历史命令失败", e);
             return Collections.emptyList();
         }
 

@@ -261,7 +261,7 @@ public class SshHandler {
             //auto sudo
             ServerDto serverDto = serverService.findById(serverId);
             if (Boolean.TRUE.equals(serverDto.getAutoSudo()) && ObjectUtil.notEqual(serverDto.getUsername(), "root")) {
-                outputStream.write(("echo " + serverDto.getPassword() + " | sudo -S ls && sudo -i\n").getBytes());
+                outputStream.write(("echo '" + serverDto.getPassword() + "' | sudo -S ls && sudo -i\n").getBytes());
                 outputStream.flush();
             }
 
