@@ -10,10 +10,14 @@ import '@wangeditor/editor/dist/css/style.css'
 // import _ from 'lodash';
 // import  'resize-observer-polyfill';
 import 'shepherd.js/dist/css/shepherd.css';
+import SplitBox from '@headerless/split-box'
+import '@headerless/split-box/style.css'
+
 
 import { autoAnimatePlugin } from '@formkit/auto-animate/vue'
 
 const app = createApp(App);
+app.component('SplitBox', SplitBox)
 app.use(router);
 app.use(autoAnimatePlugin);
 bootAntDesignVue(app);

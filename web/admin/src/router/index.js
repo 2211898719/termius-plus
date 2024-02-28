@@ -67,6 +67,12 @@ let routes = [
           },
         ]
       },
+      {
+        path: '/split',
+        name: 'split',
+        meta: {title: '分屏开发', requiredAuth: false},
+        component: () => import('../components/p-split.vue'),
+      },
     ]
   },
   {
@@ -75,6 +81,7 @@ let routes = [
     meta: {title: '登录', requiredAuth: false},
     component: () => import('../views/server/LoginPage.vue'),
   },
+
 ]
 
 const router = createRouter({
