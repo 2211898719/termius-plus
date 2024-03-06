@@ -165,13 +165,17 @@ public class SshHandler {
     public void onError(javax.websocket.Session session, Throwable error) {
         log.error("发生错误：{}，Session ID： {}", error.getMessage(), session.getId());
 
+        String message = "发生错误：" + error.getMessage();
         if (error instanceof UserAuthException) {
-            sendBinary(session, "用户认证错误");
+            message = "用户认证错误";
         } else if (error instanceof ConnectException) {
-            sendBinary(session, "网络连接错误，检查ip和端口是否正确");
-        } else {
-            sendBinary(session, "发生错误：" + error.getMessage());
+            message = "网络连接错误，检查ip和端口是否正确";
         }
+
+        MessageDto messageDto = new MessageDto(EventType.COMMAND, message);
+        String s = JSONUtil.toJsonStr(messageDto);
+
+        sendBinary(session, s);
 
         error.printStackTrace();
     }
@@ -400,6 +404,10 @@ public class SshHandler {
                     JSONUtil.toJsonStr(authEditSessionDto)
             ));
             sendMasterBinary(message);
+        }
+
+        public boolean isOpen() {
+            return openSession.isOpen();
         }
 
         public void handleResAuthEditSession(Session session, MessageDto messageDto) {

@@ -53,9 +53,10 @@ const emit = defineEmits(['update:loading', 'update:subSessionUsername', 'update
 
 let frontColor = useStorage('frontColor', "#ffffff")
 let backColor = useStorage('backColor', "#000000")
+let AutoComplete = useStorage('autoComp', false)
 
 let options = {
-  rendererType: "dom", //渲染类型canvas或者dom
+  rendererType: AutoComplete.value ? "dom" : "canvas", //渲染类型canvas或者dom
   // rows: 123, //行数
   // cols: 321,// 设置之后会输入多行之后覆盖现象
   convertEol: true, //启用时，光标将设置为下一行的开头
@@ -89,7 +90,7 @@ let history = ref({
   mysqlInit: false
 })
 
-let AutoComplete = useStorage('autoComp', false)
+
 watch(() => AutoComplete.value, async () => {
   if (AutoComplete.value) {
     await getHistory()
@@ -123,20 +124,6 @@ const initSocket = () => {
 
   const host = window.location.host;
   useSocket = useWebSocket(wsProtocol + '://' + host + '/socket/ssh/' + authStore.session + '/' + props.server.id + '/' + props.masterSessionId, {
-    autoReconnect: {
-      /**
-       在代码的世界里追寻，重连五次，耐心勤。每次间隔五秒钟的等待，程序员的心绪，静静躁动。
-       连接断开，网络崩溃，错误信息满屏幕跳跃。但我不放弃，不言退缩，调试代码，寻找修复。
-       每次重连，希望重生，服务器响应，灵魂燃。逐渐恢复，网络连通，程序员的坚持，不曾停。
-       无声的代码，编织着梦，每次重连，是一次命运。虽然苦涩，却充满希望，程序员的诗，用心深。
-       五次的重连纪念，程序员的辛劳不言言。温柔的重连，坚韧中，代码世界，永不停。
-       */
-      retries: 5,
-      delay: 5000,
-      onFailed: (e) => {
-        emit("update:loading", false)
-      },
-    },
     onMessage: (w, e) => {
       emit("update:loading", false)
     },
@@ -357,11 +344,12 @@ const initTerm = () => {
   })
 
   term.onKey(e => {
+    console.log(e)
     if (!AutoComplete.value) {
       return
     }
 
-    if (e.domEvent.ctrlKey && e.domEvent.key === 'w') {
+    if (e.domEvent.ctrlKey && (e.domEvent.key === 'w' || e.domEvent.key === 'W')) {
       let command = getCompleteCommand()
       if (command) {
         execCommand(command)
@@ -384,14 +372,11 @@ const initTerm = () => {
     resizeTerminal(term);
   });
 
-  getHistory();
+  if (AutoComplete.value) {
+    getHistory();
+  }
 
-  onlyInterval = setInterval(() => {
-    execCommand("\u000b")
-  }, 1000 * 60 * 5);
 }
-
-let onlyInterval = null;
 
 let channel = new BroadcastChannel("theme")
 channel.onmessage = (e) => {
@@ -405,11 +390,11 @@ channel.onmessage = (e) => {
 }
 
 const getHistory = async () => {
-  try {
-    history.value.bash = _.reverse(await serverApi.getHistory(props.server.id));
-  } catch (e) {
-    message.error(e.message)
-  }
+  // try {
+  //   history.value.bash = _.reverse(await serverApi.getHistory(props.server.id));
+  // } catch (e) {
+  //   message.error(e.message)
+  // }
 }
 
 const getMysqlHistory = async () => {
@@ -550,9 +535,6 @@ const close = () => {
   }
   if (terminal.value) {
     terminal.value.innerHTML = "";
-  }
-  if (onlyInterval) {
-    clearInterval(onlyInterval)
   }
 }
 

@@ -46,12 +46,12 @@ let routes = [
         meta: { title: '服务器', icon: 'DesktopOutlined' },
         component:  () => import('../views/server/ServerPage.vue'),
       },
-      {
-        path: '/db',
-        name: 'db',
-        meta: { title: '数据库', icon: 'DatabaseOutlined' },
-        component:  () => import('../views/db/DbPage.vue'),
-      },
+      // {
+      //   path: '/db',
+      //   name: 'db',
+      //   meta: { title: '数据库', icon: 'DatabaseOutlined' },
+      //   component:  () => import('../views/db/DbPage.vue'),
+      // },
       {
         path: '/system',
         name: 'system',
@@ -66,13 +66,14 @@ let routes = [
             component: () => import('../views/log/CommandLogPage.vue'),
           },
         ]
-      },
-      {
-        path: '/split',
-        name: 'split',
-        meta: {title: '分屏开发', requiredAuth: false},
-        component: () => import('../components/p-split.vue'),
-      },
+      }
+      // ,
+      // {
+      //   path: '/split',
+      //   name: 'split',
+      //   meta: {title: '分屏开发', requiredAuth: false},
+      //   component: () => import('../components/p-split.vue'),
+      // },
     ]
   },
   {

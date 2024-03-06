@@ -27,5 +27,6 @@ public class ServerDto {
     private String remark;
     private Long proxyId;
     private ProxyDto proxy;
+    private Boolean keepAlive;
 }
 

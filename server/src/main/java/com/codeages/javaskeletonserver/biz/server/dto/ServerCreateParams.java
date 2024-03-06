@@ -22,6 +22,7 @@ public class ServerCreateParams {
     private Boolean autoSudo;
     private Boolean isGroup;
     private Long parentId;
+    private Boolean keepAlive;
     private String password;
     private String remark;
     private String key;

@@ -53,6 +53,7 @@ public class Server {
     private String username;
     private Boolean autoSudo;
     private Boolean isDb;
+    private Boolean keepAlive;
     private String dbPort;
     /**
      * 密钥

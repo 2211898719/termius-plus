@@ -2,6 +2,7 @@ const {defineConfig} = require('@vue/cli-service');
 const path = require('path');
 const appConfig = require('./src/config');
 const CopyWebpackPlugin = require('copy-webpack-plugin')
+const { codeInspectorPlugin } = require('code-inspector-plugin');
 
 module.exports = defineConfig({
     transpileDependencies: true,
@@ -34,6 +35,12 @@ module.exports = defineConfig({
             })
         config.resolve.alias
             .set('@shared', path.join(__dirname, '../shared'));
+
+        config.plugin('code-inspector-plugin').use(
+            codeInspectorPlugin({
+                bundler: 'webpack',
+            })
+        );
     },
     css: {
         loaderOptions: {

@@ -7,6 +7,12 @@ if [ ! -n "$1" ] ;then
     exit
 fi
 
+sudo sysctl -w kern.maxfiles=65535
+
+sudo sysctl -w kern.maxfilesperproc=65535
+
+ulimit -n 65536
+
 yarn build
 
 docker build -t registry.cn-hangzhou.aliyuncs.com/education-portal/termius-plus:front-$1 .

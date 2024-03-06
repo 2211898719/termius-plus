@@ -51,6 +51,7 @@
     "@vue/cli-plugin-router": "~5.0.0",
     "@vue/cli-service": "~5.0.0",
     "babel-plugin-import": "^1.13.3",
+    "code-inspector-plugin": "^0.9.2",
     "eslint": "^7.32.0",
     "eslint-plugin-vue": "^8.0.3",
     "less": "^4.0.0",

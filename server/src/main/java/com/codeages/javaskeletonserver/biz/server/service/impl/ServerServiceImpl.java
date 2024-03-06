@@ -318,6 +318,13 @@ public class ServerServiceImpl implements ServerService {
 
     }
 
+    /**
+     * 如果带有client sessionId 遇到可能需要二次验证的情况，会向前端发送获取验证码的消息
+     *
+     * @param id
+     * @param sessionId
+     * @return
+     */
     @Override
     @SneakyThrows
     public SSHClient createSSHClient(Long id, String sessionId) {
@@ -326,6 +333,9 @@ public class ServerServiceImpl implements ServerService {
         ssh.setTimeout(3600 * 1000);
         ssh.setConnectTimeout(3600 * 1000);
         ssh.getTransport().setTimeoutMs(0);
+        if (Boolean.TRUE.equals(server.getKeepAlive())) {
+            ssh.getConnection().getKeepAlive().setKeepAliveInterval(60);
+        }
         //设置sshj代理
         if (server.getProxy() != null) {
             ssh.setSocketFactory(new SocketFactory() {

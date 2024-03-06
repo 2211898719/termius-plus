@@ -23,6 +23,7 @@ public class ServerUpdateParams {
     private String password;
     private String key;
     private Boolean isDb;
+    private Boolean keepAlive;
     private String dbPort;
     private String remark;
     private Long proxyId;
