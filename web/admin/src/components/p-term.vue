@@ -60,7 +60,7 @@ let options = {
   // rows: 123, //行数
   // cols: 321,// 设置之后会输入多行之后覆盖现象
   convertEol: true, //启用时，光标将设置为下一行的开头
-  scrollback: 5000,//终端中的回滚量
+  scrollback: AutoComplete.value ? 5000 : 30000, //滚动缓冲区大小
   fontSize: 14, //字体大小
   height: "100%", //终端高度
   disableStdin: !!props.masterSessionId, //禁用输入
