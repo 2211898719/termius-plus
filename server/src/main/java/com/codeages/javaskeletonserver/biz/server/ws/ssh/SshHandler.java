@@ -232,6 +232,7 @@ public class SshHandler {
         private UserDto userDto;
         @Getter
         private final String masterSessionId;
+        private final javax.websocket.Session masterSession;
         private final List<Pair<String, Session>> sessions = new CopyOnWriteArrayList<>();
         private final InputStream inputStream;
         private final OutputStream outputStream;
@@ -251,6 +252,7 @@ public class SshHandler {
             this.serverId = serverId;
 
             this.masterSessionId = session.getId();
+            this.masterSession = session;
 
             sshClient.useCompression();
             net.schmizz.sshj.connection.channel.direct.Session shellSession = sshClient.startSession();
@@ -316,6 +318,11 @@ public class SshHandler {
                         .forEach(s -> sendBinary(s, message));
                 this.shell.close();
                 this.openSession.close();
+
+                sessions.stream()
+                        .map(Pair::getValue)
+                        .filter(s -> s.isOpen() && !s.getId().equals(masterSessionId))
+                        .forEach(IoUtil::close);
             } catch (IOException e) {
                 log.error("关闭连接失败：{}", e.getMessage());
             }
@@ -386,6 +393,8 @@ public class SshHandler {
                     return;
                 }
 
+                log.error("读取数据失败：{}", e.getMessage());
+
                 sessions.stream().map(Pair::getValue).forEach(SshHandler.this::destroy);
             }
         }
@@ -407,7 +416,7 @@ public class SshHandler {
         }
 
         public boolean isOpen() {
-            return openSession.isOpen();
+            return openSession.isOpen() && shell.isOpen() && masterSession.isOpen();
         }
 
         public void handleResAuthEditSession(Session session, MessageDto messageDto) {

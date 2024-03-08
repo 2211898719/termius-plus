@@ -39,6 +39,7 @@ public class ConnectTimeoutJob {
 
     @Scheduled(cron = "0 0/10 * * * ?")
     public void clearTimeOutSsh() {
+        log.info("开始清理超时的SSH连接");
         for (String k : ServerContext.SSH_POOL.keySet()) {
             SshHandler.HandlerItem v = ServerContext.SSH_POOL.get(k);
             if (!v.isOpen()) {
