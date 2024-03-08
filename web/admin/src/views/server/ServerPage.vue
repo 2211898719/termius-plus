@@ -1,5 +1,5 @@
 <script setup>
-import {createVNode, nextTick, onMounted, ref} from "vue";
+import {computed, createVNode, nextTick, onMounted, ref} from "vue";
 import Sortable from 'sortablejs';
 import _ from "lodash";
 import {Input, Modal} from "ant-design-vue";
@@ -12,12 +12,14 @@ import ServerContent from "@/views/server/ServerContent.vue";
 import SnippetListPage from "@/views/server/SnippetListPage.vue";
 import PortForwarderPage from "@/views/server/PortForwarderPage.vue";
 import CronJobPage from "@/views/server/CronJobPage.vue";
+import OsEnum from "@/enums/OsEnum";
+import {useStorage} from "@vueuse/core";
 
 let spinning = ref(false)
 
 let serverContentList = ref(null)
 
-let tagActiveKey = ref()
+let tagActiveKey = ref('server')
 
 let serverList = ref([])
 
@@ -46,7 +48,7 @@ const handleOpenServer = (item, masterSessionId = 0) => {
 }
 
 onMounted(() => {
-  return Sortable.create((document.getElementsByClassName('ant-tabs-nav-list')[0]), {
+  return Sortable.create((document.getElementsByClassName('sortable')[0]), {
     group: {
       name: 'shared',
       pull: 'clone',
@@ -125,13 +127,13 @@ let tags = ref([
         xmlns="http://www.w3.org/2000/svg" p-id="16226" width="200" height="200">
   <path
       d="M752 321.84l132.7-132.69c63.79 89.55 55.75 214.52-24.57 294.85-60 60-144.9 79.57-221.37 59.2L292.59 889.38a114.66 114.66 0 0 1-162.16 0 114.65 114.65 0 0 1 0-162.15l346.18-346.18c-20.37-76.47-0.78-161.38 59.21-221.36 80.32-80.33 205.3-88.37 294.85-24.6L698 267.79z m98.58 9.53l-45.2 45.2a75.48 75.48 0 0 1-106.75 0l-55.41-55.4a75.48 75.48 0 0 1 0-106.75l45.2-45.2a152.56 152.56 0 0 0-109.79 57c-31.67 39.2-39.46 92.71-26.48 141.41l9.67 36.29-377.34 377.36a38.23 38.23 0 0 0 0 54.05 38.21 38.21 0 0 0 54.05 0L615.89 458l36.29 9.67c48.7 13 102.22 5.2 141.42-26.48a152.61 152.61 0 0 0 57-109.82z"
-      fill="#949DA6" p-id="16227"></path>
+      fill="" p-id="16227"></path>
   <path
       d="M656.23 487.31L893 724.12a116.5 116.5 0 0 1 0 164.73 116.48 116.48 0 0 1-164.73 0L491.5 652z m-37.74 72.08l-54.91 54.91 219.64 219.64A38.83 38.83 0 0 0 838.13 779zM261.578 312.297l54.907-54.907L501.71 442.617l-54.906 54.907z"
-      fill="#949DA6" p-id="16228"></path>
+      fill="" p-id="16228"></path>
   <path
       d="M316.49 312.3l-77.22 15.44a75.48 75.48 0 0 1-84.18-44.28L96.85 147.57l54.91-54.91 135.89 58.24a75.48 75.48 0 0 1 44.28 84.18z m-61.05-90.7l-51.94-22.28 22.28 51.93 24.72-4.93z"
-      fill="#949DA6" p-id="16229"></path>
+      fill="" p-id="16229"></path>
 </svg>`
   ,
   `  <svg t="1696430996543" class="tags" viewBox="0 0 1024 1024" version="1.1"
@@ -183,6 +185,40 @@ const handleChangeTab = (item) => {
   })
 }
 
+const changeTab = (item) => {
+  tagActiveKey.value = item
+
+  let index = serverList.value.findIndex(e => e.operationId === item)
+  if (index === -1) {
+    return
+  }
+
+  nextTick(() => {
+    serverContentList.value[index].focus()
+    serverList.value[index].hot = false
+  })
+}
+
+const onServerHot = (server) => {
+  if (server.operationId === tagActiveKey.value) {
+    return
+  }
+
+  let index = serverList.value.findIndex(e => e.operationId === server.operationId)
+  if (index === -1) {
+    return
+  }
+
+  serverList.value[index].hot = true
+}
+
+let backColor = useStorage('backColor', "#000000")
+let frontColor = useStorage('frontColor', "#ffffff")
+
+let backColorRadialGradient = computed(() => {
+  return `radial-gradient(10px at 0px 0px, transparent 15px, ${backColor.value} 0px)`
+})
+
 
 </script>
 
@@ -217,13 +253,139 @@ const handleChangeTab = (item) => {
         <a-tab-pane class="setting-pane" tab="设置" key="setting" :closable="false" :forceRender="true">
           <setting-page></setting-page>
         </a-tab-pane>
-        <template v-for="server in serverList" :key="server.operationId">
-          <a-tab-pane>
-            <template v-slot:tab>
-              <a-dropdown :trigger="['contextmenu']" class="dropdown">
-                <div style="display: flex;justify-content: center;align-items: center;">
-                  <div style="line-height: 1px;" v-html="server.tag"></div>
-                  <div class="ml5">{{ server.name }}</div>
+
+        <template v-slot:renderTabBar>
+          <div class="tab-bar-group">
+            <div class="tab-bar" :class="{'tab-active-normal':tagActiveKey==='server'}" @click="changeTab('server')">
+              <div class="left">
+                <div class="tab-icon">
+                  <cloud-server-outlined/>
+                </div>
+                <div class="tab-title">
+                  服务器
+                </div>
+              </div>
+              <div class="right"></div>
+            </div>
+            <div class="tab-bar" :class="{'tab-active-normal':tagActiveKey==='proxy'}" @click="changeTab('proxy')">
+              <div class="left">
+                <div class="tab-icon">
+                  <svg class="icon"
+                       style="vertical-align: middle;fill: currentColor;overflow: hidden;"
+                       viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1877">
+                    <path
+                        d="M894.424364 729.008452c-53.43705-151.726633-194.117093-258.544451-354.425171-269.737374v-64.9912c87.777159-13.472849 155.219177-89.505523 155.219177-180.992167 0-100.968599-82.144882-183.113481-183.113481-183.113481s-183.113481 82.144882-183.113481 183.113481c0 91.487667 67.442018 167.518295 155.219177 180.992167v64.9912c-160.309102 11.1919-300.993239 118.007671-354.429265 269.728165-71.986521 2.539846-129.764436 61.880349-129.764435 134.475737 0 74.204026 60.365856 134.569882 134.569881 134.569882s134.569882-60.365856 134.569882-134.569882c0-56.175417-34.600029-104.409978-83.604117-124.537388 47.802726-125.075647 165.031661-212.908064 298.657031-223.73362v216.59299c-60.916395 12.8384-106.784048 66.997903-106.784048 131.679041 0 74.204026 60.365856 134.569882 134.569881 134.569882s134.569882-60.365856 134.569882-134.569882c0-64.603367-45.759183-118.709659-106.567108-131.630946v-216.640062c133.584438 10.82351 250.799046 98.622158 298.622238 223.657896-49.101301 20.082384-83.787288 68.36811-83.787288 124.613112 0 74.204026 60.365856 134.569882 134.569882 134.569882s134.569882-60.365856 134.569881-134.569882c0.001023-72.523757-57.662281-131.818211-129.548518-134.467551z m-681.057347 134.466528c0 43.435255-35.344996 78.780251-78.780251 78.780251s-78.780251-35.344996-78.780251-78.780251 35.344996-78.780251 78.780251-78.780251c3.151783 0 6.255471 0.206708 9.312087 0.569982 1.287319 0.277316 2.577708 0.459464 3.859911 0.553608 37.184901 6.288217 65.608254 38.71065 65.608253 77.656661z m171.412998-650.186246c0-70.214155 57.110719-127.32385 127.323851-127.32385s127.32385 57.110719 127.32385 127.32385c0 70.214155-57.110719 127.32385-127.32385 127.323851s-127.32385-57.109696-127.323851-127.323851z m205.996654 650.186246c0 43.435255-35.344996 78.780251-78.780251 78.780251-43.435255 0-78.780251-35.344996-78.780251-78.780251s35.344996-78.780251 78.780251-78.780251c43.434232 0 78.780251 35.343973 78.780251 78.780251z m298.627355 78.781274c-43.435255 0-78.780251-35.344996-78.780251-78.780251 0-39.041178 28.561499-71.529103 65.880453-77.706803a28.15627 28.15627 0 0 0 3.627621-0.510629 79.109756 79.109756 0 0 1 9.272177-0.563842c43.435255 0 78.780251 35.344996 78.780251 78.780251 0.002047 43.435255-35.343973 78.781274-78.780251 78.781274z"
+                        fill="" p-id="1878"></path>
+                  </svg>
+                </div>
+                <div class="tab-title">
+                  代理
+                </div>
+              </div>
+              <div class="right"></div>
+            </div>
+            <div class="tab-bar" :class="{'tab-active-normal':tagActiveKey==='portForwarder'}"
+                 @click="changeTab('portForwarder')">
+              <div class="left">
+                <div class="tab-icon">
+                  <svg class="icon" style=";vertical-align: middle;fill: currentColor;overflow: hidden;"
+                       viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="2316">
+                    <path
+                        d="M865.922728 583.211878c-16.276708 0-29.580712 13.246699-29.667693 29.727045l0 215.125569c0 17.992793-14.58723 32.637328-32.520671 32.637328L181.762717 860.70182c-17.935488 0-32.520671-14.645558-32.520671-32.637328L149.242046 292.155966c0-17.992793 14.586207-32.637328 32.520671-32.637328l291.230897 0c16.304338-0.029676 29.580712-13.363356 29.580712-29.724998 0-16.392342-13.276375-29.727045-29.610388-29.727045l-295.336402 0c-48.358381 0-87.721901 39.450501-87.721901 87.925538l0 544.205493c0 48.475038 39.36352 87.925538 87.721901 87.925538l630.239961 0c48.358381 0 87.720877-39.450501 87.720877-87.925538L895.588375 612.762915C895.501394 596.458577 882.19739 583.211878 865.922728 583.211878z"
+                        fill="" p-id="2317"></path>
+                    <path
+                        d="M930.818761 338.183256l0-0.318248L727.07645 133.511783l-6.435573-6.259564-0.814552 0.844228c-4.511757-2.532683-9.606799-3.873214-14.876826-3.873214-16.974603 0-30.774911 13.829983-30.774911 30.832216 0 5.298679 1.338485 10.393721 3.873214 14.907525l-0.903579 0.931209 141.845589 142.224212-145.573493 0.057305C436.396091 342.726735 378.197598 489.375723 361.049033 717.050096c0 17.004279 13.800307 30.832216 30.772864 30.832216 13.858636 0 25.620517-9.229199 29.464055-21.893636l1.397836-8.181333c18.022469-215.329207 60.470233-321.567833 251.839749-342.937536l144.466276 0L683.433464 510.804778l-5.502317 7.744381c-1.951445 4.104481-2.969635 9.112542-2.969635 13.654998 0 17.002232 13.799284 30.832216 30.772864 30.832216 4.832052 0 10.160407-1.164522 14.439874-3.37691L929.954067 350.740246c1.860371-1.305739 4.140297-4.52506 4.140297-6.970762C934.093341 341.323782 932.679132 339.488994 930.818761 338.183256z"
+                        fill="" p-id="2318"></path>
+                  </svg>
+                </div>
+                <div class="tab-title">
+                  端口转发
+                </div>
+              </div>
+              <div class="right"></div>
+            </div>
+            <div class="tab-bar" :class="{'tab-active-normal':tagActiveKey==='cronJob'}" @click="changeTab('cronJob')">
+              <div class="left">
+                <div class="tab-icon">
+                  <svg class="icon"
+                       style="vertical-align: middle;fill: currentColor;overflow: hidden;"
+                       viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="3172">
+                    <path
+                        d="M553 186.4v-84h204.8c22.5 0 41-18.4 41-41 0-22.5-18.4-41-41-41H266.2c-22.5 0-41 18.4-41 41 0 22.5 18.4 41 41 41H471v84C264 207 102.4 381.5 102.4 593.9c0 226.2 183.4 409.6 409.6 409.6s409.6-183.4 409.6-409.6c0-212.4-161.7-387-368.6-407.5z m-41 735.2c-180.7 0-327.7-147-327.7-327.7s147-327.7 327.7-327.7 327.7 147 327.7 327.7-147 327.7-327.7 327.7zM532.5 556.5V368.6c0-22.5-18.4-41-41-41s-41 18.4-41 41v204.8c0 0.3 0.1 0.5 0.1 0.7 0 2.4 0.3 4.9 0.7 7.3 0.2 0.9 0.5 1.7 0.8 2.6 0.5 1.7 0.9 3.5 1.6 5.2 0.2 0.5 0.5 1 0.8 1.5 2 4.2 4.5 8.2 8 11.6l173.8 173.8c15.9 15.9 42 15.9 57.9 0 15.9-15.9 15.9-42 0-57.9L532.5 556.5z"
+                        p-id="3173"></path>
+                  </svg>
+                </div>
+                <div class="tab-title">
+                  定时任务
+                </div>
+              </div>
+              <div class="right"></div>
+            </div>
+            <div class="tab-bar" :class="{'tab-active-normal':tagActiveKey==='snippet'}" @click="changeTab('snippet')">
+              <div class="left">
+                <div class="tab-icon">
+                  <svg class="icon"
+                       style="vertical-align: middle;fill: currentColor;overflow: hidden;"
+                       viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="4057">
+                    <path
+                        d="M896 346.8c-0.1 0 0 0 0 0 0-0.9-0.1-1.7-0.2-2.5 0-0.1 0-0.3-0.1-0.4-0.2-1.7-0.5-3.3-1-4.9-0.5-1.7-1-3.3-1.7-4.9v-0.1c-0.3-0.8-0.7-1.5-1.1-2.3v-0.1c-0.4-0.7-0.8-1.5-1.2-2.2-0.1-0.1-0.1-0.2-0.2-0.3-0.4-0.6-0.8-1.2-1.3-1.9-0.1-0.1-0.1-0.2-0.2-0.2-0.5-0.6-1-1.3-1.5-1.9-0.1-0.1-0.2-0.3-0.4-0.4-0.5-0.6-1-1.2-1.6-1.7l-0.1-0.1L637.3 74.5c-0.6-0.6-1.2-1.1-1.8-1.6-0.1-0.1-0.3-0.2-0.4-0.4-0.6-0.5-1.2-1-1.9-1.5-0.1 0-0.1-0.1-0.2-0.1-0.6-0.5-1.3-0.9-1.9-1.3-0.1-0.1-0.2-0.1-0.3-0.2-0.7-0.4-1.4-0.9-2.2-1.3-0.8-0.4-1.5-0.8-2.3-1.1h-0.1c-1.6-0.7-3.2-1.3-4.9-1.7-1.6-0.4-3.2-0.8-4.9-1-0.1 0-0.3 0-0.4-0.1-1.4-0.2-2.8-0.3-4.3-0.3H164c-19.9 0-36 16.1-36 36v823.3c0 19.9 16.1 36 36 36h696c19.9 0 36-16.1 36-36V348.6v-1.8zM647.8 186.9l125.4 125.6H647.8V186.9zM200 887.2V135.9h375.8v212.7c0 19.9 16.1 36 36 36H824v502.7H200z"
+                        fill="" p-id="4058"></path>
+                    <path
+                        d="M378.8 603.9l59.7-65.8c13.4-14.7 12.2-37.5-2.5-50.9-14.7-13.4-37.5-12.2-50.9 2.5l-80.8 89.1c-12.1 13.3-12.5 33.5-0.9 47.3l80.9 96.5c7.1 8.5 17.3 12.9 27.6 12.9 8.2 0 16.4-2.8 23.1-8.4 15.2-12.8 17.2-35.5 4.5-50.7l-60.7-72.5zM639 489.7c-13.4-14.7-36.1-15.8-50.9-2.5-14.7 13.4-15.8 36.1-2.5 50.9l59.7 65.8-60.7 72.4c-12.8 15.2-10.8 37.9 4.5 50.7 6.7 5.7 14.9 8.4 23.1 8.4 10.3 0 20.5-4.4 27.6-12.9l80.9-96.5c11.6-13.8 11.2-34-0.9-47.3l-80.8-89z"
+                        fill="" p-id="4059"></path>
+                  </svg>
+                </div>
+                <div class="tab-title">
+                  命令片段
+                </div>
+              </div>
+
+              <div class="right"></div>
+            </div>
+            <div class="tab-bar" :class="{'tab-active-normal':tagActiveKey==='setting'}" @click="changeTab('setting')">
+              <div class="left">
+                <div class="tab-icon">
+                  <setting-outlined/>
+                </div>
+                <div class="tab-title">
+                  设置
+                </div>
+              </div>
+
+              <div class="right"></div>
+            </div>
+            <div class="sortable">
+
+              <a-dropdown v-for="server in serverList" :key="server.operationId" :trigger="['contextmenu']"
+                          class="dropdown">
+
+                <div class="tab-bar" :class="{'tab-active':tagActiveKey===server.operationId}"
+                     @click="changeTab(server.operationId)">
+                  <div class="left">
+                    <a-badge :dot="server.hot" :offset="[-9,-2]">
+                      <div class="tab-icon">
+                        <template v-if="server.tag">
+                          <div v-html="server.tag">
+
+                          </div>
+                        </template>
+                        <template v-else>
+                          <ApartmentOutlined v-if="server.isGroup" class="icon-server"/>
+                          <hdd-outlined v-else-if="server.os===OsEnum.LINUX.value" class="icon-server"
+                                        style="color: #E45F2B;"/>
+                          <windows-outlined v-else-if="server.os===OsEnum.WINDOWS.value" class="icon-server"
+                                            style="color: #E45F2B;"/>
+                        </template>
+
+                      </div>
+                    </a-badge>
+                    <div class="tab-title" :title="server.name">
+                      {{ server.name }}
+                    </div>
+                  </div>
+                  <div class="right tab-close">
+                    <close-outlined @click.stop="onCloseServer(server.operationId)"/>
+                  </div>
                 </div>
                 <template #overlay>
                   <a-menu>
@@ -233,7 +395,7 @@ const handleChangeTab = (item) => {
                       </template>
                       复制
                     </a-menu-item>
-                    <a-menu-item key="5" @click="handleRename(server)">
+                    <a-menu-item key="5" >
                       <a-sub-menu key="7">
                         <template #icon>
                           <tag-outlined/>
@@ -256,11 +418,18 @@ const handleChangeTab = (item) => {
                   </a-menu>
                 </template>
               </a-dropdown>
-            </template>
+
+            </div>
+          </div>
+        </template>
+
+        <template v-for="server in serverList" :key="server.operationId">
+          <a-tab-pane class="ant-tabs-tab-dot">
+
             <template v-slot:closeIcon>
               <close-outlined @click="onCloseServer(server.operationId)"/>
             </template>
-                <server-content ref="serverContentList" :server="server" ></server-content>
+            <server-content ref="serverContentList" :server="server" @hot="onServerHot"></server-content>
           </a-tab-pane>
         </template>
       </a-tabs>
@@ -277,9 +446,9 @@ const handleChangeTab = (item) => {
 
 
 :deep(.tags) {
-  width: 20px;
-  height: 20px;
-  font-size: 20px;
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
 }
 
 
@@ -301,6 +470,157 @@ const handleChangeTab = (item) => {
 
 .server-content-tabs {
   height: @height;
+}
+
+
+:deep(.ant-tabs-left > .ant-tabs-content-holder > .ant-tabs-content > .ant-tabs-tabpane, .ant-tabs-left > div > .ant-tabs-content-holder > .ant-tabs-content > .ant-tabs-tabpane) {
+  padding: 0;
+}
+
+:deep(.ant-tabs-content-holder) {
+  border: none;
+  z-index: 100;
+}
+
+.tab-bar-group {
+  background-color: #282B3B;
+  padding: 10px;
+  overflow: auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 10+ */
+  //设置滚动条隐藏
+  ::-webkit-scrollbar {
+    display: none;
+  }
+
+
+  .sortable {
+    display: flex;
+    flex-direction: column;
+  }
+
+
+  .tab-bar {
+    margin: 4px 0;
+    padding: 8px 16px;
+    cursor: pointer;
+    color: #fff;
+    text-align: left;
+    width: 180px;
+    display: flex;
+    border-radius: 8px;
+    justify-content: space-between;
+
+    .left {
+      width: 83%;
+      display: flex;
+
+      .tab-icon {
+        margin-right: 8px;
+        font-size: 18px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: #fff;
+        fill: #fff;
+        width: 20px;
+        height: 100%;
+
+        svg {
+          width: 18px;
+          height: 18px;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+        }
+
+        .tags {
+          width: 18px;
+          height: 18px;
+          font-size: 18px;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+        }
+      }
+
+      .tab-title {
+        //单行省略
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+
+      }
+    }
+
+    .right {
+
+    }
+
+
+    //悬停时出现关闭按钮
+    &:hover .tab-close {
+      display: flex !important;
+    }
+
+    .tab-close {
+      font-size: 12px;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      padding: 0 4px;
+      border-radius: 4px;
+
+      &:hover {
+        background-color: #404460;
+      }
+    }
+
+    &:hover {
+      color: #1890ff;
+      background-color: #32364A;
+      border-radius: 8px;
+    }
+  }
+
+  //普通的
+  .tab-active-normal {
+    color: #1890ff;
+    background-color: #32364A;
+    position: relative;
+    z-index: 100;
+  }
+
+  .tab-active {
+    color: v-bind(frontColor) !important;
+    background-color: v-bind(backColor) !important;
+    position: relative;
+    z-index: 100;
+  }
+
+  .tab-active:after {
+    content: "";
+    display: block;
+    height: 103%;
+    width: 30px;
+    position: absolute;
+    right: -24px;
+    top: -15px;
+    background: v-bind(backColorRadialGradient);
+  }
+
+  .tab-active:before {
+    content: "";
+    display: block;
+    height: 103%;
+    width: 30px;
+    position: absolute;
+    right: -24px;
+    top: 14px;
+    background: v-bind(backColorRadialGradient);
+    transform: rotateX(180deg);
+  }
+
 }
 
 :deep(.ant-tabs-tab-with-remove) {

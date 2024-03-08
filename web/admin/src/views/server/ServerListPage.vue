@@ -384,7 +384,7 @@ defineExpose({
   <div class="server-root">
     <div class="server-pane">
       <a-space direction="vertical" size="middle" style="width: 100%;">
-        <a-card :bodyStyle="{padding:'12px 12px'}">
+        <a-card :bodyStyle="{padding:'12px 12px'}" style="border:none">
           <div style="display: flex;justify-content: space-between">
             <a-breadcrumb>
               <a-breadcrumb-item v-for="item in groupBreadcrumb" :key="item.id" @click="handleDblclick(item)">

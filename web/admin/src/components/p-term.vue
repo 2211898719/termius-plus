@@ -49,7 +49,7 @@ let props = defineProps({
   }
 });
 
-const emit = defineEmits(['update:loading', 'update:subSessionUsername', 'update:inputTerminal'])
+const emit = defineEmits(['update:loading', 'update:subSessionUsername', 'update:inputTerminal', 'hot'])
 
 let frontColor = useStorage('frontColor', "#ffffff")
 let backColor = useStorage('backColor', "#000000")
@@ -205,9 +205,9 @@ const initTerm = () => {
 
   function preprocessEvent(event) {
     let data = JSON.parse(event.data);
-    console.log("event.data", data)
     switch (data.event) {
       case "COMMAND":
+        emit("hot", props.server)
         return {
           type: "COMMAND",
           data: data.data

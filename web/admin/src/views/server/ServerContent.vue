@@ -13,6 +13,11 @@ import {useShepherd} from 'vue-shepherd'
 import OsEnum from "@/enums/OsEnum";
 import PRdp from "@/components/p-rdp.vue";
 
+const emit = defineEmits(['hot'])
+
+const onHot = (server) => {
+  emit('hot', server)
+}
 
 let searchLinuxDoc = ref(JSON.parse(JSON.stringify(linuxDoc)))
 
@@ -265,6 +270,7 @@ onMounted(() => {
 });
 
 
+
 </script>
 
 <template>
@@ -310,7 +316,7 @@ onMounted(() => {
       <template #front>
         <a-spin :spinning="pTermLoading">
           <div :class="{'ssh-content':true}">
-            <a-card :title="server.masterUserInfo?('观察'+server.masterUserInfo.username)+'的终端':'终端'" :body-style="{background:backColor}">
+            <a-card :title="server.masterUserInfo?('观察'+server.masterUserInfo.username)+'的终端':'终端'" :body-style="{background:backColor}"  style="border:none">
               <template #extra>
                 <div>
                   <a-avatar-group :max-count="2" :max-style="{ color: '#f56a00', backgroundColor: '#fde3cf' }">
@@ -402,6 +408,7 @@ onMounted(() => {
                       <p-term v-model:loading="pTermLoading" class="ssh" :server="server"
                               :master-session-id="server.masterSessionId"
                               ref="PTermRef"
+                              @hot="onHot"
                               v-model:inputTerminal="inputTerm"
                               v-model:sub-session-username="subSessionUsername"></p-term>
                     </span>
