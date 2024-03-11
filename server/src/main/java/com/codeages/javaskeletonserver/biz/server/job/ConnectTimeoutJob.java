@@ -31,7 +31,7 @@ public class ConnectTimeoutJob {
                     log.error("关闭sftp连接失败", e);
                 }
                 ServerContext.SFTP_POOL.remove(k);
-                log.info("SFTP连接已失效：{}", k);
+                log.info("SFTP连接已失效了：{}", k);
             }
         }
      }
