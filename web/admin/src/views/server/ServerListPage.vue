@@ -13,6 +13,7 @@ import Sortable from "sortablejs";
 import _ from "lodash";
 import PEnumSelect from "@/components/p-enum-select.vue";
 import OsEnum from "@/enums/OsEnum";
+import {getSurname} from "../../utils/nameUtil";
 
 let termiusStyleColumn = ref(Math.floor(window.innerWidth / 300));
 
@@ -415,8 +416,8 @@ defineExpose({
                             <double-right-outlined/>
                           </div>
                         </template>
-                        <a-avatar class="avatar">
-                          {{ item.onlyConnect[0].user.username }}
+                        <a-avatar class="avatar" :title="item.onlyConnect[0].user.username">
+                          {{ getSurname(item.onlyConnect[0].user.username) }}
                         </a-avatar>
                       </a-popover>
                       <a>

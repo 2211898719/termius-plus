@@ -1,5 +1,5 @@
 <script setup>
-import {computed, createVNode, nextTick, onMounted, ref} from "vue";
+import {computed, createVNode, getCurrentInstance, h, nextTick, onMounted, ref, render} from "vue";
 import Sortable from 'sortablejs';
 import _ from "lodash";
 import {Input, Modal} from "ant-design-vue";
@@ -14,6 +14,7 @@ import PortForwarderPage from "@/views/server/PortForwarderPage.vue";
 import CronJobPage from "@/views/server/CronJobPage.vue";
 import OsEnum from "@/enums/OsEnum";
 import {useStorage} from "@vueuse/core";
+import {GoldenLayout} from "golden-layout";
 
 let spinning = ref(false)
 
@@ -45,6 +46,10 @@ const handleOpenServer = (item, masterSessionId = 0) => {
 
   serverList.value.push(copyItem)
   tagActiveKey.value = copyItem.operationId
+
+  nextTick(() => {
+    renderLayout(copyItem)
+  })
 }
 
 onMounted(() => {
@@ -181,7 +186,7 @@ const handleChangeTab = (item) => {
   }
 
   nextTick(() => {
-    serverContentList.value[index].focus()
+    // serverContentList.value[index].focus()
   })
 }
 
@@ -194,8 +199,8 @@ const changeTab = (item) => {
   }
 
   nextTick(() => {
-    serverContentList.value[index].focus()
-    serverList.value[index].hot = false
+    // serverContentList.value[index].focus()
+    // serverList.value[index].hot = false
   })
 }
 
@@ -219,6 +224,93 @@ let backColorRadialGradient = computed(() => {
   return `radial-gradient(10px at 0px 0px, transparent 15px, ${backColor.value} 0px)`
 })
 
+
+let layoutContainer = ref([])
+let tabBarRef = ref([])
+
+const componentIns = getCurrentInstance();
+
+class termComponent {
+  rootElement;
+
+  constructor(container, state) {
+    this.rootElement = container.element;
+    let pTerm = h(ServerContent, state)
+    pTerm.appContext = componentIns.appContext
+    this.rootElement.appendChild(this.vNode2dom(pTerm));
+  }
+
+  vNode2dom(vNode) {
+    let domEl = document.createElement("div");
+    render(vNode, domEl);
+    return domEl.firstElementChild;
+  }
+}
+
+let goldenLayoutArr = []
+
+const resizeObserver = new ResizeObserver(() => {
+  goldenLayoutArr.forEach(e => {
+    e.updateRootSize()
+  });
+});
+
+resizeObserver.observe(document.body);
+
+const renderLayout = (server) => {
+  let el = layoutContainer.value[layoutContainer.value.length - 1]
+  const goldenLayout = new GoldenLayout(el);
+
+  goldenLayout.registerComponentConstructor('termComponent', termComponent);
+
+
+  let newItemConfig = {
+    title: server.name,
+    type: 'component',
+    componentType: 'termComponent',
+    componentState: {
+      server: server
+    }
+  };
+
+  goldenLayout.loadLayout({
+    header: {
+      show: true,
+      popout: false,
+      maximise: false,
+      close: "关闭",
+    },
+    root: {
+      type: 'row',
+      content: [
+        {
+          title: server.name,
+          type: 'component',
+          componentType: 'termComponent',
+          componentState: {
+            server: server
+          }
+        }
+      ]
+    }
+  });
+
+  goldenLayoutArr.forEach(e => {
+    e.newDragSource(tabBarRef.value[tabBarRef.value.length - 1], () => newItemConfig);
+  })
+
+  goldenLayoutArr.push(goldenLayout)
+
+  goldenLayout.on('stackCreated', function (stack) {
+
+    // Add the colorDropdown to the header
+    // stack.header.controlsContainer.prepend( colorDropdown );
+
+    console.log(stack)
+
+  });
+
+}
 
 </script>
 
@@ -355,11 +447,10 @@ let backColorRadialGradient = computed(() => {
               <div class="right"></div>
             </div>
             <div class="sortable">
-
               <a-dropdown v-for="server in serverList" :key="server.operationId" :trigger="['contextmenu']"
                           class="dropdown">
 
-                <div class="tab-bar" :class="{'tab-active':tagActiveKey===server.operationId}"
+                <div ref="tabBarRef" class="tab-bar" :class="{'tab-active':tagActiveKey===server.operationId}"
                      @click="changeTab(server.operationId)">
                   <div class="left">
                     <a-badge :dot="server.hot" :offset="[-9,-2]">
@@ -425,11 +516,12 @@ let backColorRadialGradient = computed(() => {
 
         <template v-for="server in serverList" :key="server.operationId">
           <a-tab-pane class="ant-tabs-tab-dot">
-
             <template v-slot:closeIcon>
               <close-outlined @click="onCloseServer(server.operationId)"/>
             </template>
-            <server-content ref="serverContentList" :server="server" @hot="onServerHot"></server-content>
+            <div ref="layoutContainer" class="layoutContainer">
+
+            </div>
           </a-tab-pane>
         </template>
       </a-tabs>
@@ -438,7 +530,14 @@ let backColorRadialGradient = computed(() => {
   </div>
 </template>
 
+<style lang="less">
+@import 'golden-layout/dist/less/goldenlayout-base.less';
+@import 'golden-layout/dist/less/themes/goldenlayout-dark-theme.less';
+
+</style>
+
 <style scoped lang="less">
+
 
 :deep(.ant-card-extra) {
   display: flex;
@@ -479,7 +578,7 @@ let backColorRadialGradient = computed(() => {
 
 :deep(.ant-tabs-content-holder) {
   border: none;
-  z-index: 100;
+  //z-index: 100;
 }
 
 .tab-bar-group {
@@ -626,6 +725,15 @@ let backColorRadialGradient = computed(() => {
 :deep(.ant-tabs-tab-with-remove) {
   display: flex;
   justify-content: space-between;
+}
+
+.layoutContainer {
+  height: @height;
+}
+
+:deep(.lm_header .lm_tab .lm_title){
+  white-space: nowrap;
+  max-width: 100px;
 }
 
 </style>

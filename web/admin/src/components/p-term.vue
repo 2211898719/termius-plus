@@ -3,7 +3,7 @@ import "xterm/css/xterm.css";
 import Terminal from '../utils/zmodem.js';
 // import {Terminal} from "xterm";
 import {FitAddon} from "xterm-addon-fit";
-import {h, nextTick, onBeforeUnmount, onMounted, ref, watch} from "vue";
+import {computed, h, nextTick, onBeforeUnmount, onMounted, ref, watch} from "vue";
 import _ from "lodash";
 import {useStorage, useWebSocket} from "@vueuse/core";
 import {SearchAddon} from "xterm-addon-search";
@@ -63,7 +63,7 @@ let options = {
   scrollback: AutoComplete.value ? 5000 : 30000, //滚动缓冲区大小
   fontSize: 14, //字体大小
   height: "100%", //终端高度
-  disableStdin: !!props.masterSessionId, //禁用输入
+  disableStdin: false, //禁用输入
   // cursorStyle: "block", //光标样式
   cursorBlink: true, //光标闪烁
   fastScrollModifier: "alt", //快速滚动时要使用的修饰符
@@ -105,7 +105,25 @@ onMounted(() => {
   initSocket();
 });
 
+
+watch(() => authStore.session, () => {
+  initSocket();
+})
+
+
+let currentServer = computed(() => {
+  if (typeof props.server === "string") {
+    return JSON.parse(props.server)
+  }
+
+  return props.server
+})
+
 const initSocket = () => {
+  if (!authStore.session || !currentServer.value.id ) {
+    return
+  }
+
   if (socket) {
     useSocket.close();
   }
@@ -123,7 +141,7 @@ const initSocket = () => {
   }
 
   const host = window.location.host;
-  useSocket = useWebSocket(wsProtocol + '://' + host + '/socket/ssh/' + authStore.session + '/' + props.server.id + '/' + props.masterSessionId, {
+  useSocket = useWebSocket(wsProtocol + '://' + host + '/socket/ssh/' + authStore.session + '/' + currentServer.value.id + '/' + props.masterSessionId, {
     onMessage: (w, e) => {
       emit("update:loading", false)
     },
@@ -207,7 +225,7 @@ const initTerm = () => {
     let data = JSON.parse(event.data);
     switch (data.event) {
       case "COMMAND":
-        emit("hot", props.server)
+        emit("hot", currentServer.value)
         return {
           type: "COMMAND",
           data: data.data
@@ -215,9 +233,9 @@ const initTerm = () => {
       case "RESPONSE_AUTH_EDIT_SESSION": {
         let m = JSON.parse(data.data)
         if (m.result) {
-          message.success("申请操作" + props.server.name + "成功")
+          message.success("申请操作" + currentServer.value.name + "成功")
         } else {
-          message.error("申请操作" + props.server.name + "拒绝")
+          message.error("申请操作" + currentServer.value.name + "拒绝")
         }
 
         term.setOption("disableStdin", !m.result)
@@ -230,12 +248,12 @@ const initTerm = () => {
       }
       case "REQUEST_AUTH_EDIT_SESSION": {
         let message = JSON.parse(data.data)
-        let key = `REQUEST_AUTH_EDIT_SESSION-${message.username}-${props.server.name}`;
+        let key = `REQUEST_AUTH_EDIT_SESSION-${message.username}-${currentServer.value.name}`;
         notification.open({
           message: '提示',
           duration: 0,
           description:
-              `${message.username}申请操作你终端${props.server.name}，是否允许？`,
+              `${message.username}申请操作你终端${currentServer.value.name}，是否允许？`,
           btn: () =>
               [h(
                   Button,
@@ -275,14 +293,14 @@ const initTerm = () => {
         }
       }
       case "JOIN_SESSION":
-        message.warning(data.data + "正在观察你操作" + props.server.name)
+        message.warning(data.data + "正在观察你操作" + currentServer.value.name)
         emit("update:subSessionUsername", [...props.subSessionUsername, data.data])
         return {
           type: "JOIN_SESSION",
           data: ""
         }
       case "LEAVE_SESSION":
-        message.warning(data.data + "已经停止观察你操作" + props.server.name)
+        message.warning(data.data + "已经停止观察你操作" + currentServer.value.name)
         var removeIndex = props.subSessionUsername.indexOf(data.data)
         emit("update:subSessionUsername", [...props.subSessionUsername.slice(0, removeIndex), ...props.subSessionUsername.slice(removeIndex + 1)])
         return {
@@ -344,7 +362,7 @@ const initTerm = () => {
   })
 
   term.onKey(e => {
-    console.log(e)
+    return;
     if (!AutoComplete.value) {
       return
     }
@@ -404,14 +422,14 @@ const getMysqlHistory = async () => {
 
   history.value.mysqlInit = true
   try {
-    history.value.mysql = _.reverse(await serverApi.getMysqlHistory(props.server.id));
+    history.value.mysql = _.reverse(await serverApi.getMysqlHistory(currentServer.value.id));
   } catch (e) {
     message.error(e.message)
   }
 }
 
 const requestAuthEditSession = () => {
-  message.info("正在申请操作" + props.server.name)
+  message.info("正在申请操作" + currentServer.value.name)
   socketSend.call(socket, JSON.stringify({
     event: "REQUEST_AUTH_EDIT_SESSION"
   }));
@@ -565,12 +583,17 @@ defineExpose({
 
 
 <template>
-  <div ref="log">
+  <div class="log" ref="log">
     <div class="console" ref="terminal"></div>
   </div>
 </template>
 
 <style lang="less" scoped>
+.log{
+  width: 100%;
+  height: 100%;
+  background-color: #fff;
+}
 .console {
   width: 100%;
   height: 100%;

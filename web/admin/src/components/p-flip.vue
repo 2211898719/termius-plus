@@ -40,11 +40,12 @@ defineExpose({
 
 .flip-container {
   perspective: 1000px;
+  height: 100%;
 }
 
 .flipper {
   width: 100%;
-  height: @height;
+  height: 100%;
   overflow: hidden;
   position: relative;
   transform-style: preserve-3d;
@@ -60,7 +61,7 @@ defineExpose({
 
 .front {
   width: 100%;
-  height: auto;
+  height: 100%;
   overflow: hidden;
   transform: rotateY(0deg);
   transform-origin: calc(50%) calc(50%);
@@ -69,7 +70,7 @@ defineExpose({
 
 .back {
   width: 100%;
-  //height: 600px;
+  height: 100%;
   //overflow: hidden;
   transform: rotateY(-180deg);
   transform-origin: calc(50%) calc(50%);
