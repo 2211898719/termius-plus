@@ -67,13 +67,6 @@ let routes = [
           },
         ]
       }
-      // ,
-      // {
-      //   path: '/split',
-      //   name: 'split',
-      //   meta: {title: '分屏开发', requiredAuth: false},
-      //   component: () => import('../components/p-split.vue'),
-      // },
     ]
   },
   {

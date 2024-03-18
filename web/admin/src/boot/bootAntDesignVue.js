@@ -1,5 +1,4 @@
 import '@ant-design-vue/pro-layout/dist/style.less';
-// import 'ant-design-vue/dist/antd.css';
 
 import ProLayout, {PageContainer} from '@ant-design-vue/pro-layout';
 import {

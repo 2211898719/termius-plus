@@ -1,267 +1,136 @@
 <script setup>
-import {ref} from "vue";
-import PSplitBoxTree from "@/components/p-split-box-tree.vue";
+import {h, onMounted, render} from "vue";
+import {GoldenLayout} from "golden-layout";
+import PTerm from "@/components/p-term.vue";
 
+class MyComponent {
+  rootElement;
 
-let tabSortAnimationTime = ref(200);
-
-let tabData = ref([
-  {
-    name: 'first1',
-    content: 'first1',
-    children: [
-      {
-        name: 'first1-1',
-        content: 'first1-1'
-      },
-      {
-        name: 'first1-2',
-        content: 'first1-2'
-      }
-    ]
-  },
-  {
-    name: 'first2',
-    content: 'first2'
-  },
-  {
-    name: 'first3',
-    content: 'first3'
-  },
-  {
-    name: 'first4',
-    content: 'first4'
+  constructor(container) {
+    this.rootElement = container.element;
+    let pTerm = h(PTerm, {server: {id: 79}})
+    this.rootElement.appendChild(vNode2dom(pTerm));
+    this.resizeWithContainerAutomatically = true;
   }
-]);
-
-let activeName = ref('first1');
-
-const handleChangeActiveName = (val) => {
-  activeName.value = val;
 }
 
 
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~tab拖拽~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-let currentDragIndex = ref(null);
-
-const dragStart = (item, index) => {
-  currentDragIndex.value = index;
-  console.log('dragStart', item);
+function vNode2dom(vNode) {
+  let domEl = document.createElement("div");
+  render(vNode, domEl);
+  return domEl.firstElementChild;
 }
 
-
-const dragOver = _.throttle(
-    (item, index) => {
-      if (currentDragIndex.value === null) return;
-      const dragItem = tabData.value[currentDragIndex.value];
-      tabData.value.splice(currentDragIndex.value, 1);
-      tabData.value.splice(index, 0, dragItem);
-      currentDragIndex.value = index;
-    },
-    tabSortAnimationTime.value,
-    {leading: true, trailing: false}
-);
-
-let dragContentOverSet = new Set();
-let endTargetItem = null;
-
-
-const dragContentOver = _.throttle((e, item) => {
-      console.log('dragContentOver', item, e.target);
-      //根据在元素上的位置上下左右分屏添加一个.drag-mask-xxx样式 中间20%的区域区分上下
-      const {clientX, clientY} = e;
-      const {left, top, width, height} = e.target.getBoundingClientRect();
-      const x = clientX - left;
-      const y = clientY - top;
-      const xPercent = x / width;
-      const yPercent = y / height;
-      e.target.classList.remove('drag-mask-left', 'drag-mask-right', 'drag-mask-top', 'drag-mask-bottom');
-      if (xPercent < 0.3) {
-        e.target.classList.add('drag-mask-left');
-        item.dragFlag = 'left';
-      } else if (xPercent > 0.7) {
-        e.target.classList.add('drag-mask-right');
-        item.dragFlag = 'right';
-      } else if (yPercent < 0.3) {
-        e.target.classList.add('drag-mask-top');
-        item.dragFlag = 'top';
-      } else if (yPercent > 0.7) {
-        e.target.classList.add('drag-mask-bottom');
-        item.dragFlag = 'bottom';
-      }
-      dragContentOverSet.add(e.target);
-      endTargetItem = item;
-    },
-    tabSortAnimationTime.value,
-    {leading: true, trailing: false}
-);
-
-const dragEnd = () => {
-  //没有拖拽的目标，不做任何操作
-  if (!endTargetItem) {
-    return;
-  }
-
-  const dragItem = tabData.value[currentDragIndex.value];
-  //如果拖拽的目标是自己，不做任何操作
-  if (endTargetItem === dragItem) {
-    return;
-  }
-
-  //根据endTargetItem 和 dragItem 的位置关系，进行分屏操作
-  if (endTargetItem.children) {
-    endTargetItem.children.push(dragItem);
-  } else {
-    //根据dragFlag计算layout和children中的顺序
-    let newEndItem = JSON.parse(JSON.stringify(endTargetItem));
-    if (endTargetItem.dragFlag === 'left') {
-      endTargetItem.layout = 'flex-row';
-      endTargetItem.children = [dragItem, newEndItem];
-    } else if (endTargetItem.dragFlag === 'right') {
-      endTargetItem.layout = 'flex-row';
-      endTargetItem.children = [newEndItem, dragItem];
-    } else if (endTargetItem.dragFlag === 'top') {
-      endTargetItem.layout = 'flex-col';
-      endTargetItem.children = [dragItem, newEndItem];
-    } else if (endTargetItem.dragFlag === 'bottom') {
-      endTargetItem.layout = 'flex-col';
-      endTargetItem.children = [newEndItem, dragItem];
+onMounted(() => {
+  const myLayout = {
+    root: {
+      type: 'row',
+      content: [
+        {
+          title: 'My Component 1',
+          type: 'component',
+          componentType: 'MyComponent',
+          width: 50,
+        },
+        {
+          title: 'My Component 2',
+          type: 'component',
+          componentType: 'MyComponent',
+          componentState: {text: 'Component 2'}
+        }
+      ]
     }
+  };
 
-    endTargetItem.name = endTargetItem.name + '-'+dragItem.name;
-  }
+  const menuContainerElement = document.querySelector('#menuContainer');
+  const addMenuItemElement = document.querySelector('#addMenuItem');
+  const dragMenuItem = document.querySelector('#dragMenuItem');
+  const layoutElement = document.querySelector('#layoutContainer');
 
-  console.log('dragEnd', tabData.value);
-
-  endTargetItem.dragFlag = null;
-  //善后工作
-  endTargetItem = null;
-  currentDragIndex.value = null;
-  dragContentOverSet.forEach((item) => {
-    item.classList.remove('drag-mask-left', 'drag-mask-right', 'drag-mask-top', 'drag-mask-bottom');
+  addMenuItemElement.addEventListener('click', (event) => {
+    goldenLayout.addComponent('MyComponent', undefined, 'Added Component');
   });
-}
 
-/**
- * 嵌套的split-box组件可以视为一个n叉树，每个节点都是一个split-box组件,拖拽操作就是在这个树上进行的
- */
+  const goldenLayout = new GoldenLayout(layoutElement);
 
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  goldenLayout.registerComponentConstructor('MyComponent', MyComponent);
+
+  var newItemConfig = {
+    title: "11111",
+    type: 'component',
+    componentType: 'MyComponent',
+    componentState: {text: "3333"}
+  };
+
+  goldenLayout.newDragSource(dragMenuItem, () => newItemConfig);
+
+  goldenLayout.loadLayout(myLayout);
+})
+
 </script>
 
 <template>
-  <div class="split">
-    <div class="navigation" v-auto-animate="{ duration: tabSortAnimationTime }">
-      <div draggable="true"
-           v-for="(item, index) in tabData"
-           :key="item.name"
-           @dragstart="dragStart(item,index)"
-           @dragover.prevent="dragOver(item,index)"
-           @dragend="dragEnd()"
-           :class="{item:true,active:activeName===item.name}"
-           @click="handleChangeActiveName(item.name)">
-        {{ item.name }}
-      </div>
-    </div>
-    <div class="content">
-      <div v-for="item in tabData" :key="item.name"
-           :class="{'content-item':true,'content-item-active':activeName===item.name}">
-        <p-split-box-tree @dragContentOver="dragContentOver" :tree="item"></p-split-box-tree>
-      </div>
-    </div>
+  <div id="wrapper" class="wrapper">
+    <ul id="menuContainer">
+      <li id="addMenuItem">Add another component</li>
+      <li id="dragMenuItem">dragMenuItem another component</li>
+    </ul>
+    <div id="layoutContainer"></div>
   </div>
 </template>
 
-<style scoped lang="less">
-.split {
+<style lang="less">
+@import 'golden-layout/dist/less/goldenlayout-base.less';
+@import 'golden-layout/dist/less/themes/goldenlayout-dark-theme.less';
+
+.wrapper {
+  height: calc(100vh - 100px) !important;
+}
+
+h2 {
+  font: 14px Arial, sans-serif;
+  color: #fff;
+  padding: 10px;
+  text-align: center;
+}
+
+html, body {
+  height: 100%;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  list-style-type: none;
+}
+
+#wrapper {
   display: flex;
+  height: 100%
+}
 
+#menuContainer {
+  flex: 0 0 auto;
+  margin-right: 3px;
+}
 
-  .navigation {
-    .item {
-      background-color: #f50000;
-      padding: 10px;
-      margin: 10px;
-      cursor: pointer;
-    }
+#menuContainer li {
+  border-bottom: 1px solid #000;
+  border-top: 1px solid #333;
+  cursor: pointer;
+  padding: 10px 10px;
+  color: #BBB;
+  background: #1a1a1a;
+  font: 12px Arial, sans-serif;
+}
 
-    .active {
-      background-color: #3fff02;
-    }
-  }
+#menuContainer li:hover {
+  background: #111;
+  color: #CCC;
+}
 
-  .content {
-    background-color: #1daa6c;
-    position: relative;
-    pointer-events: auto;
-
-    .title {
-      background-color: #f50000;
-      padding: 10px;
-      margin: 10px;
-      //抓手
-      cursor: grab;
-    }
-
-    &-item {
-      height: 0;
-      overflow: hidden;
-
-      &-active {
-        height: auto;
-      }
-    }
-
-  }
-
-
-  //拖拽分屏预览大小蒙层
-  .drag-mask-left:after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: 50%;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 999;
-  }
-
-  .drag-mask-right:after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 50%;
-    right: 0;
-    bottom: 0;
-    width: 50%;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 999;
-  }
-
-  .drag-mask-top:after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 50%;
-    height: 50%;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 999;
-  }
-
-  .drag-mask-bottom:after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: 50%;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 999;
-  }
+#layoutContainer {
+  flex: 1 1 auto;
+  height: 100%;
 }
 </style>

@@ -13,7 +13,6 @@ import 'shepherd.js/dist/css/shepherd.css';
 import SplitBox from '@headerless/split-box'
 import '@headerless/split-box/style.css'
 
-
 import { autoAnimatePlugin } from '@formkit/auto-animate/vue'
 
 const app = createApp(App);

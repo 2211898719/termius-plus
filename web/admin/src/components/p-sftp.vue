@@ -1,5 +1,5 @@
 <script setup>
-import {computed, createVNode, defineExpose, defineProps, nextTick, onUnmounted, ref, watch} from "vue";
+import {computed, createVNode, defineExpose, defineProps, nextTick, onMounted, onUnmounted, ref, watch} from "vue";
 import {sftpApi} from "@/api/sftp";
 import {message, Modal} from "ant-design-vue";
 import fileIcon from "@/assets/file-icon/dir.png";
@@ -390,11 +390,24 @@ const startEditPath = () => {
   })
 }
 
+let width = ref("16.6%")
+
+let sftpRootEl = ref(null)
+
+onMounted(() => {
+  //监测sftpRootEl的大小变化
+  const observer = new ResizeObserver(() => {
+    width.value = `${100 / Math.floor(sftpRootEl.value.clientWidth / 100)}%`
+  })
+
+  observer.observe(sftpRootEl.value)
+})
+
 
 </script>
 
 <template>
-  <div class="sftp-root">
+  <div ref="sftpRootEl" class="sftp-root">
     <a-spin v-model:spinning="spinning" :tip="spinTip">
       <a-card :bordered="false" :hoverable="false">
         <template v-slot:title>
@@ -430,7 +443,7 @@ const startEditPath = () => {
           </div>
         </template>
         <div ref="parent" style="overflow: hidden">
-          <a-card-grid :bordered="false" :hoverable="false" v-for="(file,index) in currentPageData" :key="file.name"
+          <a-card-grid :style="{width: width}" :bordered="false" :hoverable="false" v-for="(file,index) in currentPageData" :key="file.name"
                        @click="handleClickFile(file)" :title="file.name">
             <a-dropdown :trigger="['contextmenu']">
               <div>
@@ -532,56 +545,14 @@ const startEditPath = () => {
     align-items: center
   }
 
-  min-height: @height;
+  //min-height: @height;
 
   :deep(.ant-card-body) {
     margin-top: 24px;
-    height: calc(@height - 180px);
+    //height: calc(@height - 180px);
     overflow: scroll;
   }
 
-  //根据屏幕尺寸调整列数
-  //大于2000px 7列
-  @media screen and (min-width: 2000px) and (max-width: 3000px) {
-    :deep(.ant-card-grid) {
-      width: calc(100% / 8) !important;
-    }
-  }
-
-  //大于1500px 6列
-  @media screen and (min-width: 1500px) and (max-width: 2000px) {
-    :deep(.ant-card-grid) {
-      width: calc(100% / 7) !important;
-    }
-  }
-
-  //大于1200px 5列
-  @media screen and (min-width: 1200px) and (max-width: 1500px) {
-    :deep(.ant-card-grid) {
-      width: calc(100% / 6) !important;
-    }
-  }
-
-  //大于1000px 4列
-  @media screen and (min-width: 1000px) and (max-width: 1200px) {
-    :deep(.ant-card-grid) {
-      width: calc(100% / 5) !important;
-    }
-  }
-
-  //大于800px 3列
-  @media screen and (min-width: 800px) and (max-width: 1000px) {
-    :deep(.ant-card-grid) {
-      width: calc(100% / 4) !important;
-    }
-  }
-
-  //再小就是2列
-  @media screen and (max-width: 800px) {
-    :deep(.ant-card-grid) {
-      width: calc(100% / 3) !important;
-    }
-  }
 
   :deep(.ant-card-grid) {
     box-shadow: none;

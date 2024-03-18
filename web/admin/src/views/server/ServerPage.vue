@@ -1,5 +1,5 @@
 <script setup>
-import {computed, createVNode, nextTick, onMounted, ref} from "vue";
+import {computed, createVNode, getCurrentInstance, h, nextTick, onMounted, ref, render, watch} from "vue";
 import Sortable from 'sortablejs';
 import _ from "lodash";
 import {Input, Modal} from "ant-design-vue";
@@ -14,6 +14,7 @@ import PortForwarderPage from "@/views/server/PortForwarderPage.vue";
 import CronJobPage from "@/views/server/CronJobPage.vue";
 import OsEnum from "@/enums/OsEnum";
 import {useStorage} from "@vueuse/core";
+import {ComponentItem, GoldenLayout} from "golden-layout";
 
 let spinning = ref(false)
 
@@ -45,6 +46,10 @@ const handleOpenServer = (item, masterSessionId = 0) => {
 
   serverList.value.push(copyItem)
   tagActiveKey.value = copyItem.operationId
+
+  nextTick(() => {
+    renderLayout(copyItem)
+  })
 }
 
 onMounted(() => {
@@ -69,7 +74,8 @@ const onCloseServer = (item) => {
   }
 
   nextTick(() => {
-    serverContentList.value[index].close()
+    goldenLayoutArr[item].destroy()
+    delete goldenLayoutArr[item]
   })
 
   _.remove(serverList.value, i => i.operationId === item)
@@ -174,29 +180,9 @@ const proxyCreation = () => {
   proxyListRef.value.proxyCreation()
 }
 
-const handleChangeTab = (item) => {
-  let index = serverList.value.findIndex(e => e.operationId === item)
-  if (index === -1) {
-    return
-  }
-
-  nextTick(() => {
-    serverContentList.value[index].focus()
-  })
-}
 
 const changeTab = (item) => {
   tagActiveKey.value = item
-
-  let index = serverList.value.findIndex(e => e.operationId === item)
-  if (index === -1) {
-    return
-  }
-
-  nextTick(() => {
-    serverContentList.value[index].focus()
-    serverList.value[index].hot = false
-  })
 }
 
 const onServerHot = (server) => {
@@ -220,6 +206,148 @@ let backColorRadialGradient = computed(() => {
 })
 
 
+let layoutContainer = ref([])
+let tabBarRef = ref([])
+
+const componentIns = getCurrentInstance();
+
+class termComponent {
+  rootElement;
+  pTerm;
+
+  constructor(container, state) {
+    this.rootElement = container.element;
+    this.pTerm = h(ServerContent, {...state, onHot: onServerHot})
+    this.pTerm.appContext = componentIns.appContext
+    this.rootElement.appendChild(this.vNode2dom(this.pTerm));
+  }
+
+  close() {
+    this.pTerm.component.exposed.close()
+  }
+
+  vNode2dom(vNode) {
+    let domEl = document.createElement("div");
+    render(vNode, domEl);
+    return domEl.firstElementChild;
+  }
+}
+
+let goldenLayoutArr = {}
+
+const resizeObserver = new ResizeObserver(() => {
+  Object.keys(goldenLayoutArr).map(e => goldenLayoutArr[e]).forEach(e => {
+    e.updateRootSize()
+  });
+});
+
+resizeObserver.observe(document.body);
+
+const renderLayout = (server) => {
+  let el = layoutContainer.value[layoutContainer.value.length - 1]
+  const goldenLayout = new GoldenLayout(el);
+
+  goldenLayout.registerComponentConstructor('termComponent', termComponent);
+  goldenLayout.loadLayout({
+    header: {
+      show: true,
+      popout: false,
+      maximise: false,
+      close: "关闭",
+    },
+
+    root: {
+      type: 'row',
+      content: [
+        {
+          title: server.name,
+          type: 'component',
+          componentType: 'termComponent',
+          componentState: {
+            server: server
+          }
+        }
+      ]
+    }
+  });
+
+  goldenLayout.on("itemDestroyed", (item) => {
+    //是我吗自己的组件,需要调用组件的close方法
+    if (item.target instanceof ComponentItem) {
+      item.target.component.close()
+    }
+
+    nextTick(() => {
+      //没有rootItem就关闭标签
+      if (!goldenLayout.rootItem) {
+        onCloseServer(server.operationId)
+      }
+    })
+  })
+
+  // goldenLayout.on( 'stateChanged', function( stack ){
+  //  stack.target.header.controlsContainerElement.prepend(
+  //
+  //  )
+  // })
+
+
+  goldenLayoutArr[server.operationId] = goldenLayout
+}
+
+
+watch(() => tagActiveKey.value, (val) => {
+  let index = serverList.value.findIndex(e => e.operationId === val)
+  if (index === -1) {
+    return
+  }
+
+  nextTick(() => {
+    let current = goldenLayoutArr[tagActiveKey.value];
+
+    //清除掉其他面板的拖拽源
+    Object.keys(goldenLayoutArr).forEach(k => {
+      let e = goldenLayoutArr[k];
+        if (Array.isArray(e.dragSources)) {
+          e.dragSources.forEach(dragSource => {
+            e.removeDragSource(dragSource)
+          })
+
+          e.dragSources = []
+        }
+    })
+
+    current.dragSources = []
+
+    for (let i = 0; i < tabBarRef.value.length; i++) {
+      if (i !== index) {
+        current.dragSources.push(
+            current.newDragSource(tabBarRef.value[i], () => {
+              return {
+                title: serverList.value[i].name,
+                type: 'component',
+                componentType: 'termComponent',
+                componentState: {
+                  server: {
+                    ...serverList.value[i],
+                    operationId: val
+                  }
+                }
+              }
+            })
+        );
+      }
+    }
+
+
+    current.updateRootSize()
+
+    // serverContentList.value[index].focus()
+    serverList.value[index].hot = false
+  })
+
+})
+
 </script>
 
 <template>
@@ -231,7 +359,6 @@ let backColorRadialGradient = computed(() => {
               :tabBarGutter="8"
               :hideAdd="true"
               v-model:activeKey="tagActiveKey"
-              @change="handleChangeTab"
               :tab-position="'left'">
 
         <a-tab-pane tab="服务器" class="server-pane" key="server" :closable="false">
@@ -355,11 +482,10 @@ let backColorRadialGradient = computed(() => {
               <div class="right"></div>
             </div>
             <div class="sortable">
-
               <a-dropdown v-for="server in serverList" :key="server.operationId" :trigger="['contextmenu']"
                           class="dropdown">
 
-                <div class="tab-bar" :class="{'tab-active':tagActiveKey===server.operationId}"
+                <div ref="tabBarRef" class="tab-bar" :class="{'tab-active':tagActiveKey===server.operationId}"
                      @click="changeTab(server.operationId)">
                   <div class="left">
                     <a-badge :dot="server.hot" :offset="[-9,-2]">
@@ -425,11 +551,12 @@ let backColorRadialGradient = computed(() => {
 
         <template v-for="server in serverList" :key="server.operationId">
           <a-tab-pane class="ant-tabs-tab-dot">
-
             <template v-slot:closeIcon>
               <close-outlined @click="onCloseServer(server.operationId)"/>
             </template>
-            <server-content ref="serverContentList" :server="server" @hot="onServerHot"></server-content>
+            <div ref="layoutContainer" class="layoutContainer">
+
+            </div>
           </a-tab-pane>
         </template>
       </a-tabs>
@@ -438,7 +565,14 @@ let backColorRadialGradient = computed(() => {
   </div>
 </template>
 
+<style lang="less">
+@import 'golden-layout/dist/less/goldenlayout-base.less';
+@import 'golden-layout/dist/less/themes/goldenlayout-dark-theme.less';
+
+</style>
+
 <style scoped lang="less">
+
 
 :deep(.ant-card-extra) {
   display: flex;
@@ -448,7 +582,7 @@ let backColorRadialGradient = computed(() => {
 :deep(.tags) {
   width: 18px;
   height: 18px;
-  font-size: 18px;
+  font-size: 16px;
 }
 
 
@@ -479,7 +613,7 @@ let backColorRadialGradient = computed(() => {
 
 :deep(.ant-tabs-content-holder) {
   border: none;
-  z-index: 100;
+  //z-index: 100;
 }
 
 .tab-bar-group {
@@ -537,7 +671,7 @@ let backColorRadialGradient = computed(() => {
         .tags {
           width: 18px;
           height: 18px;
-          font-size: 18px;
+          font-size: 17px;
           display: flex;
           justify-content: center;
           align-items: center;
@@ -626,6 +760,15 @@ let backColorRadialGradient = computed(() => {
 :deep(.ant-tabs-tab-with-remove) {
   display: flex;
   justify-content: space-between;
+}
+
+.layoutContainer {
+  height: @height;
+}
+
+:deep(.lm_header .lm_tab .lm_title){
+  white-space: nowrap;
+  max-width: 100px;
 }
 
 </style>

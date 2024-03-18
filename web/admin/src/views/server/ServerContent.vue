@@ -6,7 +6,6 @@ import {defineExpose, defineProps, nextTick, onMounted, ref} from "vue";
 import {commandApi} from "@/api/command";
 import PTerm from "@/components/p-term.vue";
 import "@/components/VueDragSplit/style.css";
-import VueDragSplit from "@/components/VueDragSplit/index.vue";
 import linuxDoc from "@/assets/linux-doc.json";
 import {useStorage} from "@vueuse/core";
 import {useShepherd} from 'vue-shepherd'
@@ -314,117 +313,91 @@ onMounted(() => {
         </div>
       </template>
       <template #front>
-        <a-spin :spinning="pTermLoading">
+        <a-spin :spinning="pTermLoading" style="height: 100%">
           <div :class="{'ssh-content':true}">
-            <a-card :title="server.masterUserInfo?('观察'+server.masterUserInfo.username)+'的终端':'终端'" :body-style="{background:backColor}"  style="border:none">
-              <template #extra>
-                <div>
-                  <a-avatar-group :max-count="2" :max-style="{ color: '#f56a00', backgroundColor: '#fde3cf' }">
-                    <a-avatar v-for="username in subSessionUsername" :key="username" style="background-color: #1890ff">
-                      {{ username }}
-                    </a-avatar>
-                  </a-avatar-group>
-                </div>
-                <div ref="CompChangeEl">
-                  <a-popover title="提示">
-                    <template #content>
-                      <p>根据history提示最接近的命令</p>
-                      <p>ctrl+w补全命令</p>
-                    </template>
-                    <a-button type="link" @click="handleChangeComp" :class="{green:autoComp,center:true}">
-                      <template v-slot:icon>
-                        <svg class="tags"
-                             style="vertical-align: middle;fill: currentColor;overflow: hidden;"
-                             viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1494">
-                          <path d="M512 512m-512 0a512 512 0 1 0 1024 0 512 512 0 1 0-1024 0Z"
-                                p-id="1495"></path>
-                          <path d="M651.2 672.7h-548l269.6-321.4h548z" fill="#FFFFFF" p-id="1496"></path>
-                          <path
-                              d="M662.4 696.7H51.7l309.9-369.3h610.7L662.4 696.7z m-507.8-48H640l229.4-273.3H384L154.6 648.7z"
-                              p-id="1497"></path>
-                          <path d="M512 512m-48.2 0a48.2 48.2 0 1 0 96.4 0 48.2 48.2 0 1 0-96.4 0Z"
-                                p-id="1498"></path>
-                          <path
-                              d="M512 584.2c-39.8 0-72.2-32.4-72.2-72.2s32.4-72.2 72.2-72.2 72.2 32.4 72.2 72.2-32.4 72.2-72.2 72.2z m0-96.4c-13.4 0-24.2 10.9-24.2 24.2 0 13.4 10.9 24.2 24.2 24.2 13.4 0 24.2-10.9 24.2-24.2 0-13.4-10.8-24.2-24.2-24.2z"
-                              p-id="1499"></path>
-                        </svg>
-                      </template>
-                    </a-button>
-                  </a-popover>
-                </div>
-                <div ref="SftpChangeEl">
-                  <a-button type="link"
-                            :class="{green:sftpEnable,center:true}" @click="changeSftpEnable">
-                    <template v-slot:icon>
-                      <svg t="1696435355552" class="tags" viewBox="0 0 1024 1024" version="1.1"
-                           xmlns="http://www.w3.org/2000/svg" p-id="19507" width="200" height="200">
-                        <path
-                            d="M972.8 249.856h-14.336l-0.512-108.032c0-25.6-20.992-45.568-46.08-45.568l-413.184 2.56h-3.584l-23.552-25.088c-9.728-10.24-23.04-16.384-37.376-16.384l-381.952-0.512C24.064 56.832 1.536 79.36 1.024 107.52L0 914.432c0 13.824 5.12 26.624 14.848 36.352 9.728 9.728 22.528 14.848 36.352 15.36l921.088 1.024c28.16 0 51.2-22.528 51.2-51.2l0.512-614.912c0-28.16-23.04-50.688-51.2-51.2z m-105.984-61.44l0.512 61.44-232.96-0.512-55.296-59.392 287.744-1.536zM921.088 865.28L102.4 864.256 108.032 158.72l303.616 0.512 162.816 176.128c9.728 10.24 23.04 16.384 37.376 16.384l310.272 0.512-1.024 513.024z"
-                            p-id="19508"></path>
-                        <path
-                            d="M531.968 441.344c-9.216 1.536-17.408 7.168-22.528 15.36-9.728 15.872-6.144 36.864 8.192 48.128l28.16 22.016-183.808 1.024c-18.432 0-33.28 16.384-33.28 35.84s15.36 35.328 33.792 35.328l284.16-1.536c18.432 0 33.28-16.384 33.28-35.84 0-9.728-4.096-18.944-10.752-25.6-1.536-2.048-3.584-4.096-5.632-5.632l-106.496-82.944c-7.168-5.632-15.872-7.68-25.088-6.144zM647.168 639.488l-283.648 2.048c-18.432 0-33.28 16.384-33.28 35.84 0 9.728 4.096 18.944 10.752 25.6 1.536 2.048 3.584 4.096 5.632 5.632l106.496 82.944c5.632 4.608 12.8 6.656 19.968 6.656 11.264 0 21.504-6.144 27.648-15.872 4.608-7.68 6.656-16.896 5.12-25.6-1.536-9.216-6.144-17.408-13.312-22.528l-28.16-22.016 183.808-1.024c18.432 0 33.28-16.384 33.28-35.84-1.024-19.968-15.872-35.84-34.304-35.84z"
-                            p-id="19509"></path>
-                      </svg>
-                    </template>
-                  </a-button>
-                </div>
-                <div class="center-name">{{ server.name }}</div>
-                <div ref="reloadEl">
-                  <a-button type="link" @click="reloadServer">
-                    <template v-slot:icon>
-                      <reload-outlined/>
-                    </template>
-                  </a-button>
-                </div>
-              </template>
+<!--            <a-card :title="server.masterUserInfo?('观察'+server.masterUserInfo.username)+'的终端':'终端'" :body-style="{background:backColor}"  style="border:none">-->
+<!--              <template #extra>-->
+<!--                <div>-->
+<!--                  <a-avatar-group :max-count="2" :max-style="{ color: '#f56a00', backgroundColor: '#fde3cf' }">-->
+<!--                    <a-avatar :title="username" v-for="username in subSessionUsername" :key="username"-->
+<!--                              style="background-color: #1890ff">-->
+<!--                      {{ getSurname(username) }}-->
+<!--                    </a-avatar>-->
+<!--                  </a-avatar-group>-->
+<!--                </div>-->
+<!--                <div ref="CompChangeEl">-->
+<!--                  <a-popover title="提示">-->
+<!--                    <template #content>-->
+<!--                      <p>根据history提示最接近的命令</p>-->
+<!--                      <p>ctrl+w补全命令</p>-->
+<!--                    </template>-->
+<!--                    <a-button type="link" @click="handleChangeComp" :class="{green:autoComp,center:true}">-->
+<!--                      <template v-slot:icon>-->
+<!--                        <svg class="tags"-->
+<!--                             style="vertical-align: middle;fill: currentColor;overflow: hidden;"-->
+<!--                             viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1494">-->
+<!--                          <path d="M512 512m-512 0a512 512 0 1 0 1024 0 512 512 0 1 0-1024 0Z"-->
+<!--                                p-id="1495"></path>-->
+<!--                          <path d="M651.2 672.7h-548l269.6-321.4h548z" fill="#FFFFFF" p-id="1496"></path>-->
+<!--                          <path-->
+<!--                              d="M662.4 696.7H51.7l309.9-369.3h610.7L662.4 696.7z m-507.8-48H640l229.4-273.3H384L154.6 648.7z"-->
+<!--                              p-id="1497"></path>-->
+<!--                          <path d="M512 512m-48.2 0a48.2 48.2 0 1 0 96.4 0 48.2 48.2 0 1 0-96.4 0Z"-->
+<!--                                p-id="1498"></path>-->
+<!--                          <path-->
+<!--                              d="M512 584.2c-39.8 0-72.2-32.4-72.2-72.2s32.4-72.2 72.2-72.2 72.2 32.4 72.2 72.2-32.4 72.2-72.2 72.2z m0-96.4c-13.4 0-24.2 10.9-24.2 24.2 0 13.4 10.9 24.2 24.2 24.2 13.4 0 24.2-10.9 24.2-24.2 0-13.4-10.8-24.2-24.2-24.2z"-->
+<!--                              p-id="1499"></path>-->
+<!--                        </svg>-->
+<!--                      </template>-->
+<!--                    </a-button>-->
+<!--                  </a-popover>-->
+<!--                </div>-->
 
-              <div style="display: flex">
-                <div style="width: 100%;position: relative;">
-                  <VueDragSplit
-                      ref="fullscreenRef"
-                      class="drag-root"
-                      :generateWindowConfig="generateWindowConfig"
-                      v-model:windowListSync="windowList"
-                      v-model:activeTabKeySync="activeTabKey"
-                  >
-                    <template #Tab="win">
-                      <p style="color: white; font-size: 12px">{{ win.label }}</p>
-                      <p></p>
-                    </template>
-                    <template #CloseBtn>
-                      <span></span>
-                    </template>
-                    <template #AddBtn>
-                      <span></span>
-                    </template>
-                    <template #TabActions>
-                      <span></span>
-                    </template>
-                    <template #placeHolder>
-                      <span></span>
-                    </template>
-                    <template #TabView="win">
-                    <span>
+<!--                <div class="center-name">{{ server.name }}</div>-->
+<!--                <div ref="reloadEl">-->
+<!--                  <a-button type="link" @click="reloadServer">-->
+<!--                    <template v-slot:icon>-->
+<!--                      <reload-outlined/>-->
+<!--                    </template>-->
+<!--                  </a-button>-->
+<!--                </div>-->
+<!--              </template>-->
+
+              <div class="p-term-root">
+                <div style="width: 100%;position: relative;overflow: hidden">
                       <p-term v-model:loading="pTermLoading" class="ssh" :server="server"
                               :master-session-id="server.masterSessionId"
                               ref="PTermRef"
                               @hot="onHot"
                               v-model:inputTerminal="inputTerm"
                               v-model:sub-session-username="subSessionUsername"></p-term>
-                    </span>
-                    </template>
-                  </VueDragSplit>
-                  <div style="position: absolute;right: 16px;top: calc(50% - 1em / 2);color: aliceblue"
+                  <div style="position: absolute;right: 16px;top: calc(50% - 1em / 2);color: aliceblue;z-index: 100"
                        ref="openPopover"
                        @click="remarkStatus=!remarkStatus">
                     <left-outlined :class="{'button-action':remarkStatus,'left':true}"/>
                   </div>
-                  <div style="position: absolute;right: 16px;top: 16px;color: aliceblue" class="left"
-                       ref="fullscreenEl"
-                       @click="handleRequestFullscreen">
-                    <fullscreen-outlined/>
+                  <div ref="reloadEl"
+                       @click="reloadServer"
+                       style="position: absolute;right: 16px;top: 17px;color: aliceblue;z-index: 99999;fill: aliceblue"
+                       class="left">
+                    <reload-outlined class="tags"/>
                   </div>
-                  <div v-if="server.masterSessionId" style="position: absolute;right: 16px;top: 40px;color: aliceblue"
+                  <div :class="{green:sftpEnable,center:true}" @click="changeSftpEnable"
+                       style="position: absolute;right:45px;top: 17px;color: aliceblue;z-index: 99999;fill: aliceblue"
+                       class="left" ref="SftpChangeEl">
+
+                        <svg t="1696435355552" class="tags" viewBox="0 0 1024 1024" version="1.1"
+                             xmlns="http://www.w3.org/2000/svg" p-id="19507" >
+                          <path
+                              d="M972.8 249.856h-14.336l-0.512-108.032c0-25.6-20.992-45.568-46.08-45.568l-413.184 2.56h-3.584l-23.552-25.088c-9.728-10.24-23.04-16.384-37.376-16.384l-381.952-0.512C24.064 56.832 1.536 79.36 1.024 107.52L0 914.432c0 13.824 5.12 26.624 14.848 36.352 9.728 9.728 22.528 14.848 36.352 15.36l921.088 1.024c28.16 0 51.2-22.528 51.2-51.2l0.512-614.912c0-28.16-23.04-50.688-51.2-51.2z m-105.984-61.44l0.512 61.44-232.96-0.512-55.296-59.392 287.744-1.536zM921.088 865.28L102.4 864.256 108.032 158.72l303.616 0.512 162.816 176.128c9.728 10.24 23.04 16.384 37.376 16.384l310.272 0.512-1.024 513.024z"
+                              p-id="19508"></path>
+                          <path
+                              d="M531.968 441.344c-9.216 1.536-17.408 7.168-22.528 15.36-9.728 15.872-6.144 36.864 8.192 48.128l28.16 22.016-183.808 1.024c-18.432 0-33.28 16.384-33.28 35.84s15.36 35.328 33.792 35.328l284.16-1.536c18.432 0 33.28-16.384 33.28-35.84 0-9.728-4.096-18.944-10.752-25.6-1.536-2.048-3.584-4.096-5.632-5.632l-106.496-82.944c-7.168-5.632-15.872-7.68-25.088-6.144zM647.168 639.488l-283.648 2.048c-18.432 0-33.28 16.384-33.28 35.84 0 9.728 4.096 18.944 10.752 25.6 1.536 2.048 3.584 4.096 5.632 5.632l106.496 82.944c5.632 4.608 12.8 6.656 19.968 6.656 11.264 0 21.504-6.144 27.648-15.872 4.608-7.68 6.656-16.896 5.12-25.6-1.536-9.216-6.144-17.408-13.312-22.528l-28.16-22.016 183.808-1.024c18.432 0 33.28-16.384 33.28-35.84-1.024-19.968-15.872-35.84-34.304-35.84z"
+                              p-id="19509"></path>
+                        </svg>
+                  </div>
+                  <div v-if="server.masterSessionId"
+                       style="position: absolute;right: 16px;top: 60px;color: aliceblue;z-index: 100"
                        class="left enable-line"
                        :class="{'disable-line':!inputTerm,'enable-line':sftpEnable}"
                        @click="handleRequestInputTerm">
@@ -502,7 +475,7 @@ onMounted(() => {
                   </a-tabs>
                 </div>
               </div>
-            </a-card>
+<!--            </a-card>-->
           </div>
         </a-spin>
       </template>
@@ -513,9 +486,25 @@ onMounted(() => {
 <style scoped lang="less">
 
 .split-box {
+  height: 100%;
   min-height: auto;
 
   .ssh-content {
+    height: 100%;
+
+    :deep(.ant-card) {
+      height: 100%;
+
+      .ant-card-body {
+        height: 100%;
+      }
+    }
+
+    .p-term-root {
+      display: flex;
+      height: 100%
+    }
+
 
     /deep/ .ant-card-head {
 
@@ -543,11 +532,15 @@ onMounted(() => {
     .remark {
       transition: all 0.3s;
       overflow: scroll;
-      height: calc(@height - 100px);
+      //height: calc(@height - 100px);
       width: 0;
       background: rgba(255, 255, 255, 0.6); /* 设置元素的背景颜色和透明度 */
       backdrop-filter: blur(20px); /* 应用模糊效果，值可以调整模糊的程度 */
       border-radius: 8px; /* 设置元素的圆角 */
+    }
+
+    .ssh-enter {
+      width: 80% !important;
     }
 
     .remark-enter {
@@ -599,7 +592,7 @@ onMounted(() => {
 }
 
 :deep(.drag-root) {
-  height: calc(@height - 100px) !important;
+  //height: calc(@height - 100px) !important;
 }
 
 :deep(#split_window .drag_modal_wrapper) {
@@ -725,6 +718,13 @@ onMounted(() => {
   align-items: center;
 }
 
+:deep(.ant-spin-nested-loading) {
+  height: 100%;
+}
+
+:deep(.ant-spin-container) {
+  height: 100%;
+}
 
 </style>
 
