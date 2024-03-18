@@ -155,6 +155,7 @@ defineExpose({
 
       <a-space direction="vertical" size="middle" style="width: 100%;">
         <a-card :bodyStyle="{padding:'12px 12px'}" style="border:none">
+          <div class="body-root">
           <div style="display: flex;justify-content: space-between">
             <div>
 
@@ -201,6 +202,7 @@ defineExpose({
                 </a-dropdown>
               </template>
             </a-list>
+          </div>
           </div>
         </a-card>
         <a-drawer

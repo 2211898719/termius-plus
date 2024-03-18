@@ -133,4 +133,8 @@ const handleOk = () => {
 .ant-space{
   display: flex !important;
 }
+
+.ant-pro-basicLayout-content{
+  margin: 0!important;
+}
 </style>

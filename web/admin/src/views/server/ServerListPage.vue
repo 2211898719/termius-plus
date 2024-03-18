@@ -386,95 +386,97 @@ defineExpose({
     <div class="server-pane">
       <a-space direction="vertical" size="middle" style="width: 100%;">
         <a-card :bodyStyle="{padding:'12px 12px'}" style="border:none">
-          <div style="display: flex;justify-content: space-between">
-            <a-breadcrumb>
-              <a-breadcrumb-item v-for="item in groupBreadcrumb" :key="item.id" @click="handleDblclick(item)">
-                <a>{{ item.name }}</a>
-              </a-breadcrumb-item>
-            </a-breadcrumb>
+          <div class="body-root">
+            <div style="display: flex;justify-content: space-between">
+              <a-breadcrumb>
+                <a-breadcrumb-item v-for="item in groupBreadcrumb" :key="item.id" @click="handleDblclick(item)">
+                  <a>{{ item.name }}</a>
+                </a-breadcrumb-item>
+              </a-breadcrumb>
 
-            <div>
-              <a-button @click="getServerList" class="my-button">刷新</a-button>
-              <a-button @click="handleAddServer" class="ml10 my-button">新增服务器</a-button>
-              <a-button class="ml10 my-button" @click="handleAddGroup">新增分组</a-button>
+              <div>
+                <a-button @click="getServerList" class="my-button">刷新</a-button>
+                <a-button @click="handleAddServer" class="ml10 my-button">新增服务器</a-button>
+                <a-button class="ml10 my-button" @click="handleAddGroup">新增分组</a-button>
+              </div>
             </div>
-          </div>
-          <div class="mt30 server">
-            <a-list :grid="{ gutter: 16, column: termiusStyleColumn }" :data-source="currentData" row-key="id">
-              <template #renderItem="{ item }">
-                <a-dropdown :trigger="['contextmenu']">
-                  <a-list-item class="sortEl" @dblclick="handleDblclick(item)">
-                    <template #actions>
-                      <a-popover :visible="item.onlyUserVisible" v-if="item.onlyConnect?.length" @dblclick.stop
-                                 @click.stop title="在线用户"
-                                 placement="bottom"
-                                 trigger="click">
-                        <template #content>
-                          <div class="onlyUser" v-for="only in item.onlyConnect" :key="only.user.username"
-                               @click.stop="handleDblclick(item,only.masterSessionId)">
-                            <span>{{ only.user.username }}</span>
-                            <double-right-outlined/>
-                          </div>
-                        </template>
-                        <a-avatar class="avatar" :title="item.onlyConnect[0].user.username">
-                          {{ getSurname(item.onlyConnect[0].user.username) }}
-                        </a-avatar>
-                      </a-popover>
-                      <a>
-                        <edit-outlined @click="handleEditServer(item)"/>
-                      </a>
-                    </template>
-
-                  <a-badge-ribbon :text="item.onlyTag" :class="{none:!item.onlyTag}">
-                    <a-card>
-                      <a-skeleton avatar :title="false" :loading="!!item.loading" active>
-                        <a-list-item-meta
-                            :description="item.isGroup?'group':'server'"
-                        >
-                          <template #title>
-                            <span>{{ item.name }}</span>
+            <div class="mt30 server">
+              <a-list :grid="{ gutter: 16, column: termiusStyleColumn }" :data-source="currentData" row-key="id">
+                <template #renderItem="{ item }">
+                  <a-dropdown :trigger="['contextmenu']">
+                    <a-list-item class="sortEl" @dblclick="handleDblclick(item)">
+                      <template #actions>
+                        <a-popover :visible="item.onlyUserVisible" v-if="item.onlyConnect?.length" @dblclick.stop
+                                   @click.stop title="在线用户"
+                                   placement="bottom"
+                                   trigger="click">
+                          <template #content>
+                            <div class="onlyUser" v-for="only in item.onlyConnect" :key="only.user.username"
+                                 @click.stop="handleDblclick(item,only.masterSessionId)">
+                              <span>{{ only.user.username }}</span>
+                              <double-right-outlined/>
+                            </div>
                           </template>
-                          <template #avatar>
-                            <ApartmentOutlined v-if="item.isGroup" class="icon-server"/>
-                            <hdd-outlined v-else-if="item.os===OsEnum.LINUX.value" class="icon-server"
-                                          style="color: #E45F2B;"/>
-                            <windows-outlined v-else-if="item.os===OsEnum.WINDOWS.value" class="icon-server"
+                          <a-avatar class="avatar" :title="item.onlyConnect[0].user.username">
+                            {{ getSurname(item.onlyConnect[0].user.username) }}
+                          </a-avatar>
+                        </a-popover>
+                        <a>
+                          <edit-outlined @click="handleEditServer(item)"/>
+                        </a>
+                      </template>
+
+                      <a-badge-ribbon :text="item.onlyTag" :class="{none:!item.onlyTag}">
+                        <a-card>
+                          <a-skeleton avatar :title="false" :loading="!!item.loading" active>
+                            <a-list-item-meta
+                                :description="item.isGroup?'group':'server'"
+                            >
+                              <template #title>
+                                <span>{{ item.name }}</span>
+                              </template>
+                              <template #avatar>
+                                <ApartmentOutlined v-if="item.isGroup" class="icon-server"/>
+                                <hdd-outlined v-else-if="item.os===OsEnum.LINUX.value" class="icon-server"
                                               style="color: #E45F2B;"/>
-                          </template>
-                        </a-list-item-meta>
-                      </a-skeleton>
-                    </a-card>
-                  </a-badge-ribbon>
-                  </a-list-item>
-                  <template #overlay>
-                    <a-menu>
-                      <a-menu-item v-if="!item.isGroup" key="2" @click="handleDblclick(item)">
-                        <link-outlined/>
-                        连接
-                      </a-menu-item>
-                      <a-menu-item v-if="!item.isGroup&&item.os===OsEnum.WINDOWS.value" key="5"
-                                   @click="handleDownloadWindowsRdp(item)">
-                        <cloud-download-outlined/>
-                        下载本地连接文件
-                      </a-menu-item>
-                      <a-menu-item key="4" @click="handleEditServer(item)">
-                        <edit-outlined/>
-                        修改
-                      </a-menu-item>
-                      <a-menu-item key="3" @click="handleCopyServer(item)">
-                        <CopyOutlined/>
-                        复制
-                      </a-menu-item>
+                                <windows-outlined v-else-if="item.os===OsEnum.WINDOWS.value" class="icon-server"
+                                                  style="color: #E45F2B;"/>
+                              </template>
+                            </a-list-item-meta>
+                          </a-skeleton>
+                        </a-card>
+                      </a-badge-ribbon>
+                    </a-list-item>
+                    <template #overlay>
+                      <a-menu>
+                        <a-menu-item v-if="!item.isGroup" key="2" @click="handleDblclick(item)">
+                          <link-outlined/>
+                          连接
+                        </a-menu-item>
+                        <a-menu-item v-if="!item.isGroup&&item.os===OsEnum.WINDOWS.value" key="5"
+                                     @click="handleDownloadWindowsRdp(item)">
+                          <cloud-download-outlined/>
+                          下载本地连接文件
+                        </a-menu-item>
+                        <a-menu-item key="4" @click="handleEditServer(item)">
+                          <edit-outlined/>
+                          修改
+                        </a-menu-item>
+                        <a-menu-item key="3" @click="handleCopyServer(item)">
+                          <CopyOutlined/>
+                          复制
+                        </a-menu-item>
 
-                      <a-menu-item key="1" @click="handleDelServer(item)">
-                        <DeleteOutlined/>
-                        删除
-                      </a-menu-item>
-                    </a-menu>
-                  </template>
-                </a-dropdown>
-              </template>
-            </a-list>
+                        <a-menu-item key="1" @click="handleDelServer(item)">
+                          <DeleteOutlined/>
+                          删除
+                        </a-menu-item>
+                      </a-menu>
+                    </template>
+                  </a-dropdown>
+                </template>
+              </a-list>
+            </div>
           </div>
         </a-card>
       </a-space>
@@ -536,9 +538,9 @@ defineExpose({
 
             <a-form-item label="自动保活" v-bind="creationValidations.keepAlive">
               <a-switch v-model:checked="creationState.keepAlive"></a-switch>
-                <p>某些服务器ssl版本过新可能会出现连接失败</p>
-                <pre>strict KEX violation: unexpected packet type 2 (seqnr 1)</pre>
-                <p>可以通过关闭该设置解决</p>
+              <p>某些服务器ssl版本过新可能会出现连接失败</p>
+              <pre>strict KEX violation: unexpected packet type 2 (seqnr 1)</pre>
+              <p>可以通过关闭该设置解决</p>
             </a-form-item>
 
             <a-form-item label="私钥" v-bind="creationValidations.key">

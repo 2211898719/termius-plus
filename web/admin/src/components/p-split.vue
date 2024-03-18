@@ -84,7 +84,7 @@ onMounted(() => {
 @import 'golden-layout/dist/less/themes/goldenlayout-dark-theme.less';
 
 .wrapper {
-  height: calc(100vh - 100px) !important;
+  height: calc(100vh) !important;
 }
 
 h2 {
