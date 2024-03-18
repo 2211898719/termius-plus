@@ -1,5 +1,5 @@
 <script setup>
-import {computed, createVNode, getCurrentInstance, h, nextTick, onMounted, ref, render} from "vue";
+import {computed, createVNode, getCurrentInstance, h, nextTick, onMounted, ref, render, watch} from "vue";
 import Sortable from 'sortablejs';
 import _ from "lodash";
 import {Input, Modal} from "ant-design-vue";
@@ -14,7 +14,7 @@ import PortForwarderPage from "@/views/server/PortForwarderPage.vue";
 import CronJobPage from "@/views/server/CronJobPage.vue";
 import OsEnum from "@/enums/OsEnum";
 import {useStorage} from "@vueuse/core";
-import {GoldenLayout} from "golden-layout";
+import {ComponentItem, GoldenLayout} from "golden-layout";
 
 let spinning = ref(false)
 
@@ -74,7 +74,8 @@ const onCloseServer = (item) => {
   }
 
   nextTick(() => {
-    serverContentList.value[index].close()
+    goldenLayoutArr[item].destroy()
+    delete goldenLayoutArr[item]
   })
 
   _.remove(serverList.value, i => i.operationId === item)
@@ -179,29 +180,9 @@ const proxyCreation = () => {
   proxyListRef.value.proxyCreation()
 }
 
-const handleChangeTab = (item) => {
-  let index = serverList.value.findIndex(e => e.operationId === item)
-  if (index === -1) {
-    return
-  }
-
-  nextTick(() => {
-    // serverContentList.value[index].focus()
-  })
-}
 
 const changeTab = (item) => {
   tagActiveKey.value = item
-
-  let index = serverList.value.findIndex(e => e.operationId === item)
-  if (index === -1) {
-    return
-  }
-
-  nextTick(() => {
-    // serverContentList.value[index].focus()
-    // serverList.value[index].hot = false
-  })
 }
 
 const onServerHot = (server) => {
@@ -232,12 +213,17 @@ const componentIns = getCurrentInstance();
 
 class termComponent {
   rootElement;
+  pTerm;
 
   constructor(container, state) {
     this.rootElement = container.element;
-    let pTerm = h(ServerContent, state)
-    pTerm.appContext = componentIns.appContext
-    this.rootElement.appendChild(this.vNode2dom(pTerm));
+    this.pTerm = h(ServerContent, {...state, onHot: onServerHot})
+    this.pTerm.appContext = componentIns.appContext
+    this.rootElement.appendChild(this.vNode2dom(this.pTerm));
+  }
+
+  close() {
+    this.pTerm.component.exposed.close()
   }
 
   vNode2dom(vNode) {
@@ -247,10 +233,10 @@ class termComponent {
   }
 }
 
-let goldenLayoutArr = []
+let goldenLayoutArr = {}
 
 const resizeObserver = new ResizeObserver(() => {
-  goldenLayoutArr.forEach(e => {
+  Object.keys(goldenLayoutArr).map(e => goldenLayoutArr[e]).forEach(e => {
     e.updateRootSize()
   });
 });
@@ -262,17 +248,6 @@ const renderLayout = (server) => {
   const goldenLayout = new GoldenLayout(el);
 
   goldenLayout.registerComponentConstructor('termComponent', termComponent);
-
-
-  let newItemConfig = {
-    title: server.name,
-    type: 'component',
-    componentType: 'termComponent',
-    componentState: {
-      server: server
-    }
-  };
-
   goldenLayout.loadLayout({
     header: {
       show: true,
@@ -280,6 +255,7 @@ const renderLayout = (server) => {
       maximise: false,
       close: "关闭",
     },
+
     root: {
       type: 'row',
       content: [
@@ -295,22 +271,82 @@ const renderLayout = (server) => {
     }
   });
 
-  goldenLayoutArr.forEach(e => {
-    e.newDragSource(tabBarRef.value[tabBarRef.value.length - 1], () => newItemConfig);
+  goldenLayout.on("itemDestroyed", (item) => {
+    //是我吗自己的组件,需要调用组件的close方法
+    if (item.target instanceof ComponentItem) {
+      item.target.component.close()
+    }
+
+    nextTick(() => {
+      //没有rootItem就关闭标签
+      if (!goldenLayout.rootItem) {
+        onCloseServer(server.operationId)
+      }
+    })
   })
 
-  goldenLayoutArr.push(goldenLayout)
+  // goldenLayout.on( 'stateChanged', function( stack ){
+  //  stack.target.header.controlsContainerElement.prepend(
+  //
+  //  )
+  // })
 
-  goldenLayout.on('stackCreated', function (stack) {
 
-    // Add the colorDropdown to the header
-    // stack.header.controlsContainer.prepend( colorDropdown );
-
-    console.log(stack)
-
-  });
-
+  goldenLayoutArr[server.operationId] = goldenLayout
 }
+
+
+watch(() => tagActiveKey.value, (val) => {
+  let index = serverList.value.findIndex(e => e.operationId === val)
+  if (index === -1) {
+    return
+  }
+
+  nextTick(() => {
+    let current = goldenLayoutArr[tagActiveKey.value];
+
+    //清除掉其他面板的拖拽源
+    Object.keys(goldenLayoutArr).forEach(k => {
+      let e = goldenLayoutArr[k];
+        if (Array.isArray(e.dragSources)) {
+          e.dragSources.forEach(dragSource => {
+            e.removeDragSource(dragSource)
+          })
+
+          e.dragSources = []
+        }
+    })
+
+    current.dragSources = []
+
+    for (let i = 0; i < tabBarRef.value.length; i++) {
+      if (i !== index) {
+        current.dragSources.push(
+            current.newDragSource(tabBarRef.value[i], () => {
+              return {
+                title: serverList.value[i].name,
+                type: 'component',
+                componentType: 'termComponent',
+                componentState: {
+                  server: {
+                    ...serverList.value[i],
+                    operationId: val
+                  }
+                }
+              }
+            })
+        );
+      }
+    }
+
+
+    current.updateRootSize()
+
+    // serverContentList.value[index].focus()
+    serverList.value[index].hot = false
+  })
+
+})
 
 </script>
 
@@ -323,7 +359,6 @@ const renderLayout = (server) => {
               :tabBarGutter="8"
               :hideAdd="true"
               v-model:activeKey="tagActiveKey"
-              @change="handleChangeTab"
               :tab-position="'left'">
 
         <a-tab-pane tab="服务器" class="server-pane" key="server" :closable="false">
@@ -547,7 +582,7 @@ const renderLayout = (server) => {
 :deep(.tags) {
   width: 18px;
   height: 18px;
-  font-size: 18px;
+  font-size: 16px;
 }
 
 
@@ -636,7 +671,7 @@ const renderLayout = (server) => {
         .tags {
           width: 18px;
           height: 18px;
-          font-size: 18px;
+          font-size: 17px;
           display: flex;
           justify-content: center;
           align-items: center;
