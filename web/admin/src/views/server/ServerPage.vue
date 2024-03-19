@@ -52,8 +52,10 @@ const handleOpenServer = (item, masterSessionId = 0) => {
   })
 }
 
+let sortableEl = ref()
+
 onMounted(() => {
-  return Sortable.create((document.getElementsByClassName('sortable')[0]), {
+  return Sortable.create(sortableEl.value, {
     group: {
       name: 'shared',
       pull: 'clone',
@@ -250,7 +252,7 @@ const renderLayout = (server) => {
   goldenLayout.registerComponentConstructor('termComponent', termComponent);
   goldenLayout.loadLayout({
     header: {
-      show: true,
+      show: false,
       popout: false,
       maximise: false,
       close: "关闭",
@@ -285,11 +287,6 @@ const renderLayout = (server) => {
     })
   })
 
-  // goldenLayout.on( 'stateChanged', function( stack ){
-  //  stack.target.header.controlsContainerElement.prepend(
-  //
-  //  )
-  // })
 
 
   goldenLayoutArr[server.operationId] = goldenLayout
@@ -322,7 +319,8 @@ watch(() => tagActiveKey.value, (val) => {
     for (let i = 0; i < tabBarRef.value.length; i++) {
       if (i !== index) {
         current.dragSources.push(
-            current.newDragSource(tabBarRef.value[i], () => {
+            current.newDragSource(tabBarRef.value[i], (e) => {
+              console.log(current)
               return {
                 title: serverList.value[i].name,
                 type: 'component',
@@ -481,7 +479,7 @@ watch(() => tagActiveKey.value, (val) => {
 
               <div class="right"></div>
             </div>
-            <div class="sortable">
+            <div class="sortable" ref="sortableEl">
               <a-dropdown v-for="server in serverList" :key="server.operationId" :trigger="['contextmenu']"
                           class="dropdown">
 
@@ -566,6 +564,8 @@ watch(() => tagActiveKey.value, (val) => {
 </template>
 
 <style lang="less">
+//@import '@/components/less/goldenlayout-base.less';
+//@import '@/components/less/themes/goldenlayout-dark-theme.less';
 @import 'golden-layout/dist/less/goldenlayout-base.less';
 @import 'golden-layout/dist/less/themes/goldenlayout-dark-theme.less';
 
@@ -619,7 +619,8 @@ watch(() => tagActiveKey.value, (val) => {
 .tab-bar-group {
   background-color: #282B3B;
   padding: 10px;
-  overflow: auto;
+  overflow-x: unset;
+  overflow-y: unset;
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE 10+ */
   //设置滚动条隐藏
@@ -732,28 +733,28 @@ watch(() => tagActiveKey.value, (val) => {
     z-index: 100;
   }
 
-  .tab-active:after {
-    content: "";
-    display: block;
-    height: 103%;
-    width: 30px;
-    position: absolute;
-    right: -24px;
-    top: -15px;
-    background: v-bind(backColorRadialGradient);
-  }
-
-  .tab-active:before {
-    content: "";
-    display: block;
-    height: 103%;
-    width: 30px;
-    position: absolute;
-    right: -24px;
-    top: 14px;
-    background: v-bind(backColorRadialGradient);
-    transform: rotateX(180deg);
-  }
+  //.tab-active:after {
+  //  content: "";
+  //  display: block;
+  //  height: 103%;
+  //  width: 30px;
+  //  position: absolute;
+  //  right: -24px;
+  //  top: -15px;
+  //  background: v-bind(backColorRadialGradient);
+  //}
+  //
+  //.tab-active:before {
+  //  content: "";
+  //  display: block;
+  //  height: 103%;
+  //  width: 30px;
+  //  position: absolute;
+  //  right: -24px;
+  //  top: 14px;
+  //  background: v-bind(backColorRadialGradient);
+  //  transform: rotateX(180deg);
+  //}
 
 }
 
