@@ -3,10 +3,10 @@ package com.codeages.javaskeletonserver.biz.server.service.impl;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.lang.UUID;
-import cn.hutool.extra.ssh.Sftp;
 import com.codeages.javaskeletonserver.biz.ErrorCode;
 import com.codeages.javaskeletonserver.biz.server.context.ServerContext;
 import com.codeages.javaskeletonserver.biz.server.dto.SFTPBean;
+import com.codeages.javaskeletonserver.biz.server.dto.SFTPServerUploadServerParams;
 import com.codeages.javaskeletonserver.biz.server.service.SFTPService;
 import com.codeages.javaskeletonserver.biz.server.service.ServerService;
 import com.codeages.javaskeletonserver.exception.AppException;
@@ -20,7 +20,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.IOException;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -129,6 +131,7 @@ public class SFTPServiceImpl implements SFTPService {
 
     @Override
     public void download(String id, String remotePath, HttpServletResponse response) throws IOException {
+        log.info("下载文件：{}", remotePath);
         String filename = remotePath.substring(remotePath.lastIndexOf("/") + 1);
         ServletOutputStream outputStream = response.getOutputStream();
 
@@ -181,5 +184,38 @@ public class SFTPServiceImpl implements SFTPService {
 
         sftp.getSftp().close();
         ServerContext.SFTP_POOL.remove(id);
+    }
+
+    @Override
+    public void serverUploadServer(SFTPServerUploadServerParams params) {
+        try {
+            SFTPClient sourceSftp = getSftp(params.getSourceId());
+            RemoteFile sourceFile = sourceSftp.open(params.getSourcePath() + File.separator + params.getFileName());
+
+            SFTPClient targetSftp = getSftp(params.getTargetId());
+
+
+            String target = params.getTargetPath() + File.separator + params.getFileName();
+
+            try {
+                targetSftp.lstat(target);
+                throw new AppException(ErrorCode.INTERNAL_ERROR, "文件已存在");
+            } catch (IOException e) {
+                File tmpFile = createTmpFile();
+                targetSftp.put(tmpFile.getPath(), target);
+            }
+
+            RemoteFile remoteFile = targetSftp.open(target, EnumSet.of(OpenMode.WRITE));
+            RemoteFile.RemoteFileOutputStream remoteFileOutputStream = remoteFile.new RemoteFileOutputStream();
+            RemoteFile.RemoteFileInputStream remoteFileInputStream = sourceFile.new RemoteFileInputStream();
+
+            IoUtil.copy(remoteFileInputStream, remoteFileOutputStream);
+
+            IoUtil.close(remoteFileInputStream);
+            IoUtil.close(remoteFileOutputStream);
+        } catch (Exception e) {
+            log.error("服务器对服务器传递文件错误", e);
+            throw new AppException(ErrorCode.INTERNAL_ERROR, e.getMessage());
+        }
     }
 }

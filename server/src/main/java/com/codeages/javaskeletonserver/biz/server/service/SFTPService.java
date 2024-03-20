@@ -1,5 +1,6 @@
 package com.codeages.javaskeletonserver.biz.server.service;
 
+import com.codeages.javaskeletonserver.biz.server.dto.SFTPServerUploadServerParams;
 import net.schmizz.sshj.sftp.RemoteResourceInfo;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -95,6 +96,7 @@ public interface SFTPService {
      */
     void close(String id);
 
+    void serverUploadServer(SFTPServerUploadServerParams params);
 }
 
 

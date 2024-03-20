@@ -27,9 +27,12 @@ export const sftpApi = {
         return "/api-admin/sftp/" + params.id + "/upload";
     },
     download: (params) => {
-        return "/api-admin/sftp/" + params.id + "/download?remotePath=" + params.remotePath;
+        return "/api-admin/sftp/" + params.id + "/download?remotePath=" + encodeURI(params.remotePath).replace("+", "%2B");
     },
     close: async (params) => {
         return client.post("/api-admin/sftp/" + params.id + "/close", params);
     },
+    serverUploadServer: async (params) => {
+        return client.post("/api-admin/sftp/serverUploadServer", params);
+    }
 }

@@ -2,6 +2,7 @@ package com.codeages.javaskeletonserver.api.admin;
 
 import com.codeages.javaskeletonserver.biz.server.dto.SFTPInitParams;
 import com.codeages.javaskeletonserver.biz.server.dto.SFTPParams;
+import com.codeages.javaskeletonserver.biz.server.dto.SFTPServerUploadServerParams;
 import com.codeages.javaskeletonserver.biz.server.service.SFTPService;
 import lombok.SneakyThrows;
 import net.schmizz.sshj.sftp.RemoteResourceInfo;
@@ -59,12 +60,16 @@ public class SFTPController {
         sftpService.rename(id, params.getRemotePath(), params.getNewRemotePath());
     }
 
-    @SneakyThrows
     @PostMapping("/{id}/upload")
     public void upload(@PathVariable String id,
                        @RequestParam("file") MultipartFile file,
                        @RequestParam("remotePath") String remotePath) {
         sftpService.upload(id, file, remotePath);
+    }
+
+    @PostMapping("/serverUploadServer")
+    public void serverUploadServer(@RequestBody SFTPServerUploadServerParams params) {
+        sftpService.serverUploadServer(params);
     }
 
     @SneakyThrows

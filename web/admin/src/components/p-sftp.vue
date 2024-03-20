@@ -404,6 +404,41 @@ onMounted(() => {
 })
 
 
+const ondragover = (e) => {
+  e.preventDefault()
+}
+
+const drop = async (e, sessionId, currentPath) => {
+  let sourceData = JSON.parse(localStorage.getItem('dragData'));
+  try {
+    await sftpApi.serverUploadServer({
+      sourceId: sourceData.sessionId,
+      sourcePath: sourceData.currentPath,
+      targetId: sessionId,
+      targetPath: currentPath,
+      fileName: sourceData.fileName
+    })
+
+    message.success("传递成功")
+
+    await ls()
+
+  } catch (e) {
+    console.error(e)
+    message.error(e.message)
+  }
+}
+
+const onStart = (e, sessionId, currentPath, fileName) => {
+  let dragData = {
+    sessionId,
+    currentPath,
+    fileName
+  }
+  localStorage.setItem('dragData', JSON.stringify(dragData))
+}
+
+
 </script>
 
 <template>
@@ -442,14 +477,17 @@ onMounted(() => {
 
           </div>
         </template>
-        <div ref="parent" style="overflow: hidden">
-          <a-card-grid :style="{width: width}" :bordered="false" :hoverable="false" v-for="(file,index) in currentPageData" :key="file.name"
+        <div ref="parent" style="overflow: hidden" @dragover="ondragover" @drop="drop($event,sessionId,currentPath)">
+          <a-card-grid draggable="true" @dragstart="onStart($event,sessionId,currentPath,file.name)"
+                       :style="{width: width}"
+                       :bordered="false"
+                       :hoverable="false" v-for="(file,index) in currentPageData" :key="file.name"
                        @click="handleClickFile(file)" :title="file.name">
             <a-dropdown :trigger="['contextmenu']">
               <div>
                 <div>
-                  <a-image class="icon" :preview="false" :src="fileIcon"
-                           v-if="file.attributes.type==='DIRECTORY'"></a-image>
+                  <img class="icon" :preview="false" :src="fileIcon" draggable="false"
+                       v-if="file.attributes.type==='DIRECTORY'" alt="icon"/>
                   <svg v-else-if="file.attributes.type==='SYMLINK'" class="icon"
                        style="width:40%;height:40%;vertical-align: middle;fill: currentColor;overflow: hidden;"
                        viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="24103">
@@ -457,7 +495,7 @@ onMounted(() => {
                         d="M625.792 302.912V64L1024 482.112l-398.208 418.176V655.36C341.312 655.36 142.208 750.912 0 960c56.896-298.688 227.584-597.312 625.792-657.088z"
                         fill="#262626" p-id="24104"></path>
                   </svg>
-                  <a-image class="icon" :preview="false" :src="dirIcon" v-else></a-image>
+                  <img draggable="false" class="icon" :preview="false" :src="dirIcon" v-else alt="icon"/>
                 </div>
                 <div>
                   <a-input ref="renameInputs" @blur="confirmRename" @pressEnter="confirmRename"
