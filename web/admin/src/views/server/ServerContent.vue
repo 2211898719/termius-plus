@@ -133,6 +133,11 @@ defineExpose({
       pRdpEl.value.close()
     }
   },
+  term: () => {
+    if (props.server.os === OsEnum.LINUX.value) {
+      return PTermRef.value.term()
+    }
+  }
 })
 
 let backColor = useStorage('backColor', "#000000")
@@ -279,9 +284,9 @@ onMounted(() => {
     </div>
     <p-flip v-else-if="server.os===OsEnum.LINUX.value" ref="flip" :operation-id="server.operationId">
       <template #back>
-        <div v-if="sftpEnable">
+        <div v-if="sftpEnable" style="height: 100%">
           <div class="sftp-content">
-            <a-card title="sftp">
+            <a-card title="sftp" style="min-height: 100%">
               <template #extra>
                 <div class="center-name">{{ server.name }}</div>
 
@@ -560,6 +565,7 @@ onMounted(() => {
   }
 
   .sftp-content {
+    height: 100%;
 
     .sftp {
       width: 100%;

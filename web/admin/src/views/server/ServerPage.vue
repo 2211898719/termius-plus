@@ -14,7 +14,7 @@ import PortForwarderPage from "@/views/server/PortForwarderPage.vue";
 import CronJobPage from "@/views/server/CronJobPage.vue";
 import OsEnum from "@/enums/OsEnum";
 import {useStorage} from "@vueuse/core";
-import {ComponentItem, GoldenLayout} from "golden-layout";
+import {ComponentItem, GoldenLayout, Stack} from "golden-layout";
 
 let spinning = ref(false)
 
@@ -65,7 +65,34 @@ onMounted(() => {
     dataIdAttr: 'id',
     sortElement: '.sortEl',
     dragClass: "sortable-drag",
-    animation: 500
+    animation: 500,
+    onEnd: (e) => {
+      if (e.oldIndex === e.newIndex) {
+        return
+      }
+
+      let oldItem = serverList.value[e.oldIndex]
+      let newItem = serverList.value[e.newIndex]
+
+      serverList.value[e.newIndex] = oldItem
+      serverList.value[e.oldIndex] = newItem
+
+
+      // 维护layoutContainer tabBarRef
+      let oldEl = layoutContainer.value[e.oldIndex]
+      let newEl = layoutContainer.value[e.newIndex]
+      layoutContainer.value[e.newIndex] = oldEl
+      layoutContainer.value[e.oldIndex] = newEl
+
+      let oldTab = tabBarRef.value[e.oldIndex]
+      let newTab = tabBarRef.value[e.newIndex]
+      tabBarRef.value[e.newIndex] = oldTab
+      tabBarRef.value[e.oldIndex] = newTab
+
+      nextTick(() => {
+        handleChangeActiveKey(tagActiveKey.value)
+      })
+    }
   });
 })
 
@@ -219,13 +246,23 @@ class termComponent {
 
   constructor(container, state) {
     this.rootElement = container.element;
-    this.pTerm = h(ServerContent, {...state, onHot: onServerHot})
-    this.pTerm.appContext = componentIns.appContext
-    this.rootElement.appendChild(this.vNode2dom(this.pTerm));
+    if (state.server.originOperationId) {
+      let originTermComponent = goldenLayoutArr[state.server.originOperationId].rootItem.contentItems[0].contentItems[0].component;
+      this.rootElement.appendChild(originTermComponent.rootElement.firstChild)
+      this.pTerm = originTermComponent.pTerm
+    } else {
+      this.pTerm = h(ServerContent, {...state, onHot: onServerHot})
+      this.pTerm.appContext = componentIns.appContext
+      this.rootElement.appendChild(this.vNode2dom(this.pTerm));
+    }
   }
 
   close() {
     this.pTerm.component.exposed.close()
+  }
+
+  term() {
+    return this.pTerm.component.exposed.term()
   }
 
   vNode2dom(vNode) {
@@ -252,7 +289,7 @@ const renderLayout = (server) => {
   goldenLayout.registerComponentConstructor('termComponent', termComponent);
   goldenLayout.loadLayout({
     header: {
-      show: false,
+      show: true,
       popout: false,
       maximise: false,
       close: "关闭",
@@ -274,10 +311,20 @@ const renderLayout = (server) => {
   });
 
   goldenLayout.on("itemDestroyed", (item) => {
-    //是我吗自己的组件,需要调用组件的close方法
+    //是我自己的组件,需要调用组件的close方法
     if (item.target instanceof ComponentItem) {
       item.target.component.close()
+      //contentItems=1
     }
+    nextTick(() => {
+      //只剩一个了 需要坍缩回去
+      if (goldenLayout.rootItem instanceof Stack && goldenLayout.rootItem.contentItems.length === 1) {
+        serverList.value.filter(s => s.operationId === server.operationId).forEach(s => {
+          s.name = s.originName
+          s.isSplitView = false
+        })
+      }
+    })
 
     nextTick(() => {
       //没有rootItem就关闭标签
@@ -288,62 +335,101 @@ const renderLayout = (server) => {
   })
 
 
+  //fixme 处理dragSource
+  //获取不到dragEnd事件，只能通过itemCreated事件来处理
+  goldenLayout.on("itemCreated", (item) => {
+    let index = serverList.value.findIndex(e => e.operationId === server.operationId)
+    if (!serverList.value[index].isSplitView) {
+      serverList.value[index].originName = serverList.value[index].name
+      serverList.value[index].name = "Split view"
+      serverList.value[index].isSplitView = true
+    }
+
+    handleChangeActiveKey(server.operationId)
+  })
+
+  goldenLayout.on("tabCreated", (item) => {
+    let index = serverList.value.findIndex(e => e.operationId === server.operationId)
+    if (!serverList.value[index].isSplitView) {
+      serverList.value[index].originName = serverList.value[index].name
+      serverList.value[index].name = "Split view"
+      serverList.value[index].isSplitView = true
+    }
+  })
 
   goldenLayoutArr[server.operationId] = goldenLayout
 }
 
 
-watch(() => tagActiveKey.value, (val) => {
+function handleChangeActiveKey(val) {
   let index = serverList.value.findIndex(e => e.operationId === val)
-  if (index === -1) {
-    return
-  }
+
 
   nextTick(() => {
     let current = goldenLayoutArr[tagActiveKey.value];
 
     //清除掉其他面板的拖拽源
-    Object.keys(goldenLayoutArr).forEach(k => {
-      let e = goldenLayoutArr[k];
-        if (Array.isArray(e.dragSources)) {
-          e.dragSources.forEach(dragSource => {
-            e.removeDragSource(dragSource)
-          })
+    Object.keys(goldenLayoutArr).forEach(key => {
+      let e = goldenLayoutArr[key];
+      if (Array.isArray(e.dragSources)) {
+        e.dragSources.forEach(dragSource => {
+          e.removeDragSource(dragSource)
+        })
+      }
 
-          e.dragSources = []
-        }
+      e.dragSources = []
     })
 
-    current.dragSources = []
-
-    for (let i = 0; i < tabBarRef.value.length; i++) {
-      if (i !== index) {
-        current.dragSources.push(
-            current.newDragSource(tabBarRef.value[i], (e) => {
-              console.log(current)
-              return {
-                title: serverList.value[i].name,
-                type: 'component',
-                componentType: 'termComponent',
-                componentState: {
-                  server: {
-                    ...serverList.value[i],
-                    operationId: val
-                  }
-                }
-              }
-            })
-        );
-      }
+    if (index === -1) {
+      return
     }
 
+    let tabBarRefIndex = tabBarRef.value.findIndex(e => e.getAttribute('operationId') === val)
+    for (let i = 0; i < tabBarRef.value.length; i++) {
+      if (i === tabBarRefIndex) {
+        continue;
+      }
+
+      let serverI = serverList.value.findIndex(e => e.operationId === tabBarRef.value[i].getAttribute('operationId'))
+      if (serverList.value[serverI].isSplitView) {
+        continue
+      }
+
+      let newDrag = current.newDragSource(tabBarRef.value[i], (e) => {
+            let newWindowOptions = {
+              title: serverList.value[serverI].name,
+              type: 'component',
+              componentType: 'termComponent',
+              componentState: {
+                server: {
+                  ...serverList.value[serverI],
+                  operationId: val,
+                  originOperationId: serverList.value[serverI].operationId,
+                },
+              }
+            }
+
+            //删除serverList.value[i]
+            serverList.value.splice(serverI, 1)
+            //维护layoutContainer tabBarRef
+            layoutContainer.value.splice(serverI, 1)
+            tabBarRef.value.splice(serverI, 1)
+
+            return newWindowOptions
+          }
+      )
+
+      current.dragSources.push(newDrag);
+    }
 
     current.updateRootSize()
 
-    // serverContentList.value[index].focus()
     serverList.value[index].hot = false
   })
+}
 
+watch(() => tagActiveKey.value, (val) => {
+  handleChangeActiveKey(val);
 })
 
 </script>
@@ -480,68 +566,72 @@ watch(() => tagActiveKey.value, (val) => {
               <div class="right"></div>
             </div>
             <div class="sortable" ref="sortableEl">
-              <a-dropdown v-for="server in serverList" :key="server.operationId" :trigger="['contextmenu']"
-                          class="dropdown">
+              <div v-for="server in serverList" :key="server.operationId">
+                <a-dropdown :trigger="['contextmenu']"
+                            class="dropdown" :class="server.operationId">
 
-                <div ref="tabBarRef" class="tab-bar" :class="{'tab-active':tagActiveKey===server.operationId}"
-                     @click="changeTab(server.operationId)">
-                  <div class="left">
-                    <a-badge :dot="server.hot" :offset="[-9,-2]">
-                      <div class="tab-icon">
-                        <template v-if="server.tag">
-                          <div v-html="server.tag">
+                  <div ref="tabBarRef" :operationId="server.operationId" class="tab-bar"
+                       :class="{'tab-active':tagActiveKey===server.operationId}"
+                       @click="changeTab(server.operationId)">
+                    <div class="left">
+                      <a-badge :dot="server.hot" :offset="[-9,-2]">
+                        <div class="tab-icon">
+                          <template v-if="server.tag">
+                            <div v-html="server.tag">
 
-                          </div>
-                        </template>
-                        <template v-else>
-                          <ApartmentOutlined v-if="server.isGroup" class="icon-server"/>
-                          <hdd-outlined v-else-if="server.os===OsEnum.LINUX.value" class="icon-server"
-                                        style="color: #E45F2B;"/>
-                          <windows-outlined v-else-if="server.os===OsEnum.WINDOWS.value" class="icon-server"
-                                            style="color: #E45F2B;"/>
-                        </template>
+                            </div>
+                          </template>
+                          <template v-else>
+                            <ApartmentOutlined v-if="server.isGroup" class="icon-server"/>
+                            <hdd-outlined v-else-if="server.os===OsEnum.LINUX.value" class="icon-server"
+                                          style="color: #E45F2B;"/>
+                            <windows-outlined v-else-if="server.os===OsEnum.WINDOWS.value" class="icon-server"
+                                              style="color: #E45F2B;"/>
+                          </template>
 
+                        </div>
+                      </a-badge>
+                      <div class="tab-title" :title="server.name">
+                        {{ server.name }}
                       </div>
-                    </a-badge>
-                    <div class="tab-title" :title="server.name">
-                      {{ server.name }}
+                    </div>
+                    <div class="right tab-close">
+                      <close-outlined @click.stop="onCloseServer(server.operationId)"/>
                     </div>
                   </div>
-                  <div class="right tab-close">
-                    <close-outlined @click.stop="onCloseServer(server.operationId)"/>
-                  </div>
-                </div>
-                <template #overlay>
-                  <a-menu>
-                    <a-menu-item key="4" @click="handleCopy(server)">
-                      <template #icon>
-                        <CopyOutlined/>
-                      </template>
-                      复制
-                    </a-menu-item>
-                    <a-menu-item key="5" >
-                      <a-sub-menu key="7">
+                  <template #overlay>
+                    <a-menu>
+                      <a-menu-item key="4" @click="handleCopy(server)">
                         <template #icon>
-                          <tag-outlined/>
+                          <CopyOutlined/>
                         </template>
-                        <template #title>标签</template>
-                        <a-menu-item @click="handleAddTags(server,item)" v-for="item in tags" :key="item.length">
+                        复制
+                      </a-menu-item>
+                      <a-menu-item key="5">
+                        <a-sub-menu key="7">
                           <template #icon>
-                            <div v-html="item"></div>
+                            <tag-outlined/>
                           </template>
-                        </a-menu-item>
+                          <template #title>标签</template>
+                          <a-menu-item @click="handleAddTags(server,item)" v-for="item in tags" :key="item.length">
+                            <template #icon>
+                              <div v-html="item"></div>
+                            </template>
+                          </a-menu-item>
 
-                      </a-sub-menu>
-                    </a-menu-item>
-                    <a-menu-item key="3" @click="handleRename(server)">
-                      <template #icon>
-                        <edit-outlined/>
-                      </template>
-                      重命名
-                    </a-menu-item>
-                  </a-menu>
-                </template>
-              </a-dropdown>
+                        </a-sub-menu>
+                      </a-menu-item>
+                      <a-menu-item key="3" @click="handleRename(server)">
+                        <template #icon>
+                          <edit-outlined/>
+                        </template>
+                        重命名
+                      </a-menu-item>
+                    </a-menu>
+                  </template>
+                </a-dropdown>
+              </div>
+
 
             </div>
           </div>
@@ -767,7 +857,7 @@ watch(() => tagActiveKey.value, (val) => {
   height: @height;
 }
 
-:deep(.lm_header .lm_tab .lm_title){
+:deep(.lm_header .lm_tab .lm_title) {
   white-space: nowrap;
   max-width: 100px;
 }
