@@ -1,5 +1,5 @@
 <script setup>
-import {computed, createVNode, getCurrentInstance, h, nextTick, onMounted, ref, render, watch} from "vue";
+import {createVNode, getCurrentInstance, h, nextTick, onMounted, ref, render, watch} from "vue";
 import Sortable from 'sortablejs';
 import _ from "lodash";
 import {Input, Modal} from "ant-design-vue";
@@ -17,8 +17,6 @@ import {useStorage} from "@vueuse/core";
 import {ComponentItem, GoldenLayout, Stack} from "golden-layout";
 
 let spinning = ref(false)
-
-let serverContentList = ref(null)
 
 let tagActiveKey = ref('server')
 
@@ -230,11 +228,6 @@ const onServerHot = (server) => {
 let backColor = useStorage('backColor', "#000000")
 let frontColor = useStorage('frontColor', "#ffffff")
 
-let backColorRadialGradient = computed(() => {
-  return `radial-gradient(10px at 0px 0px, transparent 15px, ${backColor.value} 0px)`
-})
-
-
 let layoutContainer = ref([])
 let tabBarRef = ref([])
 
@@ -272,15 +265,24 @@ class termComponent {
   }
 }
 
+
+let tabBarGroupEl = ref()
+
+onMounted(()=>{
+  const resizeObserver = new ResizeObserver(() => {
+    Object.keys(goldenLayoutArr).map(e => goldenLayoutArr[e]).forEach(e => {
+      e.updateRootSize()
+    });
+  });
+
+  resizeObserver.observe(tabBarGroupEl.value);
+  resizeObserver.observe(document.body);
+})
+
+
 let goldenLayoutArr = {}
 
-const resizeObserver = new ResizeObserver(() => {
-  Object.keys(goldenLayoutArr).map(e => goldenLayoutArr[e]).forEach(e => {
-    e.updateRootSize()
-  });
-});
 
-resizeObserver.observe(document.body);
 
 const renderLayout = (server) => {
   let el = layoutContainer.value[layoutContainer.value.length - 1]
@@ -294,7 +296,6 @@ const renderLayout = (server) => {
       maximise: false,
       close: "关闭",
     },
-
     root: {
       type: 'row',
       content: [
@@ -302,6 +303,7 @@ const renderLayout = (server) => {
           title: server.name,
           type: 'component',
           componentType: 'termComponent',
+          id: 'no-drop-target',
           componentState: {
             server: server
           }
@@ -337,7 +339,7 @@ const renderLayout = (server) => {
 
   //fixme 处理dragSource
   //获取不到dragEnd事件，只能通过itemCreated事件来处理
-  goldenLayout.on("itemCreated", (item) => {
+  goldenLayout.on("itemCreated", () => {
     let index = serverList.value.findIndex(e => e.operationId === server.operationId)
     if (!serverList.value[index].isSplitView) {
       serverList.value[index].originName = serverList.value[index].name
@@ -345,10 +347,12 @@ const renderLayout = (server) => {
       serverList.value[index].isSplitView = true
     }
 
+    console.log(goldenLayout)
+
     handleChangeActiveKey(server.operationId)
   })
 
-  goldenLayout.on("tabCreated", (item) => {
+  goldenLayout.on("tabCreated", () => {
     let index = serverList.value.findIndex(e => e.operationId === server.operationId)
     if (!serverList.value[index].isSplitView) {
       serverList.value[index].originName = serverList.value[index].name
@@ -395,7 +399,7 @@ function handleChangeActiveKey(val) {
         continue
       }
 
-      let newDrag = current.newDragSource(tabBarRef.value[i], (e) => {
+      let newDrag = current.newDragSource(tabBarRef.value[i], () => {
             let newWindowOptions = {
               title: serverList.value[serverI].name,
               type: 'component',
@@ -432,6 +436,12 @@ watch(() => tagActiveKey.value, (val) => {
   handleChangeActiveKey(val);
 })
 
+let miniTabBar = useStorage('miniTabBar', false)
+
+const changeMiniTab = () => {
+  miniTabBar.value = !miniTabBar.value
+}
+
 </script>
 
 <template>
@@ -466,7 +476,7 @@ watch(() => tagActiveKey.value, (val) => {
         </a-tab-pane>
 
         <template v-slot:renderTabBar>
-          <div class="tab-bar-group">
+          <div ref="tabBarGroupEl" :class="{'tab-bar-group':true,'tab-bar-group-mini':miniTabBar}">
             <div class="tab-bar" :class="{'tab-active-normal':tagActiveKey==='server'}" @click="changeTab('server')">
               <div class="left">
                 <div class="tab-icon">
@@ -570,38 +580,49 @@ watch(() => tagActiveKey.value, (val) => {
                 <a-dropdown :trigger="['contextmenu']"
                             class="dropdown" :class="server.operationId">
 
-                  <div ref="tabBarRef" :operationId="server.operationId" class="tab-bar"
-                       :class="{'tab-active':tagActiveKey===server.operationId}"
-                       @click="changeTab(server.operationId)">
-                    <div class="left">
-                      <a-badge :dot="server.hot" :offset="[-9,-2]">
-                        <div class="tab-icon">
-                          <template v-if="server.tag">
-                            <div v-html="server.tag">
+                  <a-tooltip placement="right" color="green">
+                    <template #title>
+                      <template v-if="server.isSplitView">Split view</template>
+                      <template v-else>
+                        <span v-if="server.path">{{ server.path }}/</span>
+                        <span>{{ server.name }}</span>
+                      </template>
 
-                            </div>
-                          </template>
-                          <template v-else>
-                            <ApartmentOutlined v-if="server.isGroup" class="icon-server"/>
-                            <hdd-outlined v-else-if="server.os===OsEnum.LINUX.value" class="icon-server"
-                                          style="color: #E45F2B;"/>
-                            <windows-outlined v-else-if="server.os===OsEnum.WINDOWS.value" class="icon-server"
-                                              style="color: #E45F2B;"/>
-                          </template>
+                    </template>
+                    <div ref="tabBarRef" :operationId="server.operationId" class="tab-bar"
+                         :class="{'tab-active':tagActiveKey===server.operationId}"
+                         @click="changeTab(server.operationId)">
+                      <div class="left">
+                        <a-badge :dot="server.hot" :offset="[-9,-2]">
+                          <div class="tab-icon">
+                            <template v-if="server.tag">
+                              <div v-html="server.tag">
 
+                              </div>
+                            </template>
+                            <template v-else>
+                              <ApartmentOutlined v-if="server.isGroup" class="icon-server"/>
+                              <hdd-outlined v-else-if="server.os===OsEnum.LINUX.value" class="icon-server"
+                                            style="color: #E45F2B;"/>
+                              <windows-outlined v-else-if="server.os===OsEnum.WINDOWS.value" class="icon-server"
+                                                style="color: #E45F2B;"/>
+                            </template>
+
+                          </div>
+                        </a-badge>
+                        <div class="tab-title">
+                          {{ server.name }}
                         </div>
-                      </a-badge>
-                      <div class="tab-title" :title="server.name">
-                        {{ server.name }}
+                      </div>
+                      <div class="right tab-close">
+                        <close-outlined @click.stop="onCloseServer(server.operationId)"/>
                       </div>
                     </div>
-                    <div class="right tab-close">
-                      <close-outlined @click.stop="onCloseServer(server.operationId)"/>
-                    </div>
-                  </div>
+                  </a-tooltip>
+
                   <template #overlay>
                     <a-menu>
-                      <a-menu-item key="4" @click="handleCopy(server)">
+                      <a-menu-item v-if="!server.isSplitView" key="4" @click="handleCopy(server)">
                         <template #icon>
                           <CopyOutlined/>
                         </template>
@@ -633,6 +654,9 @@ watch(() => tagActiveKey.value, (val) => {
               </div>
 
 
+            </div>
+            <div class="bottom" @click="changeMiniTab">
+              <left-outlined :class="{'button-action':miniTabBar,'transition':true}"/>
             </div>
           </div>
         </template>
@@ -706,9 +730,23 @@ watch(() => tagActiveKey.value, (val) => {
   //z-index: 100;
 }
 
+:deep(.ant-menu-item) {
+  svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+.tab-bar-group-mini{
+  width: 75px !important;
+}
+
 .tab-bar-group {
-  background-color: #282B3B;
-  padding: 10px;
+  background-color: #00152A;
+  transition: all 0.5s;
+  position: relative;
+  padding: 8px;
+  width: 180px;
   overflow-x: unset;
   overflow-y: unset;
   scrollbar-width: none; /* Firefox */
@@ -724,6 +762,22 @@ watch(() => tagActiveKey.value, (val) => {
     flex-direction: column;
   }
 
+  .bottom {
+    color: #fff;
+    position: absolute;
+    left: 50%;
+    bottom: 8px;
+    transform: translateX(-50%);
+    cursor: pointer;
+
+
+    .button-action {
+      transform: rotateY(180deg);
+    }
+    .transition{
+      transition: all 0.9s;
+    }
+  }
 
   .tab-bar {
     margin: 4px 0;
@@ -731,7 +785,7 @@ watch(() => tagActiveKey.value, (val) => {
     cursor: pointer;
     color: #fff;
     text-align: left;
-    width: 180px;
+
     display: flex;
     border-radius: 8px;
     justify-content: space-between;

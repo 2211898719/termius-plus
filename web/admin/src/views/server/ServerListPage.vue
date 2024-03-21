@@ -282,7 +282,8 @@ const handleDblclick = (item, masterSessionId = 0) => {
     return
   }
 
-  emit('openServer', item, masterSessionId)
+
+  emit('openServer', {...item, path: groupBreadcrumb.value.slice(1).map(g=>g.name).join("/")}, masterSessionId)
 }
 
 const handleDownloadWindowsRdp = (item) => {

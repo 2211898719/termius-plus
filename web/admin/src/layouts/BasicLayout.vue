@@ -1,6 +1,7 @@
 <template>
   <keep-alive>
     <pro-layout
+        ref="fullscreenRef"
         :locale="locale"
         v-model:openKeys="state.openKeys"
         v-model:collapsed="state.collapsed"
@@ -9,6 +10,7 @@
         v-bind="layoutConf"
     >
         <template #rightContentRender>
+          <fullscreen-outlined @click="toggleFullScreen" style="margin-right: 8px;cursor: pointer"/>
             <span v-if="store.user" style="color: #fff">您好，{{ store.user.username }}</span>
             <a-button type="link" @click="onLogout">退出</a-button>
         </template>
@@ -51,6 +53,26 @@ walk(routerTree, (node) => {
       node.meta.hideInMenu = true;
     }
 })
+
+function toggleFullScreen() {
+  const doc = window.document;
+  const docEl = doc.documentElement;
+
+  const requestFullScreen = docEl.requestFullscreen || docEl.mozRequestFullScreen || docEl.webkitRequestFullScreen || docEl.msRequestFullscreen;
+  const exitFullScreen = doc.exitFullscreen || doc.mozCancelFullScreen || doc.webkitExitFullscreen || doc.msExitFullscreen;
+
+  if (!doc.fullscreenElement && !doc.mozFullScreenElement && !doc.webkitFullscreenElement && !doc.msFullscreenElement) {
+    // 进入全屏模式
+    if (requestFullScreen) {
+      requestFullScreen.call(docEl);
+    }
+  } else {
+    // 退出全屏模式
+    if (exitFullScreen) {
+      exitFullScreen.call(doc);
+    }
+  }
+}
 
 const {menuData} = getMenuData(clearMenuItem(routerTree));
 
