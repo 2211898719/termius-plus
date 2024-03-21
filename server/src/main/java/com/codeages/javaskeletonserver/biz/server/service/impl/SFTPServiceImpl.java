@@ -3,14 +3,20 @@ package com.codeages.javaskeletonserver.biz.server.service.impl;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.lang.UUID;
+import cn.hutool.core.lang.func.VoidFunc1;
+import cn.hutool.json.JSONUtil;
 import com.codeages.javaskeletonserver.biz.ErrorCode;
 import com.codeages.javaskeletonserver.biz.server.context.ServerContext;
 import com.codeages.javaskeletonserver.biz.server.dto.SFTPBean;
 import com.codeages.javaskeletonserver.biz.server.dto.SFTPServerUploadServerParams;
 import com.codeages.javaskeletonserver.biz.server.service.SFTPService;
 import com.codeages.javaskeletonserver.biz.server.service.ServerService;
+import com.codeages.javaskeletonserver.biz.server.ws.ssh.AuthKeyBoardHandler;
+import com.codeages.javaskeletonserver.biz.server.ws.ssh.EventType;
+import com.codeages.javaskeletonserver.biz.server.ws.ssh.MessageDto;
+import com.codeages.javaskeletonserver.biz.server.ws.ssh.SftpServerUploadServerProgressDto;
+import com.codeages.javaskeletonserver.biz.util.FileSizeFormatter;
 import com.codeages.javaskeletonserver.exception.AppException;
-import com.github.jaemon.dinger.DingerSender;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import net.schmizz.sshj.SSHClient;
@@ -20,9 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -33,11 +37,8 @@ public class SFTPServiceImpl implements SFTPService {
 
     private final ServerService serverService;
 
-    private final DingerSender dingerSender;
-
-    public SFTPServiceImpl(ServerService serverService, DingerSender dingerSender) {
+    public SFTPServiceImpl(ServerService serverService) {
         this.serverService = serverService;
-        this.dingerSender = dingerSender;
     }
 
     @SneakyThrows
@@ -146,7 +147,10 @@ public class SFTPServiceImpl implements SFTPService {
         RemoteFile.ReadAheadRemoteFileInputStream readAheadRemoteFileInputStream = readFile.new ReadAheadRemoteFileInputStream(
                 15);
 
-        BufferedInputStream inputStream = new BufferedInputStream(readAheadRemoteFileInputStream, 1024 * 1024);
+        BufferedInputStream inputStream = new BufferedInputStream(
+                readAheadRemoteFileInputStream,
+                FileSizeFormatter.ONE_MB
+        );
         inputStream.transferTo(outputStream);
 
         IoUtil.close(inputStream);
@@ -190,7 +194,8 @@ public class SFTPServiceImpl implements SFTPService {
     public void serverUploadServer(SFTPServerUploadServerParams params) {
         try {
             SFTPClient sourceSftp = getSftp(params.getSourceId());
-            RemoteFile sourceFile = sourceSftp.open(params.getSourcePath() + File.separator + params.getFileName());
+            String source = params.getSourcePath() + File.separator + params.getFileName();
+            RemoteFile sourceFile = sourceSftp.open(source);
 
             SFTPClient targetSftp = getSftp(params.getTargetId());
 
@@ -209,7 +214,16 @@ public class SFTPServiceImpl implements SFTPService {
             RemoteFile.RemoteFileOutputStream remoteFileOutputStream = remoteFile.new RemoteFileOutputStream();
             RemoteFile.RemoteFileInputStream remoteFileInputStream = sourceFile.new RemoteFileInputStream();
 
-            IoUtil.copy(remoteFileInputStream, remoteFileOutputStream);
+            transferWithProgress(remoteFileInputStream, remoteFileOutputStream, progress -> {
+                MessageDto messageDto = new MessageDto(EventType.SFTP_SERVER_UPLOAD_SERVER_PROGRESS, JSONUtil.toJsonStr(new SftpServerUploadServerProgressDto(
+                        params.getSourceServerName(),
+                        source,
+                        params.getTargetServerName(),
+                        target,
+                        progress
+                )));
+                AuthKeyBoardHandler.sendMessage(params.getClientSessionId(), JSONUtil.toJsonStr(messageDto));
+            });
 
             IoUtil.close(remoteFileInputStream);
             IoUtil.close(remoteFileOutputStream);
@@ -218,4 +232,23 @@ public class SFTPServiceImpl implements SFTPService {
             throw new AppException(ErrorCode.INTERNAL_ERROR, e.getMessage());
         }
     }
+
+    @SneakyThrows
+    public static void transferWithProgress(InputStream inputStream,
+                                            OutputStream outputStream,
+                                            VoidFunc1<Long> progressCallback) {
+        byte[] buffer = new byte[FileSizeFormatter.ONE_MB];
+        int bytesRead;
+        long totalBitsTransferred = 0;
+
+        while ((bytesRead = inputStream.read(buffer)) != -1) {
+            outputStream.write(buffer, 0, bytesRead);
+            totalBitsTransferred += bytesRead;
+
+            if (progressCallback != null) {
+                progressCallback.call(totalBitsTransferred);
+            }
+        }
+    }
+
 }

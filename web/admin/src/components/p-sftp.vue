@@ -1,7 +1,7 @@
 <script setup>
 import {computed, createVNode, defineExpose, defineProps, nextTick, onMounted, onUnmounted, ref, watch} from "vue";
 import {sftpApi} from "@/api/sftp";
-import {message, Modal} from "ant-design-vue";
+import {message, Modal, notification} from "ant-design-vue";
 import fileIcon from "@/assets/file-icon/dir.png";
 import dirIcon from "@/assets/file-icon/file.png";
 import _ from "lodash";
@@ -19,6 +19,9 @@ const props = defineProps({
   },
   operationId: {
     type: [String], default: undefined,
+  },
+  serverName: {
+    type: [String], default: '',
   },
 });
 
@@ -408,20 +411,52 @@ const ondragover = (e) => {
   e.preventDefault()
 }
 
+
 const drop = async (e, sessionId, currentPath) => {
   let sourceData = JSON.parse(localStorage.getItem('dragData'));
+
+  if (sourceData.sessionId === sessionId) {
+    return
+  }
+
+
+  let key = sourceData.currentPath + "/" + sourceData.fileName + "---" + currentPath + "/" + sourceData.fileName
+  let sftp = new BroadcastChannel('sftp')
+
+  sftp.onmessage = (e) => {
+    let data = JSON.parse(e.data)
+    if (data.progress === sourceData.fileSize) {
+      notification.open({
+        key: key,
+        duration: 0,
+        message: '文件传输',
+        description: `${sourceData.fileName} 传输完成`,
+      });
+      ls()
+      return
+    }
+
+    notification.open({
+      key: key,
+      duration: 0,
+      message: '文件传输',
+      description: `${sourceData.fileName} 进度：${(data.progress / sourceData.fileSize * 100).toFixed(2)} %`,
+    });
+  }
+
   try {
     await sftpApi.serverUploadServer({
       sourceId: sourceData.sessionId,
       sourcePath: sourceData.currentPath,
       targetId: sessionId,
       targetPath: currentPath,
-      fileName: sourceData.fileName
+      fileName: sourceData.fileName,
+      clientSessionId: authStore.session,
+      sourceServerName: sourceData.serverName,
+      targetServerName: props.serverName
     })
 
-    message.success("传递成功")
 
-    await ls()
 
   } catch (e) {
     console.error(e)
@@ -429,11 +464,13 @@ const drop = async (e, sessionId, currentPath) => {
   }
 }
 
-const onStart = (e, sessionId, currentPath, fileName) => {
+const onStart = (e, sessionId, currentPath, file, serverName) => {
   let dragData = {
     sessionId,
     currentPath,
-    fileName
+    fileName: file.name,
+    fileSize: file.attributes.size,
+    serverName
   }
   localStorage.setItem('dragData', JSON.stringify(dragData))
 }
@@ -478,7 +515,7 @@ const onStart = (e, sessionId, currentPath, fileName) => {
           </div>
         </template>
         <div ref="parent" style="overflow: hidden" @dragover="ondragover" @drop="drop($event,sessionId,currentPath)">
-          <a-card-grid draggable="true" @dragstart="onStart($event,sessionId,currentPath,file.name)"
+          <a-card-grid draggable="true" @dragstart="onStart($event,sessionId,currentPath,file,serverName)"
                        :style="{width: width}"
                        :bordered="false"
                        :hoverable="false" v-for="(file,index) in currentPageData" :key="file.name"

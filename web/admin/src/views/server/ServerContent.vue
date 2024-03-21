@@ -312,7 +312,7 @@ onMounted(() => {
                 </a-button>
               </template>
               <p-sftp class="sftp" ref="sftpEl" :operation-id="server.operationId"
-                      :server-id="server.id"></p-sftp>
+                      :server-id="server.id" :server-name="server.name"></p-sftp>
             </a-card>
           </div>
         </div>

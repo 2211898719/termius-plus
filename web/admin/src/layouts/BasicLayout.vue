@@ -88,6 +88,8 @@ if (window.location.protocol === 'https:') {
   wsProtocol = 'wss';
 }
 const host = window.location.host;
+
+let sftp = new BroadcastChannel('sftp')
 let useSocket = useWebSocket(wsProtocol + '://' + host + '/socket/authKeyBoard', {
   autoReconnect: {
     delay: 500,
@@ -104,6 +106,9 @@ let useSocket = useWebSocket(wsProtocol + '://' + host + '/socket/authKeyBoard',
         break;
       case "SESSION":
         store.setSession(message.data)
+        break;
+      case "SFTP_SERVER_UPLOAD_SERVER_PROGRESS":
+        sftp.postMessage(message.data)
         break;
       case "close":
         close();
