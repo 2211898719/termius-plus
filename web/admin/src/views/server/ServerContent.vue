@@ -2,7 +2,7 @@
 import PFlip from "@/components/p-flip.vue";
 import PSftp from "@/components/p-sftp.vue";
 import {message} from "ant-design-vue";
-import {defineExpose, defineProps, nextTick, onMounted, ref} from "vue";
+import {computed, defineExpose, defineProps, nextTick, onMounted, ref} from "vue";
 import {commandApi} from "@/api/command";
 import PTerm from "@/components/p-term.vue";
 import "@/components/VueDragSplit/style.css";
@@ -20,20 +20,13 @@ const onHot = (server) => {
 
 let searchLinuxDoc = ref(JSON.parse(JSON.stringify(linuxDoc)))
 
-const activeTabKey = ref("");
-const windowList = ref([
-  {
-    key: "1",
-    label: "标签一",
-  },
-]);
-
-function generateWindowConfig(params) {
-  return {
-    key: Date.now(),
-    label: "标签" + Date.now(),
-  };
-}
+let currentServer = computed(() => {
+  if (props.server.os === OsEnum.WINDOWS.value) {
+    return pRdpEl.value
+  } else {
+    return PTermRef.value
+  }
+})
 
 const props = defineProps({
   server: {
@@ -47,18 +40,11 @@ const remarkStatus = ref(false)
 
 let flipStatus = ref(false)
 
-// let fullscreenContent = ref(null)
-//
-// let frontColor = useStorage('frontColor', "#ffffff")
-// let backColor = useStorage('backColor', "#000000")
 
 
 let sftpEnable = ref(false)
 
 let flip = ref(null)
-
-// let link = ref(true)
-
 
 let sftpEl = ref([])
 
@@ -77,7 +63,8 @@ let PTermRef = ref(null)
 let pTermLoading = ref(false)
 
 const reloadServer = () => {
-  PTermRef.value.reload()
+  console.log(currentServer.value)
+  currentServer.value.reload()
   inputTerm.value = false
 }
 
@@ -274,15 +261,11 @@ onMounted(() => {
 });
 
 
-
 </script>
 
 <template>
   <div class="split-box">
-    <div v-if="server.os===OsEnum.WINDOWS.value">
-      <p-rdp ref="pRdpEl" :server="server"></p-rdp>
-    </div>
-    <p-flip v-else-if="server.os===OsEnum.LINUX.value" ref="flip" :operation-id="server.operationId">
+    <p-flip ref="flip" :operation-id="server.operationId">
       <template #back>
         <div v-if="sftpEnable" style="height: 100%">
           <div class="sftp-content">
@@ -311,8 +294,9 @@ onMounted(() => {
                   </template>
                 </a-button>
               </template>
+              <!--windows的sftp其实是上传到guacamoleServer-->
               <p-sftp class="sftp" ref="sftpEl" :operation-id="server.operationId"
-                      :server-id="server.id" :server-name="server.name"></p-sftp>
+                      :server-id="server.os===OsEnum.WINDOWS.value?server.guacamoleServerId:server.id" :fixedPath="server.guacamoleServerFilePath" :server-name="server.name"></p-sftp>
             </a-card>
           </div>
         </div>
@@ -320,167 +304,173 @@ onMounted(() => {
       <template #front>
         <a-spin :spinning="pTermLoading" style="height: 100%">
           <div :class="{'ssh-content':true}">
-<!--            <a-card :title="server.masterUserInfo?('观察'+server.masterUserInfo.username)+'的终端':'终端'" :body-style="{background:backColor}"  style="border:none">-->
-<!--              <template #extra>-->
-<!--                <div>-->
-<!--                  <a-avatar-group :max-count="2" :max-style="{ color: '#f56a00', backgroundColor: '#fde3cf' }">-->
-<!--                    <a-avatar :title="username" v-for="username in subSessionUsername" :key="username"-->
-<!--                              style="background-color: #1890ff">-->
-<!--                      {{ getSurname(username) }}-->
-<!--                    </a-avatar>-->
-<!--                  </a-avatar-group>-->
-<!--                </div>-->
-<!--                <div ref="CompChangeEl">-->
-<!--                  <a-popover title="提示">-->
-<!--                    <template #content>-->
-<!--                      <p>根据history提示最接近的命令</p>-->
-<!--                      <p>ctrl+w补全命令</p>-->
-<!--                    </template>-->
-<!--                    <a-button type="link" @click="handleChangeComp" :class="{green:autoComp,center:true}">-->
-<!--                      <template v-slot:icon>-->
-<!--                        <svg class="tags"-->
-<!--                             style="vertical-align: middle;fill: currentColor;overflow: hidden;"-->
-<!--                             viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1494">-->
-<!--                          <path d="M512 512m-512 0a512 512 0 1 0 1024 0 512 512 0 1 0-1024 0Z"-->
-<!--                                p-id="1495"></path>-->
-<!--                          <path d="M651.2 672.7h-548l269.6-321.4h548z" fill="#FFFFFF" p-id="1496"></path>-->
-<!--                          <path-->
-<!--                              d="M662.4 696.7H51.7l309.9-369.3h610.7L662.4 696.7z m-507.8-48H640l229.4-273.3H384L154.6 648.7z"-->
-<!--                              p-id="1497"></path>-->
-<!--                          <path d="M512 512m-48.2 0a48.2 48.2 0 1 0 96.4 0 48.2 48.2 0 1 0-96.4 0Z"-->
-<!--                                p-id="1498"></path>-->
-<!--                          <path-->
-<!--                              d="M512 584.2c-39.8 0-72.2-32.4-72.2-72.2s32.4-72.2 72.2-72.2 72.2 32.4 72.2 72.2-32.4 72.2-72.2 72.2z m0-96.4c-13.4 0-24.2 10.9-24.2 24.2 0 13.4 10.9 24.2 24.2 24.2 13.4 0 24.2-10.9 24.2-24.2 0-13.4-10.8-24.2-24.2-24.2z"-->
-<!--                              p-id="1499"></path>-->
-<!--                        </svg>-->
-<!--                      </template>-->
-<!--                    </a-button>-->
-<!--                  </a-popover>-->
-<!--                </div>-->
+            <!--            <a-card :title="server.masterUserInfo?('观察'+server.masterUserInfo.username)+'的终端':'终端'" :body-style="{background:backColor}"  style="border:none">-->
+            <!--              <template #extra>-->
+            <!--                <div>-->
+            <!--                  <a-avatar-group :max-count="2" :max-style="{ color: '#f56a00', backgroundColor: '#fde3cf' }">-->
+            <!--                    <a-avatar :title="username" v-for="username in subSessionUsername" :key="username"-->
+            <!--                              style="background-color: #1890ff">-->
+            <!--                      {{ getSurname(username) }}-->
+            <!--                    </a-avatar>-->
+            <!--                  </a-avatar-group>-->
+            <!--                </div>-->
+            <!--                <div ref="CompChangeEl">-->
+            <!--                  <a-popover title="提示">-->
+            <!--                    <template #content>-->
+            <!--                      <p>根据history提示最接近的命令</p>-->
+            <!--                      <p>ctrl+w补全命令</p>-->
+            <!--                    </template>-->
+            <!--                    <a-button type="link" @click="handleChangeComp" :class="{green:autoComp,center:true}">-->
+            <!--                      <template v-slot:icon>-->
+            <!--                        <svg class="tags"-->
+            <!--                             style="vertical-align: middle;fill: currentColor;overflow: hidden;"-->
+            <!--                             viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1494">-->
+            <!--                          <path d="M512 512m-512 0a512 512 0 1 0 1024 0 512 512 0 1 0-1024 0Z"-->
+            <!--                                p-id="1495"></path>-->
+            <!--                          <path d="M651.2 672.7h-548l269.6-321.4h548z" fill="#FFFFFF" p-id="1496"></path>-->
+            <!--                          <path-->
+            <!--                              d="M662.4 696.7H51.7l309.9-369.3h610.7L662.4 696.7z m-507.8-48H640l229.4-273.3H384L154.6 648.7z"-->
+            <!--                              p-id="1497"></path>-->
+            <!--                          <path d="M512 512m-48.2 0a48.2 48.2 0 1 0 96.4 0 48.2 48.2 0 1 0-96.4 0Z"-->
+            <!--                                p-id="1498"></path>-->
+            <!--                          <path-->
+            <!--                              d="M512 584.2c-39.8 0-72.2-32.4-72.2-72.2s32.4-72.2 72.2-72.2 72.2 32.4 72.2 72.2-32.4 72.2-72.2 72.2z m0-96.4c-13.4 0-24.2 10.9-24.2 24.2 0 13.4 10.9 24.2 24.2 24.2 13.4 0 24.2-10.9 24.2-24.2 0-13.4-10.8-24.2-24.2-24.2z"-->
+            <!--                              p-id="1499"></path>-->
+            <!--                        </svg>-->
+            <!--                      </template>-->
+            <!--                    </a-button>-->
+            <!--                  </a-popover>-->
+            <!--                </div>-->
 
-<!--                <div class="center-name">{{ server.name }}</div>-->
-<!--                <div ref="reloadEl">-->
-<!--                  <a-button type="link" @click="reloadServer">-->
-<!--                    <template v-slot:icon>-->
-<!--                      <reload-outlined/>-->
-<!--                    </template>-->
-<!--                  </a-button>-->
-<!--                </div>-->
-<!--              </template>-->
+            <!--                <div class="center-name">{{ server.name }}</div>-->
+            <!--                <div ref="reloadEl">-->
+            <!--                  <a-button type="link" @click="reloadServer">-->
+            <!--                    <template v-slot:icon>-->
+            <!--                      <reload-outlined/>-->
+            <!--                    </template>-->
+            <!--                  </a-button>-->
+            <!--                </div>-->
+            <!--              </template>-->
 
-              <div class="p-term-root">
-                <div style="width: 100%;position: relative;overflow: hidden">
-                      <p-term v-model:loading="pTermLoading" class="ssh" :server="server"
-                              :master-session-id="server.masterSessionId"
-                              ref="PTermRef"
-                              @hot="onHot"
-                              v-model:inputTerminal="inputTerm"
-                              v-model:sub-session-username="subSessionUsername"></p-term>
-                  <div style="position: absolute;right: 16px;top: calc(50% - 1em / 2);color: aliceblue;z-index: 100"
-                       ref="openPopover"
-                       @click="remarkStatus=!remarkStatus">
-                    <left-outlined :class="{'button-action':remarkStatus,'left':true}"/>
-                  </div>
-                  <div ref="reloadEl"
-                       @click="reloadServer"
-                       style="position: absolute;right: 16px;top: 17px;color: aliceblue;z-index: 99999;fill: aliceblue"
-                       class="left">
-                    <reload-outlined class="tags"/>
-                  </div>
-                  <div :class="{green:sftpEnable,center:true}" @click="changeSftpEnable"
-                       style="position: absolute;right:45px;top: 17px;color: aliceblue;z-index: 99999;fill: aliceblue"
-                       class="left" ref="SftpChangeEl">
-
-                        <svg t="1696435355552" class="tags" viewBox="0 0 1024 1024" version="1.1"
-                             xmlns="http://www.w3.org/2000/svg" p-id="19507" >
-                          <path
-                              d="M972.8 249.856h-14.336l-0.512-108.032c0-25.6-20.992-45.568-46.08-45.568l-413.184 2.56h-3.584l-23.552-25.088c-9.728-10.24-23.04-16.384-37.376-16.384l-381.952-0.512C24.064 56.832 1.536 79.36 1.024 107.52L0 914.432c0 13.824 5.12 26.624 14.848 36.352 9.728 9.728 22.528 14.848 36.352 15.36l921.088 1.024c28.16 0 51.2-22.528 51.2-51.2l0.512-614.912c0-28.16-23.04-50.688-51.2-51.2z m-105.984-61.44l0.512 61.44-232.96-0.512-55.296-59.392 287.744-1.536zM921.088 865.28L102.4 864.256 108.032 158.72l303.616 0.512 162.816 176.128c9.728 10.24 23.04 16.384 37.376 16.384l310.272 0.512-1.024 513.024z"
-                              p-id="19508"></path>
-                          <path
-                              d="M531.968 441.344c-9.216 1.536-17.408 7.168-22.528 15.36-9.728 15.872-6.144 36.864 8.192 48.128l28.16 22.016-183.808 1.024c-18.432 0-33.28 16.384-33.28 35.84s15.36 35.328 33.792 35.328l284.16-1.536c18.432 0 33.28-16.384 33.28-35.84 0-9.728-4.096-18.944-10.752-25.6-1.536-2.048-3.584-4.096-5.632-5.632l-106.496-82.944c-7.168-5.632-15.872-7.68-25.088-6.144zM647.168 639.488l-283.648 2.048c-18.432 0-33.28 16.384-33.28 35.84 0 9.728 4.096 18.944 10.752 25.6 1.536 2.048 3.584 4.096 5.632 5.632l106.496 82.944c5.632 4.608 12.8 6.656 19.968 6.656 11.264 0 21.504-6.144 27.648-15.872 4.608-7.68 6.656-16.896 5.12-25.6-1.536-9.216-6.144-17.408-13.312-22.528l-28.16-22.016 183.808-1.024c18.432 0 33.28-16.384 33.28-35.84-1.024-19.968-15.872-35.84-34.304-35.84z"
-                              p-id="19509"></path>
-                        </svg>
-                  </div>
-                  <div v-if="server.masterSessionId"
-                       style="position: absolute;right: 16px;top: 60px;color: aliceblue;z-index: 100"
-                       class="left enable-line"
-                       :class="{'disable-line':!inputTerm,'enable-line':sftpEnable}"
-                       @click="handleRequestInputTerm">
-                    <edit-outlined style="text-decoration: line-through;"/>
-                  </div>
+            <div class="p-term-root">
+              <div style="width: 100%;position: relative;overflow: hidden">
+                <div v-if="server.os===OsEnum.WINDOWS.value">
+                  <p-rdp ref="pRdpEl" :server="server"></p-rdp>
                 </div>
 
-                <div :class="{remark:true,'remark-enter':remarkStatus}" class="card-container">
-                  <a-tabs v-model:activeKey="rightTabKey" style="margin: 8px" type="card">
-                    <a-tab-pane key="remark" tab="备注">
-                      <div class="w-e-text-container">
-                        <div data-slate-editor v-html="server.remark">
+                <p-term v-else v-model:loading="pTermLoading" class="ssh" :server="server"
+                        :master-session-id="server.masterSessionId"
+                        ref="PTermRef"
+                        @hot="onHot"
+                        v-model:inputTerminal="inputTerm"
+                        v-model:sub-session-username="subSessionUsername"></p-term>
 
-                        </div>
-                      </div>
-                    </a-tab-pane>
-                    <a-tab-pane key="command" tab="命令" force-render>
-                      <a-list style="padding: 8px" item-layout="horizontal" :data-source="commandData">
-                        <template #renderItem="{ item }">
-                          <a-list-item>
-                            <a-list-item-meta>
-                              <template #title>
-                                {{ item.name }}
-                              </template>
-                              <template #avatar>
 
-                                <mac-command-outlined style="color: #F6C445;"/>
-                              </template>
-                              <template #description>
-                                <a-collapse v-model:activeKey="item.activeKey">
-                                  <a-collapse-panel key="1" :header="item.command">
-                                    <div class="w-e-text-container">
-                                      <div data-slate-editor v-html="item.remark">
+                <div style="position: absolute;right: 16px;top: calc(50% - 1em / 2);color: aliceblue;z-index: 100"
+                     ref="openPopover"
+                     @click="remarkStatus=!remarkStatus">
+                  <left-outlined :class="{'button-action':remarkStatus,'left':true}"/>
+                </div>
+                <div ref="reloadEl"
+                     @click="reloadServer"
+                     style="position: absolute;right: 16px;top: 17px;color: aliceblue;z-index: 99999;fill: aliceblue"
+                     class="left">
+                  <reload-outlined class="tags"/>
+                </div>
+                <div :class="{green:sftpEnable,center:true}" @click="changeSftpEnable"
+                     style="position: absolute;right:45px;top: 17px;color: aliceblue;z-index: 99999;fill: aliceblue"
+                     class="left" ref="SftpChangeEl">
 
-                                      </div>
-                                    </div>
-                                    <template #extra>
-                                      <a-popconfirm
-                                          title="确定执行吗?"
-                                          ok-text="Yes"
-                                          cancel-text="No"
-                                          @click.stop
-                                          @confirm="handleExecCommand(item.command)"
-                                      >
-                                        <a-button type="link">执行</a-button>
-                                      </a-popconfirm>
-                                    </template>
-                                  </a-collapse-panel>
-                                </a-collapse>
-                              </template>
-                            </a-list-item-meta>
-                          </a-list-item>
-                        </template>
-                      </a-list>
-                    </a-tab-pane>
-                    <a-tab-pane key="linux-doc" tab="Linux文档">
-                      <div class="linux-doc">
-                        <a-input-search class="search" @change="handleChangeSearch" allow-clear></a-input-search>
-                        <a-collapse v-model:activeKey="activeKey" accordion>
-                          <a-collapse-panel v-for="item in searchLinuxDoc" :key="item.title">
-                            <template #header>
-                              <div>
-                                <span class="title" v-html="item.title"></span>
-                                <span class="des" v-html="item.des"></span>
-                              </div>
-                            </template>
-                            <transition>
-                              <div v-html="item.body" v-if="activeKey===item.title">
-                              </div>
-                            </transition>
-                          </a-collapse-panel>
-                        </a-collapse>
-                      </div>
-                    </a-tab-pane>
-                  </a-tabs>
+                  <svg t="1696435355552" class="tags" viewBox="0 0 1024 1024" version="1.1"
+                       xmlns="http://www.w3.org/2000/svg" p-id="19507">
+                    <path
+                        d="M972.8 249.856h-14.336l-0.512-108.032c0-25.6-20.992-45.568-46.08-45.568l-413.184 2.56h-3.584l-23.552-25.088c-9.728-10.24-23.04-16.384-37.376-16.384l-381.952-0.512C24.064 56.832 1.536 79.36 1.024 107.52L0 914.432c0 13.824 5.12 26.624 14.848 36.352 9.728 9.728 22.528 14.848 36.352 15.36l921.088 1.024c28.16 0 51.2-22.528 51.2-51.2l0.512-614.912c0-28.16-23.04-50.688-51.2-51.2z m-105.984-61.44l0.512 61.44-232.96-0.512-55.296-59.392 287.744-1.536zM921.088 865.28L102.4 864.256 108.032 158.72l303.616 0.512 162.816 176.128c9.728 10.24 23.04 16.384 37.376 16.384l310.272 0.512-1.024 513.024z"
+                        p-id="19508"></path>
+                    <path
+                        d="M531.968 441.344c-9.216 1.536-17.408 7.168-22.528 15.36-9.728 15.872-6.144 36.864 8.192 48.128l28.16 22.016-183.808 1.024c-18.432 0-33.28 16.384-33.28 35.84s15.36 35.328 33.792 35.328l284.16-1.536c18.432 0 33.28-16.384 33.28-35.84 0-9.728-4.096-18.944-10.752-25.6-1.536-2.048-3.584-4.096-5.632-5.632l-106.496-82.944c-7.168-5.632-15.872-7.68-25.088-6.144zM647.168 639.488l-283.648 2.048c-18.432 0-33.28 16.384-33.28 35.84 0 9.728 4.096 18.944 10.752 25.6 1.536 2.048 3.584 4.096 5.632 5.632l106.496 82.944c5.632 4.608 12.8 6.656 19.968 6.656 11.264 0 21.504-6.144 27.648-15.872 4.608-7.68 6.656-16.896 5.12-25.6-1.536-9.216-6.144-17.408-13.312-22.528l-28.16-22.016 183.808-1.024c18.432 0 33.28-16.384 33.28-35.84-1.024-19.968-15.872-35.84-34.304-35.84z"
+                        p-id="19509"></path>
+                  </svg>
+                </div>
+                <div v-if="server.masterSessionId"
+                     style="position: absolute;right: 16px;top: 60px;color: aliceblue;z-index: 100"
+                     class="left enable-line"
+                     :class="{'disable-line':!inputTerm,'enable-line':sftpEnable}"
+                     @click="handleRequestInputTerm">
+                  <edit-outlined style="text-decoration: line-through;"/>
                 </div>
               </div>
-<!--            </a-card>-->
+
+              <div :class="{remark:true,'remark-enter':remarkStatus}" class="card-container">
+                <a-tabs v-model:activeKey="rightTabKey" style="margin: 8px" type="card">
+                  <a-tab-pane key="remark" tab="备注">
+                    <div class="w-e-text-container">
+                      <div data-slate-editor v-html="server.remark">
+
+                      </div>
+                    </div>
+                  </a-tab-pane>
+                  <a-tab-pane key="command" tab="命令" v-if="server.os!==OsEnum.WINDOWS.value" force-render>
+                    <a-list style="padding: 8px" item-layout="horizontal" :data-source="commandData">
+                      <template #renderItem="{ item }">
+                        <a-list-item>
+                          <a-list-item-meta>
+                            <template #title>
+                              {{ item.name }}
+                            </template>
+                            <template #avatar>
+
+                              <mac-command-outlined style="color: #F6C445;"/>
+                            </template>
+                            <template #description>
+                              <a-collapse v-model:activeKey="item.activeKey">
+                                <a-collapse-panel key="1" :header="item.command">
+                                  <div class="w-e-text-container">
+                                    <div data-slate-editor v-html="item.remark">
+
+                                    </div>
+                                  </div>
+                                  <template #extra>
+                                    <a-popconfirm
+                                        title="确定执行吗?"
+                                        ok-text="Yes"
+                                        cancel-text="No"
+                                        @click.stop
+                                        @confirm="handleExecCommand(item.command)"
+                                    >
+                                      <a-button type="link">执行</a-button>
+                                    </a-popconfirm>
+                                  </template>
+                                </a-collapse-panel>
+                              </a-collapse>
+                            </template>
+                          </a-list-item-meta>
+                        </a-list-item>
+                      </template>
+                    </a-list>
+                  </a-tab-pane>
+                  <a-tab-pane key="linux-doc" tab="Linux文档" v-if="server.os!==OsEnum.WINDOWS.value">
+                    <div class="linux-doc">
+                      <a-input-search class="search" @change="handleChangeSearch" allow-clear></a-input-search>
+                      <a-collapse v-model:activeKey="activeKey" accordion>
+                        <a-collapse-panel v-for="item in searchLinuxDoc" :key="item.title">
+                          <template #header>
+                            <div>
+                              <span class="title" v-html="item.title"></span>
+                              <span class="des" v-html="item.des"></span>
+                            </div>
+                          </template>
+                          <transition>
+                            <div v-html="item.body" v-if="activeKey===item.title">
+                            </div>
+                          </transition>
+                        </a-collapse-panel>
+                      </a-collapse>
+                    </div>
+                  </a-tab-pane>
+                </a-tabs>
+              </div>
+            </div>
+            <!--            </a-card>-->
           </div>
         </a-spin>
       </template>

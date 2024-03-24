@@ -19,33 +19,27 @@ let props = defineProps({
 })
 
 const show = () => {
-
-  notification.open({
-    message: '提示',
-    description:
-        '浏览器远程桌面有诸多不便，在服务器上右键下载连接文件，本地连接更方便！'
-  });
-
-  //var guac = new Guacamole.Client(
-  //new Guacamole.HTTPTunnel("/guacamole/tunnel")
-  //);
-
+  if (display.value){
+    display.value.innerHTML = "";
+  }
+  let webSocketTunnel = new Guacamole.WebSocketTunnel(
+      "/socket/rdp/" + props.server.id
+  );
   guac = new Guacamole.Client(
-      new Guacamole.WebSocketTunnel(
-          "/socket/rdp/" + props.server.id
-      )
+      webSocketTunnel
   );
 
-
   let handleResize = () => {
-    guac.sendSize(display.value.clientWidth, display.value.clientHeight);
+    if (display.value.clientHeight - 20 > 100 && display.value.clientWidth > 100) {
+      guac.sendSize(display.value.clientWidth, display.value.clientHeight - 20);
+    }
   }
 
   guac.audioEnabled = true;
 
   const resizeObserver = new ResizeObserver(_.debounce(handleResize, 1500, {leading: false, trailing: true}));
 
-  resizeObserver.observe(window.document.body);
+  resizeObserver.observe(display.value);
 
   // Add client to display div
   display.value.appendChild(guac.getDisplay().getElement());
@@ -59,7 +53,7 @@ const show = () => {
 
   // Connect
   guac.connect("height=" +
-      display.value.clientHeight +
+      (display.value.clientHeight - 20) +
       "&width=" +
       display.value.clientWidth);
   // Disconnect on closez
@@ -80,22 +74,29 @@ const show = () => {
                   };
 
       // Keyboard
-      keyboard = new Guacamole.Keyboard(document);
+      keyboard = new Guacamole.Keyboard(document)
 
-      keyboard.onkeydown = function (keySystem) {
-        guac.sendKeyEvent(1, keySystem);
-      };
+      //display.value的鼠标移入事件
+      display.value.addEventListener('mouseenter', function () {
+        keyboard.onkeydown = function (keySystem) {
+          guac.sendKeyEvent(1, keySystem);
+        };
 
-      keyboard.onkeyup = function (keySystem) {
-        guac.sendKeyEvent(0, keySystem);
-      };
+        keyboard.onkeyup = function (keySystem) {
+          guac.sendKeyEvent(0, keySystem);
+        };
+      });
+      //display.value的鼠标移出事件
+      display.value.addEventListener('mouseleave', function () {
+        keyboard.onkeydown = null;
+        keyboard.onkeyup = null;
+      });
     }
   };
 
   guac.onaudio = function (mimetype, data) {
     console.log(mimetype, data);
   }
-
 }
 
 const close = () => {
@@ -111,13 +112,25 @@ const close = () => {
 }
 
 onMounted(() => {
-  show()
+  setTimeout(() => {
+    show()
+    notification.open({
+      message: '提示',
+      description:
+          '浏览器远程桌面有诸多不便，在服务器上右键下载连接文件，本地连接更方便！'
+    });
+  }, 0)
 })
+
+const reload = () => {
+  close()
+  show()
+}
 
 defineExpose({
-  close
+  close,
+  reload
 })
-
 
 </script>
 
@@ -126,10 +139,10 @@ defineExpose({
       class="remote-desktop"
   >
     <a-spin :spinning="showResult" :tip="resultTitle.value">
-    <div
-        ref="display"
-    >
-    </div>
+      <div
+          ref="display"
+      >
+      </div>
     </a-spin>
   </div>
 </template>
@@ -138,6 +151,18 @@ defineExpose({
 .remote-desktop {
   width: 100%;
   height: 100%;
+
+  .reload{
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    z-index: 1000;
+    cursor: pointer;
+    mix-blend-mode: difference;
+    width: 30px;
+    height: 30px;
+    color: #fff;
+  }
 
   div {
     width: 100%;

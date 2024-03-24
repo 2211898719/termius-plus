@@ -14,6 +14,7 @@ import com.codeages.javaskeletonserver.biz.server.context.ServerContext;
 import com.codeages.javaskeletonserver.biz.server.dto.*;
 import com.codeages.javaskeletonserver.biz.server.entity.QServer;
 import com.codeages.javaskeletonserver.biz.server.entity.Server;
+import com.codeages.javaskeletonserver.biz.server.enums.OSEnum;
 import com.codeages.javaskeletonserver.biz.server.mapper.ServerMapper;
 import com.codeages.javaskeletonserver.biz.server.repository.ServerRepository;
 import com.codeages.javaskeletonserver.biz.server.service.ProxyService;
@@ -33,6 +34,7 @@ import net.schmizz.sshj.userauth.method.AuthPassword;
 import net.schmizz.sshj.userauth.method.PasswordResponseProvider;
 import net.schmizz.sshj.userauth.password.PasswordFinder;
 import net.schmizz.sshj.userauth.password.Resource;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -67,6 +69,12 @@ public class ServerServiceImpl implements ServerService {
     private final Validator validator;
 
     private final ProxyService proxyService;
+
+    @Value("${guacamole.serverId}")
+    private Long guacamoleServerId;
+
+    @Value("${guacamole.mapping}")
+    private String guacamoleServerFilePath;
 
     public ServerServiceImpl(ServerRepository serverRepository, ServerMapper serverMapper, Validator validator,
                              ProxyService proxyService) {
@@ -195,7 +203,6 @@ public class ServerServiceImpl implements ServerService {
     @Override
     @Transactional(readOnly = true)
     public List<Tree<Long>> findAll(List<Long> serverIds) {
-
         List<Server> allParent = findAllParent(serverRepository.findAllById(serverIds));
         allParent.addAll(findAllChildren(serverIds));
 
@@ -218,6 +225,11 @@ public class ServerServiceImpl implements ServerService {
                     Map<String, Object> beanMap = BeanUtil.beanToMap(e);
 
                     longTreeNode.setExtra(beanMap);
+                    if (e.getOs().equals(OSEnum.WINDOWS)) {
+                        longTreeNode.getExtra().put("guacamoleServerId", guacamoleServerId);
+                        longTreeNode.getExtra().put("guacamoleServerFilePath", guacamoleServerFilePath);
+                    }
+
                     return longTreeNode;
                 })
                 .collect(Collectors.toList());

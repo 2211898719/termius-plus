@@ -41,7 +41,6 @@ let routes = [
       },
       {
         path: '/server',
-
         name: 'server',
         meta: { title: '服务器', icon: 'DesktopOutlined' },
         component:  () => import('../views/server/ServerPage.vue'),

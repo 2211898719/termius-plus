@@ -23,6 +23,9 @@ const props = defineProps({
   serverName: {
     type: [String], default: '',
   },
+  fixedPath: {
+    type: [String], default: undefined,
+  }
 });
 
 let spinning = ref(false)
@@ -61,8 +64,14 @@ const init = async () => {
     if (sessionId.value) {
       await sftpApi.close({id: sessionId.value})
     }
-    sessionId.value = await sftpApi.init({serverId: props.serverId, sessionId:authStore.session})
-    currentPath.value = await sftpApi.pwd({id: sessionId.value})
+    sessionId.value = await sftpApi.init({serverId: props.serverId, sessionId: authStore.session})
+
+    if (props.fixedPath) {
+      currentPath.value = props.fixedPath
+    } else {
+      currentPath.value = await sftpApi.pwd({id: sessionId.value})
+    }
+
   } catch (e) {
     console.error(e)
     message.error(e.message)
@@ -125,6 +134,10 @@ const changeDir = async (path) => {
     // if (!editPathVisible.value) {
     //   startEditPath()
     // }
+    return
+  }
+
+  if (path<props.fixedPath){
     return
   }
 
@@ -207,12 +220,12 @@ const handleDel = (file) => {
     rmApi = sftpApi.rmDir
   }
 
- let modal =  Modal.confirm({
+  let modal = Modal.confirm({
     title: '确定要删除吗?',
     icon: createVNode(ExclamationCircleOutlined),
     content: file.type === 'DIR' ? '你要删除的是一个文件夹，请小心行事！！!' : '',
     onOk() {
-      return  rmApi({id: sessionId.value, remotePath: currentPath.value + '/' + file.name})
+      return rmApi({id: sessionId.value, remotePath: currentPath.value + '/' + file.name})
           .then(() => {
             message.success("删除成功")
             ls()
@@ -352,7 +365,7 @@ const handleChangeSort = (e) => {
     sortFun = dateSort
   } else if (e === 'type') {
     sortFun = typeSort
-  }else if (e === 'size') {
+  } else if (e === 'size') {
     sortFun = (files) => {
       return _.orderBy(files, (file) => {
         return file.attributes.size
@@ -386,6 +399,9 @@ const handleChangePath = () => {
 
 let editInput = ref(null)
 const startEditPath = () => {
+  if (props.fixedPath) {
+    return
+  }
   editPathVisible.value = true
   currentPathEdit.value = currentPath.value
   nextTick(() => {
@@ -455,7 +471,6 @@ const drop = async (e, sessionId, currentPath) => {
       sourceServerName: sourceData.serverName,
       targetServerName: props.serverName
     })
-
 
 
   } catch (e) {
@@ -543,12 +558,12 @@ const onStart = (e, sessionId, currentPath, file, serverName) => {
                   </p>
                 </div>
 
-                  <div class="size">
-                    {{ computedFileSize(file.attributes.size) }}
-                  </div>
-                  <div class="time">
-                    {{ $f.datetime(file.attributes.mtime * 1000) }}
-                  </div>
+                <div class="size">
+                  {{ computedFileSize(file.attributes.size) }}
+                </div>
+                <div class="time">
+                  {{ $f.datetime(file.attributes.mtime * 1000) }}
+                </div>
 
               </div>
               <template #overlay>
@@ -571,7 +586,8 @@ const onStart = (e, sessionId, currentPath, file, serverName) => {
             </a-dropdown>
           </a-card-grid>
         </div>
-        <div v-if="searchFiles.length>50" style="margin-top: 16px;display: flex;flex-direction: row;justify-content: center">
+        <div v-if="searchFiles.length>50"
+             style="margin-top: 16px;display: flex;flex-direction: row;justify-content: center">
           <a-pagination
               v-model:current="page"
               v-model:page-size="size"
@@ -672,17 +688,17 @@ const onStart = (e, sessionId, currentPath, file, serverName) => {
   }
 
 
-    .time {
-      color: rgba(0, 0, 0, .45);
-      font-size: 12px;
-      text-align: center;
-    }
+  .time {
+    color: rgba(0, 0, 0, .45);
+    font-size: 12px;
+    text-align: center;
+  }
 
-    .size {
-      color: rgba(0, 0, 0, .45);
-      font-size: 12px;
-      text-align: center;
-    }
+  .size {
+    color: rgba(0, 0, 0, .45);
+    font-size: 12px;
+    text-align: center;
+  }
 
 
 }

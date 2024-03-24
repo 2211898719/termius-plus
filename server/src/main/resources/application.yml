@@ -97,3 +97,6 @@ guacamole:
     host: ${GUACAMOLE_HOST:127.0.0.1}
     port: ${GUACAMOLE_PORT:4822}
     mapping: ${GUACAMOLE_MAPPING:/tmp}
+#    guacamole服务器的id，把guacamole服务器配置到termius-plus中产生到id
+#    用于向windows上传文件使用
+    serverId: ${GUACAMOLE_SERVER_ID:1}
