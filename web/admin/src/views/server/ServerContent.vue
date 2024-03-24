@@ -1,7 +1,7 @@
 <script setup>
 import PFlip from "@/components/p-flip.vue";
 import PSftp from "@/components/p-sftp.vue";
-import {message} from "ant-design-vue";
+import {message, notification} from "ant-design-vue";
 import {computed, defineExpose, defineProps, nextTick, onMounted, ref} from "vue";
 import {commandApi} from "@/api/command";
 import PTerm from "@/components/p-term.vue";
@@ -83,6 +83,15 @@ const changeSftpEnable = () => {
   if (!sftpEnable.value) {
     sftpEnable.value = true;
     message.success("开启sftp成功");
+
+    if (props.server.os === OsEnum.WINDOWS.value) {
+      notification.open({
+        message: '提示',
+        description:
+            '上传文件映射至【我的电脑】内的 guacamole虚拟磁盘'
+      });
+    }
+
   }
 
   nextTick(() => {
