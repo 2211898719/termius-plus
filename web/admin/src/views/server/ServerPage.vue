@@ -614,8 +614,8 @@ const changeMiniTab = () => {
                           {{ server.name }}
                         </div>
                       </div>
-                      <div class="right tab-close">
-                        <close-outlined @click.stop="onCloseServer(server.operationId)"/>
+                      <div class="right tab-close" @click.stop="onCloseServer(server.operationId)">
+                        <close-outlined />
                       </div>
                     </div>
                   </a-tooltip>
@@ -738,7 +738,11 @@ const changeMiniTab = () => {
 }
 
 .tab-bar-group-mini{
-  width: 75px !important;
+  width: 67px !important;
+  .tab-close{
+    background: none !important;
+    font-size: 10px !important;
+  }
 }
 
 .tab-bar-group {
@@ -849,6 +853,7 @@ const changeMiniTab = () => {
       align-items: center;
       padding: 0 4px;
       border-radius: 4px;
+      z-index: 1000;
 
       &:hover {
         background-color: #404460;
