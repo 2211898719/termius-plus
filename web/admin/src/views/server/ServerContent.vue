@@ -63,7 +63,6 @@ let PTermRef = ref(null)
 let pTermLoading = ref(false)
 
 const reloadServer = () => {
-  console.log(currentServer.value)
   currentServer.value.reload()
   inputTerm.value = false
 }

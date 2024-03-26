@@ -346,8 +346,6 @@ const renderLayout = (server) => {
       serverList.value[index].isSplitView = true
     }
 
-    console.log(goldenLayout)
-
     handleChangeActiveKey(server.operationId)
   })
 

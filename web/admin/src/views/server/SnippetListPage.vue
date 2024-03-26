@@ -78,7 +78,7 @@ const handleCommandCreate = async () => {
     ...creationCommandState
   }
 
-  submitData.serverIds = submitData.serverIds.join(',')
+  submitData.serverIds = submitData.serverIds.filter(s=>!!s).join(',')
 
   let res = await commandApi[creationCommandType.value](submitData);
   emit('createSuccess', res)
@@ -177,7 +177,7 @@ const openServer = (snippet) => {
         serverArgsData.value[s.id][arg] = cache ? cache : ''
       })
     })
-    console.log(serverArgsData.value)
+
     return
   }
 
