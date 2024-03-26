@@ -26,7 +26,6 @@ let serverListRef = ref()
 let proxyListRef = ref()
 
 const handleOpenServer = (item, masterSessionId = 0) => {
-  // spinning.value = true;
   let uuid = v4();
   while (serverList.value.findIndex(e => e.operationId === uuid) !== -1) {
     uuid = v4();
@@ -469,7 +468,7 @@ const changeMiniTab = () => {
           <cron-job-page></cron-job-page>
         </a-tab-pane>
         <a-tab-pane tab="命令片段" key="snippet" :closable="false" :forceRender="true">
-          <snippet-list-page ref="snippetListRef" @createSuccess="handleProxyCreateSuccess"></snippet-list-page>
+          <snippet-list-page ref="snippetListRef" @createSuccess="handleProxyCreateSuccess" @openServer="handleOpenServer"></snippet-list-page>
         </a-tab-pane>
         <a-tab-pane class="setting-pane" tab="设置" key="setting" :closable="false" :forceRender="true">
           <setting-page></setting-page>

@@ -11,5 +11,6 @@ public class CommandCreateParams {
     private String name;
     private String command;
     private String remark;
+    private String serverIds;
 }
 

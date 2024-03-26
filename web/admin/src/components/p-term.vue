@@ -386,6 +386,13 @@ const initTerm = () => {
     }
   });
 
+  console.log("execCommand" , props.server)
+  if (props.server.execCommand) {
+    nextTick(() => {
+      execCommand(props.server.execCommand + "\n")
+    })
+  }
+
   nextTick(() => {
     resizeTerminal(term);
   });

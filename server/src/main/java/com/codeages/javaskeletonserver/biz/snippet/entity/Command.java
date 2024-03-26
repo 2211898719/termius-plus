@@ -3,7 +3,6 @@ package com.codeages.javaskeletonserver.biz.snippet.entity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -34,6 +33,10 @@ public class Command {
      * 备注
      */
     private String remark;
+    /**
+     * 服务器ids
+     */
+    private String serverIds;
     @CreatedDate
     private Long createdAt;
     @LastModifiedDate

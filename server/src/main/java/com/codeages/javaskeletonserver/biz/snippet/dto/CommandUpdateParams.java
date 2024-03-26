@@ -12,5 +12,6 @@ public class CommandUpdateParams {
     private String name;
     private String command;
     private String remark;
+    private String serverIds;
 }
 
