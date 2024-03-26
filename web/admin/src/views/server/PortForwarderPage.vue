@@ -21,6 +21,7 @@ const creationPortForwardingState = reactive({
   serverId: "",
   serverDto: {},
   remotePort: "",
+  remoteHost: ""
 });
 
 const creationPortForwardingRules = reactive({
@@ -54,6 +55,16 @@ const creationPortForwardingRules = reactive({
     {
       required: true,
       message: "请选择服务器",
+    }
+  ],
+  remoteHost: [
+    {
+      required: true,
+      message: "请输入host",
+    },
+    {
+      pattern: /^(?:(?:[0-9]{1,3}\.){3}[0-9]{1,3}|(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,})$/,
+      message: "host格式不正确"
     }
   ],
 });
@@ -129,6 +140,7 @@ let selectServerVisible = ref(false);
 const handleSelectServer = (server) => {
   creationPortForwardingState.serverId = server.id;
   creationPortForwardingState.serverDto = server;
+  creationPortForwardingState.remoteHost = server.ip;
   selectServerVisible.value = false;
 }
 
@@ -238,6 +250,9 @@ defineExpose({
               </span>
                 <a-button v-else>选择服务器</a-button>
               </div>
+            </a-form-item>
+            <a-form-item label="远端ip：" v-bind="portForwardingCreationValidations.remoteHost">
+              <a-input v-model:value="creationPortForwardingState.remoteHost"></a-input>
             </a-form-item>
             <a-form-item label="服务器端口：" v-bind="portForwardingCreationValidations.remotePort">
               <a-input-number v-model:value="creationPortForwardingState.remotePort" :min="1" :max="65535"></a-input-number>

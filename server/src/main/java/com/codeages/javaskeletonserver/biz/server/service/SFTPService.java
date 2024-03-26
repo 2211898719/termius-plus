@@ -6,7 +6,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.List;
 
 public interface SFTPService {
@@ -97,6 +96,8 @@ public interface SFTPService {
     void close(String id);
 
     void serverUploadServer(SFTPServerUploadServerParams params);
+
+    void asyncServerUploadServer(SFTPServerUploadServerParams params);
 }
 
 

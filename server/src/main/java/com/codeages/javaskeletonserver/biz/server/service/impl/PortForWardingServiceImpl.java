@@ -2,6 +2,7 @@ package com.codeages.javaskeletonserver.biz.server.service.impl;
 
 import cn.hutool.core.net.NetUtil;
 import cn.hutool.core.thread.ThreadUtil;
+import cn.hutool.core.util.StrUtil;
 import com.codeages.javaskeletonserver.biz.ErrorCode;
 import com.codeages.javaskeletonserver.biz.server.dto.PortForwarderDto;
 import com.codeages.javaskeletonserver.biz.server.dto.ServerDto;
@@ -61,7 +62,11 @@ public class PortForWardingServiceImpl implements PortForWardingService {
      */
     @SneakyThrows
     @Override
-    public void startPortForwarding(String forwardingName, Integer localPort, Long serverId, Integer remotePort) {
+    public void startPortForwarding(String forwardingName,
+                                    Integer localPort,
+                                    Long serverId,
+                                    String remoteHost,
+                                    Integer remotePort) {
         if (localPortForwarderMap.containsKey(localPort)) {
             throw new AppException(ErrorCode.INTERNAL_ERROR, "端口已被“" + localPortForwarderMap.get(localPort)
                                                                                                 .getForwardingName() + "”映射占用");
@@ -77,7 +82,7 @@ public class PortForWardingServiceImpl implements PortForWardingService {
                                                              .newLocalPortForwarder(new Parameters(
                                                                      currentIp,
                                                                      localPort,
-                                                                     serverDto.getIp(),
+                                                                     StrUtil.isEmpty(remoteHost) ? serverDto.getIp() : remoteHost,
                                                                      remotePort
                                                              ), new ServerSocket(localPort));
 
@@ -104,6 +109,7 @@ public class PortForWardingServiceImpl implements PortForWardingService {
                         localPortForwarder,
                         localPort,
                         currentIp,
+                        remoteHost,
                         remotePort,
                         serverId,
                         serverDto
@@ -114,7 +120,8 @@ public class PortForWardingServiceImpl implements PortForWardingService {
     @Override
     public Integer startPortForwarding(String forwardingName, Long serverId, Integer remotePort) {
         Integer localPort = NetUtil.getUsableLocalPort(8200, 8500);
-        startPortForwarding(forwardingName, localPort, serverId, remotePort);
+        ServerDto serverDto = serverService.findById(serverId);
+        startPortForwarding(forwardingName, localPort, serverId, serverDto.getIp(), remotePort);
         return localPort;
     }
 

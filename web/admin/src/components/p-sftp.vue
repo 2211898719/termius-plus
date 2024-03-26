@@ -436,17 +436,23 @@ const drop = async (e, sessionId, currentPath) => {
   }
 
 
-  let key = sourceData.currentPath + "/" + sourceData.fileName + "---" + currentPath + "/" + sourceData.fileName
+  let key = sourceData.sessionId + "---" + sourceData.currentPath + "/" + sourceData.fileName + "---" + currentPath + "/" + sourceData.fileName + "---" + sessionId
   let sftp = new BroadcastChannel('sftp')
 
+  let time = new Date().getTime()
   sftp.onmessage = (e) => {
     let data = JSON.parse(e.data)
+    let messageKey = data.sourceId + "---" + data.sourceFileName + "---" + data.targetFileName + "---" + data.targetId
+    if (key !== messageKey) {
+      return
+    }
+
     if (data.progress === sourceData.fileSize) {
       notification.open({
         key: key,
         duration: 0,
         message: '文件传输',
-        description: `${sourceData.fileName} 传输完成`,
+        description: `${sourceData.fileName} 传输完成,耗时：${(new Date().getTime() - time) / 1000} 秒`,
       });
       ls()
       return
@@ -456,7 +462,8 @@ const drop = async (e, sessionId, currentPath) => {
       key: key,
       duration: 0,
       message: '文件传输',
-      description: `${sourceData.fileName} 进度：${(data.progress / sourceData.fileSize * 100).toFixed(2)} %`,
+      description: `${sourceData.fileName} 进度：${(data.progress / sourceData.fileSize * 100).toFixed(2)} %,耗时：` +
+          `${(new Date().getTime() - time) / 1000} 秒`,
     });
   }
 

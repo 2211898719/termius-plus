@@ -13,4 +13,6 @@ public class SftpServerUploadServerProgressDto {
     private String targetServerName;
     private String targetFileName;
     private Long progress;
+    private String sourceId;
+    private String targetId;
 }

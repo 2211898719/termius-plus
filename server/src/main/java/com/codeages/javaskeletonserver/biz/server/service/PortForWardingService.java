@@ -11,6 +11,7 @@ public interface PortForWardingService {
     void startPortForwarding(String forwardingName,
                              Integer localPort,
                              Long serverId,
+                             String remoteHost,
                              Integer remotePort);
 
     Integer startPortForwarding(String forwardingName,

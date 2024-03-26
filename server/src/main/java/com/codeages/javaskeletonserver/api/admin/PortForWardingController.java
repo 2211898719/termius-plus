@@ -28,6 +28,7 @@ public class PortForWardingController {
                 portForwarderDto.getForwardingName(),
                 portForwarderDto.getLocalPort(),
                 portForwarderDto.getServerId(),
+                portForwarderDto.getRemoteHost(),
                 portForwarderDto.getRemotePort()
         );
     }

@@ -29,6 +29,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 
 @Slf4j
@@ -69,6 +71,8 @@ public class SFTPServiceImpl implements SFTPService {
                     createSftp(split[split.length - 1], Long.valueOf(split[split.length - 2])),
                     System.currentTimeMillis()
             );
+
+            ServerContext.SFTP_POOL.put(id, sftp);
         }
 
         sftp.setTime(System.currentTimeMillis());
@@ -190,6 +194,10 @@ public class SFTPServiceImpl implements SFTPService {
         ServerContext.SFTP_POOL.remove(id);
     }
 
+    public void asyncServerUploadServer(SFTPServerUploadServerParams params) {
+        CompletableFuture.runAsync(() -> serverUploadServer(params));
+    }
+
     @Override
     public void serverUploadServer(SFTPServerUploadServerParams params) {
         try {
@@ -212,20 +220,23 @@ public class SFTPServiceImpl implements SFTPService {
 
             RemoteFile remoteFile = targetSftp.open(target, EnumSet.of(OpenMode.WRITE));
             RemoteFile.RemoteFileOutputStream remoteFileOutputStream = remoteFile.new RemoteFileOutputStream();
-            RemoteFile.RemoteFileInputStream remoteFileInputStream = sourceFile.new RemoteFileInputStream();
+            RemoteFile.ReadAheadRemoteFileInputStream readAheadRemoteFileInputStream = sourceFile.new ReadAheadRemoteFileInputStream(
+                    15);
 
-            transferWithProgress(remoteFileInputStream, remoteFileOutputStream, progress -> {
+            transferWithProgress(readAheadRemoteFileInputStream, remoteFileOutputStream, progress -> {
                 MessageDto messageDto = new MessageDto(EventType.SFTP_SERVER_UPLOAD_SERVER_PROGRESS, JSONUtil.toJsonStr(new SftpServerUploadServerProgressDto(
                         params.getSourceServerName(),
                         source,
                         params.getTargetServerName(),
                         target,
-                        progress
+                        progress,
+                        params.getSourceId(),
+                        params.getTargetId()
                 )));
                 AuthKeyBoardHandler.sendMessage(params.getClientSessionId(), JSONUtil.toJsonStr(messageDto));
             });
 
-            IoUtil.close(remoteFileInputStream);
+            IoUtil.close(readAheadRemoteFileInputStream);
             IoUtil.close(remoteFileOutputStream);
         } catch (Exception e) {
             log.error("服务器对服务器传递文件错误", e);
@@ -237,16 +248,15 @@ public class SFTPServiceImpl implements SFTPService {
     public static void transferWithProgress(InputStream inputStream,
                                             OutputStream outputStream,
                                             VoidFunc1<Long> progressCallback) {
+        Objects.requireNonNull(outputStream, "out");
+        long transferred = 0;
         byte[] buffer = new byte[FileSizeFormatter.ONE_MB];
-        int bytesRead;
-        long totalBitsTransferred = 0;
-
-        while ((bytesRead = inputStream.read(buffer)) != -1) {
-            outputStream.write(buffer, 0, bytesRead);
-            totalBitsTransferred += bytesRead;
-
+        int read;
+        while ((read = inputStream.read(buffer, 0, FileSizeFormatter.ONE_MB)) >= 0) {
+            outputStream.write(buffer, 0, read);
+            transferred += read;
             if (progressCallback != null) {
-                progressCallback.call(totalBitsTransferred);
+                progressCallback.call(transferred);
             }
         }
     }
