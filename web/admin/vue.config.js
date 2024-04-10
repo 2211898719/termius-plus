@@ -43,15 +43,18 @@ module.exports = defineConfig({
         );
 
         config.module
+            .rule('jsx')
+            .test(/\.jsx$/)
+            .use('babel-loader')
+            .loader('babel-loader')
+            .end()
             .rule('vue')
-            .use('vue-loader')
-            .tap(options => ({
-                ...options,
-                compilerOptions: {
-                    // 将所有以 ion- 开头的标签都视为自定义元素
-                    isCustomElement: tag => tag.startsWith('p-term.ce')
-                }
-            }))
+            .test(/\.vue$/)
+            .use('babel-loader')
+            .loader('babel-loader')
+            .end()
+
+
     },
     css: {
         loaderOptions: {

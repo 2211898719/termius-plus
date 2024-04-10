@@ -2,6 +2,8 @@
   "compilerOptions": {
     "target": "es5",
     "module": "esnext",
+    "jsx": "preserve",
+    "jsxImportSource": "vue",
     "baseUrl": "./",
     "moduleResolution": "node",
     "paths": {

@@ -94,9 +94,6 @@ const show = () => {
     }
   };
 
-  guac.onaudio = function (mimetype, data) {
-    console.log(mimetype, data);
-  }
 }
 
 const close = () => {

@@ -40,8 +40,6 @@ const remarkStatus = ref(false)
 
 let flipStatus = ref(false)
 
-
-
 let sftpEnable = ref(false)
 
 let flip = ref(null)
@@ -184,7 +182,7 @@ const defaultConfig = {
   defaultStepOptions: {
     // 显示关闭按钮
     cancelIcon: {
-      enabled: true
+      enabled: false
     },
     scrollTo: {behavior: 'smooth', block: 'center'},
     // 高亮元素四周要填充的空白像素
@@ -225,14 +223,6 @@ onMounted(() => {
 
   tour.addSteps([
     {
-      attachTo: {element: document.getElementsByClassName("ant-tabs-tab-active")[0], on: 'right'},
-      text: '服务器操作标签，可以拖拽排序，右键可以进行复制等操作',
-    },
-    {
-      attachTo: {element: CompChangeEl.value, on: 'bottom'},
-      text: '开启后可根据history提示最接近的命令,使用ctrl+w补全命令',
-    },
-    {
       attachTo: {element: SftpChangeEl.value, on: 'bottom'},
       text: '开启sftp,图形化管理文件',
     },
@@ -243,10 +233,6 @@ onMounted(() => {
     {
       attachTo: {element: openPopover.value, on: 'bottom'},
       text: '展开额外信息面板，包括备注、命令、Linux文档',
-    },
-    {
-      attachTo: {element: fullscreenEl.value, on: 'bottom'},
-      text: '全屏显示终端',
       buttons: [
         {
           action() {
@@ -264,10 +250,11 @@ onMounted(() => {
       ]
     },
   ])
-
+  tour.onclose =()=>{
+    console.log(111)
+  }
   tour.start();
 });
-
 
 </script>
 

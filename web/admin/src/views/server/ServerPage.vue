@@ -680,6 +680,9 @@ const changeMiniTab = () => {
 @import 'golden-layout/dist/less/goldenlayout-base.less';
 @import 'golden-layout/dist/less/themes/goldenlayout-dark-theme.less';
 
+.ant-tooltip {
+  max-width: 1000px
+}
 </style>
 
 <style scoped lang="less">
@@ -917,5 +920,7 @@ const changeMiniTab = () => {
   white-space: nowrap;
   max-width: 100px;
 }
+
+
 
 </style>

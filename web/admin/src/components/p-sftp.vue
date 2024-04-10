@@ -10,6 +10,7 @@ import {ExclamationCircleOutlined} from "@ant-design/icons-vue";
 import {computedFileSize} from "@/components/tinymce/File";
 import {useAutoAnimate} from "@formkit/auto-animate/vue";
 import {useAuthStore} from "@shared/store/useAuthStore";
+import {uploadFileProcess} from "@/components/process.jsx";
 
 let authStore = useAuthStore()
 
@@ -440,11 +441,17 @@ const drop = async (e, sessionId, currentPath) => {
   let sftp = new BroadcastChannel('sftp')
 
   let time = new Date().getTime()
-  sftp.onmessage = (e) => {
+
+  const handleProcessMessage = (e) => {
     let data = JSON.parse(e.data)
     let messageKey = data.sourceId + "---" + data.sourceFileName + "---" + data.targetFileName + "---" + data.targetId
     if (key !== messageKey) {
       return
+    }
+
+    let take = Math.floor((new Date().getTime() - time) / 1000);
+    if (take === 0) {
+      take = 1
     }
 
     if (data.progress === sourceData.fileSize) {
@@ -452,20 +459,30 @@ const drop = async (e, sessionId, currentPath) => {
         key: key,
         duration: 0,
         message: '文件传输',
-        description: `${sourceData.fileName} 传输完成,耗时：${(new Date().getTime() - time) / 1000} 秒`,
+        description: `${sourceData.fileName} 传输完成,耗时：${take} 秒`,
       });
       ls()
       return
     }
 
+    //计算预计剩余时间
+    let speed = data.progress / take
+    let left = (sourceData.fileSize - data.progress) / speed
+
+    let speedStr = computedFileSize(speed) + '/s'
+
+
+
     notification.open({
       key: key,
       duration: 0,
       message: '文件传输',
-      description: `${sourceData.fileName} 进度：${(data.progress / sourceData.fileSize * 100).toFixed(2)} %,耗时：` +
-          `${(new Date().getTime() - time) / 1000} 秒`,
+      description: uploadFileProcess(sourceData, data, speedStr, take, left),
     });
+
   }
+
+  sftp.onmessage = _.throttle(handleProcessMessage, 1000)
 
   try {
     await sftpApi.serverUploadServer({
@@ -485,6 +502,7 @@ const drop = async (e, sessionId, currentPath) => {
     message.error(e.message)
   }
 }
+
 
 const onStart = (e, sessionId, currentPath, file, serverName) => {
   let dragData = {
@@ -648,7 +666,7 @@ const onStart = (e, sessionId, currentPath, file, serverName) => {
   :deep(.ant-card-body) {
     margin-top: 24px;
     //height: calc(@height - 180px);
-    overflow: scroll;
+
   }
 
 

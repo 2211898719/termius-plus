@@ -91,7 +91,7 @@ defineExpose({
   overflow: auto;
 
   .ant-card-body {
-    overflow: scroll;
+
   }
 }
 </style>

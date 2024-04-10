@@ -195,7 +195,12 @@ public class SFTPServiceImpl implements SFTPService {
     }
 
     public void asyncServerUploadServer(SFTPServerUploadServerParams params) {
-        CompletableFuture.runAsync(() -> serverUploadServer(params));
+        CompletableFuture<Void> future = CompletableFuture.runAsync(() -> serverUploadServer(params));
+
+        future.exceptionally(ex -> {
+            //todo 使用websocket通知前端
+            return null; // 返回一个默认值
+        });
     }
 
     @Override

@@ -386,7 +386,6 @@ const initTerm = () => {
     }
   });
 
-  console.log("execCommand" , props.server)
   if (props.server.execCommand) {
     nextTick(() => {
       execCommand(props.server.execCommand + "\n")
@@ -449,7 +448,6 @@ const getCompleteCommand = () => {
   let command = getUnExecutedCommand()
   //去掉头部的空格，不能去掉尾部的空格
   command = command.replace(/^\s+/, "")
-  console.log("当前命令" + command)
   if (command) {
     let find = history.value[history.value.currentType].find(item => item.startsWith(command))
     if (find) {
