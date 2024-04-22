@@ -47,10 +47,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
-import java.net.Socket;
+import java.net.*;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -394,7 +391,12 @@ public class ServerServiceImpl implements ServerService {
 
         // 设置主机和端口号
         ssh.addHostKeyVerifier(new PromiscuousVerifier());
-        ssh.connect(server.getIp(), server.getPort().intValue());
+        try {
+            ssh.connect(server.getIp(), server.getPort().intValue());
+        } catch (ConnectException connectException) {
+            throw new AppException(ErrorCode.INVALID_ARGUMENT, "连接失败，请检查网络或者服务器是否开启");
+        }
+
         // 配置身份验证使用的私钥
         if (StrUtil.isNotBlank(server.getKey())) {
             ssh.authPublickey(server.getUsername(), ssh.loadKeys(server.getKey(), null, null));

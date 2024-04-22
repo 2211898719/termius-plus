@@ -5,7 +5,6 @@ import {message, notification} from "ant-design-vue";
 import {computed, defineExpose, defineProps, nextTick, onMounted, ref} from "vue";
 import {commandApi} from "@/api/command";
 import PTerm from "@/components/p-term.vue";
-import "@/components/VueDragSplit/style.css";
 import linuxDoc from "@/assets/linux-doc.json";
 import {useStorage} from "@vueuse/core";
 import {useShepherd} from 'vue-shepherd'

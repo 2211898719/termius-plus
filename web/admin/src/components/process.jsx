@@ -1,8 +1,6 @@
 import {Progress} from 'ant-design-vue'
 
 export const uploadFileProcess = (sourceData, data, speedStr, take, left) => {
-
-
     return <div>
         <p>{sourceData.fileName}</p>
         <p><Progress percent={Math.floor(data.progress / sourceData.fileSize * 100)} status="active"/></p>

@@ -15,7 +15,6 @@
     "@codemirror/lang-sql": "^6.5.5",
     "@codemirror/theme-one-dark": "^6.1.2",
     "@formkit/auto-animate": "^0.8.1",
-    "@headerless/split-box": "^0.2.8",
     "@vueuse/core": "10.6.1",
     "@wangeditor/editor": "^5.1.23",
     "@wangeditor/editor-for-vue": "^5.1.12",

@@ -1296,13 +1296,6 @@
   dependencies:
     "@hapi/hoek" "^9.0.0"
 
-"@headerless/split-box@^0.2.8":
-  version "0.2.8"
-  resolved "https://registry.npmmirror.com/@headerless/split-box/-/split-box-0.2.8.tgz#8cf951d5a7fe9ac51eba2af1facea17da5b192d2"
-  integrity sha512-Y8mdefpgQW8TZxmEXXO0KYanwea7mbmJR4I/8oy3kOlTNt52cKjCFm8UBkGNaZsBYG3QH/xL489gN4BkP5z5qQ==
-  dependencies:
-    "@vueuse/core" "^10.4.1"
-
 "@humanwhocodes/config-array@^0.5.0":
   version "0.5.0"
   resolved "https://registry.npmmirror.com/@humanwhocodes/config-array/-/config-array-0.5.0.tgz#1407967d4c6eecd7388f83acf1eaf4d0c6e58ef9"
@@ -2207,37 +2200,15 @@
     "@vueuse/shared" "10.6.1"
     vue-demi ">=0.14.6"
 
-"@vueuse/core@^10.4.1":
-  version "10.7.1"
-  resolved "https://registry.npmmirror.com/@vueuse/core/-/core-10.7.1.tgz#b4bfe3355dbb0ec17d34d737385e1c8a0156ccf1"
-  integrity sha512-74mWHlaesJSWGp1ihg76vAnfVq9NTv1YT0SYhAQ6zwFNdBkkP+CKKJmVOEHcdSnLXCXYiL5e7MaewblfiYLP7g==
-  dependencies:
-    "@types/web-bluetooth" "^0.0.20"
-    "@vueuse/metadata" "10.7.1"
-    "@vueuse/shared" "10.7.1"
-    vue-demi ">=0.14.6"
-
 "@vueuse/metadata@10.6.1":
   version "10.6.1"
   resolved "https://registry.npmmirror.com/@vueuse/metadata/-/metadata-10.6.1.tgz#100faa0ced3c0ab4c014fb8e66e781e85e4eb88d"
   integrity sha512-qhdwPI65Bgcj23e5lpGfQsxcy0bMjCAsUGoXkJ7DsoeDUdasbZ2DBa4dinFCOER3lF4gwUv+UD2AlA11zdzMFw==
 
-"@vueuse/metadata@10.7.1":
-  version "10.7.1"
-  resolved "https://registry.npmmirror.com/@vueuse/metadata/-/metadata-10.7.1.tgz#190a8d0e97216941cc95120c89dfa2c4228b2a53"
-  integrity sha512-jX8MbX5UX067DYVsbtrmKn6eG6KMcXxLRLlurGkZku5ZYT3vxgBjui2zajvUZ18QLIjrgBkFRsu7CqTAg18QFw==
-
 "@vueuse/shared@10.6.1":
   version "10.6.1"
   resolved "https://registry.npmmirror.com/@vueuse/shared/-/shared-10.6.1.tgz#1d9fc1e3f9083e45b59a693fc372bc50ad62a9e4"
   integrity sha512-TECVDTIedFlL0NUfHWncf3zF9Gc4VfdxfQc8JFwoVZQmxpONhLxFrlm0eHQeidHj4rdTPL3KXJa0TZCk1wnc5Q==
-  dependencies:
-    vue-demi ">=0.14.6"
-
-"@vueuse/shared@10.7.1":
-  version "10.7.1"
-  resolved "https://registry.npmmirror.com/@vueuse/shared/-/shared-10.7.1.tgz#b9892fc31784d685619015fba287cde53873485d"
-  integrity sha512-v0jbRR31LSgRY/C5i5X279A/WQjD6/JsMzGa+eqt658oJ75IvQXAeONmwvEMrvJQKnRElq/frzBR7fhmWY5uLw==
   dependencies:
     vue-demi ">=0.14.6"
 
