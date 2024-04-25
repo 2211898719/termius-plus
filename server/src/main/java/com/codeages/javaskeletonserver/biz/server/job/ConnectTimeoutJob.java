@@ -1,5 +1,6 @@
 package com.codeages.javaskeletonserver.biz.server.job;
 
+import cn.hutool.core.date.DateUnit;
 import com.codeages.javaskeletonserver.biz.server.context.ServerContext;
 import com.codeages.javaskeletonserver.biz.server.dto.SFTPBean;
 import com.codeages.javaskeletonserver.biz.server.ws.ssh.SshHandler;
@@ -8,6 +9,9 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 @Component
 @Slf4j
@@ -34,20 +38,24 @@ public class ConnectTimeoutJob {
                 log.info("SFTP连接已失效了：{}", k);
             }
         }
-     }
+    }
 
 
     @Scheduled(cron = "0 0/10 * * * ?")
     public void clearTimeOutSsh() {
         log.info("开始清理超时的SSH连接");
-        for (String k : ServerContext.SSH_POOL.keySet()) {
-            SshHandler.HandlerItem v = ServerContext.SSH_POOL.get(k);
-            if (!v.isOpen()) {
-                v.close();
-                ServerContext.SSH_POOL.remove(k);
-                log.info("SSH连接已失效：{}", k);
+        List<String> key = new ArrayList<>();
+        for (Map.Entry<String, SshHandler.HandlerItem> entry : ServerContext.SSH_POOL.entrySet()) {
+            long diffTime = System.currentTimeMillis() - entry.getValue().getLastActiveTime();
+
+            if (!entry.getValue().isOpen() || diffTime > DateUnit.DAY.getMillis()) {
+                entry.getValue().close();
+                key.add(entry.getKey());
+                log.info("SSH连接已失效：{}", entry.getKey());
             }
         }
+
+        key.forEach(ServerContext.SSH_POOL::remove);
     }
 
 }

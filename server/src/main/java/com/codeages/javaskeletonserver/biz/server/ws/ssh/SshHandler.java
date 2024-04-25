@@ -77,8 +77,8 @@ public class SshHandler {
 
         // 如果是主连接 0，就创建一个新的连接
         if (isMasterSession(masterSessionId)) {
-            HandlerItem handlerItem = new HandlerItem(
-                    userId, username,
+            HandlerItem handlerItem = new HandlerItem(userId,
+                    username,
                     serverId,
                     session,
                     serverService.createSSHClient(serverId, sessionId)
@@ -114,6 +114,7 @@ public class SshHandler {
             return;
         }
 
+        handlerItem.active();
         //如果是事件，就不发送到服务器
         MessageDto messageDto = MessageDto.parse(message);
         switch (messageDto.getEvent()) {
@@ -124,8 +125,7 @@ public class SshHandler {
                 //只有主连接才能调整窗口大小
                 if (isMasterSession(masterSessionId)) {
                     ResizeDto resizeDto = JSONUtil.toBean(messageDto.getData(), ResizeDto.class);
-                    handlerItem.reSize(
-                            resizeDto.getCols(),
+                    handlerItem.reSize(resizeDto.getCols(),
                             resizeDto.getRows(),
                             resizeDto.getWidth(),
                             resizeDto.getHeight()
@@ -145,8 +145,7 @@ public class SshHandler {
     }
 
     @OnClose
-    public void onClose(javax.websocket.Session session,
-                        @PathParam("masterSessionId") String masterSessionId) {
+    public void onClose(javax.websocket.Session session, @PathParam("masterSessionId") String masterSessionId) {
         if (isMasterSession(masterSessionId)) {
             HandlerItem handlerItem = SSH_POOL.get(session.getId());
             handlerItem.close();
@@ -238,15 +237,14 @@ public class SshHandler {
         private final OutputStream outputStream;
         private final net.schmizz.sshj.connection.channel.direct.Session openSession;
         private final net.schmizz.sshj.connection.channel.direct.Session.Shell shell;
+        @Getter
+        private long lastActiveTime = System.currentTimeMillis();
 
         private final File logFile;
         private final BufferedOutputStream logFileOutputStream;
 
         @SneakyThrows
-        HandlerItem(Long userId, String username,
-                    Long serverId,
-                    javax.websocket.Session session,
-                    SSHClient sshClient) {
+        HandlerItem(Long userId, String username, Long serverId, javax.websocket.Session session, SSHClient sshClient) {
             this.sessions.add(Pair.of(username, session));
             this.userId = userId;
             this.serverId = serverId;
@@ -271,27 +269,22 @@ public class SshHandler {
                 outputStream.flush();
             }
 
-            if (CharSequenceUtil.isNotBlank(serverDto.getFirstCommand())){
+            if (CharSequenceUtil.isNotBlank(serverDto.getFirstCommand())) {
                 outputStream.write((serverDto.getFirstCommand()).getBytes());
                 outputStream.flush();
             }
 
             this.openSession = shellSession;
 
-            CommandLogDto commandLogDto = commandLogService
-                                                    .create(new CommandLogCreateParams(
-                                                            userId,
-                                                            session.getId(),
-                                                            serverId
-                                                    ));
+            CommandLogDto commandLogDto = commandLogService.create(new CommandLogCreateParams(userId,
+                    session.getId(),
+                    serverId
+            ));
             log.info("创建命令记录成功：{}", commandLogDto.getId());
             logFile = FileUtil.file(commandLogDto.getCommandData());
 
             //日志内存缓冲区
-            logFileOutputStream = IoUtil.toBuffered(
-                    FileUtil.getOutputStream(logFile),
-                    MAX_LOG_BUFFER_SIZE
-            );
+            logFileOutputStream = IoUtil.toBuffered(FileUtil.getOutputStream(logFile), MAX_LOG_BUFFER_SIZE);
 
             ThreadUtil.execute(this);
         }
@@ -335,7 +328,9 @@ public class SshHandler {
             //写入内存缓冲区中的数据到文件
             logFileOutputStream.flush();
 
-            MessageDto messageDto = new MessageDto(EventType.COMMAND, FileUtil.readString(logFile, openSession.getRemoteCharset()));
+            MessageDto messageDto = new MessageDto(EventType.COMMAND,
+                    FileUtil.readString(logFile, openSession.getRemoteCharset())
+            );
 
             //把之前的服务器上下文的数据发送给新的子连接
             sendBinary(session, JSONUtil.toJsonStr(messageDto));
@@ -399,6 +394,10 @@ public class SshHandler {
             }
         }
 
+        public void active() {
+            lastActiveTime = System.currentTimeMillis();
+        }
+
         public void reqAuthEditSession(Session session) {
             String username = sessions.stream()
                                       .filter(s -> s.getValue().getId().equals(session.getId()))
@@ -408,8 +407,7 @@ public class SshHandler {
 
             AuthEditSessionDto authEditSessionDto = new AuthEditSessionDto(username, session.getId(), null);
 
-            String message = JSONUtil.toJsonStr(new MessageDto(
-                    EventType.REQUEST_AUTH_EDIT_SESSION,
+            String message = JSONUtil.toJsonStr(new MessageDto(EventType.REQUEST_AUTH_EDIT_SESSION,
                     JSONUtil.toJsonStr(authEditSessionDto)
             ));
             sendMasterBinary(message);
