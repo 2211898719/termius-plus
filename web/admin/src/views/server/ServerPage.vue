@@ -15,6 +15,7 @@ import CronJobPage from "@/views/server/CronJobPage.vue";
 import OsEnum from "@/enums/OsEnum";
 import {useStorage} from "@vueuse/core";
 import {ComponentItem, GoldenLayout, Stack} from "golden-layout";
+import ApplicationListPage from "@/views/server/ApplicationListPage.vue";
 
 let spinning = ref(false)
 
@@ -468,6 +469,9 @@ const changeMiniTab = () => {
         <a-tab-pane tab="命令片段" key="snippet" :closable="false" :forceRender="true">
           <snippet-list-page ref="snippetListRef" @createSuccess="handleProxyCreateSuccess" @openServer="handleOpenServer"></snippet-list-page>
         </a-tab-pane>
+        <a-tab-pane tab="应用" key="application" :closable="false" :forceRender="true">
+          <ApplicationListPage ref="applicationListRef"></ApplicationListPage>
+        </a-tab-pane>
         <a-tab-pane class="setting-pane" tab="设置" key="setting" :closable="false" :forceRender="true">
           <setting-page></setting-page>
         </a-tab-pane>
@@ -555,6 +559,18 @@ const changeMiniTab = () => {
                 </div>
                 <div class="tab-title">
                   命令片段
+                </div>
+              </div>
+
+              <div class="right"></div>
+            </div>
+            <div class="tab-bar" :class="{'tab-active-normal':tagActiveKey==='application'}" @click="changeTab('application')">
+              <div class="left">
+                <div class="tab-icon">
+                    <appstore-outlined />
+                </div>
+                <div class="tab-title">
+                  应用
                 </div>
               </div>
 

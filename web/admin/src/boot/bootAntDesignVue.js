@@ -34,7 +34,8 @@ import {
     Pagination,
     Result,
     Badge,
-    Tooltip
+    Tooltip,
+    AutoComplete,
 } from 'ant-design-vue';
 import icons from '@/icons';
 
@@ -80,5 +81,6 @@ export function bootAntDesignVue(app) {
         .use(Pagination)
         .use(Badge)
         .use(Tooltip)
+        .use(AutoComplete)
     ;
 }
