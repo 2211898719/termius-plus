@@ -12,7 +12,6 @@ import com.codeages.javaskeletonserver.common.OkResponse;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -46,28 +45,29 @@ public class ApplicationController {
                 Collectors.toMap(ApplicationMonitorDto::getApplicationId, Function.identity()));
 
         Map<Long, List<ApplicationServerDto>> applicationServerMap = applicationServerService.search(
-                                                                                        new ApplicationServerSearchParams(),
-                                                                                        Pageable.unpaged()
-                                                                                ).getContent().stream()
-                                                                                .collect(Collectors.groupingBy(
-                                                                                        ApplicationServerDto::getApplicationId));
+                                                                                                     new ApplicationServerSearchParams(),
+                                                                                                     Pageable.unpaged()
+                                                                                             ).getContent().stream()
+                                                                                             .collect(Collectors.groupingBy(
+                                                                                                     ApplicationServerDto::getApplicationId));
+
+        if (CollectionUtil.isEmpty(applicationServiceAll)) {
+            applicationServiceAll.forEach(tree -> tree.walk(n -> {
+                ApplicationMonitorDto applicationMonitorDto = applicationMonitorMap.get(n.getId());
+                if (applicationMonitorDto != null) {
+                    n.putExtra("monitorType", applicationMonitorDto.getType());
+                    n.putExtra("monitorConfig", applicationMonitorDto.getConfig());
+                    n.putExtra("remark", applicationMonitorDto.getRemark());
+                    n.putExtra("failureCount", applicationMonitorDto.getFailureCount());
+                }
 
 
-        applicationServiceAll.forEach(tree -> tree.walk(n->{
-            ApplicationMonitorDto applicationMonitorDto = applicationMonitorMap.get(n.getId());
-            if (applicationMonitorDto!= null) {
-                n.putExtra("monitorType", applicationMonitorDto.getType());
-                n.putExtra("monitorConfig", applicationMonitorDto.getConfig());
-                n.putExtra("remark", applicationMonitorDto.getRemark());
-                n.putExtra("failureCount", applicationMonitorDto.getFailureCount());
-            }
-
-
-            List<ApplicationServerDto> applicationServerDtoList = applicationServerMap.get(n.getId());
-            if (CollectionUtil.isNotEmpty(applicationServerDtoList )) {
-                n.putExtra("serverList", applicationServerDtoList);
-            }
-        }));
+                List<ApplicationServerDto> applicationServerDtoList = applicationServerMap.get(n.getId());
+                if (CollectionUtil.isNotEmpty(applicationServerDtoList)) {
+                    n.putExtra("serverList", applicationServerDtoList);
+                }
+            }));
+        }
 
         return applicationServiceAll;
     }
