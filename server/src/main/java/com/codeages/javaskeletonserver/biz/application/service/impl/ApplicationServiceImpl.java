@@ -2,6 +2,7 @@ package com.codeages.javaskeletonserver.biz.application.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.lang.tree.Tree;
 import cn.hutool.core.lang.tree.TreeNode;
 import cn.hutool.core.lang.tree.TreeUtil;
@@ -11,6 +12,7 @@ import com.codeages.javaskeletonserver.biz.application.entity.Application;
 import com.codeages.javaskeletonserver.biz.application.mapper.ApplicationMapper;
 import com.codeages.javaskeletonserver.biz.application.repository.ApplicationRepository;
 import com.codeages.javaskeletonserver.biz.application.service.ApplicationMonitorService;
+import com.codeages.javaskeletonserver.biz.application.service.ApplicationServerService;
 import com.codeages.javaskeletonserver.biz.application.service.ApplicationService;
 import com.codeages.javaskeletonserver.biz.server.dto.TreeSortParams;
 import com.codeages.javaskeletonserver.biz.util.TreeUtils;
@@ -33,13 +35,17 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     private final ApplicationMonitorService applicationMonitorService;
 
+    private final ApplicationServerService applicationServerService;
+
     public ApplicationServiceImpl(ApplicationRepository applicationRepository,
                                   ApplicationMapper applicationMapper,
-                                  Validator validator, ApplicationMonitorService applicationMonitorService) {
+                                  Validator validator, ApplicationMonitorService applicationMonitorService,
+                                  ApplicationServerService applicationServerService) {
         this.applicationRepository = applicationRepository;
         this.applicationMapper = applicationMapper;
         this.validator = validator;
         this.applicationMonitorService = applicationMonitorService;
+        this.applicationServerService = applicationServerService;
     }
 
     @Override
@@ -84,6 +90,14 @@ public class ApplicationServiceImpl implements ApplicationService {
                     createParams.getRemark()
             ));
         }
+
+        if (CollectionUtil.isNotEmpty(createParams.getServerList())) {
+            createParams.getServerList().forEach(e -> {
+                e.setApplicationId(application.getId());
+            });
+
+            createParams.getServerList().forEach(applicationServerService::create);
+        }
     }
 
     @Override
@@ -123,6 +137,14 @@ public class ApplicationServiceImpl implements ApplicationService {
             );
         } else {
             applicationMonitorService.deleteByApplicationId(application.getId());
+        }
+
+        if (CollectionUtil.isNotEmpty(updateParams.getServerList())) {
+            applicationServerService.deleteByApplicationId(application.getId());
+            updateParams.getServerList().forEach(e -> e.setApplicationId(application.getId()));
+            updateParams.getServerList().forEach(applicationServerService::create);
+        } else {
+            applicationServerService.deleteByApplicationId(application.getId());
         }
 
     }

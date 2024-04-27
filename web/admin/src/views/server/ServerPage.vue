@@ -470,7 +470,7 @@ const changeMiniTab = () => {
           <snippet-list-page ref="snippetListRef" @createSuccess="handleProxyCreateSuccess" @openServer="handleOpenServer"></snippet-list-page>
         </a-tab-pane>
         <a-tab-pane tab="应用" key="application" :closable="false" :forceRender="true">
-          <ApplicationListPage ref="applicationListRef"></ApplicationListPage>
+          <ApplicationListPage @openServer="handleOpenServer" ref="applicationListRef"></ApplicationListPage>
         </a-tab-pane>
         <a-tab-pane class="setting-pane" tab="设置" key="setting" :closable="false" :forceRender="true">
           <setting-page></setting-page>

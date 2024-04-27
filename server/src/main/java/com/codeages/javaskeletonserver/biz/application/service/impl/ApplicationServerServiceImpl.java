@@ -10,6 +10,9 @@ import com.codeages.javaskeletonserver.biz.application.entity.QApplicationServer
 import com.codeages.javaskeletonserver.biz.application.mapper.ApplicationServerMapper;
 import com.codeages.javaskeletonserver.biz.application.repository.ApplicationServerRepository;
 import com.codeages.javaskeletonserver.biz.application.service.ApplicationServerService;
+import com.codeages.javaskeletonserver.biz.server.dto.ServerDto;
+import com.codeages.javaskeletonserver.biz.server.service.ServerService;
+import com.codeages.javaskeletonserver.biz.util.QueryUtils;
 import com.codeages.javaskeletonserver.exception.AppException;
 import com.querydsl.core.BooleanBuilder;
 import org.springframework.data.domain.Page;
@@ -27,12 +30,15 @@ public class ApplicationServerServiceImpl implements ApplicationServerService {
 
     private final Validator validator;
 
+    private final ServerService serverService;
+
     public ApplicationServerServiceImpl(ApplicationServerRepository applicationServerRepository,
                                         ApplicationServerMapper applicationServerMapper,
-                                        Validator validator) {
+                                        Validator validator, ServerService serverService) {
         this.applicationServerRepository = applicationServerRepository;
         this.applicationServerMapper = applicationServerMapper;
         this.validator = validator;
+        this.serverService = serverService;
     }
 
     @Override
@@ -51,7 +57,17 @@ public class ApplicationServerServiceImpl implements ApplicationServerService {
         if (StrUtil.isNotEmpty(searchParams.getRemark())) {
             builder.and(q.remark.eq(searchParams.getRemark()));
         }
-        return applicationServerRepository.findAll(builder, pageable).map(applicationServerMapper::toDto);
+        Page<ApplicationServerDto> page = applicationServerRepository.findAll(builder, pageable)
+                                                                    .map(applicationServerMapper::toDto);
+        QueryUtils.batchQueryOneToOne(
+                page.getContent(),
+                ApplicationServerDto::getServerId,
+                serverService::findByIdIn,
+                ServerDto::getId,
+                ApplicationServerDto::setServer
+        );
+
+        return page;
     }
 
     @Override
@@ -82,6 +98,11 @@ public class ApplicationServerServiceImpl implements ApplicationServerService {
         applicationServerRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
 
         applicationServerRepository.deleteById(id);
+    }
+
+    @Override
+    public void deleteByApplicationId(Long applicationId) {
+        applicationServerRepository.deleteByApplicationId(applicationId);
     }
 }
 

@@ -16,6 +16,8 @@ public interface ApplicationServerService {
     void update(ApplicationServerUpdateParams updateParams);
 
     void delete(Long id);
+
+    void deleteByApplicationId(Long applicationId);
 }
 
 

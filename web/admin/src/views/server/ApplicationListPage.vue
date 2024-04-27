@@ -12,6 +12,8 @@ import PEnumSelect from "@/components/p-enum-select.vue";
 import ApplicationMonitorTypeEnum from "@/enums/ApplicationMonitorTypeEnum";
 import MethodEnum from "@/enums/MethodEnum";
 import {formatSeconds} from "@/components/process";
+import {serverApi} from "@/api/server";
+import PCascader from "@/components/p-cascader.vue";
 
 
 let termiusStyleColumn = ref(Math.floor(window.innerWidth / 350));
@@ -24,7 +26,7 @@ const resizeObserver = new ResizeObserver(() => {
 resizeObserver.observe(window.document.body);
 
 
-const emit = defineEmits(['openApplication', 'update:value', 'change'])
+const emit = defineEmits(['openServer', 'update:value', 'change'])
 
 const props = defineProps({
   column: {
@@ -60,6 +62,7 @@ const creationState = reactive({
     responseRegex: "",
   },
   monitorTestData: {},
+  serverList: [],
 });
 
 
@@ -207,7 +210,6 @@ const handleCopyApplication = async (row) => {
   await getApplicationList()
 }
 const handleDelApplication = (item) => {
-
   let modal = Modal.confirm({
     title: '确定要删除吗?',
     icon: createVNode(ExclamationCircleOutlined),
@@ -318,22 +320,16 @@ const handleDblclick = (item) => {
     return
   }
 
-
   openModalData.value = item
+  if ((!isJSON(item.identity) || JSON.parse(item.identity).length === 0) && (!item.serverList||item.serverList?.length === 0)) {
+    window.open(item.content, '_blank')
+    return;
+  }
+
+  openModalTitle.value = [...groupBreadcrumb.value.slice(1).map(g => g.name), item.name].join("/")
+  openModalVisible.value = true
   if (isJSON(item.identity)) {
     openModalData.value.identityArray = JSON.parse(item.identity)
-    if (openModalData.value.identityArray.length) {
-      copyToClipboard(openModalData.value.identityArray[0].password)
-      openModalVisible.value = true
-      openModalTitle.value = [...groupBreadcrumb.value.slice(1).map(g => g.name), item.name].join("/")
-      message.success("用户名：" + openModalData.value.identityArray[0].username + "，密码已复制到剪贴板,1秒后跳转到应用")
-      setTimeout(() => {
-        window.open(openModalData.value.content)
-      }, 1000)
-    } else {
-      window.open(openModalData.value.content)
-    }
-
   }
 
 }
@@ -372,6 +368,22 @@ let tagOptions = ref([
   {value: '学生', text: 'student'},
 ])
 
+
+let servertagOptions = ref([
+  {value: 'web', text: 'web'},
+  {value: 'db', text: 'db'},
+  {value: '负载', text: '负载'},
+  {value: '发布机', text: '发布机'},
+  {value: '缓存', text: '缓存'},
+  {value: '备份', text: '备份'},
+  {value: '转码', text: '转码'},
+  {value: 'nfs', text: 'nfs'},
+  {value: 'redis', text: 'redis'},
+  {value: 'mysql', text: 'mysql'},
+  {value: '跳板机', text: '跳板机'},
+  {value: '测试', text: '测试'},
+])
+
 const addIdentity = () => {
   creationState.identityArray.push({
     username: "",
@@ -404,6 +416,24 @@ let identityColumns = [
   }
 ]
 
+let serverColumns = [
+  {
+    title: '服务器名称',
+    dataIndex: 'server',
+    key: 'server',
+  },
+  {
+    title: '标签',
+    dataIndex: 'tag',
+    key: 'tag',
+  },
+  {
+    title: '操作',
+    dataIndex: 'action',
+    key: 'action',
+  },
+]
+
 const openApplication = (application) => {
   window.open(application.content, '_blank')
 }
@@ -420,6 +450,11 @@ const testMonitor = (monitor) => {
   }).catch(err => {
     message.error(err.message)
   })
+}
+
+
+const openServer = (item) => {
+  emit('openServer', {...item, path: groupBreadcrumb.value.slice(1).map(g => g.name).join("/")}, 0)
 }
 
 defineExpose({
@@ -666,13 +701,46 @@ defineExpose({
                 </a-form-item>
               </a-form>
             </div>
+            <a-divider>服务器</a-divider>
+            <template v-if="creationState.serverList.length">
+              <a-form autocomplete="off" layout="inline" v-for="(item, index) in creationState.serverList"
+                      :key="index" style="margin-bottom: 8px;justify-content:center">
+                <a-form-item label="服务器">
+                  <p-cascader v-model:value="creationState.serverList[index].serverId"
+                              :api="serverApi.list"></p-cascader>
+                </a-form-item>
+                <a-form-item label="标签">
+                  <a-auto-complete
+                      v-model:value="creationState.serverList[index].tag"
+                      :options="servertagOptions"
+                  >
+                    <a-input></a-input>
+                  </a-auto-complete>
+                </a-form-item>
+                <a-form-item>
+                  <a-button @click="creationState.serverList.splice(index, 1)">
+                    <template #icon>
+                      <minus-outlined/>
+                    </template>
+                  </a-button>
+                </a-form-item>
+              </a-form>
+            </template>
+            <div style="text-align: center">
+              <a-button @click="creationState.serverList.push({serverId: '', tag: ''})">
+                <template #icon>
+                  <plus-outlined/>
+                </template>
+              </a-button>
+            </div>
           </template>
         </a-form>
       </a-drawer>
       <a-modal
           v-model:visible="openModalVisible"
           :title="openModalTitle" okText="打开应用" @ok="openApplication(openModalData)">
-        <a-table :columns="identityColumns" :data-source="openModalData.identityArray" :pagination="false">
+        <a-divider>应用身份信息</a-divider>
+        <a-table v-if="openModalData.identityArray?.length" :columns="identityColumns" :data-source="openModalData.identityArray" :pagination="false">
           <template #bodyCell="{ column, record }">
             <template v-if="column.dataIndex === 'username'">
               {{ record.username }}
@@ -685,6 +753,19 @@ defineExpose({
               <a @click="copyToClipboard(record.password)">
                 <copy-outlined/>
               </a>
+            </template>
+          </template>
+        </a-table>
+        <a-divider style="margin-top: 36px;">应用服务器信息</a-divider>
+        <a-table v-if="openModalData.serverList?.length" :columns="serverColumns" :data-source="openModalData.serverList" :pagination="false">
+          <template #bodyCell="{ column, record }">
+            <template v-if="column.dataIndex === 'server'">
+              {{ record.server?.name }}
+            </template>
+            <template v-if="column.dataIndex === 'action'">
+              <a-button type="link" @click="openServer(record.server)">
+                <link-outlined/>
+              </a-button>
             </template>
           </template>
         </a-table>

@@ -1,11 +1,10 @@
 package com.codeages.javaskeletonserver.api.admin;
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.lang.tree.Tree;
-import com.codeages.javaskeletonserver.biz.application.dto.ApplicationCreateParams;
-import com.codeages.javaskeletonserver.biz.application.dto.ApplicationMonitorDto;
-import com.codeages.javaskeletonserver.biz.application.dto.ApplicationMonitorSearchParams;
-import com.codeages.javaskeletonserver.biz.application.dto.ApplicationUpdateParams;
+import com.codeages.javaskeletonserver.biz.application.dto.*;
 import com.codeages.javaskeletonserver.biz.application.service.ApplicationMonitorService;
+import com.codeages.javaskeletonserver.biz.application.service.ApplicationServerService;
 import com.codeages.javaskeletonserver.biz.application.service.ApplicationService;
 import com.codeages.javaskeletonserver.biz.server.dto.TreeSortParams;
 import com.codeages.javaskeletonserver.common.IdPayload;
@@ -13,6 +12,7 @@ import com.codeages.javaskeletonserver.common.OkResponse;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -26,10 +26,14 @@ public class ApplicationController {
 
     private final ApplicationMonitorService applicationMonitorService;
 
+    private final ApplicationServerService applicationServerService;
+
     public ApplicationController(ApplicationService applicationService,
-                                 ApplicationMonitorService applicationMonitorService) {
+                                 ApplicationMonitorService applicationMonitorService,
+                                 ApplicationServerService applicationServerService) {
         this.applicationService = applicationService;
         this.applicationMonitorService = applicationMonitorService;
+        this.applicationServerService = applicationServerService;
     }
 
     @GetMapping("/list")
@@ -41,6 +45,14 @@ public class ApplicationController {
         ).getContent().stream().collect(
                 Collectors.toMap(ApplicationMonitorDto::getApplicationId, Function.identity()));
 
+        Map<Long, List<ApplicationServerDto>> applicationServerMap = applicationServerService.search(
+                                                                                        new ApplicationServerSearchParams(),
+                                                                                        Pageable.unpaged()
+                                                                                ).getContent().stream()
+                                                                                .collect(Collectors.groupingBy(
+                                                                                        ApplicationServerDto::getApplicationId));
+
+
         applicationServiceAll.forEach(tree -> tree.walk(n->{
             ApplicationMonitorDto applicationMonitorDto = applicationMonitorMap.get(n.getId());
             if (applicationMonitorDto!= null) {
@@ -48,6 +60,12 @@ public class ApplicationController {
                 n.putExtra("monitorConfig", applicationMonitorDto.getConfig());
                 n.putExtra("remark", applicationMonitorDto.getRemark());
                 n.putExtra("failureCount", applicationMonitorDto.getFailureCount());
+            }
+
+
+            List<ApplicationServerDto> applicationServerDtoList = applicationServerMap.get(n.getId());
+            if (CollectionUtil.isNotEmpty(applicationServerDtoList )) {
+                n.putExtra("serverList", applicationServerDtoList);
             }
         }));
 

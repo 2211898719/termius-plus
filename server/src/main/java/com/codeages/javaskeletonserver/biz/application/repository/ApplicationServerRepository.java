@@ -6,6 +6,7 @@ import org.springframework.data.querydsl.QuerydslPredicateExecutor;
 
 public interface ApplicationServerRepository extends JpaRepository<ApplicationServer, Long>, QuerydslPredicateExecutor<ApplicationServer> {
 
+    void deleteByApplicationId(Long applicationId);
 }
 
 

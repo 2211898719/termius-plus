@@ -1,8 +1,13 @@
-export function copyToClipboard(textToCopy) {
+import {message} from "ant-design-vue";
+
+export function copyToClipboard(textToCopy, then = () => {
+}) {
     // navigator clipboard 需要https等安全上下文
     if (navigator.clipboard && window.isSecureContext) {
         // navigator clipboard 向剪贴板写文本
-        return navigator.clipboard.writeText(textToCopy);
+        let d = navigator.clipboard.writeText(textToCopy);
+        message.success("复制成功");
+        return d.then(then);
     } else {
         // 创建text area
         let textArea = document.createElement("textarea");
@@ -19,6 +24,9 @@ export function copyToClipboard(textToCopy) {
             // 执行复制命令并移除文本框
             document.execCommand('copy') ? res() : rej();
             textArea.remove();
+            message.success("复制成功");
         });
     }
+
+
 }

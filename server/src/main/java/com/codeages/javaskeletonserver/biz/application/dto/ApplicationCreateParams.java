@@ -45,6 +45,6 @@ public class ApplicationCreateParams {
 
     private String remark;
 
-    private List<ApplicationServerDto> serverList;
+    private List<ApplicationServerCreateParams> serverList;
 }
 
