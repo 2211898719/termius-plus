@@ -1,9 +1,6 @@
 package com.codeages.javaskeletonserver.biz.application.service;
 
-import com.codeages.javaskeletonserver.biz.application.dto.ApplicationMonitorCreateParams;
-import com.codeages.javaskeletonserver.biz.application.dto.ApplicationMonitorDto;
-import com.codeages.javaskeletonserver.biz.application.dto.ApplicationMonitorSearchParams;
-import com.codeages.javaskeletonserver.biz.application.dto.ApplicationMonitorUpdateParams;
+import com.codeages.javaskeletonserver.biz.application.dto.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -22,6 +19,10 @@ public interface ApplicationMonitorService {
     void deleteByApplicationId(Long applicationId);
 
     Optional<ApplicationMonitorDto> getByApplicationId(Long applicationId);
+
+    ApplicationMonitorExecDto exec(ApplicationMonitorDto createParams);
+
+    void updateStatus(ApplicationMonitorDto applicationMonitorDto, ApplicationMonitorExecDto testDto);
 }
 
 

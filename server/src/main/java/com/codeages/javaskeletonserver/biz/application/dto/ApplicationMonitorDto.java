@@ -1,8 +1,11 @@
 package com.codeages.javaskeletonserver.biz.application.dto;
 
+import com.codeages.javaskeletonserver.biz.application.enums.ApplicationMonitorTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.Date;
 
 @Data
 @NoArgsConstructor
@@ -11,16 +14,22 @@ public class ApplicationMonitorDto {
 
     private Long id;
 
+    private String applicationName;
+
+    private String applicationContent;
+    private String masterMobile;
 
     private Long applicationId;
 
-
-    private String type;
-
+    private ApplicationMonitorTypeEnum type;
 
     private String config;
 
-
     private String remark;
+
+    private Long failureCount;
+    private Date failureTime;
+    private String responseResult;
+    private Long responseTime;
 }
 

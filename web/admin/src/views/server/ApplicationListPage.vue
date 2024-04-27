@@ -11,13 +11,14 @@ import {copyToClipboard} from "@/utils/copyUtil";
 import PEnumSelect from "@/components/p-enum-select.vue";
 import ApplicationMonitorTypeEnum from "@/enums/ApplicationMonitorTypeEnum";
 import MethodEnum from "@/enums/MethodEnum";
+import {formatSeconds} from "@/components/process";
 
 
-let termiusStyleColumn = ref(Math.floor(window.innerWidth / 300));
+let termiusStyleColumn = ref(Math.floor(window.innerWidth / 350));
 
 
 const resizeObserver = new ResizeObserver(() => {
-  termiusStyleColumn.value = Math.floor(window.innerWidth / 300);
+  termiusStyleColumn.value = Math.floor(window.innerWidth / 350);
 });
 
 resizeObserver.observe(window.document.body);
@@ -47,26 +48,18 @@ const creationState = reactive({
   content: "",
   sort: 0,
   identity: "",
-  identityArray: [
-    {
-      username: "",
-      password: "",
-      tag: "",
-    }
-  ],
-  monitorType: ApplicationMonitorTypeEnum.REQUEST.value,
+  masterMobile: "",
+  identityArray: [],
+  monitorType: null,
   monitorConfig: {
     url: "",
     method: MethodEnum.GET.value,
     headers: [
-      {
-        key: "",
-        value: "",
-      }
     ],
     body: "",
     responseRegex: "",
   },
+  monitorTestData: {},
 });
 
 
@@ -90,6 +83,17 @@ const creationRules = computed(() => reactive({
     {
       pattern: /^https?:\/\/[^\s/$.?#].[^\s]*$/,
       message: "链接格式不正确"
+    }
+  ],
+  masterMobile: [
+    {
+      required: !creationState.isGroup,
+      message: "请输入手机号",
+
+    },
+    {
+      pattern: /^1[3-9]\d{9}$/,
+      message: "手机号格式不正确"
     }
   ],
   identity: [
@@ -140,6 +144,26 @@ const handleEditApplication = (row) => {
       console.error("处理身份数据出错", e)
     }
   }
+
+  if (isJSON(creationState.monitorConfig)) {
+    try {
+      creationState.monitorConfig = JSON.parse(creationState.monitorConfig)
+      let headers = []
+      Object.keys(creationState.monitorConfig.headers).forEach(key => {
+            headers.push({
+              key: key,
+              value: creationState.monitorConfig.headers[key].join(',')
+            })
+
+          }
+      )
+
+      creationState.monitorConfig.headers = headers
+
+    } catch (e) {
+      console.error("处理监控配置数据出错", e)
+    }
+  }
 }
 
 function isJSON(str) {
@@ -168,6 +192,10 @@ const getApplicationList = async () => {
 }
 
 getApplicationList()
+
+setInterval(() => {
+  getApplicationList()
+}, 1000 * 10)
 
 const handleCopyApplication = async (row) => {
   creationType.value = 'create'
@@ -207,7 +235,13 @@ const submitCreate = async () => {
     } catch (error) {
       return;
     }
-    let submitData = {...creationState}
+    let submitData = JSON.parse(JSON.stringify(creationState))
+    let headers = {}
+    submitData.monitorConfig.headers.forEach(header => {
+      headers[header.key] = header.value.split(',')
+    })
+    submitData.monitorConfig.headers = headers
+    submitData.monitorConfig = JSON.stringify(submitData.monitorConfig)
 
     await applicationApi[creationType.value](submitData);
     message.success("操作成功");
@@ -284,15 +318,22 @@ const handleDblclick = (item) => {
     return
   }
 
-  openModalVisible.value = true
-  openModalTitle.value = [...groupBreadcrumb.value.slice(1).map(g => g.name), item.name].join("/")
+
   openModalData.value = item
   if (isJSON(item.identity)) {
     openModalData.value.identityArray = JSON.parse(item.identity)
     if (openModalData.value.identityArray.length) {
       copyToClipboard(openModalData.value.identityArray[0].password)
-      message.success("用户名：" + openModalData.value.identityArray[0].username + "，密码已复制到剪贴板")
+      openModalVisible.value = true
+      openModalTitle.value = [...groupBreadcrumb.value.slice(1).map(g => g.name), item.name].join("/")
+      message.success("用户名：" + openModalData.value.identityArray[0].username + "，密码已复制到剪贴板,1秒后跳转到应用")
+      setTimeout(() => {
+        window.open(openModalData.value.content)
+      }, 1000)
+    } else {
+      window.open(openModalData.value.content)
     }
+
   }
 
 }
@@ -367,6 +408,20 @@ const openApplication = (application) => {
   window.open(application.content, '_blank')
 }
 
+const testMonitor = (monitor) => {
+  let data = JSON.parse(JSON.stringify(monitor))
+  let headers = {}
+  data.monitorConfig.headers.forEach(header => {
+    headers[header.key] = header.value.split(',')
+  })
+  data.monitorConfig.headers = headers
+  applicationApi.testMonitor({type: data.monitorType, config: JSON.stringify(data.monitorConfig)}).then(res => {
+    creationState.monitorTestData = res
+  }).catch(err => {
+    message.error(err.message)
+  })
+}
+
 defineExpose({
   getProxyData,
   setProxyId
@@ -397,6 +452,7 @@ defineExpose({
               <a-list :grid="{ gutter: 16, column: termiusStyleColumn }" :data-source="currentData" row-key="id">
                 <template #renderItem="{ item }">
                   <a-dropdown :trigger="['contextmenu']">
+
                     <a-list-item class="sortEl" @dblclick="handleDblclick(item)">
                       <template #actions>
                         <a>
@@ -404,7 +460,8 @@ defineExpose({
                         </a>
                       </template>
 
-                      <a-badge-ribbon :text="item.onlyTag" :class="{none:!item.onlyTag}">
+                      <a-badge-ribbon :text="item.failureCount?'异常'+(formatSeconds(item.failureCount*60)):'正常'"
+                                      :color="item.failureCount?'red':'green'" :class="{none:item.isGroup||!item.monitorType}">
                         <a-card>
                           <a-skeleton avatar :title="false" :loading="!!item.loading" active>
                             <a-list-item-meta
@@ -464,7 +521,7 @@ defineExpose({
           v-model:visible="creationVisible"
           :title="creationType==='create'?'新增':'修改'"
           placement="right"
-          width="95%"
+          :width="creationState.isGroup?'30%':'95%'"
           size="large"
       >
         <template #extra>
@@ -475,11 +532,11 @@ defineExpose({
         </template>
 
         <a-form
-            :label-col="{ span: 2 }"
+            :label-col="{ span: creationState.isGroup?4:2 }"
             :wrapper-col="{ span: 22 }"
             autocomplete="off"
         >
-          <a-divider>应用</a-divider>
+          <a-divider v-if="!creationState.isGroup">应用</a-divider>
           <a-form-item label="名称" v-bind="creationValidations.name">
             <a-input v-model:value="creationState.name"/>
           </a-form-item>
@@ -487,9 +544,12 @@ defineExpose({
             <a-form-item label="链接" v-bind="creationValidations.content">
               <a-input v-model:value="creationState.content"/>
             </a-form-item>
+            <a-form-item label="负责人手机号" v-bind="creationValidations.masterMobile">
+              <a-input v-model:value="creationState.masterMobile"/>
+            </a-form-item>
             <a-divider>身份</a-divider>
             <a-form autocomplete="off" layout="inline" v-for="(item, index) in creationState.identityArray"
-                    :key="index" style="margin-bottom: 8px;">
+                    :key="index" style="margin-bottom: 8px;justify-content:center">
               <a-form-item label="用户名">
                 <a-input v-model:value="creationState.identityArray[index].username"/>
               </a-form-item>
@@ -505,20 +565,36 @@ defineExpose({
                 </a-auto-complete>
               </a-form-item>
               <a-form-item>
-                <a-button v-if="index===creationState.identityArray.length-1" @click="addIdentity">
-                  <template #icon>
-                    <plus-outlined/>
-                  </template>
-                </a-button>
-                <a-button v-else @click="creationState.identityArray.splice(index, 1)">
+
+                <a-button @click="creationState.identityArray.splice(index, 1)">
                   <template #icon>
                     <minus-outlined/>
                   </template>
                 </a-button>
               </a-form-item>
             </a-form>
+            <div style="text-align: center">
+              <a-button @click="addIdentity">
+                <template #icon>
+                  <plus-outlined/>
+                </template>
+              </a-button>
+            </div>
+
             <a-divider>监控</a-divider>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 16px;">
+            <div style="text-align: center">
+            <a-button v-if="!creationState.monitorType" @click="creationState.monitorType=ApplicationMonitorTypeEnum.REQUEST.value">
+              <template #icon>
+                <plus-outlined/>
+              </template>
+            </a-button>
+              <a-button v-else @click="creationState.monitorType=null">
+                <template #icon>
+                  <minus-outlined/>
+                </template>
+              </a-button>
+            </div>
+            <div v-if="creationState.monitorType" style="display: flex; justify-content: space-between; margin-bottom: 16px;">
               <a-form autocomplete="off" :label-col="{ span: 3 }"
                       :wrapper-col="{ span: 18 }" style="margin-bottom: 8px; width: 50%;">
                 <a-form-item label="监控类型">
@@ -541,35 +617,52 @@ defineExpose({
                       <a-input v-model:value="creationState.monitorConfig.headers[index].key"/>
                     </a-form-item>
                     <a-form-item label="内容">
-                      <a-input v-model:value="creationState.monitorConfig.headers[index].value"/>
+                      <a-input placeholder="多个用,分隔"
+                               v-model:value="creationState.monitorConfig.headers[index].value"/>
                     </a-form-item>
                     <a-form-item style="text-align: center">
-                      <a-button v-if="index===creationState.monitorConfig.headers.length-1"
-                                @click="creationState.monitorConfig.headers.push({key: '', value: ''})">
-                        <template #icon>
-                          <plus-outlined/>
-                        </template>
-                      </a-button>
-                      <a-button v-else @click="creationState.monitorConfig.headers.splice(index, 1)">
+                      <a-button @click="creationState.monitorConfig.headers.splice(index, 1)">
                         <template #icon>
                           <minus-outlined/>
                         </template>
                       </a-button>
                     </a-form-item>
                   </a-form>
+                  <div style="text-align: center">
+                    <a-button
+                        @click="creationState.monitorConfig.headers.push({key: '', value: ''})">
+                      <template #icon>
+                        <plus-outlined/>
+                      </template>
+                    </a-button>
+                  </div>
                 </a-form-item>
                 <a-form-item label="请求体">
-                  <a-input v-model:value="creationState.monitorConfig.body"/>
+                  <a-textarea v-model:value="creationState.monitorConfig.body"></a-textarea>
                 </a-form-item>
-                <a-form-item label="校验返回值正则">
+                <a-form-item label="校验返回正则">
                   <a-input v-model:value="creationState.monitorConfig.responseRegex"/>
+                  <p>单行包含xxx  = .*xxx.*</p>
+                  <p>多行包含xxx  = (?s).*xxx.*</p>
+                  <p>等于xxx  = ^xxx$</p>
                 </a-form-item>
               </a-form>
-              <a-divider type="vertical" style="height: 400px"></a-divider>
+              <div style="display: flex;align-items:center">
+                <a-button type="primary" @click="testMonitor(creationState)">测试</a-button>
+              </div>
               <a-form autocomplete="off" :label-col="{ span: 3 }"
                       :wrapper-col="{ span: 18 }" style="margin-bottom: 8px; width: 50%;">
-                <a-form-item label="监控频率">
-                  <a-input></a-input>
+                <a-form-item style="height:40%" label="请求">
+                  <a-textarea :auto-size="{ minRows: 3, maxRows: 9 }"
+                              :value="creationState.monitorTestData.request"></a-textarea>
+                </a-form-item>
+                <a-form-item style="height:40%" label="响应">
+                  <a-textarea :auto-size="{ minRows: 3, maxRows: 9 }"
+                              :value="creationState.monitorTestData.response"></a-textarea>
+                </a-form-item>
+                <a-form-item label="校验">
+                  <a-tag color="#f50" v-if="!creationState.monitorTestData.success">失败</a-tag>
+                  <a-tag color="#87d068" v-else>成功</a-tag>
                 </a-form-item>
               </a-form>
             </div>

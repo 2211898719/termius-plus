@@ -9,6 +9,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import javax.persistence.*;
+import java.util.Date;
 
 /**
  * 应用监控
@@ -39,6 +40,10 @@ public class ApplicationMonitor {
      * 备注
      */
     private String remark;
+    private Long failureCount;
+    private Date failureTime;
+    private String responseResult;
+    private Long responseTime;
     /**
      * 创建时间
      */

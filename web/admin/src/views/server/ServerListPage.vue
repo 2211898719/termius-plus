@@ -170,7 +170,7 @@ getServerList()
 
 setInterval(() => {
   getServerList()
-}, 1000 * 3)
+}, 1000 * 10)
 
 const handleCopyServer = async (row) => {
   creationType.value = 'create'

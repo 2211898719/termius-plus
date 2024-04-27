@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotNull;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -34,6 +35,7 @@ public class ApplicationCreateParams {
 
     private String content;
 
+    private String masterMobile;
 
     private String identity;
 
@@ -42,5 +44,7 @@ public class ApplicationCreateParams {
     private String monitorConfig;
 
     private String remark;
+
+    private List<ApplicationServerDto> serverList;
 }
 

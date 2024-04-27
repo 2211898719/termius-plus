@@ -6,10 +6,7 @@ import cn.hutool.core.lang.tree.Tree;
 import cn.hutool.core.lang.tree.TreeNode;
 import cn.hutool.core.lang.tree.TreeUtil;
 import com.codeages.javaskeletonserver.biz.ErrorCode;
-import com.codeages.javaskeletonserver.biz.application.dto.ApplicationCreateParams;
-import com.codeages.javaskeletonserver.biz.application.dto.ApplicationMonitorCreateParams;
-import com.codeages.javaskeletonserver.biz.application.dto.ApplicationMonitorUpdateParams;
-import com.codeages.javaskeletonserver.biz.application.dto.ApplicationUpdateParams;
+import com.codeages.javaskeletonserver.biz.application.dto.*;
 import com.codeages.javaskeletonserver.biz.application.entity.Application;
 import com.codeages.javaskeletonserver.biz.application.mapper.ApplicationMapper;
 import com.codeages.javaskeletonserver.biz.application.repository.ApplicationRepository;
@@ -22,10 +19,7 @@ import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
 import javax.validation.Validator;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -82,7 +76,7 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         Application application = applicationRepository.save(applicationMapper.toCreateEntity(createParams));
 
-        if (createParams.getMonitorType() != null) {
+        if (createParams.getMonitorType() != null && createParams.getMonitorConfig()!= null && Boolean.FALSE.equals(createParams.getIsGroup())) {
             applicationMonitorService.create(new ApplicationMonitorCreateParams(
                     application.getId(),
                     createParams.getMonitorType(),
@@ -106,15 +100,27 @@ public class ApplicationServiceImpl implements ApplicationService {
         applicationRepository.save(application);
 
         if (updateParams.getMonitorType() != null) {
-            applicationMonitorService.getByApplicationId(application.getId()).ifPresent(monitor -> {
+            applicationMonitorService.getByApplicationId(application.getId()).ifPresentOrElse(monitor -> {
                 applicationMonitorService.update(new ApplicationMonitorUpdateParams(
                         monitor.getId(),
                         updateParams.getId(),
                         updateParams.getMonitorType(),
                         updateParams.getMonitorConfig(),
-                        updateParams.getRemark()
+                        updateParams.getRemark(),
+                        monitor.getFailureCount(),
+                        monitor.getFailureTime(),
+                        monitor.getResponseResult(),
+                        monitor.getResponseTime()
                 ));
-            });
+            },
+
+                    () -> applicationMonitorService.create(new ApplicationMonitorCreateParams(
+                            application.getId(),
+                            updateParams.getMonitorType(),
+                            updateParams.getMonitorConfig(),
+                            updateParams.getRemark()
+                    ))
+            );
         } else {
             applicationMonitorService.deleteByApplicationId(application.getId());
         }
@@ -133,6 +139,8 @@ public class ApplicationServiceImpl implements ApplicationService {
                                                        .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
 
         applicationRepository.delete(application);
+
+        applicationMonitorService.deleteByApplicationId(id);
     }
 
     @Override
@@ -144,6 +152,14 @@ public class ApplicationServiceImpl implements ApplicationService {
         }
 
         applicationRepository.saveAll(toUpdateAllEntity(treeSortParams));
+    }
+
+    @Override
+    public List<ApplicationDto> findAllByIds(Collection<Long> ids) {
+        return applicationRepository.findAllById(ids)
+                                     .stream()
+                                     .map(applicationMapper::toDto)
+                                     .collect(Collectors.toList());
     }
 
     private List<Application> toUpdateAllEntity(List<TreeSortParams> serverUpdateParams) {

@@ -11,7 +11,7 @@ export const uploadFileProcess = (sourceData, data, speedStr, take, left) => {
 }
 
 //秒转可读时间 例如  100秒  转换为  1分40秒。需要支持天、小时、分、秒
-function formatSeconds(seconds) {
+export function formatSeconds(seconds) {
     let day = Math.floor(seconds / (60 * 60 * 24));
     let hour = Math.floor(seconds / (60 * 60)) - (day * 24);
     let minute = Math.floor(seconds / 60) - (day * 24 * 60) - (hour * 60);
@@ -24,7 +24,7 @@ function formatSeconds(seconds) {
         result += hour + '小时';
     }
     if (minute) {
-        result += minute + '分';
+        result += minute + '分钟';
     }
     if (second) {
         result += second + '秒';

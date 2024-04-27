@@ -1,9 +1,6 @@
 package com.codeages.javaskeletonserver.api.admin;
 
-import com.codeages.javaskeletonserver.biz.application.dto.ApplicationMonitorCreateParams;
-import com.codeages.javaskeletonserver.biz.application.dto.ApplicationMonitorDto;
-import com.codeages.javaskeletonserver.biz.application.dto.ApplicationMonitorSearchParams;
-import com.codeages.javaskeletonserver.biz.application.dto.ApplicationMonitorUpdateParams;
+import com.codeages.javaskeletonserver.biz.application.dto.*;
 import com.codeages.javaskeletonserver.biz.application.service.ApplicationMonitorService;
 import com.codeages.javaskeletonserver.common.IdPayload;
 import com.codeages.javaskeletonserver.common.OkResponse;
@@ -51,6 +48,12 @@ public class ApplicationMonitorController {
         applicationMonitorService.delete(idPayload.getId());
 
         return OkResponse.TRUE;
+    }
+
+
+    @PostMapping("/test")
+    public ApplicationMonitorExecDto test(@RequestBody ApplicationMonitorDto createParams) {
+        return applicationMonitorService.exec(createParams);
     }
 
 }

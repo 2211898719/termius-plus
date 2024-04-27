@@ -16,4 +16,7 @@ export const applicationApi = {
     del(id) {
         return client.post("/api-admin/application/delete", {id: id});
     },
+    testMonitor(params) {
+        return client.post("/api-admin/applicationMonitor/test", params);
+    }
 }

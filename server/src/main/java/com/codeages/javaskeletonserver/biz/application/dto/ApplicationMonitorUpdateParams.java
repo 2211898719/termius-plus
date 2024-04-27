@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotNull;
+import java.util.Date;
 
 @Data
 @NoArgsConstructor
@@ -28,5 +29,10 @@ public class ApplicationMonitorUpdateParams {
 
 
     private String remark;
+
+    private Long failureCount;
+    private Date failureTime;
+    private String responseResult;
+    private Long responseTime;
 }
 

@@ -33,6 +33,8 @@ public class ApplicationUpdateParams {
 
     private String icon;
 
+    private String masterMobile;
+
 
     private String content;
 

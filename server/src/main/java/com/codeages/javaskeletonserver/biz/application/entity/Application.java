@@ -50,6 +50,10 @@ public class Application {
      */
     private String identity;
     /**
+     * 负责人手机号
+     */
+    private String masterMobile;
+    /**
      * 创建时间
      */
     @CreatedDate

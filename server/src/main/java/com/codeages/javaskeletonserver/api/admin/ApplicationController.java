@@ -2,14 +2,21 @@ package com.codeages.javaskeletonserver.api.admin;
 
 import cn.hutool.core.lang.tree.Tree;
 import com.codeages.javaskeletonserver.biz.application.dto.ApplicationCreateParams;
+import com.codeages.javaskeletonserver.biz.application.dto.ApplicationMonitorDto;
+import com.codeages.javaskeletonserver.biz.application.dto.ApplicationMonitorSearchParams;
 import com.codeages.javaskeletonserver.biz.application.dto.ApplicationUpdateParams;
+import com.codeages.javaskeletonserver.biz.application.service.ApplicationMonitorService;
 import com.codeages.javaskeletonserver.biz.application.service.ApplicationService;
 import com.codeages.javaskeletonserver.biz.server.dto.TreeSortParams;
 import com.codeages.javaskeletonserver.common.IdPayload;
 import com.codeages.javaskeletonserver.common.OkResponse;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api-admin/application")
@@ -17,13 +24,34 @@ public class ApplicationController {
 
     private final ApplicationService applicationService;
 
-    public ApplicationController(ApplicationService applicationService) {
+    private final ApplicationMonitorService applicationMonitorService;
+
+    public ApplicationController(ApplicationService applicationService,
+                                 ApplicationMonitorService applicationMonitorService) {
         this.applicationService = applicationService;
+        this.applicationMonitorService = applicationMonitorService;
     }
 
     @GetMapping("/list")
     public List<Tree<Long>> findAll() {
-        return applicationService.findAll();
+        List<Tree<Long>> applicationServiceAll = applicationService.findAll();
+        Map<Long, ApplicationMonitorDto> applicationMonitorMap = applicationMonitorService.search(
+                new ApplicationMonitorSearchParams(),
+                Pageable.unpaged()
+        ).getContent().stream().collect(
+                Collectors.toMap(ApplicationMonitorDto::getApplicationId, Function.identity()));
+
+        applicationServiceAll.forEach(tree -> tree.walk(n->{
+            ApplicationMonitorDto applicationMonitorDto = applicationMonitorMap.get(n.getId());
+            if (applicationMonitorDto!= null) {
+                n.putExtra("monitorType", applicationMonitorDto.getType());
+                n.putExtra("monitorConfig", applicationMonitorDto.getConfig());
+                n.putExtra("remark", applicationMonitorDto.getRemark());
+                n.putExtra("failureCount", applicationMonitorDto.getFailureCount());
+            }
+        }));
+
+        return applicationServiceAll;
     }
 
     @PostMapping("/updateSort")

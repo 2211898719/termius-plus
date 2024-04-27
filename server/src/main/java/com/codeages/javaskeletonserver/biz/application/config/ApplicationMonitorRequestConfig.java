@@ -1,10 +1,11 @@
 package com.codeages.javaskeletonserver.biz.application.config;
 
+import cn.hutool.http.Method;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.http.HttpMethod;
 
+import java.util.List;
 import java.util.Map;
 
 @Data
@@ -12,8 +13,8 @@ import java.util.Map;
 @AllArgsConstructor
 public class ApplicationMonitorRequestConfig {
     private String url;
-    private HttpMethod method;
-    private Map<String, String> headers;
+    private Method method;
+    private Map<String, List<String>> headers;
     private String body;
     private String responseRegex;
 }
