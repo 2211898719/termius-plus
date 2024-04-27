@@ -25,6 +25,8 @@ public interface ApplicationService {
     void sort(List<TreeSortParams> treeSortParams);
 
     List<ApplicationDto> findAllByIds(Collection<Long> ids);
+
+    List<Tree<Long>> groupList();
 }
 
 

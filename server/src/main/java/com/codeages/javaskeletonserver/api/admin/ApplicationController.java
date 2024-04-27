@@ -51,7 +51,7 @@ public class ApplicationController {
                                                                                              .collect(Collectors.groupingBy(
                                                                                                      ApplicationServerDto::getApplicationId));
 
-        if (CollectionUtil.isEmpty(applicationServiceAll)) {
+        if (CollectionUtil.isNotEmpty(applicationServiceAll)) {
             applicationServiceAll.forEach(tree -> tree.walk(n -> {
                 ApplicationMonitorDto applicationMonitorDto = applicationMonitorMap.get(n.getId());
                 if (applicationMonitorDto != null) {
@@ -84,6 +84,11 @@ public class ApplicationController {
         applicationService.create(createParams);
 
         return OkResponse.TRUE;
+    }
+
+    @GetMapping("/groupList")
+    public List<Tree<Long>> groupList() {
+        return applicationService.groupList();
     }
 
     @PostMapping("/update")

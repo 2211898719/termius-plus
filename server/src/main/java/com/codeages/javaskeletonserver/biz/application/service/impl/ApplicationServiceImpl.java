@@ -184,6 +184,29 @@ public class ApplicationServiceImpl implements ApplicationService {
                                      .collect(Collectors.toList());
     }
 
+    @Override
+    public List<Tree<Long>> groupList() {
+        List<TreeNode<Long>> servers = applicationRepository.findAllByIsGroupTrue()
+                                                       .stream()
+                                                       .map(e -> {
+                                                           TreeNode<Long> longTreeNode = new TreeNode<>(
+                                                                   e.getId(),
+                                                                   e.getParentId(),
+                                                                   e.getName(),
+                                                                   e.getSort()
+                                                           );
+                                                           longTreeNode.setExtra(BeanUtil.beanToMap(e));
+                                                           return longTreeNode;
+                                                       })
+                                                       .collect(Collectors.toList());
+
+        Tree<Long> root = new Tree<>();
+        root.setId(0L);
+        root.setName("all");
+        root.setChildren(TreeUtil.build(servers, 0L));
+        return List.of(root);
+    }
+
     private List<Application> toUpdateAllEntity(List<TreeSortParams> serverUpdateParams) {
         if (CollUtil.isEmpty(serverUpdateParams)) {
             return Collections.emptyList();

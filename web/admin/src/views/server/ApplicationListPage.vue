@@ -14,6 +14,7 @@ import MethodEnum from "@/enums/MethodEnum";
 import {formatSeconds} from "@/components/process";
 import {serverApi} from "@/api/server";
 import PCascader from "@/components/p-cascader.vue";
+import GroupCascader from "@/components/group-cascader.vue";
 
 
 let termiusStyleColumn = ref(Math.floor(window.innerWidth / 350));
@@ -136,8 +137,8 @@ const handleAddApplication = () => {
   creationState.parentId = groupBreadcrumb.value[groupBreadcrumb.value.length - 1].id
 }
 
-const handleEditApplication = (row) => {
-  creationVisible.value = true;
+const handleEditApplication = (row, flag = true) => {
+  creationVisible.value = flag;
   creationType.value = 'update'
   Object.assign(creationState, row)
   if (isJSON(creationState.identity)) {
@@ -201,12 +202,10 @@ setInterval(() => {
 }, 1000 * 10)
 
 const handleCopyApplication = async (row) => {
+  handleEditApplication(row, false);
   creationType.value = 'create'
-  Object.assign(creationState, row)
-  creationState.id = null
-  creationState.name = creationState.name + '-复制'
-  await applicationApi[creationType.value](creationState);
-  message.success("操作成功");
+  creationState.name = `${row.name}-copy`
+  await submitCreate()
   await getApplicationList()
 }
 const handleDelApplication = (item) => {
@@ -453,8 +452,12 @@ const testMonitor = (monitor) => {
 }
 
 
-const openServer = (item) => {
-  emit('openServer', {...item, path: groupBreadcrumb.value.slice(1).map(g => g.name).join("/")}, 0)
+const openServer = (openModalData, record) => {
+  emit('openServer', {
+    ...record.server,
+    path: groupBreadcrumb.value.slice(1).map(g => g.name).join("/"),
+    name: openModalData.name + '的' + record.tag + '服务器'
+  }, 0)
 }
 
 defineExpose({
@@ -574,6 +577,12 @@ defineExpose({
           <a-divider v-if="!creationState.isGroup">应用</a-divider>
           <a-form-item label="名称" v-bind="creationValidations.name">
             <a-input v-model:value="creationState.name"/>
+          </a-form-item>
+          <a-form-item label="位置" v-bind="creationValidations.parentId">
+            <GroupCascader v-if="creationVisible"
+                           :api="applicationApi.groupList"
+                           :disabled="creationState.id"
+                           v-model:value="creationState.parentId"></GroupCascader>
           </a-form-item>
           <template v-if="!creationState.isGroup">
             <a-form-item label="链接" v-bind="creationValidations.content">
@@ -739,36 +748,40 @@ defineExpose({
       <a-modal
           v-model:visible="openModalVisible"
           :title="openModalTitle" okText="打开应用" @ok="openApplication(openModalData)">
-        <a-divider>应用身份信息</a-divider>
-        <a-table v-if="openModalData.identityArray?.length" :columns="identityColumns" :data-source="openModalData.identityArray" :pagination="false">
-          <template #bodyCell="{ column, record }">
-            <template v-if="column.dataIndex === 'username'">
-              {{ record.username }}
-              <a @click="copyToClipboard(record.username)">
-                <copy-outlined/>
-              </a>
+        <template v-if="openModalData.identityArray?.length">
+          <a-divider>应用身份信息</a-divider>
+          <a-table :columns="identityColumns" :data-source="openModalData.identityArray" :pagination="false">
+            <template #bodyCell="{ column, record }">
+              <template v-if="column.dataIndex === 'username'">
+                {{ record.username }}
+                <a @click="copyToClipboard(record.username)">
+                  <copy-outlined/>
+                </a>
+              </template>
+              <template v-if="column.dataIndex === 'password'">
+                {{ record.password }}
+                <a @click="copyToClipboard(record.password)">
+                  <copy-outlined/>
+                </a>
+              </template>
             </template>
-            <template v-if="column.dataIndex === 'password'">
-              {{ record.password }}
-              <a @click="copyToClipboard(record.password)">
-                <copy-outlined/>
-              </a>
-            </template>
-          </template>
-        </a-table>
+          </a-table>
+        </template>
+        <template v-if="openModalData.serverList?.length">
         <a-divider style="margin-top: 36px;">应用服务器信息</a-divider>
-        <a-table v-if="openModalData.serverList?.length" :columns="serverColumns" :data-source="openModalData.serverList" :pagination="false">
+          <a-table :columns="serverColumns" :data-source="openModalData.serverList" :pagination="false">
           <template #bodyCell="{ column, record }">
             <template v-if="column.dataIndex === 'server'">
               {{ record.server?.name }}
             </template>
             <template v-if="column.dataIndex === 'action'">
-              <a-button type="link" @click="openServer(record.server)">
+              <a-button type="link" @click="openServer(openModalData,record)">
                 <link-outlined/>
               </a-button>
             </template>
           </template>
         </a-table>
+        </template>
       </a-modal>
     </div>
   </div>

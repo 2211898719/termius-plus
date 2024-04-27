@@ -18,5 +18,8 @@ export const applicationApi = {
     },
     testMonitor(params) {
         return client.post("/api-admin/applicationMonitor/test", params);
+    },
+    groupList: async () => {
+        return client.get("/api-admin/application/groupList");
     }
 }

@@ -34,6 +34,10 @@ const props = defineProps({
       };
     },
   },
+  api: {
+    type: Function,
+    default: serverApi.groupList
+  }
 })
 
 const options = ref([]);
@@ -54,7 +58,7 @@ const loadCurrentValue = () => {
 loadCurrentValue();
 
 const getOptionsList = async () => {
-  options.value = await serverApi.groupList()
+  options.value = await props.api()
 
   loadCurrentValue()
 }
