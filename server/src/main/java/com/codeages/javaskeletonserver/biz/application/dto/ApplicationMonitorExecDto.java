@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ApplicationMonitorExecDto {
 
+    private boolean res;
     private String request;
     private String response;
     private boolean success;

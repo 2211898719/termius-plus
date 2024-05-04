@@ -61,6 +61,7 @@ const creationState = reactive({
     ],
     body: "",
     responseRegex: "",
+    timeRange: null,
   },
   monitorTestData: {},
   serverList: [],
@@ -445,6 +446,7 @@ const testMonitor = (monitor) => {
   })
   data.monitorConfig.headers = headers
   applicationApi.testMonitor({type: data.monitorType, config: JSON.stringify(data.monitorConfig)}).then(res => {
+    console.log(res)
     creationState.monitorTestData = res
   }).catch(err => {
     message.error(err.message)
@@ -458,6 +460,10 @@ const openServer = (openModalData, record) => {
     path: groupBreadcrumb.value.slice(1).map(g => g.name).join("/"),
     name: openModalData.name + '的' + record.tag + '服务器'
   }, 0)
+}
+
+const handleTimeRangeChange = (e) => {
+  console.log(e)
 }
 
 defineExpose({
@@ -689,6 +695,9 @@ defineExpose({
                   <p>单行包含xxx  = .*xxx.*</p>
                   <p>多行包含xxx  = (?s).*xxx.*</p>
                   <p>等于xxx  = ^xxx$</p>
+                </a-form-item>
+                <a-form-item label="生效时间段">
+                  <a-time-range-picker v-model:value="creationState.monitorConfig.timeRange" format="HH:mm" value-format="HH:mm" />
                 </a-form-item>
               </a-form>
               <div style="display: flex;align-items:center">

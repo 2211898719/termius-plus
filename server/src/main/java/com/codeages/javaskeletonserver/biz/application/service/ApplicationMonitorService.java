@@ -22,7 +22,7 @@ public interface ApplicationMonitorService {
 
     ApplicationMonitorExecDto exec(ApplicationMonitorDto createParams);
 
-    void updateStatus(ApplicationMonitorDto applicationMonitorDto, ApplicationMonitorExecDto testDto);
+    void updateStatusAndSendMessage(ApplicationMonitorDto applicationMonitorDto, ApplicationMonitorExecDto testDto);
 }
 
 

@@ -17,4 +17,5 @@ public class ApplicationMonitorRequestConfig {
     private Map<String, List<String>> headers;
     private String body;
     private String responseRegex;
+    private List<String> timeRange;
 }

@@ -62,7 +62,7 @@ public class MonitorJob {
         for (ApplicationMonitorDto applicationMonitor : applicationMonitorList) {
             CompletableFuture.runAsync(() -> {
                 ApplicationMonitorExecDto applicationMonitorTest = applicationMonitorService.exec(applicationMonitor);
-                applicationMonitorService.updateStatus(applicationMonitor, applicationMonitorTest);
+                applicationMonitorService.updateStatusAndSendMessage(applicationMonitor, applicationMonitorTest);
             }, executor);
         }
     }

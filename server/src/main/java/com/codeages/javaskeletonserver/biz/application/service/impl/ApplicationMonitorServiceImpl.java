@@ -1,5 +1,6 @@
 package com.codeages.javaskeletonserver.biz.application.service.impl;
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpRequest;
@@ -43,6 +44,9 @@ public class ApplicationMonitorServiceImpl implements ApplicationMonitorService 
 
     @Value("${monitor.count:3}")
     private int monitorCount;
+
+    @Value("${monitor.debounce:5}")
+    private int monitorDebounce;
 
     public ApplicationMonitorServiceImpl(ApplicationMonitorRepository applicationMonitorRepository,
                                          ApplicationMonitorMapper applicationMonitorMapper,
@@ -115,16 +119,27 @@ public class ApplicationMonitorServiceImpl implements ApplicationMonitorService 
             throw new AppException(ErrorCode.INVALID_ARGUMENT, "暂不支持其他类型");
         }
 
-
         try {
             long startTime = System.currentTimeMillis();
             ApplicationMonitorRequestConfig config = JSONUtil.toBean(
                     monitorDto.getConfig(),
                     ApplicationMonitorRequestConfig.class
             );
+            //[00:00, 23:06]
+            List<String> timeRange = config.getTimeRange();
+            log.info("请求监控配置：{}", timeRange);
+            //处理时间范围
+            if (CollectionUtil.isNotEmpty(timeRange)) {
+                String monitorStartTime = timeRange.get(0);
+                String monitorEndTime = timeRange.get(1);
+                String nowTime = DateUtil.format(DateUtil.date(), "HH:mm");
+                if (nowTime.compareTo(monitorStartTime) < 0 || nowTime.compareTo(monitorEndTime) > 0) {
+                    return new ApplicationMonitorExecDto(false, null, null, true, "不在监控时间范围内", 0L);
+                }
+            }
 
             if (StrUtil.isBlank(config.getUrl())) {
-                return new ApplicationMonitorExecDto(null, null, true, "", 0L);
+                return new ApplicationMonitorExecDto(true, null, null, true, "", 0L);
             }
 
             HttpRequest request = HttpRequest.of(config.getUrl())
@@ -139,6 +154,7 @@ public class ApplicationMonitorServiceImpl implements ApplicationMonitorService 
             String responseRegex = config.getResponseRegex();
 
             return new ApplicationMonitorExecDto(
+                    true,
                     request.toString(),
                     response.toString(),
                     Pattern.matches(responseRegex, body),
@@ -146,12 +162,14 @@ public class ApplicationMonitorServiceImpl implements ApplicationMonitorService 
                     endTime - startTime
             );
         } catch (Exception e) {
-            return new ApplicationMonitorExecDto(null, null, false, e.getMessage(), -1L);
+            log.error("请求监控失败", e);
+            return new ApplicationMonitorExecDto(false, null, null, false, e.getMessage(), -1L);
         }
     }
 
     @Override
-    public void updateStatus(ApplicationMonitorDto applicationMonitorDto, ApplicationMonitorExecDto testDto) {
+    public void updateStatusAndSendMessage(ApplicationMonitorDto applicationMonitorDto,
+                                           ApplicationMonitorExecDto testDto) {
         ApplicationMonitorUpdateParams applicationMonitorUpdateParams = new ApplicationMonitorUpdateParams();
         applicationMonitorUpdateParams.setId(applicationMonitorDto.getId());
         if (Boolean.FALSE.equals(testDto.isSuccess())) {
@@ -165,11 +183,11 @@ public class ApplicationMonitorServiceImpl implements ApplicationMonitorService 
 
             update(applicationMonitorUpdateParams);
 
-            if ((applicationMonitorUpdateParams.getFailureCount() <= monitorCount)) {
+            if ((applicationMonitorUpdateParams.getFailureCount() <= monitorCount + monitorDebounce) && (applicationMonitorUpdateParams.getFailureCount() > monitorDebounce)) {
                 dingerSender.send(
                         MessageSubType.TEXT,
                         DingerRequest.request(
-                                "第" + applicationMonitorUpdateParams.getFailureCount() + "次提醒，连续提醒" + monitorCount + "次，应用出现异常，请尽快处理，应用名称：" + applicationMonitorDto.getApplicationName() + "，应用内容：" + applicationMonitorDto.getApplicationContent(),
+                                "第" + applicationMonitorUpdateParams.getFailureCount() + "次提醒，连续提醒" + (monitorCount - monitorDebounce) + "次，应用出现异常，请尽快处理，应用名称：" + applicationMonitorDto.getApplicationName() + "，应用内容：" + applicationMonitorDto.getApplicationContent(),
                                 StrUtil.isEmpty(applicationMonitorDto.getMasterMobile())? null : List.of(applicationMonitorDto.getMasterMobile())
                         )
                 );

@@ -36,6 +36,8 @@ import {
     Badge,
     Tooltip,
     AutoComplete,
+    DatePicker,
+    TimePicker,
 } from 'ant-design-vue';
 import icons from '@/icons';
 
@@ -59,6 +61,7 @@ export function bootAntDesignVue(app) {
         .use(Divider)
         .use(Dropdown)
         .use(Menu)
+        .use(DatePicker)
         .use(Drawer)
         .use(Tabs)
         .use(Descriptions)
@@ -82,5 +85,6 @@ export function bootAntDesignVue(app) {
         .use(Badge)
         .use(Tooltip)
         .use(AutoComplete)
+        .use(TimePicker)
     ;
 }
