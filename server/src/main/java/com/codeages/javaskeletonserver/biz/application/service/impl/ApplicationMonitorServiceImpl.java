@@ -86,7 +86,7 @@ public class ApplicationMonitorServiceImpl implements ApplicationMonitorService 
     @Override
     public void update(ApplicationMonitorUpdateParams updateParams) {
         var applicationMonitor = applicationMonitorRepository.findById(updateParams.getId())
-                                                             .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
         applicationMonitorMapper.toUpdateEntity(applicationMonitor, updateParams);
         applicationMonitorRepository.save(applicationMonitor);
     }
@@ -106,7 +106,7 @@ public class ApplicationMonitorServiceImpl implements ApplicationMonitorService 
     @Override
     public Optional<ApplicationMonitorDto> getByApplicationId(Long applicationId) {
         return applicationMonitorRepository.findByApplicationId(applicationId)
-                                           .map(applicationMonitorMapper::toDto);
+                .map(applicationMonitorMapper::toDto);
     }
 
     @Override
@@ -143,9 +143,9 @@ public class ApplicationMonitorServiceImpl implements ApplicationMonitorService 
             }
 
             HttpRequest request = HttpRequest.of(config.getUrl())
-                                             .method(config.getMethod())
-                                             .header(config.getHeaders())
-                                             .body(config.getBody());
+                    .method(config.getMethod())
+                    .header(config.getHeaders())
+                    .body(config.getBody());
 
             HttpResponse response = request.execute();
             String body = response.body();
@@ -187,8 +187,8 @@ public class ApplicationMonitorServiceImpl implements ApplicationMonitorService 
                 dingerSender.send(
                         MessageSubType.TEXT,
                         DingerRequest.request(
-                                "第" + applicationMonitorUpdateParams.getFailureCount() + "次提醒，连续提醒" + (monitorCount - monitorDebounce) + "次，应用出现异常，请尽快处理，应用名称：" + applicationMonitorDto.getApplicationName() + "，应用内容：" + applicationMonitorDto.getApplicationContent(),
-                                StrUtil.isEmpty(applicationMonitorDto.getMasterMobile())? null : List.of(applicationMonitorDto.getMasterMobile())
+                                "第" + (applicationMonitorUpdateParams.getFailureCount() - monitorDebounce) + "次提醒，连续提醒" + (monitorCount) + "次，应用出现异常，请尽快处理，应用名称：" + applicationMonitorDto.getApplicationName() + "，应用内容：" + applicationMonitorDto.getApplicationContent(),
+                                StrUtil.isEmpty(applicationMonitorDto.getMasterMobile()) ? null : List.of(applicationMonitorDto.getMasterMobile())
                         )
                 );
             }
