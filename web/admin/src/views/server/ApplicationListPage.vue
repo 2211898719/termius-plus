@@ -446,7 +446,10 @@ const testMonitor = (monitor) => {
   })
   data.monitorConfig.headers = headers
   applicationApi.testMonitor({type: data.monitorType, config: JSON.stringify(data.monitorConfig)}).then(res => {
-    console.log(res)
+    if (!res.res) {
+      message.error(res.message)
+      return
+    }
     creationState.monitorTestData = res
   }).catch(err => {
     message.error(err.message)
@@ -460,10 +463,6 @@ const openServer = (openModalData, record) => {
     path: groupBreadcrumb.value.slice(1).map(g => g.name).join("/"),
     name: openModalData.name + '的' + record.tag + '服务器'
   }, 0)
-}
-
-const handleTimeRangeChange = (e) => {
-  console.log(e)
 }
 
 defineExpose({
