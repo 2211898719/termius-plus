@@ -15,7 +15,7 @@ import {formatSeconds} from "@/components/process";
 import {serverApi} from "@/api/server";
 import PCascader from "@/components/p-cascader.vue";
 import GroupCascader from "@/components/group-cascader.vue";
-
+import RelationGraph from 'relation-graph/vue3'
 
 let termiusStyleColumn = ref(Math.floor(window.innerWidth / 350));
 
@@ -465,6 +465,73 @@ const openServer = (openModalData, record) => {
   }, 0)
 }
 
+const graphOpenServer = (server) => {
+  message.success('后台进入服务器,' + server.name)
+  emit('openServer', server, 0)
+}
+
+let graphRef$ = ref(null)
+let contactVisible = ref(false)
+let contactData = ref({})
+let showApplicationContent = ref(false)
+let relationOptions = ref({
+  "defaultNodeShape": 1,
+  "downloadImageFileName": "下载",
+  "layouts": [
+    {
+      "label": "中心",
+      "layoutName": "tree",
+      'defaultJunctionPoint': 'border',
+      'defaultNodeShape': 0,
+      'defaultLineShape': 1,
+      "min_per_width": "150",
+      "max_per_width": "301",
+      "min_per_height": "150",
+      "max_per_height": "501"
+    }
+  ]
+})
+
+
+const handleOpenApplicationContact = (item) => {
+  contactVisible.value = true
+  contactData.value = item
+  relationOptions.value.downloadImageFileName = '下载' + item.name + '关系图'
+  let nodes = []
+  let lines = []
+  walk([contactData.value], (node) => {
+    nodes.push({id: 'app' + node.id, text: node.name, data: {type: 'application', ...node}})
+    if (node.serverList) {
+      nodes.push(...node.serverList.map(n => ({
+        id: 'server' + n.server.id,
+        text: n.server.name,
+        data: {type: 'server', ...n.server},
+        color: '#E45F2B'
+      })))
+      lines.push(...node.serverList.map(n => ({
+        from: 'app' + node.id,
+        to: 'server' + n.server.id,
+        text: n.tag,
+        lineShape: 4
+      })))
+    }
+    if (node.children) {
+      lines.push(...node.children.map(c => ({from: 'app' + node.id, to: 'app' + c.id})))
+    }
+  })
+  const jsonData = {
+    rootId: 'app' + contactData.value.id,
+    nodes: nodes,
+    lines: lines,
+  }
+
+  nextTick(() => {
+    graphRef$.value.setJsonData(jsonData)
+    graphRef$.value.setOptions(relationOptions.value)
+  })
+
+}
+
 defineExpose({
   getProxyData,
   setProxyId
@@ -543,6 +610,10 @@ defineExpose({
                           <edit-outlined/>
                           修改
                         </a-menu-item>
+                        <a-menu-item key="5" @click="handleOpenApplicationContact(item)">
+                          <read-outlined/>
+                          关系图
+                        </a-menu-item>
                         <a-menu-item key="3" @click="handleCopyApplication(item)">
                           <CopyOutlined/>
                           复制
@@ -560,6 +631,41 @@ defineExpose({
           </div>
         </a-card>
       </a-space>
+      <a-drawer
+          v-model:visible="contactVisible"
+          :title="contactData.name+'的关系图'"
+          placement="right"
+          width="90%"
+          size="large"
+      >
+        <a-form layout="inline">
+          <a-form-item label="显示应用内容">
+            <a-switch v-model:checked="showApplicationContent"/>
+          </a-form-item>
+          <a-form-item label="节点距离" style="width: 200px">
+            <a-slider  @change="handleOpenApplicationContact(contactData)" v-model:value="relationOptions.layouts[0].min_per_width" :min="10" :max="500" :step="1"/>
+          </a-form-item>
+        </a-form>
+        <relation-graph ref="graphRef$" :options="relationOptions">
+          <template #node="{node}">
+            <div class="my-node" @dblclick="node.data.type==='server'&&graphOpenServer(node.data)">
+              <div class="my-node-text">
+                {{ node.text }}
+              </div>
+
+              <div v-if="node.data.type==='server'" class="my-node-text">
+                {{ node.data.ip }}
+                <template v-if="node.data.port!==22">
+                  :{{ node.data.port }}
+                </template>
+              </div>
+              <div v-show="showApplicationContent" v-else class="my-node-text">
+                {{ node.data.content }}
+              </div>
+            </div>
+          </template>
+        </relation-graph>
+      </a-drawer>
       <a-drawer
           v-model:visible="creationVisible"
           :title="creationType==='create'?'新增':'修改'"
@@ -823,5 +929,13 @@ defineExpose({
 
 /deep/ .none {
   display: none;
+}
+
+.my-node-text {
+  white-space: nowrap;
+  padding: 4px 8px;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 </style>
