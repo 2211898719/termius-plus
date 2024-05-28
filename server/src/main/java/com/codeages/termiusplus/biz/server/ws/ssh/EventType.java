@@ -1,0 +1,14 @@
+package com.codeages.termiusplus.biz.server.ws.ssh;
+
+public enum EventType {
+    RESIZE,
+    COMMAND,
+    AUTH_KEYBOARD,
+    SESSION,
+    JOIN_SESSION,
+    LEAVE_SESSION,
+    REQUEST_AUTH_EDIT_SESSION,
+    RESPONSE_AUTH_EDIT_SESSION,
+    MASTER_CLOSE,
+    SFTP_SERVER_UPLOAD_SERVER_PROGRESS,
+}

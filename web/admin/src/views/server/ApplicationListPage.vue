@@ -477,13 +477,13 @@ let showApplicationContent = ref(false)
 let relationOptions = ref({
   "defaultNodeShape": 1,
   "downloadImageFileName": "下载",
+  "defaultLineShape": 1,
   "layouts": [
     {
       "label": "中心",
       "layoutName": "tree",
       'defaultJunctionPoint': 'border',
       'defaultNodeShape': 0,
-      'defaultLineShape': 1,
       "min_per_width": "150",
       "max_per_width": "301",
       "min_per_height": "150",
@@ -511,8 +511,7 @@ const handleOpenApplicationContact = (item) => {
       lines.push(...node.serverList.map(n => ({
         from: 'app' + node.id,
         to: 'server' + n.server.id,
-        text: n.tag,
-        lineShape: 4
+        text: n.tag
       })))
     }
     if (node.children) {
