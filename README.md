@@ -14,13 +14,21 @@
 ![img_9.png](docs/img_9.png)
 ### 执行自定义命令
 ![img_10.png](docs/img_10.png)
+### 内置linux命令文档，可以快速查看命令用法
+![img_24.png](docs/img_24.png)
 ### sftp
 ![img_3.png](docs/img_3.png) 
 #### 基本文件操作
 ![img_11.png](docs/img_11.png)
 ![img_12.png](docs/img_12.png)
+##### 分屏拖拽可直接服务器对服务器传递文件
+ps:多浏览器标签页也可以
 ![img_13.png](docs/img_13.png)
 
+## 权限管理
+##### 基于角色赋予服务器权限，支持多角色，多用户管理
+![img_25.png](docs/img_25.png)
+![img_26.png](docs/img_26.png)
 
 ## 主题色
 ![img_4.png](docs/img_4.png)
@@ -33,6 +41,45 @@
 ## 自定义代理
 ![img_7.png](docs/img_7.png)
 ![img_8.png](docs/img_8.png)
+### 支持组上设置代理,服务器连接时会就近使用
+![img_8.png](docs/img_92.png)
+
+## 应用
+目前主要是网站，后续支持更多类型应用
+![img_14.png](docs/img_14.png)
+### 信息
+#### 记录应用各种信息，其中的负责人手机号用于后续监控告警
+![img_15.png](docs/img_15.png)
+### 身份
+#### 记录应用的账号/密码等身份信息，用于后续登录等维护
+![img_16.png](docs/img_16.png)
+### 监控
+#### 可以对应用的一个端点进行监控，并使用正则判断是否有异常，并发送钉钉通知
+![img_17.png](docs/img_17.png)
+##### 监控效果，如果异常会显示异常时间，并发送钉钉通知
+![img_21.png](docs/img_21.png)
+### 服务器
+#### 记录应用所用服务器，用于后续服务器运维。也可以实现应用架构图
+![img_20.png](docs/img_20.png)
+##### 架构图
+![img_18.png](docs/img_18.png)
+![img_19.png](docs/img_19.png)
+
+## 端口转发
+### 支持动态端口转发，方便直接访问服务,如内部的mysql，redis等。或不公开的站点
+![img_22.png](docs/img_22.png)
+
+## 定时任务
+#### 使用类java语言的mvel表达式脚本，支持cron表达式的定时任务
+##### 提供全局变量session，可以直接访问服务器执行命令。
+##### DingerRequest对象，可以发送钉钉通知
+![img_23.png](docs/img_23.png)
+
+## 日志
+#### 记录每次操作的日志，方便后续问题排查
+##### 日志采用缓存区+文件的方式，避免频繁写入磁盘，提高性能
+![img_27.png](docs/img_27.png)
+![img_28.png](docs/img_28.png)
 
 # 部署安装
 ## docker
@@ -75,9 +122,10 @@ ssh连接，sftp，端口转发等功能使用 sshj
 
 钉钉机器人通知 dinger
 
+rdp转websocket apache guacamole
+
 #### 运行
 建立数据库，要求 mysql8.0+
 
-复制 application-dev.properties.dist 为 application-dev.properties
-, 修改其中的数据库配置，启动！
+复制 .env.dist 为 .env, 修改其中的数据库配置，启动！
 
