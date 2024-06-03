@@ -11,6 +11,12 @@ export default {
         ],
         sidebar: [
             {
+                text: '介绍',
+                items: [
+                    { text: '功能介绍', link: '/info' },
+                ]
+            },
+            {
                 text: '安装文档',
                 items: [
                     { text: 'Docker安装', link: '/start' },
