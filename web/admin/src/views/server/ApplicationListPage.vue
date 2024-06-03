@@ -569,8 +569,9 @@ defineExpose({
                         </a>
                       </template>
 
-                      <a-badge-ribbon :text="item.failureCount?'异常'+(formatSeconds(item.failureCount*60)):'正常'"
-                                      :color="item.failureCount?'red':'green'" :class="{none:item.isGroup||!item.monitorType}">
+                      <a-badge-ribbon :text="item.failureCount?(item.isGroup?'异常':('异常'+(formatSeconds(item.failureCount*60)))):'正常'"
+                                      :color="item.failureCount?'red':'green'"
+                                      :class="{none:(!item.monitorType&&!item.isGroup)||item.failureCount===null}">
                         <a-card>
                           <a-skeleton avatar :title="false" :loading="!!item.loading" active>
                             <a-list-item-meta

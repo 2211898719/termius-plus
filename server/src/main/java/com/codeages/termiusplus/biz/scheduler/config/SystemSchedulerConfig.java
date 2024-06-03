@@ -1,7 +1,7 @@
 package com.codeages.termiusplus.biz.scheduler.config;
 
-import com.codeages.termiusplus.biz.scheduler.service.CronJobDeclare;
-import com.codeages.termiusplus.biz.scheduler.service.IntervalJobDeclare;
+import com.codeages.termiusplus.biz.scheduler.dto.CronJobDeclare;
+import com.codeages.termiusplus.biz.scheduler.dto.IntervalJobDeclare;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,8 +1,8 @@
 package com.codeages.termiusplus.biz.user.schdule;
 
 import com.codeages.termiusplus.biz.scheduler.config.SystemSchedulerConfig;
-import com.codeages.termiusplus.biz.scheduler.service.CronJobDeclare;
-import com.codeages.termiusplus.biz.scheduler.service.IntervalJobDeclare;
+import com.codeages.termiusplus.biz.scheduler.dto.CronJobDeclare;
+import com.codeages.termiusplus.biz.scheduler.dto.IntervalJobDeclare;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.List;

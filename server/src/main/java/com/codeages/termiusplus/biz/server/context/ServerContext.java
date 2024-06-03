@@ -1,7 +1,7 @@
 package com.codeages.termiusplus.biz.server.context;
 
 import com.codeages.termiusplus.biz.server.dto.SFTPBean;
-import com.codeages.termiusplus.biz.server.ws.ssh.SshHandler;
+import com.codeages.termiusplus.ws.ssh.SshHandler;
 
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;

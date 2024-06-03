@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -61,15 +62,33 @@ public class ApplicationController {
                     n.putExtra("failureCount", applicationMonitorDto.getFailureCount());
                 }
 
-
                 List<ApplicationServerDto> applicationServerDtoList = applicationServerMap.get(n.getId());
                 if (CollectionUtil.isNotEmpty(applicationServerDtoList)) {
                     n.putExtra("serverList", applicationServerDtoList);
                 }
             }));
+
+            setGroupFailureCount(applicationServiceAll);
         }
 
         return applicationServiceAll;
+    }
+
+    //递归计算 节点的failureCount是子节点的failureCount之和否则为null
+    private void setGroupFailureCount(List<Tree<Long>> applicationService) {
+        for (Tree<Long> tree : applicationService) {
+            if (CollectionUtil.isNotEmpty(tree.getChildren())) {
+                setGroupFailureCount(tree.getChildren());
+                Long failureCount = tree.getChildren().stream()
+                                        .map(n -> n.get("failureCount"))
+                                        .filter(Objects::nonNull)
+                                        .map(Long.class::cast)
+                                        .reduce(0L, Long::sum);
+                tree.putExtra("failureCount", failureCount);
+            } else {
+                tree.putExtra("failureCount", tree.get("failureCount"));
+            }
+        }
     }
 
     @PostMapping("/updateSort")

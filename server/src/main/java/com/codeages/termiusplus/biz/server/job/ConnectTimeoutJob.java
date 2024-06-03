@@ -3,7 +3,7 @@ package com.codeages.termiusplus.biz.server.job;
 import cn.hutool.core.date.DateUnit;
 import com.codeages.termiusplus.biz.server.context.ServerContext;
 import com.codeages.termiusplus.biz.server.dto.SFTPBean;
-import com.codeages.termiusplus.biz.server.ws.ssh.SshHandler;
+import com.codeages.termiusplus.ws.ssh.SshHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;

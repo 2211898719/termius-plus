@@ -1,15 +1,17 @@
-package com.codeages.termiusplus.biz.scheduler.service;
+package com.codeages.termiusplus.biz.scheduler.dto;
 
 import org.quartz.Job;
 import org.quartz.JobDataMap;
 
-public class CronJobDeclare {
+public class IntervalJobDeclare {
 
     private String name;
 
     private String group;
 
-    private String cron;
+    private int every;
+
+    private boolean zeroSecond = false;
 
     /**
      * 任务执行类
@@ -21,31 +23,36 @@ public class CronJobDeclare {
      */
     private JobDataMap data = new JobDataMap();
 
-    public static CronJobDeclare newJobDeclare() {
-        return new CronJobDeclare();
+    public static IntervalJobDeclare newJobDeclare() {
+        return new IntervalJobDeclare();
     }
 
-    public CronJobDeclare name(String name) {
+    public IntervalJobDeclare name(String name) {
         this.name = name;
         return this;
     }
 
-    public CronJobDeclare group(String group) {
+    public IntervalJobDeclare group(String group) {
         this.group = group;
         return this;
     }
 
-    public CronJobDeclare cron(String cron) {
-        this.cron = cron;
+    public IntervalJobDeclare every(int every) {
+        this.every = every;
         return this;
     }
 
-    public CronJobDeclare clazz(Class<? extends Job> clazz) {
+    public IntervalJobDeclare zeroSecond() {
+        this.zeroSecond = true;
+        return this;
+    }
+
+    public IntervalJobDeclare clazz(Class<? extends Job> clazz) {
         this.clazz = clazz;
         return this;
     }
 
-    public CronJobDeclare putData(String key, Object value) {
+    public IntervalJobDeclare putData(String key, Object value) {
         data.put(key, value);
         return this;
     }
@@ -58,8 +65,12 @@ public class CronJobDeclare {
         return group;
     }
 
-    public String getCron() {
-        return cron;
+    public int getEvery() {
+        return every;
+    }
+
+    public boolean isZeroSecond() {
+        return zeroSecond;
     }
 
     public Class<? extends Job> getClazz() {

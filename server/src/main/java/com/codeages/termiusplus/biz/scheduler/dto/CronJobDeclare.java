@@ -1,17 +1,15 @@
-package com.codeages.termiusplus.biz.scheduler.service;
+package com.codeages.termiusplus.biz.scheduler.dto;
 
 import org.quartz.Job;
 import org.quartz.JobDataMap;
 
-public class IntervalJobDeclare {
+public class CronJobDeclare {
 
     private String name;
 
     private String group;
 
-    private int every;
-
-    private boolean zeroSecond = false;
+    private String cron;
 
     /**
      * 任务执行类
@@ -23,36 +21,31 @@ public class IntervalJobDeclare {
      */
     private JobDataMap data = new JobDataMap();
 
-    public static IntervalJobDeclare newJobDeclare() {
-        return new IntervalJobDeclare();
+    public static CronJobDeclare newJobDeclare() {
+        return new CronJobDeclare();
     }
 
-    public IntervalJobDeclare name(String name) {
+    public CronJobDeclare name(String name) {
         this.name = name;
         return this;
     }
 
-    public IntervalJobDeclare group(String group) {
+    public CronJobDeclare group(String group) {
         this.group = group;
         return this;
     }
 
-    public IntervalJobDeclare every(int every) {
-        this.every = every;
+    public CronJobDeclare cron(String cron) {
+        this.cron = cron;
         return this;
     }
 
-    public IntervalJobDeclare zeroSecond() {
-        this.zeroSecond = true;
-        return this;
-    }
-
-    public IntervalJobDeclare clazz(Class<? extends Job> clazz) {
+    public CronJobDeclare clazz(Class<? extends Job> clazz) {
         this.clazz = clazz;
         return this;
     }
 
-    public IntervalJobDeclare putData(String key, Object value) {
+    public CronJobDeclare putData(String key, Object value) {
         data.put(key, value);
         return this;
     }
@@ -65,12 +58,8 @@ public class IntervalJobDeclare {
         return group;
     }
 
-    public int getEvery() {
-        return every;
-    }
-
-    public boolean isZeroSecond() {
-        return zeroSecond;
+    public String getCron() {
+        return cron;
     }
 
     public Class<? extends Job> getClazz() {

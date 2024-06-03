@@ -6,6 +6,7 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.lang.tree.Tree;
 import cn.hutool.core.lang.tree.TreeNode;
 import cn.hutool.core.lang.tree.TreeUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.servlet.ServletUtil;
 import cn.hutool.json.JSONUtil;
@@ -19,9 +20,9 @@ import com.codeages.termiusplus.biz.server.mapper.ServerMapper;
 import com.codeages.termiusplus.biz.server.repository.ServerRepository;
 import com.codeages.termiusplus.biz.server.service.ProxyService;
 import com.codeages.termiusplus.biz.server.service.ServerService;
-import com.codeages.termiusplus.biz.server.ws.ssh.AuthKeyBoardHandler;
-import com.codeages.termiusplus.biz.server.ws.ssh.EventType;
-import com.codeages.termiusplus.biz.server.ws.ssh.MessageDto;
+import com.codeages.termiusplus.ws.ssh.AuthKeyBoardHandler;
+import com.codeages.termiusplus.ws.ssh.EventType;
+import com.codeages.termiusplus.ws.ssh.MessageDto;
 import com.codeages.termiusplus.biz.util.TreeUtils;
 import com.codeages.termiusplus.exception.AppException;
 import com.querydsl.core.BooleanBuilder;
@@ -425,7 +426,7 @@ public class ServerServiceImpl implements ServerService {
                         @Override
                         public char[] reqPassword(Resource<?> resource) {
                             //如果没有sessionId 无从发起获取 keyboard interactive的验证码，所以无法进行登录
-                            if (StrUtil.isBlank(sessionId)) {
+                            if (CharSequenceUtil.isBlank(sessionId)) {
                                 return server.getPassword().toCharArray().clone();
                             }
 

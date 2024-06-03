@@ -6,7 +6,7 @@ import com.codeages.termiusplus.biz.server.dto.ServerCreateParams;
 import com.codeages.termiusplus.biz.server.dto.ServerUpdateParams;
 import com.codeages.termiusplus.biz.server.dto.TreeSortParams;
 import com.codeages.termiusplus.biz.server.service.ServerService;
-import com.codeages.termiusplus.biz.server.ws.ssh.SshHandler;
+import com.codeages.termiusplus.ws.ssh.SshHandler;
 import com.codeages.termiusplus.biz.user.dto.RoleDto;
 import com.codeages.termiusplus.biz.user.dto.UserDto;
 import com.codeages.termiusplus.biz.user.service.RoleService;

@@ -1,4 +1,4 @@
-package com.codeages.termiusplus.biz.server.ws.ssh;
+package com.codeages.termiusplus.ws.ssh;
 
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.IoUtil;
