@@ -63,6 +63,7 @@ onMounted(() => {
     dataIdAttr: 'id',
     sortElement: '.sortEl',
     dragClass: "sortable-drag",
+    handle: ".sortable-handle",
     animation: 500,
     onEnd: (e) => {
       if (e.oldIndex === e.newIndex) {
@@ -605,7 +606,7 @@ const changeMiniTab = () => {
                     <div ref="tabBarRef" :operationId="server.operationId" class="tab-bar"
                          :class="{'tab-active':tagActiveKey===server.operationId}"
                          @click="changeTab(server.operationId)">
-                      <div class="left">
+                      <div class="left sortable-handle">
                         <a-badge :dot="server.hot" :offset="[-9,-2]">
                           <div class="tab-icon">
                             <template v-if="server.tag">
@@ -809,10 +810,17 @@ const changeMiniTab = () => {
     display: flex;
     border-radius: 8px;
     justify-content: space-between;
+    //不允许框选
+
+    user-select: none;
 
     .left {
       width: 83%;
       display: flex;
+
+      .sortable-handle{
+        cursor: move;
+      }
 
       .tab-icon {
         margin-right: 8px;
