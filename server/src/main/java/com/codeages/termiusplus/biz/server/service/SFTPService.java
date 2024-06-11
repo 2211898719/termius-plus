@@ -1,5 +1,6 @@
 package com.codeages.termiusplus.biz.server.service;
 
+import com.codeages.termiusplus.biz.server.dto.SFTPBean;
 import com.codeages.termiusplus.biz.server.dto.SFTPServerUploadServerParams;
 import net.schmizz.sshj.sftp.RemoteResourceInfo;
 import org.springframework.web.multipart.MultipartFile;
@@ -16,6 +17,8 @@ public interface SFTPService {
      * @return
      */
     String init(String sessionId, Long serverId);
+
+    SFTPBean getSftpBean(String id);
 
     /**
      * 获取当前目录

@@ -6,17 +6,18 @@ import cn.hutool.core.lang.UUID;
 import cn.hutool.core.lang.func.VoidFunc1;
 import cn.hutool.json.JSONUtil;
 import com.codeages.termiusplus.biz.ErrorCode;
+import com.codeages.termiusplus.biz.server.annotation.SftpActive;
 import com.codeages.termiusplus.biz.server.context.ServerContext;
 import com.codeages.termiusplus.biz.server.dto.SFTPBean;
 import com.codeages.termiusplus.biz.server.dto.SFTPServerUploadServerParams;
 import com.codeages.termiusplus.biz.server.service.SFTPService;
 import com.codeages.termiusplus.biz.server.service.ServerService;
+import com.codeages.termiusplus.biz.util.FileSizeFormatter;
+import com.codeages.termiusplus.exception.AppException;
 import com.codeages.termiusplus.ws.ssh.AuthKeyBoardHandler;
 import com.codeages.termiusplus.ws.ssh.EventType;
 import com.codeages.termiusplus.ws.ssh.MessageDto;
 import com.codeages.termiusplus.ws.ssh.SftpServerUploadServerProgressDto;
-import com.codeages.termiusplus.biz.util.FileSizeFormatter;
-import com.codeages.termiusplus.exception.AppException;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import net.schmizz.sshj.SSHClient;
@@ -48,7 +49,7 @@ public class SFTPServiceImpl implements SFTPService {
     public String init(String sessionId, Long serverId) {
         StatefulSFTPClient sftp = createSftp(sessionId, serverId);
         String id = UUID.fastUUID() + "-" + serverId + "-" + sessionId;
-        ServerContext.SFTP_POOL.put(id, new SFTPBean(sftp, System.currentTimeMillis()));
+        ServerContext.SFTP_POOL.put(id, new SFTPBean(sftp, System.currentTimeMillis(), false));
 
         return id;
     }
@@ -61,15 +62,16 @@ public class SFTPServiceImpl implements SFTPService {
         return sshClient.newStatefulSFTPClient();
     }
 
-
-    private StatefulSFTPClient getSftp(String id) {
+    @Override
+    public SFTPBean getSftpBean(String id) {
         SFTPBean sftp = ServerContext.SFTP_POOL.get(id);
         if (sftp == null) {
             log.info("SFTP连接已失效：{}", id);
             String[] split = id.split("-");
             sftp = new SFTPBean(
                     createSftp(split[split.length - 1], Long.valueOf(split[split.length - 2])),
-                    System.currentTimeMillis()
+                    System.currentTimeMillis(),
+                    false
             );
 
             ServerContext.SFTP_POOL.put(id, sftp);
@@ -77,7 +79,11 @@ public class SFTPServiceImpl implements SFTPService {
 
         sftp.setTime(System.currentTimeMillis());
 
-        return sftp.getSftp();
+        return sftp;
+    }
+
+    private StatefulSFTPClient getSftp(String id) {
+        return getSftpBean(id).getSftp();
     }
 
     @Override
@@ -128,6 +134,7 @@ public class SFTPServiceImpl implements SFTPService {
 
     @Override
     @SneakyThrows
+    @SftpActive("#id")
     public void upload(String id, MultipartFile file, String remotePath) {
         File tmpFile = createTmpFile();
         file.transferTo(tmpFile);
@@ -135,6 +142,7 @@ public class SFTPServiceImpl implements SFTPService {
     }
 
     @Override
+    @SftpActive("#id")
     public void download(String id, String remotePath, HttpServletResponse response) throws IOException {
         log.info("下载文件：{}", remotePath);
         String filename = remotePath.substring(remotePath.lastIndexOf("/") + 1);

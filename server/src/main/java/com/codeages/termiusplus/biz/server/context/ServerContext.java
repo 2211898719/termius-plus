@@ -15,6 +15,4 @@ public class ServerContext {
     public static final ConcurrentMap<String, SFTPBean> SFTP_POOL = new ConcurrentHashMap<>();
 
     public static final Map<String, BlockingQueue<String>> AUTH_KEYBOARD_INTERACTIVE_POOL = new ConcurrentHashMap<>();
-
-
 }

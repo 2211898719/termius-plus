@@ -20,16 +20,17 @@ import com.codeages.termiusplus.biz.server.mapper.ServerMapper;
 import com.codeages.termiusplus.biz.server.repository.ServerRepository;
 import com.codeages.termiusplus.biz.server.service.ProxyService;
 import com.codeages.termiusplus.biz.server.service.ServerService;
+import com.codeages.termiusplus.biz.util.TreeUtils;
+import com.codeages.termiusplus.exception.AppException;
 import com.codeages.termiusplus.ws.ssh.AuthKeyBoardHandler;
 import com.codeages.termiusplus.ws.ssh.EventType;
 import com.codeages.termiusplus.ws.ssh.MessageDto;
-import com.codeages.termiusplus.biz.util.TreeUtils;
-import com.codeages.termiusplus.exception.AppException;
 import com.querydsl.core.BooleanBuilder;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.connection.channel.direct.Session;
+import net.schmizz.sshj.transport.TransportException;
 import net.schmizz.sshj.transport.verification.PromiscuousVerifier;
 import net.schmizz.sshj.userauth.method.AuthPassword;
 import net.schmizz.sshj.userauth.method.PasswordResponseProvider;
@@ -396,6 +397,8 @@ public class ServerServiceImpl implements ServerService {
             ssh.connect(server.getIp(), server.getPort().intValue());
         } catch (ConnectException connectException) {
             throw new AppException(ErrorCode.INVALID_ARGUMENT, "连接失败，请检查网络或者服务器是否开启");
+        }catch (TransportException e) {
+            throw new AppException(ErrorCode.INVALID_ARGUMENT, "连接失败，请检查服务器配置");
         }
 
         // 配置身份验证使用的私钥

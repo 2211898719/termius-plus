@@ -18,7 +18,7 @@ import java.util.Map;
 public class ConnectTimeoutJob {
 
     // 每半小时清理一次超时的连接
-    @Scheduled(cron = "0 0/10 * * * ?")
+    @Scheduled(cron = "0 0 0/24 *  * ?")
     public void clearTimeOutSFTP() {
         for (String k : ServerContext.SFTP_POOL.keySet()) {
             SFTPBean v = ServerContext.SFTP_POOL.get(k);
@@ -28,7 +28,7 @@ public class ConnectTimeoutJob {
                 return;
             }
 
-            if (System.currentTimeMillis() - v.getTime() > 30 * 60 * 1000) {
+            if (System.currentTimeMillis() - v.getTime() > 24 * 60 * 60 * 1000 && !v.isActive()) {
                 try {
                     v.getSftp().close();
                 } catch (IOException e) {
@@ -41,7 +41,7 @@ public class ConnectTimeoutJob {
     }
 
 
-    @Scheduled(cron = "0 0/5 * * * ?")
+    @Scheduled(cron = "0 0 0/4 *  * ?")
     public void clearTimeOutSsh() {
         log.info("开始清理超时的SSH连接");
         List<String> key = new ArrayList<>();

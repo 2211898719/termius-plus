@@ -11,4 +11,5 @@ import net.schmizz.sshj.sftp.StatefulSFTPClient;
 public class SFTPBean {
     private StatefulSFTPClient sftp;
     private Long time;
+    private boolean active;
 }
