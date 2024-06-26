@@ -29,10 +29,14 @@ import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 import java.io.*;
 import java.net.ConnectException;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.zip.GZIPOutputStream;
 
 import static com.codeages.termiusplus.biz.server.context.ServerContext.SSH_POOL;
 
@@ -49,6 +53,8 @@ public class SshHandler {
     private static final int MAX_LOG_BUFFER_SIZE = 1024 * 1024 * 5;
 
     private static final String NONE_MASTER_SESSION_ID = "0";
+
+    private static final ThreadPoolExecutor threadPoolExecutor = ThreadUtil.newExecutorByBlockingCoefficient(0.9f);
 
     private final ServerService serverService;
 
@@ -204,6 +210,13 @@ public class SshHandler {
 
     }
 
+    private static byte[] compressString(String input, Charset charset) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        GZIPOutputStream gzipOut = new GZIPOutputStream(baos);
+        gzipOut.write(input.getBytes(charset));
+        gzipOut.close();
+        return baos.toByteArray();
+    }
 
     private static void sendBinary(javax.websocket.Session session, String msg) {
         if (!session.isOpen()) {
@@ -211,9 +224,10 @@ public class SshHandler {
             return;
         }
 
+
         synchronized (session.getId().intern()) {
             try {
-                session.getBasicRemote().sendText(msg);
+                session.getBasicRemote().sendBinary(ByteBuffer.wrap(compressString(msg, Charset.defaultCharset())));
             } catch (IOException e) {
                 log.error("发送消息出错：{}", e.getMessage());
             }
@@ -267,7 +281,6 @@ public class SshHandler {
             this.masterSessionId = session.getId();
             this.masterSession = session;
 
-            sshClient.useCompression();
             net.schmizz.sshj.connection.channel.direct.Session shellSession = sshClient.startSession();
             shellSession.allocatePTY("xterm", 80, 24, 640, 480, Map.of());
             shellSession.setAutoExpand(true);
@@ -301,7 +314,7 @@ public class SshHandler {
             //日志内存缓冲区
             logFileOutputStream = IoUtil.toBuffered(FileUtil.getOutputStream(logFile), MAX_LOG_BUFFER_SIZE);
 
-            ThreadUtil.execute(this);
+            threadPoolExecutor.execute(this);
         }
 
 

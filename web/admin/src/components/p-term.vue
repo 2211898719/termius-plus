@@ -11,6 +11,7 @@ import {TrzszAddon} from 'trzsz';
 import {useAuthStore} from "@shared/store/useAuthStore";
 import {serverApi} from "@/api/server";
 import {Button, message, notification} from "ant-design-vue";
+import pako from 'pako';
 
 let authStore = useAuthStore();
 // let networkInfo = useNetwork()
@@ -207,6 +208,10 @@ const getUnExecutedCommand = () => {
   return ""
 }
 
+const arrayBufferToString = (arrayBuffer) => {
+  return new TextDecoder('utf-8').decode(arrayBuffer);
+}
+
 
 const initTerm = () => {
   term = new Terminal(options);
@@ -219,10 +224,17 @@ const initTerm = () => {
     }
   }
 
+  function decompressArrayBuffer(arrayBuffer) {
+    const compressedData = new Uint8Array(arrayBuffer);
+    const decompressedData = pako.inflate(compressedData);
+    return decompressedData.buffer;
+  }
+
   const originalAddEventListener = socket.addEventListener;
 
   function preprocessEvent(event) {
-    let data = JSON.parse(event.data);
+
+    let data = JSON.parse(arrayBufferToString(decompressArrayBuffer(event.data)));
     switch (data.event) {
       case "COMMAND":
         emit("hot", currentServer.value)

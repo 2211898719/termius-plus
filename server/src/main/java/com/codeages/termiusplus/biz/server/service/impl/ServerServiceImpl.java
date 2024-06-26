@@ -341,6 +341,7 @@ public class ServerServiceImpl implements ServerService {
     public SSHClient createSSHClient(Long id, String sessionId) {
         ServerDto server = findById(id);
         SSHClient ssh = new SSHClient();
+        ssh.useCompression();
         ssh.setTimeout(3600 * 1000);
         ssh.setConnectTimeout(3600 * 1000);
         ssh.getTransport().setTimeoutMs(0);
@@ -422,10 +423,8 @@ public class ServerServiceImpl implements ServerService {
             log.info("ssh.isAuthenticated() = {}", ssh.isAuthenticated());
             ssh.auth(
                     server.getUsername(),
-
                     new AuthPassword(pfinder),
                     new CurrentAuthKeyboardInteractive(new PasswordResponseProvider(new PasswordFinder() {
-
                         @Override
                         public char[] reqPassword(Resource<?> resource) {
                             //如果没有sessionId 无从发起获取 keyboard interactive的验证码，所以无法进行登录

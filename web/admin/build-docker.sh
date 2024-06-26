@@ -7,18 +7,18 @@ if [ ! -n "$1" ] ;then
     exit
 fi
 
-# sudo sysctl -w kern.maxfiles=65535
-#
-# sudo sysctl -w kern.maxfilesperproc=65535
-#
-# ulimit -n 65536
+sudo sysctl -w kern.maxfiles=65535
+
+sudo sysctl -w kern.maxfilesperproc=65535
+
+ulimit -n 65536
 
 yarn build
 
-docker build -t hongjunlong/termius-plus:front-$1 .
+docker build -t registry.cn-hangzhou.aliyuncs.com/kuozhi/termius-plus:front-$1 .
 
-docker login hongjunlong/termius-plus
+docker login registry.cn-hangzhou.aliyuncs.com/kuozhi/termius-plus
 
-docker push hongjunlong/termius-plus:front-$1
+docker push registry.cn-hangzhou.aliyuncs.com/kuozhi/termius-plus:front-$1
 
 

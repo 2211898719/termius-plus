@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.codeages</groupId>
 	<artifactId>termius-plus</artifactId>
-	<version>v1.5.0</version>
+	<version>v1.5.1</version>
 	<name>Termius Plus</name>
 	<description>Termius Plus</description>
 	<properties>
@@ -191,7 +191,7 @@
 					</from>
 					<to>
 						<!--配置仓库名、镜像名-->
-						<image>hongjunlong/termius-plus</image>
+						<image>registry.cn-hangzhou.aliyuncs.com/kuozhi/termius-plus</image>
 						<!--配置Tag信息-->
 						<tags>
 							<tag>server-${project.version}</tag>

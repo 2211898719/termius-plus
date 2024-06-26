@@ -28,6 +28,7 @@
     "golden-layout": "^2.6.0",
     "lodash": "^4.17.21",
     "nora-zmodemjs": "^1.1.1",
+    "pako": "^2.1.0",
     "pinia": "^2.0.12",
     "relation-graph": "^2.2.0",
     "resize-observer-polyfill": "^1.5.1",
