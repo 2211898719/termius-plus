@@ -308,7 +308,7 @@ const renderLayout = (server) => {
           componentState: {
             server: server
           }
-        }
+        },
       ]
     }
   });

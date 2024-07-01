@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 import static com.codeages.termiusplus.biz.server.context.ServerContext.SSH_POOL;
@@ -50,7 +51,7 @@ import static com.codeages.termiusplus.biz.server.context.ServerContext.SSH_POOL
 @ServerEndpoint("/socket/ssh/{sessionId}/{serverId}/{masterSessionId}")
 public class SshHandler {
 
-    private static final int MAX_LOG_BUFFER_SIZE = 1024 * 1024 * 5;
+    private static final int MAX_LOG_BUFFER_SIZE = 1024 * 1024 * 1;
 
     private static final String NONE_MASTER_SESSION_ID = "0";
 
@@ -108,7 +109,7 @@ public class SshHandler {
 
     @OnMessage
     public void onMessage(@PathParam("masterSessionId") String masterSessionId,
-                          String message,
+                          byte[] message,
                           javax.websocket.Session session) {
         HandlerItem handlerItem = SSH_POOL.get(session.getId());
         if (!isMasterSession(masterSessionId)) {
@@ -122,7 +123,7 @@ public class SshHandler {
 
         handlerItem.active();
         //如果是事件，就不发送到服务器
-        MessageDto messageDto = MessageDto.parse(message);
+        MessageDto messageDto = MessageDto.parse(decompressString(message, Charset.defaultCharset()));
         switch (messageDto.getEvent()) {
             case COMMAND:
                 sendCommand(handlerItem, messageDto.getData());
@@ -210,7 +211,8 @@ public class SshHandler {
 
     }
 
-    private static byte[] compressString(String input, Charset charset) throws IOException {
+    @SneakyThrows
+    private static byte[] compressString(String input, Charset charset) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         GZIPOutputStream gzipOut = new GZIPOutputStream(baos);
         gzipOut.write(input.getBytes(charset));
@@ -218,12 +220,17 @@ public class SshHandler {
         return baos.toByteArray();
     }
 
+    @SneakyThrows
+    private static String decompressString(byte[] input, Charset charset) {
+        GZIPInputStream gzipIn = new GZIPInputStream(new ByteArrayInputStream(input));
+        return IoUtil.read(gzipIn, charset);
+    }
+
     private static void sendBinary(javax.websocket.Session session, String msg) {
         if (!session.isOpen()) {
             // 会话关闭不能发送消息
             return;
         }
-
 
         synchronized (session.getId().intern()) {
             try {

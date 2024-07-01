@@ -212,22 +212,25 @@ const arrayBufferToString = (arrayBuffer) => {
   return new TextDecoder('utf-8').decode(arrayBuffer);
 }
 
+function decompressArrayBuffer(arrayBuffer) {
+  const compressedData = new Uint8Array(arrayBuffer);
+  const decompressedData = pako.ungzip(compressedData);
+  return decompressedData.buffer;
+}
+
+function compressArrayBuffer(str) {
+  return pako.gzip(str, {to: 'array'});
+}
 
 const initTerm = () => {
   term = new Terminal(options);
   socket.send = (data) => {
     if (socket.readyState === 1) {
-      socketSend.call(socket, JSON.stringify({
+      sendEvent( JSON.stringify({
         event: "COMMAND",
         data: data
       }));
     }
-  }
-
-  function decompressArrayBuffer(arrayBuffer) {
-    const compressedData = new Uint8Array(arrayBuffer);
-    const decompressedData = pako.inflate(compressedData);
-    return decompressedData.buffer;
   }
 
   const originalAddEventListener = socket.addEventListener;
@@ -273,7 +276,7 @@ const initTerm = () => {
                     type: 'primary',
                     size: 'small',
                     onClick: () => {
-                      socketSend.call(socket, JSON.stringify({
+                      sendEvent( JSON.stringify({
                         event: "RESPONSE_AUTH_EDIT_SESSION",
                         data: JSON.stringify({
                           sessionId: message.sessionId,
@@ -362,41 +365,41 @@ const initTerm = () => {
   term.open(terminal.value);
 
   term.focus();
-  term.onData(() => {
-    if (!AutoComplete.value) {
-      return
-    }
+  // term.onData(() => {
+  //   if (!AutoComplete.value) {
+  //     return
+  //   }
+  //
+  //   setTimeout(() => {
+  //     completeCommand.value = getCompleteCommand();
+  //     writeCompletionToCursorPosition(completeCommand.value)
+  //   }, 100)
+  // })
 
-    setTimeout(() => {
-      completeCommand.value = getCompleteCommand();
-      writeCompletionToCursorPosition(completeCommand.value)
-    }, 100)
-  })
-
-  term.onKey(e => {
-    return;
-    if (!AutoComplete.value) {
-      return
-    }
-
-    if (e.domEvent.ctrlKey && (e.domEvent.key === 'w' || e.domEvent.key === 'W')) {
-      let command = getCompleteCommand()
-      if (command) {
-        execCommand(command)
-        displayNoneCompletion()
-      }
-      /**
-       * 由于xterm.js的实现原理，无法直接阻止事件的默认行为，所以只能抛出一个异常来阻止事件的默认行为
-       */
-      throw new Error("stop")
-    }
-
-    if (e.domEvent.ctrlKey && e.domEvent.key === 'q') {
-      displayNoneCompletion()
-
-      throw new Error("stop")
-    }
-  });
+  // term.onKey(e => {
+  //   return;
+  //   if (!AutoComplete.value) {
+  //     return
+  //   }
+  //
+  //   if (e.domEvent.ctrlKey && (e.domEvent.key === 'w' || e.domEvent.key === 'W')) {
+  //     let command = getCompleteCommand()
+  //     if (command) {
+  //       execCommand(command)
+  //       displayNoneCompletion()
+  //     }
+  //     /**
+  //      * 由于xterm.js的实现原理，无法直接阻止事件的默认行为，所以只能抛出一个异常来阻止事件的默认行为
+  //      */
+  //     throw new Error("stop")
+  //   }
+  //
+  //   if (e.domEvent.ctrlKey && e.domEvent.key === 'q') {
+  //     displayNoneCompletion()
+  //
+  //     throw new Error("stop")
+  //   }
+  // });
 
   if (props.server.execCommand) {
     nextTick(() => {
@@ -448,7 +451,7 @@ const getMysqlHistory = async () => {
 
 const requestAuthEditSession = () => {
   message.info("正在申请操作" + currentServer.value.name)
-  socketSend.call(socket, JSON.stringify({
+  sendEvent(JSON.stringify({
     event: "REQUEST_AUTH_EDIT_SESSION"
   }));
 }
@@ -542,7 +545,7 @@ const resizeTerminal = () => {
   resizeObserver.observe(content);
 
   term.onResize((size) => {
-    socketSend.call(socket, JSON.stringify({
+    sendEvent(JSON.stringify({
       event: "RESIZE",
       data: {
         cols: size.cols,
@@ -555,10 +558,14 @@ const resizeTerminal = () => {
 }
 
 const execCommand = (command) => {
-  socketSend.call(socket, JSON.stringify({
+  sendEvent(JSON.stringify({
     event: "COMMAND",
     data: command
-  }));
+  }))
+}
+
+const sendEvent = (event) => {
+  socketSend.call(socket, compressArrayBuffer(event));
 }
 
 const close = () => {
@@ -628,5 +635,7 @@ defineExpose({
 /deep/ .xterm {
   height: 100%;
 }
+
+
 
 </style>

@@ -13,7 +13,7 @@ import Sortable from "sortablejs";
 import _ from "lodash";
 import PEnumSelect from "@/components/p-enum-select.vue";
 import OsEnum from "@/enums/OsEnum";
-import {getSurname} from "../../utils/nameUtil";
+import {getSurname} from "@/utils/nameUtil";
 
 let termiusStyleColumn = ref(Math.floor(window.innerWidth / 300));
 

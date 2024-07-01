@@ -85,7 +85,6 @@ public interface SFTPService {
      *
      * @param id
      * @param remotePath
-     * @param outputStream
      */
     void download(String id, String remotePath, HttpServletResponse response) throws IOException;
 
