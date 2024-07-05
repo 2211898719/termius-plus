@@ -1,7 +1,7 @@
 <script setup>
 import {serverApi} from "@/api/server";
 import {message, Modal} from "ant-design-vue";
-import {computed, createVNode, defineEmits, defineExpose, nextTick, onMounted, reactive, ref, watch} from "vue";
+import {computed, createVNode, defineEmits, defineExpose, nextTick, reactive, ref, watch} from "vue";
 import {ExclamationCircleOutlined} from "@ant-design/icons-vue";
 import {walk} from "@/utils/treeUtil";
 import {proxyApi} from "@/api/proxy";
@@ -14,6 +14,7 @@ import _ from "lodash";
 import PEnumSelect from "@/components/p-enum-select.vue";
 import OsEnum from "@/enums/OsEnum";
 import {getSurname} from "@/utils/nameUtil";
+import autoAnimate from "@formkit/auto-animate";
 
 let termiusStyleColumn = ref(Math.floor(window.innerWidth / 300));
 
@@ -219,6 +220,8 @@ const submitCreate = async () => {
   await getServerList()
 }
 
+let sorting = ref(false)
+
 const createSortEl = (el) => {
   if (el) {
     return Sortable.create(el, {
@@ -227,17 +230,26 @@ const createSortEl = (el) => {
         pull: 'clone',
         put: 'true' // Do not allow items to be put into this list
       },
+      sort: !searchText.value,
       scroll: true,
       dataIdAttr: 'id',
       sortElement: '.sortEl',
       dragClass: "sortable-drag",
       animation: 500,
-      onEnd: handleChangeSort
+      onStart: () => {
+        sorting.value = true
+        resetAutoAnimateAndSortable()
+      },
+      onEnd: handleChangeSort,
     });
+  } else {
+    console.log(el)
   }
 }
 
 const handleChangeSort = (evt) => {
+  sorting.value = false
+  resetAutoAnimateAndSortable()
   //根据evt.oldIndex和evt.newIndex来维护currentData.value
   let oldIndex = evt.oldIndex;
   let newIndex = evt.newIndex;
@@ -260,6 +272,8 @@ const updateSort = _.debounce(async (sortData) => {
 const handleDblclick = (item, masterSessionId = 0) => {
   item.onlyUserVisible = false
   if (item.isGroup) {
+    sorting.value = true
+    resetAutoAnimateAndSortable()
     //维护面包屑
     let index = groupBreadcrumb.value.findIndex(i => i.id === item.id);
     if (index === -1) {
@@ -271,7 +285,11 @@ const handleDblclick = (item, masterSessionId = 0) => {
     //维护列表
     handleBreadcrumbData(item)
     nextTick(() => {
-      createSortEl(document.getElementsByClassName('ant-row')[0])
+      sorting.value = false
+      resetAutoAnimateAndSortable()
+      if (!searchData.value.length && currentData.value.length){
+        searchText.value = ''
+      }
     })
     return
   }
@@ -282,7 +300,6 @@ const handleDblclick = (item, masterSessionId = 0) => {
     return
   }
 
-
   emit('openServer', {...item, path: groupBreadcrumb.value.slice(1).map(g=>g.name).join("/")}, masterSessionId)
 }
 
@@ -290,10 +307,6 @@ const handleDownloadWindowsRdp = (item) => {
   windowsInfoState.value = item
   windowsInfoVisible.value = true
 }
-
-onMounted(() => {
-  createSortEl(document.getElementsByClassName('ant-row')[0])
-})
 
 const proxyCreation = () => {
   emit('proxyCreation')
@@ -375,6 +388,57 @@ const downloadWindowsRdpConfig = (item) => {
   message.success("密码已复制到剪贴板");
 }
 
+let searchText = ref('')
+
+const list = ref()
+
+const searchData = computed(() => {
+  nextTick(() => {
+    resetAutoAnimateAndSortable()
+  })
+
+  if (searchText.value) {
+    changeSortEnable(false)
+  } else {
+    changeSortEnable(true)
+  }
+
+  if (!currentData.value?.length) {
+    return []
+  }
+
+  return currentData.value.filter(item => searchLike(item, searchText.value))
+})
+
+const searchLike = (item, text) => {
+  if (item.isGroup) {
+    return item.name?.includes(text) || (item.children?.length && item.children.some(child => searchLike(child, text)))
+  } else {
+    return item.name?.includes(text) || item.remark?.includes(text) || item.ip?.includes(text)
+  }
+}
+
+let sortContent = ref()
+
+const resetAutoAnimateAndSortable = () => {
+  let el = list?.value?.$el.getElementsByClassName("ant-row")[0];
+  if (!el) {
+    return
+  }
+
+  autoAnimate(el, {duration: sorting?.value ? 0 : 300})
+  //使用 parentNode 避免重复创建，判断是否为游离节点
+  if (!sortContent.value?.el?.parentNode) {
+    sortContent.value = createSortEl(el)
+  }
+}
+
+const changeSortEnable = (enable) => {
+  if (sortContent.value) {
+    sortContent.value.option("disabled", !enable)
+  }
+}
+
 defineExpose({
   getProxyData,
   setProxyId
@@ -387,6 +451,9 @@ defineExpose({
     <div class="server-pane">
       <a-space direction="vertical" size="middle" style="width: 100%;">
         <a-card :bodyStyle="{padding:'12px 12px'}" style="border:none">
+          <div class="search">
+            <a-input v-model:value="searchText" class="search-input" placeholder="搜索服务器"/>
+          </div>
           <div class="body-root">
             <div style="display: flex;justify-content: space-between">
               <a-breadcrumb>
@@ -402,7 +469,8 @@ defineExpose({
               </div>
             </div>
             <div class="mt30 server">
-              <a-list :grid="{ gutter: 16, column: termiusStyleColumn }" :data-source="currentData" row-key="id">
+              <a-list ref="list" :grid="{ gutter: 16, column: termiusStyleColumn }" :data-source="searchData"
+                      row-key="id">
                 <template #renderItem="{ item }">
                   <a-dropdown :trigger="['contextmenu']">
                     <a-list-item class="sortEl" @dblclick="handleDblclick(item)">
