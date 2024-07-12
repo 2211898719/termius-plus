@@ -268,6 +268,18 @@ const updateSort = _.debounce(async (sortData) => {
   )
 }, 250, {'maxWait': 1000});
 
+let multipleSelection = ref(new Set())
+
+
+const handleSelect = (item) => {
+  if (multipleSelection.value.has(item.id)) {
+    multipleSelection.value.delete(item.id)
+  } else {
+    multipleSelection.value.add(item.id)
+  }
+
+  console.log(multipleSelection.value)
+}
 
 const handleDblclick = (item, masterSessionId = 0) => {
   item.onlyUserVisible = false
@@ -473,7 +485,7 @@ defineExpose({
                       row-key="id">
                 <template #renderItem="{ item }">
                   <a-dropdown :trigger="['contextmenu']">
-                    <a-list-item class="sortEl" @dblclick="handleDblclick(item)">
+                    <a-list-item class="sortEl selected-active" @dblclick="handleDblclick(item)" @click="handleSelect(item)">
                       <template #actions>
                         <a-popover :visible="item.onlyUserVisible" v-if="item.onlyConnect?.length" @dblclick.stop
                                    @click.stop title="在线用户"

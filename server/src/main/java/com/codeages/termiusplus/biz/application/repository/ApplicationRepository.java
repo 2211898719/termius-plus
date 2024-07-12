@@ -12,6 +12,8 @@ public interface ApplicationRepository extends JpaRepository<Application, Long>,
 
     List<Application> findAllByIsGroupTrue();
 
+    List<Application> findAllByIsGroupFalse();
+
 }
 
 

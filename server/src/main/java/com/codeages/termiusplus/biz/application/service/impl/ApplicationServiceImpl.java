@@ -73,6 +73,13 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
+    public List<ApplicationDto> findAllApplication() {
+        return applicationRepository.findAllByIsGroupFalse()
+                                    .stream()
+                                    .map(applicationMapper::toDto).collect(Collectors.toList());
+    }
+
+    @Override
     @Transactional
     public void create(ApplicationCreateParams createParams) {
         var errors = validator.validate(createParams);

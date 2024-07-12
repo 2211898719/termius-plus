@@ -1,5 +1,7 @@
 package com.codeages.termiusplus.biz.application.job;
 
+import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.util.StrUtil;
 import com.codeages.termiusplus.biz.application.dto.ApplicationDto;
 import com.codeages.termiusplus.biz.application.dto.ApplicationMonitorDto;
 import com.codeages.termiusplus.biz.application.dto.ApplicationMonitorExecDto;
@@ -7,6 +9,10 @@ import com.codeages.termiusplus.biz.application.dto.ApplicationMonitorSearchPara
 import com.codeages.termiusplus.biz.application.service.ApplicationMonitorService;
 import com.codeages.termiusplus.biz.application.service.ApplicationService;
 import com.codeages.termiusplus.biz.util.QueryUtils;
+import com.github.jaemon.dinger.DingerSender;
+import com.github.jaemon.dinger.core.entity.DingerRequest;
+import com.github.jaemon.dinger.core.entity.enums.MessageSubType;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
@@ -14,6 +20,10 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 
+import javax.net.ssl.HttpsURLConnection;
+import java.net.URL;
+import java.security.cert.X509Certificate;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -25,6 +35,9 @@ public class MonitorJob {
     private ApplicationService applicationService;
     @Autowired
     private ApplicationMonitorService applicationMonitorService;
+
+    @Autowired
+    private DingerSender dingerSender;
 
     private static ThreadPoolTaskExecutor executor;
 
@@ -54,7 +67,6 @@ public class MonitorJob {
                 (monitorDto, applicationDto) -> {
                     monitorDto.setApplicationContent(applicationDto.getContent());
                     monitorDto.setApplicationName(applicationDto.getName());
-                    monitorDto.setApplicationName(applicationDto.getName());
                     monitorDto.setMasterMobile(applicationDto.getMasterMobile());
                 }
         );
@@ -65,6 +77,58 @@ public class MonitorJob {
                 applicationMonitorService.updateStatusAndSendMessage(applicationMonitor, applicationMonitorTest);
             }, executor);
         }
+    }
+
+    // 每天 10点30分执行一次
+    @Scheduled(cron = "0 30 10 * * ?")
+    public void checkCertExpiryDate() {
+        List<ApplicationDto> application = applicationService.findAllApplication();
+        for (ApplicationDto app : application) {
+            String url = app.getContent();
+
+            Date expiryDate = getCertExpiryDate(url);
+            if (expiryDate == null) {
+                continue;
+            }
+
+            long lastDay = DateUtil.betweenDay(expiryDate, new Date(), false);
+            log.info("应用{}:,{}证书到期时间还有{}天", app.getName(), url, lastDay);
+
+            if (lastDay < 30) {
+                dingerSender.send(
+                        MessageSubType.TEXT,
+                        DingerRequest.request(
+                                "应用证书即将过期，还有" + lastDay + "天，请尽快处理，应用名称：" + app.getName() + "，应用内容：" + app.getContent(),
+                                StrUtil.isEmpty(app.getMasterMobile()) ? null : List.of(app.getMasterMobile())
+                        )
+                );
+            }
+        }
+    }
+
+    @SneakyThrows
+    private static Date getCertExpiryDate(String urlStr) {
+        if (urlStr == null || urlStr.isEmpty()) {
+            return null;
+        }
+
+        if (!urlStr.startsWith("https://")) {
+            return null;
+        }
+
+        URL url = new URL(urlStr);
+        HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
+        connection.connect();
+
+        java.security.cert.Certificate[] certificates = connection.getServerCertificates();
+
+        if (certificates.length == 0) {
+            return null;
+        }
+        Date date = ((X509Certificate) certificates[0]).getNotAfter();
+        connection.disconnect();
+
+        return date;
     }
 
 }

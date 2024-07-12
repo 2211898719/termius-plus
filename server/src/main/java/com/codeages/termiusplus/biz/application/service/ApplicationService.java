@@ -13,6 +13,8 @@ public interface ApplicationService {
 
     List<Tree<Long>> findAll();
 
+    List<ApplicationDto> findAllApplication();
+
     void create(ApplicationCreateParams createParams);
 
     void update(ApplicationUpdateParams updateParams);
