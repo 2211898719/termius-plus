@@ -55,7 +55,7 @@ public class SshHandler {
 
     private static final String NONE_MASTER_SESSION_ID = "0";
 
-    private static final ThreadPoolExecutor threadPoolExecutor = ThreadUtil.newExecutorByBlockingCoefficient(0.9f);
+    private static final ThreadPoolExecutor threadPoolExecutor = ThreadUtil.newExecutorByBlockingCoefficient(0.99f);
 
     private final ServerService serverService;
 

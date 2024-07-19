@@ -478,6 +478,7 @@ const changeMiniTab = () => {
         </a-tab-pane>
 
         <template v-slot:renderTabBar>
+          <div  class="tab-bar-group-container" >
           <div ref="tabBarGroupEl" :class="{'tab-bar-group':true,'tab-bar-group-mini':miniTabBar}">
             <div class="tab-bar" :class="{'tab-active-normal':tagActiveKey==='server'}" @click="changeTab('server')">
               <div class="left">
@@ -673,6 +674,7 @@ const changeMiniTab = () => {
               <left-outlined :class="{'button-action':miniTabBar,'transition':true}"/>
             </div>
           </div>
+          </div>
         </template>
 
         <template v-for="server in serverList" :key="server.operationId">
@@ -762,14 +764,20 @@ const changeMiniTab = () => {
   }
 }
 
+.tab-bar-group-container{
+  background-color: #00152A;
+  overflow-y: scroll;
+
 .tab-bar-group {
   background-color: #00152A;
+
+  min-height: 100%;
   transition: all 0.5s;
   position: relative;
   padding: 8px;
   width: 180px;
   overflow-x: unset;
-  overflow-y: unset;
+  overflow-y: scroll;
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE 10+ */
   //设置滚动条隐藏
@@ -781,6 +789,7 @@ const changeMiniTab = () => {
   .sortable {
     display: flex;
     flex-direction: column;
+    margin-bottom: 24px;
   }
 
   .bottom {
@@ -930,7 +939,7 @@ const changeMiniTab = () => {
   //}
 
 }
-
+}
 :deep(.ant-tabs-tab-with-remove) {
   display: flex;
   justify-content: space-between;
