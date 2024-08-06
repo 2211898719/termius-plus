@@ -1,4 +1,4 @@
-import { createApp } from 'vue';
+import {createApp, ref} from 'vue';
 import App from './App.vue';
 import router from './router';
 import {bootAntDesignVue} from "@/boot/bootAntDesignVue";
@@ -11,6 +11,20 @@ import 'shepherd.js/dist/css/shepherd.css';
 
 import { autoAnimatePlugin } from '@formkit/auto-animate/vue'
 
+const modulesFiles = require.context('@/assets/webfonts', true, /\.woff2$/);
+let allFonts = modulesFiles.keys().map(r=>r.slice(2));
+allFonts.forEach(async fontName=>{
+    let font = await new FontFace(
+        fontName.split('.')[0],
+        `url("${require(`@/assets/webfonts/${fontName}`)}")`,
+        {display: 'auto'}
+    );
+    document.fonts.add(font);
+    font.loaded.then(e => {
+       console.log(e);
+    });
+})
+
 const app = createApp(App);
 app.use(router);
 app.use(autoAnimatePlugin);
@@ -21,3 +35,4 @@ bootStore(app);
 bootFilters(app);
 
 app.mount('#app')
+app.config.globalProperties.$allFonts = allFonts.map((fontName)=>({name:fontName.split('.')[0]}));

@@ -1,7 +1,7 @@
 <script setup>
 
 import {message} from "ant-design-vue";
-import {ref} from "vue";
+import {getCurrentInstance, ref} from "vue";
 import {useStorage} from "@vueuse/core";
 
 let frontColor = useStorage("frontColor", "#ffffff")
@@ -63,7 +63,6 @@ let themes = ref([
     frontColor: '#00CC74',
     backColor: '#141729'
   }
-
 ])
 
 const selectThemes = (theme) => {
@@ -71,11 +70,16 @@ const selectThemes = (theme) => {
   backColor.value = theme.backColor
   saveStyle()
 }
+
+const {proxy} = getCurrentInstance()
+let fonts = ref(proxy.$allFonts)
+console.log(fonts.value)
+
 </script>
 
 <template>
   <a-space direction="vertical" size="middle" style="width: 100%;">
-    <a-card>
+    <a-card style="width: 100%;">
       <a-card title="主题色">
         <a-card-grid @click="selectThemes(item)"
                      :style="`width: 15%; text-align: center; background-color: ${item.backColor}; color: ${item.frontColor}`"
@@ -84,6 +88,14 @@ const selectThemes = (theme) => {
 
         </a-card-grid>
 
+      </a-card>
+      <a-card title="字体"  class="font-card">
+        <a-card-grid @click="selectThemes(item)"
+                     :style="`font-family: '${item.name}', Arial, sans-serif`"
+                     class="font-item"
+                     v-for="item in fonts" :key="item.name" :title="item.name">
+          {{ item.name }}
+        </a-card-grid>
       </a-card>
       <a-form :label-col="{ span: 4 }"
               :wrapper-col="{ span: 20 }"
@@ -104,5 +116,22 @@ const selectThemes = (theme) => {
 </template>
 
 <style scoped lang="less">
+:deep(.font-card){
+  max-width: 100%;
+  .ant-card-body{
+    display: flex;
+    flex-wrap: wrap;
+
+    .font-item{
+      width: 15%;
+      height: 100px;
+      padding: 8px !important;
+      text-overflow: ellipsis;
+      text-align: center;
+      overflow: hidden;
+    }
+  }
+
+}
 
 </style>
