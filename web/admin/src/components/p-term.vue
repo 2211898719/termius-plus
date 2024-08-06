@@ -223,7 +223,7 @@ function compressArrayBuffer(str) {
 }
 
 const initTerm = () => {
-  term = new Terminal(options);
+  term = new Terminal({...options,disableStdin: props.masterSessionId != 0});
   socket.send = (data) => {
     if (socket.readyState === 1) {
       sendEvent( JSON.stringify({
@@ -401,7 +401,7 @@ const initTerm = () => {
   //   }
   // });
 
-  if (props.server.execCommand) {
+  if (props.server.execCommand &&  props.masterSessionId == 0) {
     nextTick(() => {
       execCommand(props.server.execCommand + "\n")
     })

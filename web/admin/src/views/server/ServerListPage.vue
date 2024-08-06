@@ -605,7 +605,7 @@ defineExpose({
             </a-form-item>
 
             <a-form-item label="密码" v-bind="creationValidations.password">
-              <a-input-password v-model:value="creationState.password"/>
+              <a-input-password autocomplete="new-password" v-model:value="creationState.password"/>
             </a-form-item>
 
             <a-form-item label="连接时执行命令" v-bind="creationValidations.firstCommand">

@@ -98,7 +98,7 @@ public class SshHandler {
             HandlerItem handlerItem = SSH_POOL.get(masterSessionId);
             if (handlerItem == null) {
                 log.error("主连接不存在：{}", masterSessionId);
-                sendBinary(session, "主连接不存在或已关闭");
+                sendBinary(session, JSONUtil.toJsonStr(new MessageDto(EventType.MASTER_CLOSE, "主连接不存在或已关闭")));
                 return;
             }
 

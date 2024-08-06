@@ -89,7 +89,7 @@ public class PortForWardingServiceImpl implements PortForWardingService {
         CompletableFuture.runAsync(() -> {
             try {
                 localPortForwarder.listen(ThreadUtil.newThread(() -> {
-                }, "测试"));
+                }, "localPortForwarder-" + localPort));
             } catch (IOException e) {
                 log.error("端口转发失败", e);
                 try {
@@ -98,6 +98,8 @@ public class PortForWardingServiceImpl implements PortForWardingService {
                     throw new RuntimeException(ex);
                 }
                 localPortForwarderMap.remove(localPort);
+
+                startPortForwarding(forwardingName, localPort, serverId, remoteHost, remotePort);
             }
         });
 
@@ -128,20 +130,25 @@ public class PortForWardingServiceImpl implements PortForWardingService {
     @SneakyThrows
     @Override
     public void stopPortForwarding(Integer localPort) {
-        localPortForwarderMap.get(localPort).getLocalPortForwarder().close();
-        localPortForwarderMap.remove(localPort);
+        try {
+            localPortForwarderMap.get(localPort).getLocalPortForwarder().close();
+        } catch (Exception e) {
+            log.error("关闭端口转发失败", e);
+        } finally {
+            localPortForwarderMap.remove(localPort);
+        }
     }
 
     @Override
     public boolean isRunning(Integer localPort) {
-        return localPortForwarderMap.containsKey(localPort) ;
+        return localPortForwarderMap.containsKey(localPort);
     }
 
     @Override
     public void stopAllPortForwarding() {
         localPortForwarderMap.forEach((k, v) -> {
             try {
-                   v.getLocalPortForwarder().close();
+                v.getLocalPortForwarder().close();
             } catch (IOException e) {
                 log.error("关闭端口转发失败", e);
             }
