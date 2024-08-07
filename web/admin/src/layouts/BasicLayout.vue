@@ -33,7 +33,7 @@
 </template>
 
 <script setup>
-import {reactive, ref, watch} from 'vue';
+import {getCurrentInstance, reactive, ref, watch} from 'vue';
 import {useRouter} from 'vue-router';
 import {clearMenuItem, getMenuData} from '@ant-design-vue/pro-layout';
 import {useAuthStore} from "@shared/store/useAuthStore";

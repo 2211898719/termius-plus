@@ -250,7 +250,6 @@ onMounted(() => {
     },
   ])
   tour.onclose =()=>{
-    console.log(111)
   }
   tour.start();
 });

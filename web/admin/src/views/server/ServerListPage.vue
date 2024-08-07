@@ -277,8 +277,6 @@ const handleSelect = (item) => {
   } else {
     multipleSelection.value.add(item.id)
   }
-
-  console.log(multipleSelection.value)
 }
 
 const handleDblclick = (item, masterSessionId = 0) => {

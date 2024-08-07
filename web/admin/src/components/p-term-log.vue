@@ -13,7 +13,16 @@ let props = defineProps({
     type: Number,
     default: null
   },
+  commandData: {
+    type: String,
+    default: ""
+  },
+  fontFamily: {
+    type: String,
+    default: "JetBrainsMono-ExtraBold"
+  }
 });
+
 
 let options = {
   rendererType: "canvas", //渲染类型canvas或者dom
@@ -23,6 +32,7 @@ let options = {
   scrollback: 100000,//终端中的回滚量
   fontSize: 14, //字体大小
   height: "600px", //终端高度
+  fontFamily: props.fontFamily + ", sans-serif",
   disableStdin: true, //是否应禁用输入。
   // cursorStyle: "block", //光标样式
   cursorBlink: false, //光标闪烁
@@ -43,14 +53,23 @@ const init = async () => {
 
   terminal.value.innerHTML = "";
   term.open(terminal.value);
-  let list = await commandLogApi.get(props.logId)
-  term.write(list.commandData)
+  if (props.logId) {
+    let list = await commandLogApi.get(props.logId)
+    term.write(list.commandData)
+  } else {
+    term.write(props.commandData)
+  }
+
 }
 
 onMounted(() => {
   if (props.logId) {
     nextTick(() => {
     init()
+    })
+  } else if (props.commandData) {
+    nextTick(() => {
+      init()
     })
   }
 })
@@ -61,6 +80,13 @@ watch(() => props.logId, async (logId) => {
     await init()
   }
 })
+
+watch(() => props.commandData, async (commandData) => {
+  if (commandData) {
+    await init()
+  }
+})
+
 </script>
 
 <template>

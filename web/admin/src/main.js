@@ -11,7 +11,7 @@ import 'shepherd.js/dist/css/shepherd.css';
 
 import { autoAnimatePlugin } from '@formkit/auto-animate/vue'
 
-const modulesFiles = require.context('@/assets/webfonts', true, /\.woff2$/);
+const modulesFiles = require.context('@/assets/webfonts', true, /\.woff2$|\.woff$|\.ttf$|\.eot$|\.otf$/);
 let allFonts = modulesFiles.keys().map(r=>r.slice(2));
 allFonts.forEach(async fontName=>{
     let font = await new FontFace(
@@ -20,9 +20,6 @@ allFonts.forEach(async fontName=>{
         {display: 'auto'}
     );
     document.fonts.add(font);
-    font.loaded.then(e => {
-       console.log(e);
-    });
 })
 
 const app = createApp(App);

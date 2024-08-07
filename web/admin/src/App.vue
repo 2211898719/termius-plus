@@ -1,5 +1,5 @@
 <script setup>
-import {ref} from 'vue';
+import {getCurrentInstance, ref} from 'vue';
 import {RouterView, useRouter} from 'vue-router'
 import {ConfigProvider as AConfigProvider} from 'ant-design-vue'
 import zhCN from 'ant-design-vue/es/locale/zh_CN';
@@ -32,6 +32,7 @@ store.$onAction(({name, after}) => {
 <template>
     <a-config-provider :locale="locale" :get-popup-container="getPopupContainer">
         <RouterView />
+
     </a-config-provider>
 </template>
 

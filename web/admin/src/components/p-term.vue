@@ -55,6 +55,13 @@ const emit = defineEmits(['update:loading', 'update:subSessionUsername', 'update
 let frontColor = useStorage('frontColor', "#ffffff")
 let backColor = useStorage('backColor', "#000000")
 let AutoComplete = useStorage('autoComp', false)
+let currentFont = useStorage('currentFont', 'JetBrainsMono-ExtraBold')
+
+let fontChannel = new BroadcastChannel("font")
+fontChannel.onmessage = (e) => {
+  currentFont.value = e.data
+  options.fontFamily = currentFont.value + ", sans-serif"
+}
 
 let options = {
   rendererType: AutoComplete.value ? "dom" : "canvas", //渲染类型canvas或者dom
@@ -63,7 +70,7 @@ let options = {
   convertEol: true, //启用时，光标将设置为下一行的开头
   scrollback: AutoComplete.value ? 5000 : 30000, //滚动缓冲区大小
   fontSize: 14, //字体大小
-  fontFamily: "JetBrainsMono-Bold, sans-serif",
+  fontFamily: currentFont.value + ", sans-serif",
   height: "100%", //终端高度
   disableStdin: false, //禁用输入
   // cursorStyle: "block", //光标样式
@@ -624,6 +631,11 @@ defineExpose({
   width: 100%;
   height: 100%;
   background-color: #fff;
+
+  .terminal {
+    height: 100%;
+
+  }
 }
 
 /deep/ .auto-complete {
