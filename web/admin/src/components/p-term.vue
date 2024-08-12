@@ -70,7 +70,7 @@ let options = {
   convertEol: true, //启用时，光标将设置为下一行的开头
   scrollback: AutoComplete.value ? 5000 : 30000, //滚动缓冲区大小
   fontSize: 14, //字体大小
-  fontFamily: currentFont.value + ", sans-serif",
+  fontFamily: currentFont.value + ", -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji'",
   height: "100%", //终端高度
   disableStdin: false, //禁用输入
   // cursorStyle: "block", //光标样式

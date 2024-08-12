@@ -407,7 +407,6 @@ public class ServerServiceImpl implements ServerService {
             ssh.authPublickey(server.getUsername(), ssh.loadKeys(server.getKey(), null, null));
         } else {
             PasswordFinder pfinder = new PasswordFinder() {
-
                 @Override
                 public char[] reqPassword(Resource<?> resource) {
                     return server.getPassword().toCharArray().clone();

@@ -1,9 +1,9 @@
 <script setup>
 import {serverApi} from "@/api/server";
 import {message, Modal} from "ant-design-vue";
-import {computed, createVNode, defineEmits, defineExpose, nextTick, reactive, ref, watch} from "vue";
+import {computed, createVNode, defineEmits, defineExpose, nextTick, onMounted, reactive, ref, watch} from "vue";
 import {ExclamationCircleOutlined} from "@ant-design/icons-vue";
-import {walk} from "@/utils/treeUtil";
+import {findNodePath, walk} from "@/utils/treeUtil";
 import {proxyApi} from "@/api/proxy";
 import PSelect from "@/components/p-select.vue";
 import PEditor from "@/components/tinymce/p-editor.vue";
@@ -15,6 +15,7 @@ import PEnumSelect from "@/components/p-enum-select.vue";
 import OsEnum from "@/enums/OsEnum";
 import {getSurname} from "@/utils/nameUtil";
 import autoAnimate from "@formkit/auto-animate";
+import {useRoute} from "vue-router";
 
 let termiusStyleColumn = ref(Math.floor(window.innerWidth / 300));
 
@@ -24,6 +25,12 @@ const resizeObserver = new ResizeObserver(() => {
 });
 
 resizeObserver.observe(window.document.body);
+
+let route = useRoute()
+
+
+
+
 
 
 const emit = defineEmits(['openServer', 'proxyCreation', 'update:value', 'change'])
@@ -118,6 +125,23 @@ const creationRules = computed(() => reactive({
 
 let currentData = ref(data.value)
 
+let isHandleQuery = ref(false)
+const handleQuery = () => {
+  if (isHandleQuery.value || !route.query.connectId) {
+    return
+  }
+
+  isHandleQuery.value = true
+
+  findNodePath(data.value, parseInt(route.query.connectId)).forEach((id) => {
+    walk(data.value, (node) => {
+      if (node.id === id) {
+        handleDblclick(node)
+      }
+    })
+  })
+}
+
 let {
   value: {
     resetFields: resetCreationFields,
@@ -165,6 +189,7 @@ const getServerList = async () => {
   data.value.push(...list)
 
   handleBreadcrumbData(groupBreadcrumb.value[groupBreadcrumb.value.length - 1])
+  handleQuery()
 }
 
 getServerList()

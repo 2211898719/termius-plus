@@ -72,7 +72,7 @@ let routes = [
     path: '/login',
     name: 'login',
     meta: {title: '登录', requiredAuth: false},
-    component: () => import('../views/server/LoginPage.vue'),
+    component: () => import('../views/public/LoginPage.vue'),
   },
 
 ]

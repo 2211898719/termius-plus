@@ -10,6 +10,7 @@
         v-bind="layoutConf"
     >
         <template #rightContentRender>
+            <div :style="{'font-family':currentFont}" style="opacity: 0;width: 0px;height: 0px">退出</div>
           <fullscreen-outlined @click="toggleFullScreen" style="margin-right: 8px;cursor: pointer"/>
             <span v-if="store.user" style="color: #fff">您好，{{ store.user.username }}</span>
             <a-button type="link" @click="onLogout">退出</a-button>
@@ -39,11 +40,14 @@ import {clearMenuItem, getMenuData} from '@ant-design-vue/pro-layout';
 import {useAuthStore} from "@shared/store/useAuthStore";
 import config from "@/config";
 import {walk} from "@/utils/treeUtil";
-import {useWebSocket} from "@vueuse/core";
+import {useStorage, useWebSocket} from "@vueuse/core";
 
 const store = useAuthStore();
 const locale = (i18n) => i18n;
 const router = useRouter();
+
+//预加载一下字体避免闪烁露馅
+let currentFont = useStorage('currentFont', 'JetBrainsMono-ExtraBold')
 
 let routerTree = router.getRoutes();
 //过滤routerTree
