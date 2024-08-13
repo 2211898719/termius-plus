@@ -19,6 +19,8 @@ public class ApplicationUpdateParams {
 
     private Long parentId;
 
+    private Long proxyId;
+
     @NotNull(message = "是否为分组不能为空")
 
     private Boolean isGroup;

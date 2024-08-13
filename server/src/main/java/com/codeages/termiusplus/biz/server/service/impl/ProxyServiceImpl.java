@@ -1,23 +1,29 @@
 package com.codeages.termiusplus.biz.server.service.impl;
 
+import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.http.HttpRequest;
+import cn.hutool.http.HttpResponse;
+import cn.hutool.json.JSONUtil;
 import com.codeages.termiusplus.biz.ErrorCode;
-import com.codeages.termiusplus.biz.server.dto.ProxyCreateParams;
-import com.codeages.termiusplus.biz.server.dto.ProxyDto;
-import com.codeages.termiusplus.biz.server.dto.ProxySearchParams;
-import com.codeages.termiusplus.biz.server.dto.ProxyUpdateParams;
+import com.codeages.termiusplus.biz.server.dto.*;
 import com.codeages.termiusplus.biz.server.entity.QProxy;
 import com.codeages.termiusplus.biz.server.mapper.ProxyMapper;
 import com.codeages.termiusplus.biz.server.repository.ProxyRepository;
 import com.codeages.termiusplus.biz.server.service.ProxyService;
 import com.codeages.termiusplus.exception.AppException;
 import com.querydsl.core.BooleanBuilder;
+import lombok.SneakyThrows;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Validator;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -30,6 +36,9 @@ public class ProxyServiceImpl implements ProxyService {
     private final Validator validator;
 
     private final HttpServletResponse response;
+
+    @Value("${file.dir}")
+    private String fileDir;
 
     public ProxyServiceImpl(ProxyRepository proxyRepository, ProxyMapper proxyMapper, Validator validator,
                             HttpServletResponse response) {
@@ -77,7 +86,7 @@ public class ProxyServiceImpl implements ProxyService {
         }
 
         var proxy = proxyRepository.findById(updateParams.getId())
-                                   .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
         proxyMapper.toUpdateEntity(proxy, updateParams);
         proxyRepository.save(proxy);
     }
@@ -94,6 +103,65 @@ public class ProxyServiceImpl implements ProxyService {
         return proxyRepository.findById(proxyId).map(proxyMapper::toDto);
     }
 
+    @Override
+    public ClashProxyDTO getClashProxy() {
+        File file = FileUtil.file(fileDir+"/clash.json");
+        if (file.exists()) {
+            String content = FileUtil.readUtf8String(file);
+            return JSONUtil.toBean(content, ClashProxyDTO.class);
+        }
+
+        return syncClashProxy();
+    }
+
+    @Override
+    @SneakyThrows
+    public ClashProxyDTO syncClashProxy() {
+        ClashProxyDTO clashProxyDTO = new ClashProxyDTO();
+        HttpResponse direct = HttpRequest.get("https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/direct.txt").execute();
+        if (direct.getStatus() == 200) {
+            clashProxyDTO.setDirect(parsePayload(direct.body()));
+        }
+
+        HttpResponse proxy = HttpRequest.get("https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/proxy.txt").execute();
+        if (proxy.getStatus() == 200) {
+            clashProxyDTO.setProxy(parsePayload(proxy.body()));
+        }
+
+        HttpResponse reject = HttpRequest.get("https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/reject.txt").execute();
+        if (reject.getStatus() == 200) {
+            clashProxyDTO.setReject(parsePayload(reject.body()));
+        }
+
+        File file = FileUtil.file(fileDir+"/clash.json");
+        if (file.exists()) {
+            file.delete();
+            file.createNewFile();
+        }
+
+        FileUtil.writeUtf8String(clashProxyDTO.toString(), file);
+
+        return clashProxyDTO;
+    }
+
+
+    public static List<String> parsePayload(String data) {
+        List<String> payload = new ArrayList<>();
+        String[] lines = data.split("\n");
+        for (String line : lines) {
+            if (line.startsWith("  - '")) {
+                String value = line.substring(5, line.length() - 2);
+                value = value.replace(".", "\\.");
+                if (value.startsWith("+")) {
+                    value = value.substring(1);
+                    value = ".*" + value;
+                }
+                value = "/" + value + "/";
+                payload.add(value);
+            }
+        }
+        return payload;
+    }
 
 
 }

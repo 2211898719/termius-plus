@@ -26,6 +26,10 @@ public class Application {
      */
     private Long parentId;
     /**
+     * 代理
+     */
+    private Long proxyId;
+    /**
      * 是否为分组
      */
     private Boolean isGroup;

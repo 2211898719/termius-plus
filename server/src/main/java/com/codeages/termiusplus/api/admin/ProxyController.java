@@ -59,6 +59,12 @@ public class ProxyController {
         return OkResponse.TRUE;
     }
 
+
+    @GetMapping("/getClashProxy")
+    public ClashProxyDTO getClashProxy() {
+        return proxyService.getClashProxy();
+    }
+
 }
 
 

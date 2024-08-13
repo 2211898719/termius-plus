@@ -6,9 +6,13 @@ import com.codeages.termiusplus.biz.application.dto.*;
 import com.codeages.termiusplus.biz.application.service.ApplicationMonitorService;
 import com.codeages.termiusplus.biz.application.service.ApplicationServerService;
 import com.codeages.termiusplus.biz.application.service.ApplicationService;
+import com.codeages.termiusplus.biz.server.dto.ProxyDto;
+import com.codeages.termiusplus.biz.server.dto.ProxySearchParams;
 import com.codeages.termiusplus.biz.server.dto.TreeSortParams;
+import com.codeages.termiusplus.biz.server.service.ProxyService;
 import com.codeages.termiusplus.common.IdPayload;
 import com.codeages.termiusplus.common.OkResponse;
+import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,6 +24,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api-admin/application")
+@AllArgsConstructor
 public class ApplicationController {
 
     private final ApplicationService applicationService;
@@ -28,13 +33,7 @@ public class ApplicationController {
 
     private final ApplicationServerService applicationServerService;
 
-    public ApplicationController(ApplicationService applicationService,
-                                 ApplicationMonitorService applicationMonitorService,
-                                 ApplicationServerService applicationServerService) {
-        this.applicationService = applicationService;
-        this.applicationMonitorService = applicationMonitorService;
-        this.applicationServerService = applicationServerService;
-    }
+    private final ProxyService proxyService;
 
     @GetMapping("/list")
     public List<Tree<Long>> findAll() {
@@ -52,6 +51,10 @@ public class ApplicationController {
                                                                                              .collect(Collectors.groupingBy(
                                                                                                      ApplicationServerDto::getApplicationId));
 
+        Map<Long, ProxyDto> idProxyDto = proxyService.search(new ProxySearchParams(), Pageable.unpaged()).getContent().stream()
+                .collect(Collectors.toMap(ProxyDto::getId, Function.identity()));
+
+
         if (CollectionUtil.isNotEmpty(applicationServiceAll)) {
             applicationServiceAll.forEach(tree -> tree.walk(n -> {
                 ApplicationMonitorDto applicationMonitorDto = applicationMonitorMap.get(n.getId());
@@ -60,6 +63,14 @@ public class ApplicationController {
                     n.putExtra("monitorConfig", applicationMonitorDto.getConfig());
                     n.putExtra("remark", applicationMonitorDto.getRemark());
                     n.putExtra("failureCount", applicationMonitorDto.getFailureCount());
+                }
+
+                if (n.get("proxyId") != null) {
+                    Long proxyId = Long.parseLong(n.get("proxyId").toString());
+                    ProxyDto proxyDto = idProxyDto.get(proxyId);
+                    if (proxyDto != null) {
+                        n.putExtra("proxy", proxyDto);
+                    }
                 }
 
                 List<ApplicationServerDto> applicationServerDtoList = applicationServerMap.get(n.getId());

@@ -19,7 +19,7 @@
  }
  
  const dir = await fs.promises.realpath(__dirname + '/../server/src/main/resources/db/migration');
- cd(dir);
+cd(dir);
  
  const filename = `V${version}__${argv._[1]}.sql`;
  

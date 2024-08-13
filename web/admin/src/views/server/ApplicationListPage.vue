@@ -16,6 +16,8 @@ import {serverApi} from "@/api/server";
 import PCascader from "@/components/p-cascader.vue";
 import GroupCascader from "@/components/group-cascader.vue";
 import RelationGraph from 'relation-graph/vue3'
+import {proxyApi} from "@/api/proxy";
+import PSelect from "@/components/p-select.vue";
 
 let termiusStyleColumn = ref(Math.floor(window.innerWidth / 350));
 
@@ -91,11 +93,6 @@ const creationRules = computed(() => reactive({
     }
   ],
   masterMobile: [
-    {
-      required: !creationState.isGroup,
-      message: "请输入手机号",
-
-    },
     {
       pattern: /^1[3-9]\d{9}$/,
       message: "手机号格式不正确"
@@ -701,6 +698,10 @@ defineExpose({
             </a-form-item>
             <a-form-item label="负责人手机号" v-bind="creationValidations.masterMobile">
               <a-input v-model:value="creationState.masterMobile"/>
+            </a-form-item>
+            <a-form-item label="代理" v-bind="creationValidations.proxyId">
+              <p-select ref="proxyRef" :api="proxyApi.list" v-model:value="creationState.proxyId"
+                        style="width: 90%"></p-select>
             </a-form-item>
             <a-divider>身份</a-divider>
             <a-form autocomplete="off" layout="inline" v-for="(item, index) in creationState.identityArray"

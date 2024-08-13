@@ -118,6 +118,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         var application = applicationRepository.findById(updateParams.getId())
                                                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
         applicationMapper.toUpdateEntity(application, updateParams);
+        application.setProxyId(updateParams.getProxyId());
         applicationRepository.save(application);
 
         if (updateParams.getMonitorType() != null) {

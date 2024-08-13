@@ -17,6 +17,10 @@ public interface ProxyService {
     void delete(Long id);
 
     Optional<ProxyDto> findById(Long proxyId);
+
+    ClashProxyDTO getClashProxy();
+
+    ClashProxyDTO syncClashProxy();
 }
 
 

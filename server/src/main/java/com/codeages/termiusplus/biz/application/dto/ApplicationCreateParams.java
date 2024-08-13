@@ -29,6 +29,8 @@ public class ApplicationCreateParams {
 
     private String name;
 
+    private Long proxyId;
+
 
     private String icon;
 

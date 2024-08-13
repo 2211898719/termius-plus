@@ -13,6 +13,7 @@ public class ApplicationDto {
 
     private Long id;
 
+    private Long proxyId;
 
     private Long parentId;
 
