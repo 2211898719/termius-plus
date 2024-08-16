@@ -38,13 +38,11 @@ public class ProxyController {
 
 
     @PostMapping("/create")
-
     public ProxyDto create(@RequestBody ProxyCreateParams createParams) {
         return proxyService.create(createParams);
     }
 
     @PostMapping("/update")
-
     public OkResponse update(@RequestBody ProxyUpdateParams updateParams) {
         proxyService.update(updateParams);
 
@@ -52,7 +50,6 @@ public class ProxyController {
     }
 
     @PostMapping("/delete")
-
     public OkResponse delete(@RequestBody IdPayload idPayload) {
         proxyService.delete(idPayload.getId());
 
