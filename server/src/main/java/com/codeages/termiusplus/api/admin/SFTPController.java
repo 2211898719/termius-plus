@@ -6,6 +6,10 @@ import com.codeages.termiusplus.biz.server.dto.SFTPServerUploadServerParams;
 import com.codeages.termiusplus.biz.server.service.SFTPService;
 import lombok.SneakyThrows;
 import net.schmizz.sshj.sftp.RemoteResourceInfo;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -78,6 +82,20 @@ public class SFTPController {
     @PostMapping("/{id}/close")
     public void close(@PathVariable String id) {
         sftpService.close(id);
+    }
+
+    //以文本形式读取文件内容
+    @GetMapping("/{id}/readFile")
+    public ResponseEntity<String> readFile(@PathVariable String id, SFTPParams params) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.TEXT_PLAIN); // 设置为纯文本
+        return new ResponseEntity<>(new String(sftpService.readFile(id, params.getRemotePath())), headers, HttpStatus.OK);
+    }
+
+    //写入文件内容
+    @PostMapping("/{id}/writeFile")
+    public void writeFile(@PathVariable String id, @RequestBody SFTPParams params) {
+        sftpService.writeFile(id, params.getRemotePath(), params.getContent());
     }
 }
 

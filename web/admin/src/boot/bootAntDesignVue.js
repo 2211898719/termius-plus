@@ -38,7 +38,8 @@ import {
     AutoComplete,
     DatePicker,
     TimePicker,
-    Slider
+    Slider,
+    Tree
 } from 'ant-design-vue';
 import icons from '@/icons';
 
@@ -52,6 +53,7 @@ export function bootAntDesignVue(app) {
 
     app
         .use(Button)
+        .use(Tree)
         .use(Slider)
         .use(InputNumber)
         .use(Card)

@@ -28,6 +28,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
@@ -209,6 +210,28 @@ public class SFTPServiceImpl implements SFTPService {
             //todo 使用websocket通知前端
             return null; // 返回一个默认值
         });
+    }
+
+    @Override
+    @SneakyThrows
+    public byte[] readFile(String id, String remotePath) {
+        SFTPClient sftp = getSftp(id);
+        try (RemoteFile readFile = sftp.open(remotePath)) {
+            byte[] bytes = new byte[(int) readFile.length()];
+            readFile.read(0, bytes, 0, bytes.length);
+            return bytes;
+        }
+    }
+
+    @Override
+    @SneakyThrows
+    public void writeFile(String id, String remotePath, String content) {
+        try (SFTPClient sftp = getSftp(id)) {
+            try (RemoteFile remoteFile = sftp.open(remotePath, EnumSet.of(OpenMode.WRITE))) {
+                byte[] bytes = content.getBytes(StandardCharsets.UTF_8);
+                remoteFile.write(0, bytes, 0, bytes.length);
+            }
+        }
     }
 
     @Override

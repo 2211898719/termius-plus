@@ -34,5 +34,11 @@ export const sftpApi = {
     },
     serverUploadServer: async (params) => {
         return client.post("/api-admin/sftp/serverUploadServer", params);
+    },
+    readFile: async (params) => {
+        return client.get("/api-admin/sftp/" + params.id + "/readFile", {params});
+    },
+    writeFile: async (params) => {
+        return client.post("/api-admin/sftp/" + params.id + "/writeFile", params);
     }
 }

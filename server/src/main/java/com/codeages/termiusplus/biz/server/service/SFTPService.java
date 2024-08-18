@@ -100,6 +100,10 @@ public interface SFTPService {
     void serverUploadServer(SFTPServerUploadServerParams params);
 
     void asyncServerUploadServer(SFTPServerUploadServerParams params);
+
+    byte[] readFile(String id, String remotePath);
+
+    void writeFile(String id, String remotePath, String content);
 }
 
 

@@ -11,6 +11,10 @@ import {computedFileSize} from "@/components/tinymce/File";
 import {useAutoAnimate} from "@formkit/auto-animate/vue";
 import {useAuthStore} from "@shared/store/useAuthStore";
 import {uploadFileProcess} from "@/components/process.jsx";
+import {oneDark} from "@codemirror/theme-one-dark";
+import CodeMirror from 'vue-codemirror6';
+import {java} from "@codemirror/lang-java";
+import PFileTree from "@/components/p-file-tree.vue";
 
 let authStore = useAuthStore()
 
@@ -138,7 +142,7 @@ const changeDir = async (path) => {
     return
   }
 
-  if (path<props.fixedPath){
+  if (path < props.fixedPath) {
     return
   }
 
@@ -268,14 +272,15 @@ const mkdir = () => {
   mkdirVisible.value = false
 }
 
-const handleClickFile = (file) => {
+
+const handleClickFile = async (file) => {
   if (file.attributes.type === 'REGULAR') {
     fileViewVisible.value = true
     fileView.value = file
     return
   }
 
-  changeDir(currentPath.value + '/' + file.name)
+  await changeDir(currentPath.value + '/' + file.name)
 }
 
 watch(currentFiles, (files) => {
@@ -474,7 +479,6 @@ const drop = async (e, sessionId, currentPath) => {
     let speedStr = computedFileSize(speed) + '/s'
 
 
-
     notification.open({
       key: key,
       duration: 0,
@@ -515,6 +519,68 @@ const onStart = (e, sessionId, currentPath, file, serverName) => {
     serverName
   }
   localStorage.setItem('dragData', JSON.stringify(dragData))
+}
+
+const sortFileByName = (files) => {
+  return _.sortBy(files, (file) => {
+    if (file.attributes.type === 'DIRECTORY') {
+      return '0' + file.name
+    } else if (file.attributes.type === 'REGULAR') {
+      return '1' + file.name
+    } else {
+      return '2' + file.name
+    }
+  })
+}
+const openCode = async (file) => {
+  codeData.value = {
+    visible: true,
+    filePath: currentPath.value + '/' + file.name,
+    fileName: file.name,
+    content: '',
+    treeData: []
+  }
+
+  codeData.value.treeData = sortFileByName((await sftpApi.ls({id: sessionId.value, remotePath: codeData.value.filePath})))
+  codeData.value.treeData.forEach(item => {
+    if (item.attributes.type === 'DIRECTORY') {
+      item.children = []
+    } else {
+      item.children = false
+    }
+  })
+}
+
+let codeData = ref({
+  visible: false,
+  filePath: '',
+  fileName: '',
+  content: '',
+  treeData: []
+})
+
+let CodeMirrorRef = ref(null)
+watch(() => codeData.value.visible, (value) => {
+  if (value) {
+    nextTick(() => {
+      CodeMirrorRef.value.$el.onkeydown = function (e) {
+        e = e || window.event;
+        if ((e.which || e.keyCode) === 83 && (e.metaKey || e.ctrlKey)) {
+          e.preventDefault ? e.preventDefault() : e.returnValue = false;
+          saveFile()
+        }
+      }
+    })
+  }
+})
+
+const openFileContent = async (file) => {
+  console.log('openFileContent',file)
+  codeData.value.content = await sftpApi.readFile({id: sessionId.value, remotePath: file.path})
+  console.log(codeData.value.content)
+}
+const saveFile = () => {
+  console.log('save')
 }
 
 
@@ -599,6 +665,10 @@ const onStart = (e, sessionId, currentPath, file, serverName) => {
                     <cloud-download-outlined/>
                     下载
                   </a-menu-item>
+                  <a-menu-item v-else key="2" @click="openCode(file)">
+                    <FolderOpenOutlined/>
+                    打开编辑器
+                  </a-menu-item>
                   <a-menu-item key="3" @click="handleRename(file,index)">
                     <edit-outlined/>
                     重命名
@@ -623,8 +693,37 @@ const onStart = (e, sessionId, currentPath, file, serverName) => {
         </div>
       </a-card>
     </a-spin>
+    <a-drawer
+        :title="codeData.filePath"
+        placement="right"
+        :closable="false"
+        width="90%"
+        :visible="codeData.visible"
+        :get-container="()=>sftpRootEl"
+        :style="{ position: 'absolute' }"
+        @close="codeData.visible=false"
+    >
+      <div class="code-container">
+        <div class="code-tree">
+          <p-file-tree style="width: 240px;height: calc(100vh - 150px);overflow: auto;" :sftp-id="sessionId"
+                       :tree-data="codeData.treeData" @openFileInCodeEditor="openFileContent"></p-file-tree>
+        </div>
+        <div class="code-content">
+          <code-mirror
+              basic
+              style="height: calc(100vh - 150px);overflow: auto;"
+              ref="CodeMirrorRef"
+              :tab="true"
+              :extensions="[java(),oneDark]"
+              v-model:modelValue="codeData.content">
+          </code-mirror>
+        </div>
+      </div>
+    </a-drawer>
+
+
     <a-modal v-model:visible="fileViewVisible" :title="fileView.name" ok-text="下载" @ok="handleDownload(fileView)"
-             width="60%">
+             width="60%" :keyboard="false" :maskClosable="false">
       <a-form>
         <a-form-item title="详细信息">
           <a-descriptions bordered>
@@ -736,6 +835,23 @@ const onStart = (e, sessionId, currentPath, file, serverName) => {
 
 .ml5 {
   margin-left: 5px;
+}
+
+.code-container {
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+  width: 100%;
+
+  .code-tree {
+    width: 30%;
+    height: 100%;
+  }
+
+  .code-content {
+    width: 70%;
+    height: 100%
+  }
 }
 
 

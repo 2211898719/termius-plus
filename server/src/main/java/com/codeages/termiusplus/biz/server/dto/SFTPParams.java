@@ -10,5 +10,6 @@ import lombok.NoArgsConstructor;
 public class SFTPParams {
     private String remotePath;
     private String newRemotePath;
+    private String content;
 }
 
