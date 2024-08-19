@@ -47,6 +47,10 @@ let props = defineProps({
     default: () => {
       return []
     }
+  },
+  execCommand: {
+    type: String,
+    default: ""
   }
 });
 
@@ -129,7 +133,7 @@ let currentServer = computed(() => {
 })
 
 const initSocket = () => {
-  if (!authStore.session || !currentServer.value.id ) {
+  if (!authStore.session || !currentServer.value.id) {
     return
   }
 
@@ -231,10 +235,10 @@ function compressArrayBuffer(str) {
 }
 
 const initTerm = () => {
-  term = new Terminal({...options,disableStdin: props.masterSessionId != 0});
+  term = new Terminal({...options, disableStdin: props.masterSessionId != 0});
   socket.send = (data) => {
     if (socket.readyState === 1) {
-      sendEvent( JSON.stringify({
+      sendEvent(JSON.stringify({
         event: "COMMAND",
         data: data
       }));
@@ -284,7 +288,7 @@ const initTerm = () => {
                     type: 'primary',
                     size: 'small',
                     onClick: () => {
-                      sendEvent( JSON.stringify({
+                      sendEvent(JSON.stringify({
                         event: "RESPONSE_AUTH_EDIT_SESSION",
                         data: JSON.stringify({
                           sessionId: message.sessionId,
@@ -296,7 +300,7 @@ const initTerm = () => {
                     },
                   },
                   {default: () => '同意'},
-              ),h(
+              ), h(
                   Button,
                   {
                     type: 'primary',
@@ -409,9 +413,15 @@ const initTerm = () => {
   //   }
   // });
 
-  if (props.server.execCommand &&  props.masterSessionId == 0) {
+  if (props.server.execCommand && props.masterSessionId == 0) {
     nextTick(() => {
       execCommand(props.server.execCommand + "\n")
+    })
+  }
+
+  if (props.execCommand) {
+    nextTick(() => {
+      execCommand(props.execCommand + "\n")
     })
   }
 
@@ -622,11 +632,12 @@ defineExpose({
 <style lang="less">
 
 
-.log{
+.log {
   width: 100%;
   height: 100%;
   background-color: #fff;
 }
+
 .console {
   width: 100%;
   height: 100%;
@@ -649,7 +660,6 @@ defineExpose({
 /deep/ .xterm {
   height: 100%;
 }
-
 
 
 </style>

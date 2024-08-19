@@ -17,7 +17,6 @@ export const serverApi = {
     updateSort: async (params) => {
         return client.post("/api-admin/server/updateSort",  params);
     },
-
     del(id) {
         return client.post("/api-admin/server/delete", {id: id});
     },
@@ -27,4 +26,7 @@ export const serverApi = {
     getMysqlHistory: async (serverId) => {
         return client.get(`/api-admin/server/${serverId}/mysqlHistory`);
     },
+    get(serverId){
+        return client.get(`/api-admin/server/${serverId}/get`);
+    }
 }

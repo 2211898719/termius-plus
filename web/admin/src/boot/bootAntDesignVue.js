@@ -1,4 +1,5 @@
 import '@ant-design-vue/pro-layout/dist/style.less';
+import 'view-ui-plus/dist/styles/viewuiplus.css'
 
 import ProLayout, {PageContainer} from '@ant-design-vue/pro-layout';
 import {
@@ -41,6 +42,8 @@ import {
     Slider,
     Tree
 } from 'ant-design-vue';
+
+import {Split} from 'view-ui-plus'
 import icons from '@/icons';
 
 export function bootAntDesignVue(app) {
@@ -90,5 +93,6 @@ export function bootAntDesignVue(app) {
         .use(Tooltip)
         .use(AutoComplete)
         .use(TimePicker)
+        .use(Split)
     ;
 }

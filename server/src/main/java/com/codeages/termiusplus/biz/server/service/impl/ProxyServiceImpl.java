@@ -139,7 +139,7 @@ public class ProxyServiceImpl implements ProxyService {
             file.createNewFile();
         }
 
-        FileUtil.writeUtf8String(clashProxyDTO.toString(), file);
+        FileUtil.writeUtf8String(JSONUtil.toJsonStr(clashProxyDTO), file);
 
         return clashProxyDTO;
     }

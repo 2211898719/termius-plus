@@ -226,12 +226,12 @@ public class SFTPServiceImpl implements SFTPService {
     @Override
     @SneakyThrows
     public void writeFile(String id, String remotePath, String content) {
-        try (SFTPClient sftp = getSftp(id)) {
-            try (RemoteFile remoteFile = sftp.open(remotePath, EnumSet.of(OpenMode.WRITE))) {
-                byte[] bytes = content.getBytes(StandardCharsets.UTF_8);
-                remoteFile.write(0, bytes, 0, bytes.length);
-            }
+        SFTPClient sftp = getSftp(id);
+        try (RemoteFile remoteFile = sftp.open(remotePath, EnumSet.of(OpenMode.WRITE))) {
+            byte[] bytes = content.getBytes(StandardCharsets.UTF_8);
+            remoteFile.write(0, bytes, 0, bytes.length);
         }
+
     }
 
     @Override

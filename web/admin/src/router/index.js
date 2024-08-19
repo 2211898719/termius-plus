@@ -69,6 +69,12 @@ let routes = [
     ]
   },
   {
+    path: '/codeEditor',
+    name: 'codeEditor',
+    meta: {title: '编辑器'},
+    component: () => import('../views/editor/EditorContentPage.vue'),
+  },
+  {
     path: '/login',
     name: 'login',
     meta: {title: '登录', requiredAuth: false},

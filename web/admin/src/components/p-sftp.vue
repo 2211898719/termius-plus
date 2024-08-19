@@ -30,6 +30,9 @@ const props = defineProps({
   },
   fixedPath: {
     type: [String], default: undefined,
+  },
+  path: {
+    type: [String], default: '',
   }
 });
 
@@ -533,22 +536,23 @@ const sortFileByName = (files) => {
   })
 }
 const openCode = async (file) => {
-  codeData.value = {
-    visible: true,
-    filePath: currentPath.value + '/' + file.name,
-    fileName: file.name,
-    content: '',
-    treeData: []
-  }
-
-  codeData.value.treeData = sortFileByName((await sftpApi.ls({id: sessionId.value, remotePath: codeData.value.filePath})))
-  codeData.value.treeData.forEach(item => {
-    if (item.attributes.type === 'DIRECTORY') {
-      item.children = []
-    } else {
-      item.children = false
-    }
-  })
+  // codeData.value = {
+  //   visible: true,
+  //   filePath: currentPath.value + '/' + file.name,
+  //   fileName: file.name,
+  //   content: '',
+  //   treeData: []
+  // }
+  //
+  // codeData.value.treeData = sortFileByName((await sftpApi.ls({id: sessionId.value, remotePath: codeData.value.filePath})))
+  // codeData.value.treeData.forEach(item => {
+  //   if (item.attributes.type === 'DIRECTORY') {
+  //     item.children = []
+  //   } else {
+  //     item.children = false
+  //   }
+  // })
+  window.open(`/codeEditor?rootPath=${currentPath.value + '/' + file.name}&sessionId=${sessionId.value}&serverName=${props.serverName}&serverPath=${props.path}&serverId=${props.serverId}`)
 }
 
 let codeData = ref({
@@ -575,7 +579,7 @@ watch(() => codeData.value.visible, (value) => {
 })
 
 const openFileContent = async (file) => {
-  console.log('openFileContent',file)
+  console.log('openFileContent', file)
   codeData.value.content = await sftpApi.readFile({id: sessionId.value, remotePath: file.path})
   console.log(codeData.value.content)
 }
@@ -705,8 +709,8 @@ const saveFile = () => {
     >
       <div class="code-container">
         <div class="code-tree">
-          <p-file-tree style="width: 240px;height: calc(100vh - 150px);overflow: auto;" :sftp-id="sessionId"
-                       :tree-data="codeData.treeData" @openFileInCodeEditor="openFileContent"></p-file-tree>
+          <p-file-tree :sftp-id="sessionId" :initial-path="codeData.filePath"
+                       @openFileInCodeEditor="openFileContent"></p-file-tree>
         </div>
         <div class="code-content">
           <code-mirror
@@ -835,23 +839,6 @@ const saveFile = () => {
 
 .ml5 {
   margin-left: 5px;
-}
-
-.code-container {
-  display: flex;
-  flex-direction: row;
-  height: 100%;
-  width: 100%;
-
-  .code-tree {
-    width: 30%;
-    height: 100%;
-  }
-
-  .code-content {
-    width: 70%;
-    height: 100%
-  }
 }
 
 

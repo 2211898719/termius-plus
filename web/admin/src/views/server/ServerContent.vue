@@ -288,7 +288,7 @@ onMounted(() => {
                 </a-button>
               </template>
               <!--windows的sftp其实是上传到guacamoleServer-->
-              <p-sftp class="sftp" ref="sftpEl" :operation-id="server.operationId"
+              <p-sftp class="sftp" ref="sftpEl" :operation-id="server.operationId" :path="server.path"
                       :server-id="server.os===OsEnum.WINDOWS.value?server.guacamoleServerId:server.id" :fixedPath="server.guacamoleServerFilePath" :server-name="server.name"></p-sftp>
             </a-card>
           </div>

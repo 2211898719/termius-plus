@@ -2,10 +2,7 @@ package com.codeages.termiusplus.api.admin;
 
 import cn.hutool.core.lang.tree.Tree;
 import cn.hutool.json.JSONUtil;
-import com.codeages.termiusplus.biz.server.dto.ClashProxyDTO;
-import com.codeages.termiusplus.biz.server.dto.ServerCreateParams;
-import com.codeages.termiusplus.biz.server.dto.ServerUpdateParams;
-import com.codeages.termiusplus.biz.server.dto.TreeSortParams;
+import com.codeages.termiusplus.biz.server.dto.*;
 import com.codeages.termiusplus.biz.server.service.ServerService;
 import com.codeages.termiusplus.ws.ssh.SshHandler;
 import com.codeages.termiusplus.biz.user.dto.RoleDto;
@@ -117,7 +114,6 @@ public class ServerController {
      * 给有onlyConnect或者
      * @return
      */
-
     @GetMapping("/groupList")
     public List<Tree<Long>> groupList() {
         return serverService.groupList();
@@ -159,6 +155,11 @@ public class ServerController {
     @GetMapping("/{serverId}/mysqlHistory")
     public List<String> getMysqlHistory(@PathVariable Long serverId) {
         return serverService.getMysqlHistory(serverId);
+    }
+
+    @GetMapping("/{serverId}/get")
+    public ServerDto get(@PathVariable Long serverId) {
+        return serverService.findById(serverId);
     }
 
 }

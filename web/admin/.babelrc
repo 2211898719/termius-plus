@@ -1,4 +1,11 @@
 {
   "presets": ["@vue/babel-preset-app"],
-  "plugins": ["@vue/babel-plugin-jsx"]
+  "plugins": ["@vue/babel-plugin-jsx",    [
+    "import",
+    {
+      "libraryName": "view-ui-plus",
+      "libraryDirectory": "src/components"
+    },
+    "view-ui-plus"
+  ]]
 }
