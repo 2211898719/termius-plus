@@ -42,26 +42,37 @@ onMounted(async () => {
   currentServer.value = await serverApi.get(serverId.value)
 })
 
-onMounted(() => {
-  nextTick(() => {
-    CodeMirrorRef.value.$el.onkeydown = function (e) {
-      e = e || window.event;
-      if ((e.which || e.keyCode) === 83 && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault ? e.preventDefault() : e.returnValue = false;
-        saveFile()
-      }
-    }
-  })
-})
-
 let extensions = ref([oneDark])
 let currentFile = ref(null)
+let loadContentSpinner = ref(false)
+let saveContentSpinner = ref(false)
 const openFileContent = async (file) => {
-  currentFile.value = file
-  let fileUrl = sftpApi.download({id: sessionId.value, remotePath: file.path})
+  loadContentSpinner.value = true
+  try {
+    currentFile.value = file
+    let fileUrl = sftpApi.download({id: sessionId.value, remotePath: file.path})
 
-  let response = await fetch(fileUrl)
-  content.value = await response.text()
+    let response = await fetch(fileUrl)
+    content.value = await response.text()
+
+
+  } catch (e) {
+
+    console.error(e)
+    message.error('打开文件失败')
+  } finally {
+    loadContentSpinner.value = false
+    nextTick(() => {
+      CodeMirrorRef.value.$el.onkeydown = function (e) {
+        e = e || window.event;
+        if ((e.which || e.keyCode) === 83 && (e.metaKey || e.ctrlKey)) {
+          e.preventDefault ? e.preventDefault() : e.returnValue = false;
+          saveFile()
+        }
+      }
+    })
+
+  }
 }
 
 const saveFile = async () => {
@@ -69,8 +80,18 @@ const saveFile = async () => {
     return
   }
 
-  await sftpApi.writeFile({id: sessionId.value, remotePath: currentFile.value.path, content: content.value})
-  message.success('保存成功')
+
+  saveContentSpinner.value = true
+  try {
+    await sftpApi.writeFile({id: sessionId.value, remotePath: currentFile.value.path, content: content.value})
+    message.success('保存成功')
+  } catch (e) {
+    console.error(e)
+    message.error('保存失败')
+  } finally {
+    saveContentSpinner.value = false
+  }
+
 }
 
 
@@ -124,10 +145,7 @@ const lang = computed(() => {
   } else if (currentFile.value.path.endsWith('.py')) {
     return python()
   } else if (currentFile.value.path.endsWith('.js')) {
-    return javascript({
-      jsx: true,
-      typescript: true
-    })
+    return javascript()
   }
 
   return java()
@@ -135,6 +153,19 @@ const lang = computed(() => {
 
 let isFirst = ref(true)
 let showTerminal = ref(false)
+
+let termRef = ref(null)
+
+const reloadServer = () => {
+  termRef.value.reload()
+}
+
+let termLoading = ref(false)
+
+const handleLoading = (loading) => {
+  console.log('loading', loading)
+  termLoading.value = loading
+}
 
 </script>
 
@@ -172,15 +203,21 @@ let showTerminal = ref(false)
               </template>
               <template #right>
                 <div class="code-content">
-                  <code-mirror
-                      basic
-                      v-if="content"
-                      ref="CodeMirrorRef"
-                      :tab="true"
-                      :lang="lang"
-                      :extensions="extensions"
-                      v-model:modelValue="content">
-                  </code-mirror>
+                  <a-spin :spinning="saveContentSpinner">
+                    <a-spin :spinning="loadContentSpinner">
+                      <code-mirror
+                          basic
+                          ref="CodeMirrorRef"
+                          :tab="true"
+                          v-if="!loadContentSpinner"
+                          :lang="lang"
+                          :extensions="extensions"
+                          v-model:modelValue="content">
+                      </code-mirror>
+                      <div class="code-loading" v-else>
+                      </div>
+                    </a-spin>
+                  </a-spin>
                 </div>
               </template>
             </Split>
@@ -188,8 +225,9 @@ let showTerminal = ref(false)
         </template>
         <template #bottom>
           <div class="bottom-bar" v-if="!isFirst" v-show="showTerminal">
-            <p-term v-if="currentServer" master-session-id="0" :server="currentServer"
-                    :execCommand="`cd ${rootPath}`"></p-term>
+              <p-term ref="termRef" v-if="currentServer" master-session-id="0" :server="currentServer"
+                      :execCommand="`cd ${rootPath}`" v-model:loading="termLoading"></p-term>
+              <reload-outlined @click="reloadServer" class="icon"/>
           </div>
         </template>
       </Split>
@@ -257,6 +295,12 @@ let showTerminal = ref(false)
       width: 100%;
       height: 100%;
       overflow: scroll;
+
+      .code-loading {
+        height: 50vh;
+        width: 100%;
+        background-color: #282c34;
+      }
     }
   }
 
@@ -265,6 +309,17 @@ let showTerminal = ref(false)
     height: 100%;
     border-top: 1px solid #ccc;
     padding: 8px;
+    position: relative;
+
+    .icon {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      mix-blend-mode: difference;
+      color: #ccc;
+      cursor: pointer;
+      z-index: 1000;
+    }
   }
 }
 

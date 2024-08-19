@@ -21,6 +21,7 @@ import com.codeages.termiusplus.ws.ssh.SftpServerUploadServerProgressDto;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import net.schmizz.sshj.SSHClient;
+import net.schmizz.sshj.connection.ConnectionException;
 import net.schmizz.sshj.sftp.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -150,7 +151,23 @@ public class SFTPServiceImpl implements SFTPService {
         ServletOutputStream outputStream = response.getOutputStream();
 
         SFTPClient sftp = getSftp(id);
-        RemoteFile readFile = sftp.open(remotePath);
+        RemoteFile readFile;
+        try {
+             readFile = sftp.open(remotePath);
+        } catch (ConnectionException e){
+            String[] split = id.split("-");
+            SFTPBean s = new SFTPBean(
+                    createSftp(split[split.length - 1], Long.valueOf(split[split.length - 2])),
+                    System.currentTimeMillis(),
+                    false
+            );
+
+            ServerContext.SFTP_POOL.put(id, s);
+
+            download(id, remotePath, response);
+            return;
+        }
+
         com.codeages.termiusplus.biz.storage.utils.FileUtil.initResponse(
                 readFile.length(),
                 filename,
@@ -230,6 +247,17 @@ public class SFTPServiceImpl implements SFTPService {
         try (RemoteFile remoteFile = sftp.open(remotePath, EnumSet.of(OpenMode.WRITE))) {
             byte[] bytes = content.getBytes(StandardCharsets.UTF_8);
             remoteFile.write(0, bytes, 0, bytes.length);
+        }catch (ConnectionException e){
+            String[] split = id.split("-");
+            SFTPBean s = new SFTPBean(
+                    createSftp(split[split.length - 1], Long.valueOf(split[split.length - 2])),
+                    System.currentTimeMillis(),
+                    false
+            );
+
+            ServerContext.SFTP_POOL.put(id, s);
+
+            writeFile(id, remotePath, content);
         }
 
     }
