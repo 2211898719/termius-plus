@@ -5,7 +5,6 @@ import com.codeages.termiusplus.biz.server.dto.SFTPServerUploadServerParams;
 import net.schmizz.sshj.sftp.RemoteResourceInfo;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 
@@ -81,12 +80,21 @@ public interface SFTPService {
     void upload(String id, MultipartFile file, String remotePath);
 
     /**
+     * 上传文件
+     *
+     * @param id
+     * @param file
+     * @param remoteFilePath
+     */
+    void uploadFile(String id, MultipartFile file, String remoteFilePath);
+
+    /**
      * 下载文件
      *
      * @param id
      * @param remotePath
      */
-    void download(String id, String remotePath, HttpServletResponse response) throws IOException;
+    void download(String id, String remotePath) throws IOException;
 
     long size(String id, String remotePath);
 

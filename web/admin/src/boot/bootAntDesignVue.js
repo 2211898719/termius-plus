@@ -40,7 +40,8 @@ import {
     DatePicker,
     TimePicker,
     Slider,
-    Tree
+    Tree,
+    Empty
 } from 'ant-design-vue';
 
 import {Split} from 'view-ui-plus'
@@ -62,6 +63,7 @@ export function bootAntDesignVue(app) {
         .use(Card)
         .use(Form)
         .use(Input)
+        .use(Empty)
         .use(Space)
         .use(Typography)
         .use(Table)

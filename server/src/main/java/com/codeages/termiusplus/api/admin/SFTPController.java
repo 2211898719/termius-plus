@@ -15,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api-admin/sftp")
@@ -68,6 +69,13 @@ public class SFTPController {
         sftpService.upload(id, file, remotePath);
     }
 
+    @PostMapping("/{id}/uploadFile")
+    public void uploadFile(@PathVariable String id,
+                       @RequestParam("file") MultipartFile file,
+                       @RequestParam("remotePath") String remotePath) {
+        sftpService.uploadFile(id, file, remotePath);
+    }
+
     @PostMapping("/serverUploadServer")
     public void serverUploadServer(@RequestBody SFTPServerUploadServerParams params) {
         sftpService.asyncServerUploadServer(params);
@@ -75,8 +83,14 @@ public class SFTPController {
 
     @SneakyThrows
     @GetMapping("/{id}/download")
-    public void download(@PathVariable String id, SFTPParams params, HttpServletResponse response) {
-        sftpService.download(id, params.getRemotePath(), response);
+    public void download(@PathVariable String id, SFTPParams params) {
+        sftpService.download(id, params.getRemotePath());
+    }
+
+    @SneakyThrows
+    @GetMapping("/preview/{id}")
+    public void preview(@PathVariable String id, SFTPParams params) {
+        sftpService.download(id, params.getRemotePath());
     }
 
     @PostMapping("/{id}/close")

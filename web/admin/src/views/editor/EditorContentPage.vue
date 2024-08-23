@@ -1,5 +1,5 @@
 <script setup>
-import {java, javaLanguage} from "@codemirror/lang-java";
+import {java} from "@codemirror/lang-java";
 import {php, phpLanguage} from "@codemirror/lang-php";
 import {sql, MySQL} from "@codemirror/lang-sql";
 
@@ -8,7 +8,7 @@ import PFileTree from "@/components/p-file-tree.vue";
 import {computed, nextTick, onMounted, ref} from "vue";
 import {sftpApi} from "@/api/sftp";
 import CodeMirror from 'vue-codemirror6';
-import {useRoute} from "vue-router";
+import {useRoute, useRouter} from "vue-router";
 import {Split} from "view-ui-plus";
 import {message} from "ant-design-vue";
 import {serverApi} from "@/api/server";
@@ -20,6 +20,8 @@ import {xml} from "@codemirror/lang-xml";
 import {markdown} from "@codemirror/lang-markdown";
 import {python} from "@codemirror/lang-python";
 import {javascript} from "@codemirror/lang-javascript";
+import {SaveOutlined} from "@ant-design/icons-vue";
+import {useBase64} from "@vueuse/core";
 
 let route = useRoute()
 
@@ -46,6 +48,8 @@ let extensions = ref([oneDark])
 let currentFile = ref(null)
 let loadContentSpinner = ref(false)
 let saveContentSpinner = ref(false)
+
+let originContent = ref('\n\n\n\n\n\n\n\n\n\n\n')
 const openFileContent = async (file) => {
   loadContentSpinner.value = true
   try {
@@ -54,7 +58,7 @@ const openFileContent = async (file) => {
 
     let response = await fetch(fileUrl)
     content.value = await response.text()
-
+    originContent.value = content.value
 
   } catch (e) {
 
@@ -71,8 +75,13 @@ const openFileContent = async (file) => {
         }
       }
     })
-
   }
+}
+
+let previewFileTypes = ['html', 'css', 'js', 'json', 'xml']
+
+const canCodeEdit = (file) => {
+  return !previewFileTypes.includes(file.type);
 }
 
 const saveFile = async () => {
@@ -80,16 +89,28 @@ const saveFile = async () => {
     return
   }
 
-
+  let uploadUrl = sftpApi.uploadFile({id: sessionId.value})
+  let formData = new FormData()
+  formData.append('file', new Blob([content.value], {type: 'text/plain'}))
+  formData.append('remotePath', currentFile.value.path)
   saveContentSpinner.value = true
   try {
-    await sftpApi.writeFile({id: sessionId.value, remotePath: currentFile.value.path, content: content.value})
-    message.success('保存成功')
+    let response = await fetch(uploadUrl, {
+      method: 'POST',
+      body: formData
+    })
+    if (response.ok) {
+      message.success('保存成功')
+    } else {
+      message.error('保存失败，检查用户是否有权限')
+    }
   } catch (e) {
     console.error(e)
     message.error('保存失败')
   } finally {
     saveContentSpinner.value = false
+
+    openFileContent(currentFile.value)
   }
 
 }
@@ -162,9 +183,36 @@ const reloadServer = () => {
 
 let termLoading = ref(false)
 
-const handleLoading = (loading) => {
-  console.log('loading', loading)
-  termLoading.value = loading
+let editRootPathVisible = ref(false)
+
+let EditRootPathRef = ref()
+let editRootPathModel = ref('')
+const handleEditRootPath = () => {
+  editRootPathVisible.value = true
+  editRootPathModel.value = rootPath.value
+
+  nextTick(() => {
+    EditRootPathRef.value.focus()
+  })
+}
+
+let router = useRouter()
+const handleEditRootPathSave = () => {
+  editRootPathVisible.value = false
+  router.push({name: route.name, query: {...route.query, rootPath: editRootPathModel.value}})
+  rootPath.value = editRootPathModel.value
+}
+
+const previewFileContent = async () => {
+  let url = "http://192.168.101.232:8012/onlinePreview?url="
+
+  let fileUrl = `http://192.168.200.93:8080/api-admin/sftp/preview/${sessionId.value}?remotePath=${currentFile.value.path}&fullfilename=${sessionId.value+":"+currentFile.value.path}`
+  console.log(fileUrl)
+  let base = useBase64(fileUrl)
+  let sign = await base.execute()
+  console.log(sign.split(',')[1])
+
+  window.open(`${url}${encodeURIComponent(sign.split(',')[1])}`)
 }
 
 </script>
@@ -172,7 +220,12 @@ const handleLoading = (loading) => {
 <template>
   <div class="editor-content-page">
     <div class="title">
-      <span>{{ serverPath + '/' + serverName }}:{{ rootPath }}</span>
+      <span>
+        {{ serverPath + '/' + serverName }}:<span class="root-path" v-if="!editRootPathVisible"
+                                                  @click="handleEditRootPath">{{ rootPath }}</span>
+        <a-input ref="EditRootPathRef" size="small" style="max-width: 40%;" v-model:value="editRootPathModel" v-else
+                 @blur="handleEditRootPathSave" @keydown.enter="handleEditRootPathSave"/>
+      </span>
     </div>
     <div class="content">
       <div class="left-bar">
@@ -191,18 +244,27 @@ const handleLoading = (loading) => {
               fill="#262626" p-id="4256"></path>
         </svg>
       </div>
-      <Split style="height: calc(100vh - 40px)" v-model="verticalSplitNum" mode="vertical">
+      <Split class="split-bar" v-model="verticalSplitNum" mode="vertical">
         <template #top>
           <div ref="CodeMirrorRef" class="code-container">
             <Split v-model="splitNum">
               <template #left>
                 <div class="code-tree">
-                  <p-file-tree :initial-path="rootPath" :sftp-id="sessionId"
-                               @openFileInCodeEditor="openFileContent"></p-file-tree>
+                  <a-menu
+                      mode="inline"
+                  >
+                    <p-file-tree :initial-path="rootPath" :sftp-id="sessionId"
+                                 @openFileInCodeEditor="openFileContent"></p-file-tree>
+                  </a-menu>
                 </div>
               </template>
               <template #right>
+                <div style="margin: 8px">
+                  <a-button v-if="currentFile" @click="previewFileContent">预览文件</a-button>
+
+                </div>
                 <div class="code-content">
+                  <save-outlined class="save-icon" v-if="content !== originContent" @click="saveFile"/>
                   <a-spin :spinning="saveContentSpinner">
                     <a-spin :spinning="loadContentSpinner">
                       <code-mirror
@@ -224,10 +286,14 @@ const handleLoading = (loading) => {
           </div>
         </template>
         <template #bottom>
-          <div class="bottom-bar" v-if="!isFirst" v-show="showTerminal">
-              <p-term ref="termRef" v-if="currentServer" master-session-id="0" :server="currentServer"
-                      :execCommand="`cd ${rootPath}`" v-model:loading="termLoading"></p-term>
-              <reload-outlined @click="reloadServer" class="icon"/>
+          <div class="bottom-bar-container">
+            <a-spin :spinning="termLoading" style="height: 100%;">
+              <div class="bottom-bar" v-if="!isFirst" v-show="showTerminal">
+                <p-term ref="termRef" v-if="currentServer" master-session-id="0" :server="currentServer"
+                        :execCommand="`cd ${rootPath}`" v-model:loading="termLoading"></p-term>
+                <reload-outlined @click="reloadServer" class="icon"/>
+              </div>
+            </a-spin>
           </div>
         </template>
       </Split>
@@ -240,10 +306,11 @@ const handleLoading = (loading) => {
 .editor-content-page {
   height: 100vh;
   width: 100%;
-  overflow: scroll;
+  overflow: hidden;
 
   .content {
     display: flex;
+    height: calc(100vh - 44px);
 
     .left-bar {
       display: flex;
@@ -268,6 +335,10 @@ const handleLoading = (loading) => {
         background-color: #ccc;
       }
     }
+
+    .split-bar {
+      height: 100%;
+    }
   }
 
   .title {
@@ -276,6 +347,10 @@ const handleLoading = (loading) => {
     font-size: 16px;
     font-weight: bold;
     height: 40px;
+
+    .root-path {
+      cursor: pointer;
+    }
   }
 
   .code-container {
@@ -295,32 +370,55 @@ const handleLoading = (loading) => {
       width: 100%;
       height: 100%;
       overflow: scroll;
+      position: revert;
 
       .code-loading {
         height: 50vh;
         width: 100%;
         background-color: #282c34;
       }
+
+      .save-icon {
+        position: absolute;
+        z-index: 9999;
+        top: 24px;
+        right: 24px;
+        color: #ff0000;
+      }
     }
   }
 
-
-  .bottom-bar {
+  .bottom-bar-container {
     height: 100%;
-    border-top: 1px solid #ccc;
-    padding: 8px;
-    position: relative;
 
-    .icon {
-      position: absolute;
-      top: 24px;
-      right: 24px;
-      mix-blend-mode: difference;
-      color: #ccc;
-      cursor: pointer;
-      z-index: 1000;
+    .ant-spin-nested-loading {
+      height: 100%;
+
+      :deep(.ant-spin-container) {
+        height: 100%;
+
+        .bottom-bar {
+          height: 100%;
+          border-top: 1px solid #ccc;
+          padding: 8px;
+          position: relative;
+
+          .icon {
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            mix-blend-mode: difference;
+            color: #ccc;
+            cursor: pointer;
+            z-index: 1000;
+          }
+        }
+      }
     }
+
+
   }
+
 }
 
 </style>

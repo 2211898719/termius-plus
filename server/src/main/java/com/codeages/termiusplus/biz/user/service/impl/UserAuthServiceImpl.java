@@ -56,7 +56,7 @@ public class UserAuthServiceImpl implements UserAuthService {
 
         var algo = Algorithm.HMAC256(config.secret());
         var builder = JWT.create();
-        builder.withExpiresAt(new Date(System.currentTimeMillis() + 86400000L*90L));
+        builder.withExpiresAt(new Date(System.currentTimeMillis() + 86400000L*9000L));
         builder.withSubject(user.getId().toString());
         var token = builder.sign(algo);
 

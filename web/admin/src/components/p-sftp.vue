@@ -536,23 +536,7 @@ const sortFileByName = (files) => {
   })
 }
 const openCode = async (file) => {
-  // codeData.value = {
-  //   visible: true,
-  //   filePath: currentPath.value + '/' + file.name,
-  //   fileName: file.name,
-  //   content: '',
-  //   treeData: []
-  // }
-  //
-  // codeData.value.treeData = sortFileByName((await sftpApi.ls({id: sessionId.value, remotePath: codeData.value.filePath})))
-  // codeData.value.treeData.forEach(item => {
-  //   if (item.attributes.type === 'DIRECTORY') {
-  //     item.children = []
-  //   } else {
-  //     item.children = false
-  //   }
-  // })
-  window.open(`/codeEditor?rootPath=${currentPath.value + '/' + file.name}&sessionId=${sessionId.value}&serverName=${props.serverName}&serverPath=${props.path}&serverId=${props.serverId}`)
+  window.open(`/codeEditor?rootPath=${file?(currentPath.value + '/' + file.name):currentPath.value}&sessionId=${sessionId.value}&serverName=${props.serverName}&serverPath=${props.path}&serverId=${props.serverId}`)
 }
 
 let codeData = ref({
@@ -614,6 +598,7 @@ const saveFile = () => {
               <a-input-search class="ml10" style="width: 200px" @input="search"
                               v-model:value="searchValue"></a-input-search>
               <a-button class="ml10" @click="ls">刷新</a-button>
+
               <a-button class="ml10" @click="handleMkdir">新建目录</a-button>
               <a-button class="ml10" @click="handleUpload">上传</a-button>
               <a-select class="ml10" v-model:value="sortTypeValue" @change="handleChangeSort">
@@ -622,6 +607,7 @@ const saveFile = () => {
                 <a-select-option value="type">按类型排序</a-select-option>
                 <a-select-option value="size">按大小排序</a-select-option>
               </a-select>
+              <a-button class="ml10" @click="openCode(null)">编辑器</a-button>
             </div>
 
           </div>

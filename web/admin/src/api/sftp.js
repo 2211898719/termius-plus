@@ -26,6 +26,9 @@ export const sftpApi = {
     upload: (params) => {
         return "/api-admin/sftp/" + params.id + "/upload";
     },
+    uploadFile: (params) => {
+        return "/api-admin/sftp/" + params.id + "/uploadFile";
+    },
     download: (params) => {
         return "/api-admin/sftp/" + params.id + "/download?remotePath=" + encodeURI(params.remotePath).replace("+", "%2B");
     },

@@ -864,22 +864,24 @@ public class FileUtil {
 
     @SneakyThrows(IOException.class)
     public static void writeByteToResponse(byte[] bytes, String fileName, HttpServletResponse response) {
-        initResponse(bytes.length, fileName, response);
+        initResponse(bytes.length, fileName, response,true);
         ServletOutputStream outputStream = response.getOutputStream();
         outputStream.write(bytes);
         IoUtil.close(outputStream);
     }
 
-    public static void initResponse(long byteLength, String fileName, HttpServletResponse response) {
+    public static void initResponse(long byteLength, String fileName, HttpServletResponse response, boolean cache) {
         response.reset();
         response.setContentType(ContentType.OCTET_STREAM.getValue());
         response.setCharacterEncoding(CharsetUtil.UTF_8);
 
         //缓存7天
-        response.setHeader(
-                Header.CACHE_CONTROL.getValue(),
-                "max-age=" + 60 * 60 * 24 * 7
-        );
+        if (cache){
+            response.setHeader(
+                    Header.CACHE_CONTROL.getValue(),
+                    "max-age=" + 60 * 60 * 24 * 7
+            );
+        }
         response.setHeader(
                 Header.CONTENT_DISPOSITION.getValue(),
                 "attachment;filename=" + URLEncoder.encode(

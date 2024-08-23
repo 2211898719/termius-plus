@@ -3,6 +3,7 @@ package com.codeages.termiusplus.security;
 import com.codeages.termiusplus.biz.user.service.UserAuthService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -25,6 +26,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     private final AuthAccessDeniedHandler authAccessDeniedHandler;
 
     private final ObjectMapper objectMapper;
+
+    @Value("${kkfileview.passIp}")
+    private String passIp;
 
     public SecurityConfig(UserAuthService userAuthService, AuthAccessDeniedHandler authAccessDeniedHandler, ObjectMapper objectMapper) {
         this.userAuthService = userAuthService;
@@ -61,6 +65,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .authorizeRequests()
                 .antMatchers("/api-admin/public/**").permitAll()
                 .antMatchers("/api-app/public/**").permitAll()
+                .antMatchers("/api-admin/sftp/preview/**").access("hasIpAddress('" + passIp + "')")
                 .antMatchers("/ws/**").permitAll()
                 .antMatchers("/socket/**").permitAll()
                 .antMatchers("/api-admin/file/get/**").permitAll()

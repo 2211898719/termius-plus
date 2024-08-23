@@ -4,6 +4,7 @@ import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.lang.UUID;
 import cn.hutool.core.lang.func.VoidFunc1;
+import cn.hutool.http.server.HttpServerResponse;
 import cn.hutool.json.JSONUtil;
 import com.codeages.termiusplus.biz.ErrorCode;
 import com.codeages.termiusplus.biz.server.annotation.SftpActive;
@@ -18,6 +19,7 @@ import com.codeages.termiusplus.ws.ssh.AuthKeyBoardHandler;
 import com.codeages.termiusplus.ws.ssh.EventType;
 import com.codeages.termiusplus.ws.ssh.MessageDto;
 import com.codeages.termiusplus.ws.ssh.SftpServerUploadServerProgressDto;
+import lombok.Cleanup;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import net.schmizz.sshj.SSHClient;
@@ -42,8 +44,11 @@ public class SFTPServiceImpl implements SFTPService {
 
     private final ServerService serverService;
 
-    public SFTPServiceImpl(ServerService serverService) {
+    private final HttpServletResponse response;
+
+    public SFTPServiceImpl(ServerService serverService, HttpServletResponse response) {
         this.serverService = serverService;
+        this.response = response;
     }
 
     @SneakyThrows
@@ -144,8 +149,17 @@ public class SFTPServiceImpl implements SFTPService {
     }
 
     @Override
+    @SneakyThrows
     @SftpActive("#id")
-    public void download(String id, String remotePath, HttpServletResponse response) throws IOException {
+    public void uploadFile(String id, MultipartFile file, String remoteFilePath) {
+        File tmpFile = createTmpFile();
+        file.transferTo(tmpFile);
+        getSftp(id).put(tmpFile.getPath(), remoteFilePath);
+    }
+
+    @Override
+    @SftpActive("#id")
+    public void download(String id, String remotePath) throws IOException {
         log.info("下载文件：{}", remotePath);
         String filename = remotePath.substring(remotePath.lastIndexOf("/") + 1);
         ServletOutputStream outputStream = response.getOutputStream();
@@ -153,8 +167,8 @@ public class SFTPServiceImpl implements SFTPService {
         SFTPClient sftp = getSftp(id);
         RemoteFile readFile;
         try {
-             readFile = sftp.open(remotePath);
-        } catch (ConnectionException e){
+            readFile = sftp.open(remotePath);
+        } catch (ConnectionException e) {
             String[] split = id.split("-");
             SFTPBean s = new SFTPBean(
                     createSftp(split[split.length - 1], Long.valueOf(split[split.length - 2])),
@@ -164,14 +178,15 @@ public class SFTPServiceImpl implements SFTPService {
 
             ServerContext.SFTP_POOL.put(id, s);
 
-            download(id, remotePath, response);
+            download(id, remotePath);
             return;
         }
 
         com.codeages.termiusplus.biz.storage.utils.FileUtil.initResponse(
                 readFile.length(),
                 filename,
-                response
+                response,
+                false
         );
 
         RemoteFile.ReadAheadRemoteFileInputStream readAheadRemoteFileInputStream = readFile.new ReadAheadRemoteFileInputStream(
@@ -190,11 +205,9 @@ public class SFTPServiceImpl implements SFTPService {
     @Override
     @SneakyThrows
     public long size(String id, String remotePath) {
-        try (SFTPClient sftp = getSftp(id)) {
-            try (RemoteFile readFile = sftp.open(remotePath)) {
-                return readFile.length();
-            }
-        }
+        SFTPClient sftp = getSftp(id);
+        @Cleanup RemoteFile readFile = sftp.open(remotePath);
+        return readFile.length();
     }
 
     private static File createTmpFile() {
@@ -247,7 +260,7 @@ public class SFTPServiceImpl implements SFTPService {
         try (RemoteFile remoteFile = sftp.open(remotePath, EnumSet.of(OpenMode.WRITE))) {
             byte[] bytes = content.getBytes(StandardCharsets.UTF_8);
             remoteFile.write(0, bytes, 0, bytes.length);
-        }catch (ConnectionException e){
+        } catch (ConnectionException e) {
             String[] split = id.split("-");
             SFTPBean s = new SFTPBean(
                     createSftp(split[split.length - 1], Long.valueOf(split[split.length - 2])),
