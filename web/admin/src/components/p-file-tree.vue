@@ -105,6 +105,11 @@ requireApi.keys().forEach(e => {
   icons.value[name.toUpperCase()] = requireApi(e)
   icons.value[name.toLocaleLowerCase()] = requireApi(e)
 })
+
+const downloadFile = async (file) => {
+  let url = sftpApi.download({id: props.sftpId, remotePath: file.path})
+  window.open(url)
+}
 </script>
 
 <template>
@@ -120,7 +125,7 @@ requireApi.keys().forEach(e => {
         <p-file-tree v-if="item.children?.length" :treeData="item.children" :sftpId="sftpId"
                      @openFileInCodeEditor="currentOpenFileInCodeEditor"/>
         <div v-if="!item.children?.length && !item.spinning">
-          <a-empty/>
+          <a-empty :description="`没有文件`"/>
         </div>
       </a-sub-menu>
     </a-spin>
@@ -131,7 +136,14 @@ requireApi.keys().forEach(e => {
       <template #icon>
         <img :src="icons[item.name.split('.').pop()]??icons['1']">
       </template>
-      {{ item.name }}
+      <a-dropdown :trigger="['contextmenu']">
+      <span>{{ item.name }}</span>
+        <template #overlay>
+          <a-menu>
+            <a-menu-item key="download" @click="downloadFile(item)">下载</a-menu-item>
+          </a-menu>
+        </template>
+      </a-dropdown>
     </a-menu-item>
   </template>
 

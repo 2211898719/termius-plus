@@ -78,12 +78,6 @@ const openFileContent = async (file) => {
   }
 }
 
-let previewFileTypes = ['html', 'css', 'js', 'json', 'xml']
-
-const canCodeEdit = (file) => {
-  return !previewFileTypes.includes(file.type);
-}
-
 const saveFile = async () => {
   if (!currentFile.value) {
     return
@@ -109,8 +103,7 @@ const saveFile = async () => {
     message.error('保存失败')
   } finally {
     saveContentSpinner.value = false
-
-    openFileContent(currentFile.value)
+    // openFileContent(currentFile.value)
   }
 
 }
@@ -215,6 +208,11 @@ const previewFileContent = async () => {
   window.open(`${url}${encodeURIComponent(sign.split(',')[1])}`)
 }
 
+const downloadFile = () => {
+  let url = sftpApi.download({id: sessionId.value, remotePath: currentFile.value.path})
+  window.open(url)
+}
+
 </script>
 
 <template>
@@ -259,12 +257,11 @@ const previewFileContent = async () => {
                 </div>
               </template>
               <template #right>
-                <div style="margin: 8px">
-                  <a-button v-if="currentFile" @click="previewFileContent">预览文件</a-button>
-
+                <div  class="save-container">
+                  <a-button v-if="currentFile" @click="downloadFile">下载</a-button>
+                  <a-button type="primary" v-if="content !== originContent" @click="saveFile">保存</a-button>
                 </div>
                 <div class="code-content">
-                  <save-outlined class="save-icon" v-if="content !== originContent" @click="saveFile"/>
                   <a-spin :spinning="saveContentSpinner">
                     <a-spin :spinning="loadContentSpinner">
                       <code-mirror
@@ -366,9 +363,15 @@ const previewFileContent = async () => {
       overflow: scroll;
     }
 
+    .save-container{
+      margin: 8px;
+      display: flex;
+      justify-content: space-between;
+    }
+
     .code-content {
       width: 100%;
-      height: 100%;
+      height: calc(100% - 48px);
       overflow: scroll;
       position: revert;
 
