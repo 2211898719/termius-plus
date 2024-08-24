@@ -1,27 +1,15 @@
 <script setup>
-import {java} from "@codemirror/lang-java";
-import {php, phpLanguage} from "@codemirror/lang-php";
-import {sql, MySQL} from "@codemirror/lang-sql";
-
 import {oneDark} from "@codemirror/theme-one-dark";
 import PFileTree from "@/components/p-file-tree.vue";
 import {computed, nextTick, onMounted, ref} from "vue";
 import {sftpApi} from "@/api/sftp";
-import CodeMirror from 'vue-codemirror6';
 import {useRoute, useRouter} from "vue-router";
 import {Split} from "view-ui-plus";
 import {message} from "ant-design-vue";
 import {serverApi} from "@/api/server";
 import PTerm from "@/components/p-term.vue";
-import {json} from "@codemirror/lang-json";
-import {css} from "@codemirror/lang-css";
-import {html} from "@codemirror/lang-html";
-import {xml} from "@codemirror/lang-xml";
-import {markdown} from "@codemirror/lang-markdown";
-import {python} from "@codemirror/lang-python";
-import {javascript} from "@codemirror/lang-javascript";
-import {SaveOutlined} from "@ant-design/icons-vue";
 import {useBase64} from "@vueuse/core";
+import MonacoEditor from "@/components/MonacoEditor.vue";
 
 let route = useRoute()
 
@@ -44,7 +32,6 @@ onMounted(async () => {
   currentServer.value = await serverApi.get(serverId.value)
 })
 
-let extensions = ref([oneDark])
 let currentFile = ref(null)
 let loadContentSpinner = ref(false)
 let saveContentSpinner = ref(false)
@@ -136,33 +123,36 @@ const changeShowTerminal = () => {
   }
 }
 
+let lanTypeMap = {
+  'java': 'java',
+  'php': 'php',
+  'sql': 'mysql',
+  'json': 'json',
+  'css': 'css',
+  'less': 'less',
+  'scss': 'scss',
+  'html': 'html',
+  'xml': 'xml',
+  'md': 'markdown',
+  'py': 'python',
+  'js': 'javascript',
+  'twig': 'twig',
+  'sh': 'shell',
+  'ts': 'typescript',
+  'yaml': 'yaml',
+  'yml': 'yaml',
+  'ini': 'ini',
+}
+
 const lang = computed(() => {
   if (!currentFile.value) {
-    return java();
-  }
-  if (currentFile.value.path.endsWith('.java')) {
-    return java()
-  } else if (currentFile.value.path.endsWith('.php')) {
-    return php({baseLanguage: phpLanguage})
-  } else if (currentFile.value.path.endsWith('.sql')) {
-    return sql({dialect: MySQL})
-  } else if (currentFile.value.path.endsWith('.json')) {
-    return json()
-  } else if (currentFile.value.path.endsWith('.css')) {
-    return css()
-  } else if (currentFile.value.path.endsWith('.html')) {
-    return html()
-  } else if (currentFile.value.path.endsWith('.xml')) {
-    return xml()
-  } else if (currentFile.value.path.endsWith('.md')) {
-    return markdown()
-  } else if (currentFile.value.path.endsWith('.py')) {
-    return python()
-  } else if (currentFile.value.path.endsWith('.js')) {
-    return javascript()
+    return null;
   }
 
-  return java()
+  let ext = currentFile.value.path.split('.').pop()
+  ext = ext.toLowerCase()
+  return lanTypeMap[ext] || 'text'
+
 })
 
 let isFirst = ref(true)
@@ -264,16 +254,20 @@ const downloadFile = () => {
                 <div class="code-content">
                   <a-spin :spinning="saveContentSpinner">
                     <a-spin :spinning="loadContentSpinner">
-                      <code-mirror
-                          basic
-                          ref="CodeMirrorRef"
-                          :tab="true"
-                          v-if="!loadContentSpinner"
-                          :lang="lang"
-                          :extensions="extensions"
-                          v-model:modelValue="content">
-                      </code-mirror>
-                      <div class="code-loading" v-else>
+                      <!--                      <code-mirror-->
+                      <!--                          basic-->
+                      <!--                          ref="CodeMirrorRef"-->
+                      <!--                          :tab="true"-->
+                      <!--                          v-if="!loadContentSpinner"-->
+                      <!--                          :lang="lang"-->
+                      <!--                          :extensions="extensions"-->
+                      <!--                          v-model:modelValue="content">-->
+                      <!--                      </code-mirror>-->
+                      <!--                      <div class="code-loading" v-else>-->
+                      <!--                      </div>-->
+                      <div class="monaco-editor">
+                        <MonacoEditor v-if="!loadContentSpinner" ref="CodeMirrorRef"
+                                      v-model:value="content" :language="lang" theme="vs-dark"/>
                       </div>
                     </a-spin>
                   </a-spin>
@@ -374,6 +368,10 @@ const downloadFile = () => {
       height: calc(100% - 48px);
       overflow: scroll;
       position: revert;
+
+      :deep(.monaco-editor) {
+        height: calc(100vh - 48px);
+      }
 
       .code-loading {
         height: 50vh;

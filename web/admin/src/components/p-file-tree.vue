@@ -81,7 +81,21 @@ const openSubMenu = async (file) => {
     }
     file.spinning = true
     try {
-      file.children = sortFileByName(await sftpApi.ls({id: props.sftpId, remotePath: file.path}))
+      let nextFiles = sortFileByName(await sftpApi.ls({id: props.sftpId, remotePath: file.path}))
+      //如果展开过了，要合并数据
+      if (file.children){
+      // 合并数据
+        nextFiles.forEach(nextFile => {
+          file.children.forEach(child => {
+            if (nextFile.name === child.name) {
+              nextFile.children = child.children
+              nextFile.opened = child.opened
+            }
+          })
+        })
+      }
+      file.children = nextFiles
+      // file.children = sortFileByName(await sftpApi.ls({id: props.sftpId, remotePath: file.path}))
     } catch (e) {
       console.error(e)
       message.error(e.message)
@@ -97,6 +111,7 @@ const currentOpenFileInCodeEditor = (file) => {
   emit('openFileInCodeEditor', file)
 }
 
+// 加载文件类型图标
 const requireApi = require.context('@/assets/file-type-icon', true, /\.svg$/);
 
 let icons = ref({})

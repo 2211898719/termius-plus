@@ -8,7 +8,6 @@ import {bootStore} from "@/boot/bootStore";
 import {bootFilters} from "@/boot/bootFilters";
 import '@wangeditor/editor/dist/css/style.css'
 import 'shepherd.js/dist/css/shepherd.css';
-
 import { autoAnimatePlugin } from '@formkit/auto-animate/vue'
 
 const modulesFiles = require.context('@/assets/webfonts', true, /\.woff2$|\.woff$|\.ttf$|\.eot$|\.otf$/);
