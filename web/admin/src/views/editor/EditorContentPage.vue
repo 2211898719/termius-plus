@@ -52,15 +52,19 @@ const openFileContent = async (file) => {
     console.error(e)
     message.error('打开文件失败')
   } finally {
-    loadContentSpinner.value = false
+
     nextTick(() => {
-      CodeMirrorRef.value.$el.onkeydown = function (e) {
-        e = e || window.event;
-        if ((e.which || e.keyCode) === 83 && (e.metaKey || e.ctrlKey)) {
-          e.preventDefault ? e.preventDefault() : e.returnValue = false;
-          saveFile()
+      loadContentSpinner.value = false
+      nextTick(()=>{
+        CodeMirrorRef.value.$el.onkeydown = function (e) {
+          e = e || window.event;
+          if ((e.which || e.keyCode) === 83 && (e.metaKey || e.ctrlKey)) {
+            e.preventDefault ? e.preventDefault() : e.returnValue = false;
+            saveFile()
+          }
         }
-      }
+      })
+
     })
   }
 }
@@ -151,7 +155,7 @@ const lang = computed(() => {
 
   let ext = currentFile.value.path.split('.').pop()
   ext = ext.toLowerCase()
-  return lanTypeMap[ext] || 'text'
+  return lanTypeMap[ext] || 'plaintext'
 
 })
 
@@ -267,7 +271,7 @@ const downloadFile = () => {
                       <!--                      </div>-->
                       <div class="monaco-editor">
                         <MonacoEditor v-if="!loadContentSpinner" ref="CodeMirrorRef"
-                                      v-model:value="content" :language="lang" theme="vs-dark"/>
+                                      v-model:value="content" :language="lang" theme="vs-dark" :file-names="currentFile?.name" />
                       </div>
                     </a-spin>
                   </a-spin>

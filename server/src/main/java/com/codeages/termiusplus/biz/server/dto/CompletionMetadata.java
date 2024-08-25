@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CompletionMetadata {
+    private String filename;
     private String language;
     private String textAfterCursor;
     private String textBeforeCursor;

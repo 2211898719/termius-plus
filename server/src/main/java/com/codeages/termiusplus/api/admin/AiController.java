@@ -25,7 +25,10 @@ public class AiController {
     public Map<String, Object> complete(@RequestBody AiCompletionMetadata data) {
         HttpRequest request = HttpRequest.post(fittenUrl)
                                          .body(JSONUtil.toJsonStr(Map.of(
-                                                 "inputs", "!FCPREFIX!"+data.getCompletionMetadata().getTextBeforeCursor()+"!FCSUFFIX!"+data.getCompletionMetadata().getTextAfterCursor()+"!FCMIDDLE!"
+                                                 "inputs", "!FCPREFIX!"+data.getCompletionMetadata().getTextBeforeCursor()+"!FCSUFFIX!"+data.getCompletionMetadata().getTextAfterCursor()+"!FCMIDDLE!",
+                                                 "meta_datas", Map.of(
+                                                         "filename", data.getCompletionMetadata().getFilename()
+                                                 )
                                          )));
 
         HttpResponse response = request.execute();

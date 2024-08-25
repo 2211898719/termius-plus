@@ -1,12 +1,5 @@
 <script setup>
-import {
-  ref,
-  onMounted,
-  onBeforeUnmount,
-  watch,
-  defineProps,
-  defineEmits,
-} from "vue";
+import {defineEmits, defineProps, onBeforeUnmount, onMounted, ref, watch,} from "vue";
 import loader from "@monaco-editor/loader";
 import {registerCopilot} from "monacopilot";
 
@@ -20,6 +13,10 @@ const props = defineProps({
     type: String,
     default: "vs-dark",
   },
+  fileNames: {
+    type: String,
+    default: "base",
+  }
 });
 
 const emits = defineEmits(["update:value"]);
@@ -27,8 +24,11 @@ const emits = defineEmits(["update:value"]);
 const editorContainer = ref(null);
 let editorInstance = null;
 
+let registerCopilots = [];
+
 onMounted(() => {
   loader.init().then((monaco) => {
+    console.log(props.fileNames)
     editorInstance = monaco.editor.create(editorContainer.value, {
       value: props.value || "",
       language: props.language,
@@ -47,18 +47,45 @@ onMounted(() => {
       },
 
       wordWrap: "on",
-
-
     });
 
-    registerCopilot(monaco, editorInstance, {
-      endpoint: '/api-admin/ai/complete',
-      language: 'javascript',
-    });
-    registerCopilot(monaco, editorInstance, {
-      endpoint: '/api-admin/ai/complete',
-      language: 'java',
-    });
+    let lanTypeMap = {
+      'java': 'java',
+      'php': 'php',
+      'sql': 'mysql',
+      'json': 'json',
+      'css': 'css',
+      'less': 'less',
+      'scss': 'scss',
+      'html': 'html',
+      'xml': 'xml',
+      'md': 'markdown',
+      'py': 'python',
+      'js': 'javascript',
+      'twig': 'twig',
+      'sh': 'shell',
+      'ts': 'typescript',
+      'yaml': 'yaml',
+      'yml': 'yaml',
+      'ini': 'ini',
+    }
+    Object.keys(lanTypeMap).map((key) => lanTypeMap[key]).forEach(e => {
+      registerCopilots.push(
+          registerCopilot(monaco, editorInstance, {
+            endpoint: '/api-admin/ai/complete',
+            language: e,
+            filename: props.fileNames,
+          })
+      );
+    })
+
+    registerCopilots.push(
+        registerCopilot(monaco, editorInstance, {
+          endpoint: '/api-admin/ai/complete',
+          language: 'plaintext',
+          filename: props.fileNames,
+        })
+    );
 
     editorInstance.onDidChangeModelContent(() => {
       emits("update:value", editorInstance.getValue());
@@ -69,6 +96,9 @@ onMounted(() => {
 onBeforeUnmount(() => {
   if (editorInstance) {
     editorInstance.dispose();
+  }
+  if (registerCopilots){
+    registerCopilots.forEach(e => e.deregister());
   }
 });
 
