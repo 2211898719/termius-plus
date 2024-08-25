@@ -369,8 +369,15 @@ const downloadFile = () => {
       overflow: scroll;
       position: revert;
 
+      :deep(.ant-spin-nested-loading){
+        height: 100%;
+      }
+      :deep(.ant-spin-container){
+        height: 100%;
+
+      }
       :deep(.monaco-editor) {
-        height: calc(100vh - 48px);
+        height: calc(100%);
       }
 
       .code-loading {
