@@ -189,19 +189,6 @@ const handleEditRootPathSave = () => {
   router.push({name: route.name, query: {...route.query, rootPath: editRootPathModel.value}})
   rootPath.value = editRootPathModel.value
 }
-
-const previewFileContent = async () => {
-  let url = "http://192.168.101.232:8012/onlinePreview?url="
-
-  let fileUrl = `http://192.168.200.93:8080/api-admin/sftp/preview/${sessionId.value}?remotePath=${currentFile.value.path}&fullfilename=${sessionId.value+":"+currentFile.value.path}`
-  console.log(fileUrl)
-  let base = useBase64(fileUrl)
-  let sign = await base.execute()
-  console.log(sign.split(',')[1])
-
-  window.open(`${url}${encodeURIComponent(sign.split(',')[1])}`)
-}
-
 const downloadFile = () => {
   let url = sftpApi.download({id: sessionId.value, remotePath: currentFile.value.path})
   window.open(url)

@@ -26,6 +26,7 @@ let editorInstance = null;
 
 let registerCopilots = [];
 
+loader.config({ 'vs/nls': { availableLanguages: { '*': 'zh-cn' } } });
 onMounted(() => {
   loader.init().then((monaco) => {
     console.log(props.fileNames)
