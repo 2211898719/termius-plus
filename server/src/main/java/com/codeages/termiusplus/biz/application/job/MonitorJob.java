@@ -1,6 +1,7 @@
 package com.codeages.termiusplus.biz.application.job;
 
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.StrUtil;
 import com.codeages.termiusplus.biz.application.dto.ApplicationDto;
 import com.codeages.termiusplus.biz.application.dto.ApplicationMonitorDto;
@@ -20,12 +21,16 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLHandshakeException;
+import java.io.IOException;
 import java.net.URL;
 import java.security.cert.X509Certificate;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 @Component
 @Slf4j
@@ -86,7 +91,25 @@ public class MonitorJob {
         for (ApplicationDto app : application) {
             String url = app.getContent();
 
-            Date expiryDate = getCertExpiryDate(url);
+            Date expiryDate = null;
+
+            try {
+                expiryDate = getCertExpiryDate(url);
+            } catch (SSLHandshakeException e) {
+                dingerSender.send(
+                        MessageSubType.TEXT,
+                        DingerRequest.request(
+                                "应用证书验证失败，可能为dns解析错误或证书已经过期，请尽快处理，应用名称：" + app.getName() + "，应用内容：" + app.getContent(),
+                                StrUtil.isEmpty(app.getMasterMobile()) ? null : List.of(app.getMasterMobile())
+                        )
+                );
+                ThreadUtil.sleep(2, TimeUnit.SECONDS);
+                log.error("获取证书到期时间失败:{}", url, e);
+                continue;
+            } catch (Exception e) {
+                log.error("获取证书到期时间失败:{}", url, e);
+            }
+
             if (expiryDate == null) {
                 continue;
             }
@@ -102,12 +125,14 @@ public class MonitorJob {
                                 StrUtil.isEmpty(app.getMasterMobile()) ? null : List.of(app.getMasterMobile())
                         )
                 );
+                ThreadUtil.sleep(2, TimeUnit.SECONDS);
             }
+
+
         }
     }
 
-    @SneakyThrows
-    private static Date getCertExpiryDate(String urlStr) {
+    private static Date getCertExpiryDate(String urlStr) throws IOException {
         if (urlStr == null || urlStr.isEmpty()) {
             return null;
         }
@@ -118,6 +143,7 @@ public class MonitorJob {
 
         URL url = new URL(urlStr);
         HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
+        //忽略证书验证
         connection.connect();
 
         java.security.cert.Certificate[] certificates = connection.getServerCertificates();

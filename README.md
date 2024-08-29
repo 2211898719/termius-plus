@@ -18,12 +18,19 @@
 ![img_24.png](docs/doc/images/img_24.png)
 ### sftp
 ![img_3.png](docs/doc/images/img_3.png) 
+### 编辑器功能
+![img.png](docs/doc/images/img_31.png)
+![img.png](docs/doc/images/img_29.png)
+#### 编辑器
+编辑器采用VSCode的上流库monaco-editor，支持多种语言高亮，语法提示，代码自动补全，代码格式化等功能。并接入了ai补全，可以自动完成一些常用代码。
+![img.png](docs/doc/images/img_30.png)
 #### 基本文件操作
 ![img_11.png](docs/doc/images/img_11.png)
 ![img_12.png](docs/doc/images/img_12.png)
 ##### 分屏拖拽可直接服务器对服务器传递文件
 ps:多浏览器标签页也可以
 ![img_13.png](docs/doc/images/img_13.png)
+
 
 ## 权限管理
 ##### 基于角色赋予服务器权限，支持多角色，多用户管理
@@ -32,6 +39,9 @@ ps:多浏览器标签页也可以
 
 ## 主题色
 ![img_4.png](docs/doc/images/img_4.png)
+### 字体
+默认采用JetBrainsMono-Bold字体
+![img_32.png](docs/doc/images/img_32.png)
 
 ## 自定义命令片段
 ![img_5.png](docs/doc/images/img_5.png)
@@ -88,6 +98,7 @@ ps:多浏览器标签页也可以
 git clone https://gitee.com/zimehjl/termius-plus.git
 cd termius-plus/scripts/docker
 #修改server.env文件中的配置
+#修改.env中的版本号当前最新为v1.6.4。查看server/pom.xml中的version可得知最新版本
 docker-compose up -d
 #根据docker-compose.yml中的front配置，访问http://ip:9999
 ```
@@ -100,7 +111,7 @@ ui框架 ant-design-vue
 
 终端部分采用 xterm.js
 
-代码编辑器 codemirror
+代码编辑器 codemirror,monaco-editor
 
 ``` shell
 # 进入前端目录
@@ -123,6 +134,13 @@ ssh连接，sftp，端口转发等功能使用 sshj
 钉钉机器人通知 dinger
 
 rdp转websocket apache guacamole
+
+#### 后端启动前运行
+```shell
+mvn compile
+```
+生成querydsl查询代码
+
 
 #### 运行
 建立数据库，要求 mysql8.0+

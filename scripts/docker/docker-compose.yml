@@ -2,7 +2,7 @@ version: "3"
 
 services:
   server:
-    image: registry.cn-hangzhou.aliyuncs.com/education-portal/termius-plus:server-${VERSION:?error}
+    image: registry.cn-hangzhou.aliyuncs.com/kuozhi/termius-plus:server-${VERSION:?error}
     restart: unless-stopped
     environment:
       - TZ=Asia/Shanghai
@@ -19,7 +19,7 @@ services:
       - mysql
       - some-guacd
   front:
-    image: registry.cn-hangzhou.aliyuncs.com/education-portal/termius-plus:front-${VERSION:?error}
+    image: registry.cn-hangzhou.aliyuncs.com/kuozhi/termius-plus:front-${VERSION:?error}
     restart: unless-stopped
     environment:
       - TZ=Asia/Shanghai
