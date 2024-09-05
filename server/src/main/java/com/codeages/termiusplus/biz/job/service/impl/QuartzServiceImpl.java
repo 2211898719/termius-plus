@@ -55,50 +55,53 @@ public class QuartzServiceImpl implements QuartzService {
                 if (params != null && params.size() > i) {
                     param.putAll(JSON.parseObject(params.get(i), Map.class));
                 }
-            }catch (Exception e) {
+            } catch (Exception e) {
                 log.error("解析参数失败", e);
             }
 
-            Long serverId = serverIds.get(i);
-            SSHClient sshClient = serverService.createSSHClient(serverId);
-            ServerDto serverDto = serverService.findById(serverId);
-            log.info("服务器id：{}，mvel脚本: {}", serverId, mvelScript);
-            DefaultLocalVariableResolverFactory variableResolverFactory = new DefaultLocalVariableResolverFactory();
+            try {
+                Long serverId = serverIds.get(i);
+                SSHClient sshClient = serverService.createSSHClient(serverId);
+                ServerDto serverDto = serverService.findById(serverId);
+                log.info("服务器id：{}，mvel脚本: {}", serverId, mvelScript);
+                DefaultLocalVariableResolverFactory variableResolverFactory = new DefaultLocalVariableResolverFactory();
 
-            MVEL.eval(
-                    mvelScript,
-                    Map.of(
-                            "dingerSender", SpringUtil.getBean(DingerSender.class),
-                            "MessageSubType", MessageSubType.class,
-                            "DingerRequest", DingerRequest.class,
-                            "session", new MySSHClient(sshClient),
-                            "server", serverDto,
-                            "param", param
-                    ),
-                    variableResolverFactory
-            );
+                MVEL.eval(
+                        mvelScript,
+                        Map.of(
+                                "dingerSender", SpringUtil.getBean(DingerSender.class),
+                                "MessageSubType", MessageSubType.class,
+                                "DingerRequest", DingerRequest.class,
+                                "session", new MySSHClient(sshClient),
+                                "server", serverDto,
+                                "param", param
+                        ),
+                        variableResolverFactory
+                );
+            } catch (Exception e) {
+                log.error("执行脚本失败: {}, {}", serverIds.get(i), mvelScript, e);
+            }
         }
 
     }
 
 
-
     @SneakyThrows
     public void createCronJob(MvelCronCreateDto dto) {
         JobDetail jobDetail = JobBuilder.newJob(RunMvelJob.class)
-                                        .setJobData(new JobDataMap(Map.of(
-                                                "mvelScript", dto.getMvelScript(),
-                                                "serverIds", dto.getServerIds(),
-                                                "params", dto.getParams(),
-                                                "cronExpression", dto.getCronExpression()
-                                        )))
-                                        .withIdentity(dto.getJobName(), dto.getJobGroup())
-                                        .build();
+                .setJobData(new JobDataMap(Map.of(
+                        "mvelScript", dto.getMvelScript(),
+                        "serverIds", dto.getServerIds(),
+                        "params", dto.getParams(),
+                        "cronExpression", dto.getCronExpression()
+                )))
+                .withIdentity(dto.getJobName(), dto.getJobGroup())
+                .build();
 
         CronTrigger trigger = TriggerBuilder.newTrigger()
-                                            .withIdentity(dto.getJobName(), dto.getJobGroup())
-                                            .withSchedule(CronScheduleBuilder.cronSchedule(dto.getCronExpression()))
-                                            .build();
+                .withIdentity(dto.getJobName(), dto.getJobGroup())
+                .withSchedule(CronScheduleBuilder.cronSchedule(dto.getCronExpression()))
+                .build();
 
         scheduler.scheduleJob(jobDetail, trigger);
     }
