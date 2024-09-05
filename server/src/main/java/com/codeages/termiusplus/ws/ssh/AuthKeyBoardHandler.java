@@ -2,6 +2,7 @@ package com.codeages.termiusplus.ws.ssh;
 
 import cn.hutool.json.JSONUtil;
 import com.codeages.termiusplus.biz.server.context.ServerContext;
+import com.codeages.termiusplus.security.AuthTokenFilter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -22,6 +23,7 @@ public class AuthKeyBoardHandler {
 
     @OnOpen
     public void onOpen(Session session) {
+        AuthTokenFilter.userIdThreadLocal.remove();
         int cnt = OnlineCount.incrementAndGet();
         HANDLER_ITEM_CONCURRENT_HASH_MAP.put(session.getId(), session);
         log.info("有连接加入，当前连接数为：{},sessionId={}", cnt, session.getId());
@@ -38,7 +40,6 @@ public class AuthKeyBoardHandler {
 
     @OnMessage
     public void onMessage(String message, Session session) {
-        // root@192.168.1.1 123456
         AuthKeyBoardDto authKeyBoardOnMessageDto = JSONUtil.toBean(message, AuthKeyBoardDto.class);
         ServerContext.AUTH_KEYBOARD_INTERACTIVE_POOL.get(authKeyBoardOnMessageDto.getServerKey())
                                                     .offer(authKeyBoardOnMessageDto.getPassword());

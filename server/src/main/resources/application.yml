@@ -105,7 +105,5 @@ monitor:
     count: ${MONITOR_COUNT:5}
     debounce: ${MONITOR_DEBOUNCE:6}
 
-kkfileview:
-    passIp: ${KKFILEVIEW_PASS_IP:127.0.0.1}
 fitten:
     url: ${FITTEN_URL:www.fitten.com}

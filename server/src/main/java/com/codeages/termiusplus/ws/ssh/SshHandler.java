@@ -8,6 +8,7 @@ import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONUtil;
+import com.codeages.termiusplus.biz.ErrorCode;
 import com.codeages.termiusplus.biz.log.dto.CommandLogCreateParams;
 import com.codeages.termiusplus.biz.log.dto.CommandLogDto;
 import com.codeages.termiusplus.biz.log.service.CommandLogService;
@@ -15,6 +16,7 @@ import com.codeages.termiusplus.biz.server.dto.ServerDto;
 import com.codeages.termiusplus.biz.server.service.ServerService;
 import com.codeages.termiusplus.biz.user.dto.UserDto;
 import com.codeages.termiusplus.biz.user.service.UserService;
+import com.codeages.termiusplus.exception.AppException;
 import com.codeages.termiusplus.security.AuthTokenFilter;
 import lombok.Getter;
 import lombok.Setter;
@@ -74,7 +76,12 @@ public class SshHandler {
                        @PathParam("sessionId") String sessionId,
                        @PathParam("serverId") Long serverId,
                        @PathParam("masterSessionId") String masterSessionId) {
+        log.info("ssh onOpen");
         Long userId = AuthTokenFilter.userIdThreadLocal.get();
+        if (userId == null) {
+            log.error("用户未登录");
+            throw new AppException(ErrorCode.INTERNAL_ERROR, "用户鉴权不通过");
+        }
         // 为了防止内存泄漏，这里需要手动清理
         AuthTokenFilter.userIdThreadLocal.remove();
 
@@ -435,10 +442,10 @@ public class SshHandler {
 
         public void reqAuthEditSession(Session session) {
             String username = sessions.stream()
-                                      .filter(s -> s.getValue().getId().equals(session.getId()))
-                                      .map(Pair::getKey)
-                                      .findFirst()
-                                      .orElse("");
+                    .filter(s -> s.getValue().getId().equals(session.getId()))
+                    .map(Pair::getKey)
+                    .findFirst()
+                    .orElse("");
 
             AuthEditSessionDto authEditSessionDto = new AuthEditSessionDto(username, session.getId(), null);
 

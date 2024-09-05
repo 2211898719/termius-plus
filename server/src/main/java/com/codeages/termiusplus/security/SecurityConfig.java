@@ -27,9 +27,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     private final ObjectMapper objectMapper;
 
-    @Value("${kkfileview.passIp}")
-    private String passIp;
-
     public SecurityConfig(UserAuthService userAuthService, AuthAccessDeniedHandler authAccessDeniedHandler, ObjectMapper objectMapper) {
         this.userAuthService = userAuthService;
         this.authAccessDeniedHandler = authAccessDeniedHandler;
@@ -65,7 +62,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .authorizeRequests()
                 .antMatchers("/api-admin/public/**").permitAll()
                 .antMatchers("/api-app/public/**").permitAll()
-                .antMatchers("/api-admin/sftp/preview/**").access("hasIpAddress('" + passIp + "')")
                 .antMatchers("/ws/**").permitAll()
                 .antMatchers("/socket/**").permitAll()
                 .antMatchers("/api-admin/file/get/**").permitAll()

@@ -87,12 +87,6 @@ public class SFTPController {
         sftpService.download(id, params.getRemotePath());
     }
 
-    @SneakyThrows
-    @GetMapping("/preview/{id}")
-    public void preview(@PathVariable String id, SFTPParams params) {
-        sftpService.download(id, params.getRemotePath());
-    }
-
     @PostMapping("/{id}/close")
     public void close(@PathVariable String id) {
         sftpService.close(id);
