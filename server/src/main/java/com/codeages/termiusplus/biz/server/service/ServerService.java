@@ -5,7 +5,7 @@ import com.codeages.termiusplus.biz.server.dto.ServerCreateParams;
 import com.codeages.termiusplus.biz.server.dto.ServerDto;
 import com.codeages.termiusplus.biz.server.dto.ServerUpdateParams;
 import com.codeages.termiusplus.biz.server.dto.TreeSortParams;
-import net.schmizz.sshj.SSHClient;
+import com.codeages.termiusplus.biz.sshj.SSHClient;
 
 import java.net.Proxy;
 import java.util.List;

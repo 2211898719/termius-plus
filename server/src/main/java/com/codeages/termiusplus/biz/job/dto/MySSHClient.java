@@ -1,7 +1,8 @@
 package com.codeages.termiusplus.biz.job.dto;
 
+import com.codeages.termiusplus.biz.sshj.SSHClient;
 import lombok.AllArgsConstructor;
-import net.schmizz.sshj.SSHClient;
+
 import net.schmizz.sshj.connection.channel.direct.Session;
 
 import java.io.BufferedReader;

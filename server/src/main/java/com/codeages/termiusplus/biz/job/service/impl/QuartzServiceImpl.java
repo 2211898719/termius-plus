@@ -13,7 +13,7 @@ import com.github.jaemon.dinger.core.entity.DingerRequest;
 import com.github.jaemon.dinger.core.entity.enums.MessageSubType;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import net.schmizz.sshj.SSHClient;
+import com.codeages.termiusplus.biz.sshj.SSHClient;
 import org.mvel2.MVEL;
 import org.mvel2.integration.impl.DefaultLocalVariableResolverFactory;
 import org.quartz.*;

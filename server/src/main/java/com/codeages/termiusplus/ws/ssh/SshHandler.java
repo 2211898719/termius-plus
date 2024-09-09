@@ -22,7 +22,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import net.schmizz.sshj.SSHClient;
+import com.codeages.termiusplus.biz.sshj.SSHClient;
 import net.schmizz.sshj.userauth.UserAuthException;
 import org.springframework.stereotype.Component;
 

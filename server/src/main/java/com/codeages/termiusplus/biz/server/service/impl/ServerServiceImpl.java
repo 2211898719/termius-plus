@@ -28,7 +28,7 @@ import com.codeages.termiusplus.ws.ssh.MessageDto;
 import com.querydsl.core.BooleanBuilder;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import net.schmizz.sshj.SSHClient;
+import com.codeages.termiusplus.biz.sshj.SSHClient;
 import net.schmizz.sshj.connection.channel.direct.Session;
 import net.schmizz.sshj.transport.TransportException;
 import net.schmizz.sshj.transport.verification.PromiscuousVerifier;
@@ -91,7 +91,7 @@ public class ServerServiceImpl implements ServerService {
         }
 
         Server server = serverRepository.findById(params.getId())
-                                        .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
 
         serverMapper.toUpdateEntity(server, params);
         serverRepository.save(server);
@@ -111,11 +111,11 @@ public class ServerServiceImpl implements ServerService {
     @Override
     public ServerDto findById(Long id) {
         ServerDto serverDto = serverRepository.findById(id)
-                                              .map(serverMapper::toDto)
-                                              .orElseThrow(() -> new AppException(
-                                                      ErrorCode.INVALID_ARGUMENT,
-                                                      "服务器不存在"
-                                              ));
+                .map(serverMapper::toDto)
+                .orElseThrow(() -> new AppException(
+                        ErrorCode.INVALID_ARGUMENT,
+                        "服务器不存在"
+                ));
 
         Long proxyId = serverDto.getProxyId();
         ServerDto currentServer = serverDto;
@@ -125,20 +125,20 @@ public class ServerServiceImpl implements ServerService {
             }
 
             currentServer = serverRepository.findById(currentServer.getParentId())
-                                            .map(serverMapper::toDto)
-                                            .orElseThrow(() -> new AppException(
-                                                    ErrorCode.INVALID_ARGUMENT,
-                                                    "服务器不存在"
-                                            ));
+                    .map(serverMapper::toDto)
+                    .orElseThrow(() -> new AppException(
+                            ErrorCode.INVALID_ARGUMENT,
+                            "服务器不存在"
+                    ));
             proxyId = currentServer.getProxyId();
         }
 
         if (proxyId != null) {
             serverDto.setProxy(proxyService.findById(proxyId)
-                                           .orElseThrow(() -> new AppException(
-                                                   ErrorCode.INVALID_ARGUMENT,
-                                                   "代理不存在"
-                                           )));
+                    .orElseThrow(() -> new AppException(
+                            ErrorCode.INVALID_ARGUMENT,
+                            "代理不存在"
+                    )));
         }
 
         return serverDto;
@@ -160,7 +160,7 @@ public class ServerServiceImpl implements ServerService {
             servers.add(
                     serverMapper.toUpdateAllEntity(
                             serverRepository.findById(serverUpdateParam.getId())
-                                            .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND)),
+                                    .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND)),
                             serverUpdateParam
                     )
             );
@@ -179,7 +179,7 @@ public class ServerServiceImpl implements ServerService {
         }
 
         Server server = serverRepository.findById(id)
-                                        .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
 
         serverRepository.delete(server);
     }
@@ -207,10 +207,10 @@ public class ServerServiceImpl implements ServerService {
 
         List<ProxyDto> proxyDtoList = proxyService.search(new ProxySearchParams(), Pageable.unpaged()).getContent();
         Map<Long, ProxyDto> proxyIdProxyMap = proxyDtoList.stream()
-                                                          .collect(Collectors.toMap(
-                                                                  ProxyDto::getId,
-                                                                  Function.identity()
-                                                          ));
+                .collect(Collectors.toMap(
+                        ProxyDto::getId,
+                        Function.identity()
+                ));
 
         List<TreeNode<Long>> servers = allParent
                 .stream()
@@ -268,16 +268,16 @@ public class ServerServiceImpl implements ServerService {
     public List<Server> findAllParent(List<Server> servers) {
         List<Server> parentServers = new ArrayList<>(servers);
         List<Long> parentIds = servers.stream()
-                                      .map(Server::getParentId)
-                                      .filter(pId -> pId != 0)
-                                      .collect(Collectors.toList());
+                .map(Server::getParentId)
+                .filter(pId -> pId != 0)
+                .collect(Collectors.toList());
         while (CollectionUtil.isNotEmpty(parentIds)) {
             List<Server> parentServer = serverRepository.findAllById(parentIds);
             parentServers.addAll(parentServer);
             parentIds = parentServer.stream()
-                                    .map(Server::getParentId)
-                                    .filter(pId -> pId != 0)
-                                    .collect(Collectors.toList());
+                    .map(Server::getParentId)
+                    .filter(pId -> pId != 0)
+                    .collect(Collectors.toList());
         }
 
         return parentServers;
@@ -345,9 +345,9 @@ public class ServerServiceImpl implements ServerService {
         ssh.setTimeout(3600 * 1000);
         ssh.setConnectTimeout(3600 * 1000);
         ssh.getTransport().setTimeoutMs(0);
-        if (Boolean.TRUE.equals(server.getKeepAlive())) {
-            ssh.getConnection().getKeepAlive().setKeepAliveInterval(60);
-        }
+//        if (Boolean.TRUE.equals(server.getKeepAlive())) {
+        ssh.getConnection().getKeepAlive().setKeepAliveInterval(60);
+//        }
         //设置sshj代理
         if (server.getProxy() != null) {
             ssh.setSocketFactory(new SocketFactory() {
@@ -398,7 +398,7 @@ public class ServerServiceImpl implements ServerService {
             ssh.connect(server.getIp(), server.getPort().intValue());
         } catch (ConnectException connectException) {
             throw new AppException(ErrorCode.INVALID_ARGUMENT, "连接失败，请检查网络或者服务器是否开启");
-        }catch (TransportException e) {
+        } catch (TransportException e) {
             throw new AppException(ErrorCode.INVALID_ARGUMENT, "连接失败，请检查服务器配置");
         }
 
@@ -482,18 +482,18 @@ public class ServerServiceImpl implements ServerService {
     @Override
     public List<Tree<Long>> groupList() {
         List<TreeNode<Long>> servers = serverRepository.findAllByIsGroupTrue()
-                                                       .stream()
-                                                       .map(e -> {
-                                                           TreeNode<Long> longTreeNode = new TreeNode<>(
-                                                                   e.getId(),
-                                                                   e.getParentId(),
-                                                                   e.getName(),
-                                                                   e.getSort()
-                                                           );
-                                                           longTreeNode.setExtra(BeanUtil.beanToMap(e));
-                                                           return longTreeNode;
-                                                       })
-                                                       .collect(Collectors.toList());
+                .stream()
+                .map(e -> {
+                    TreeNode<Long> longTreeNode = new TreeNode<>(
+                            e.getId(),
+                            e.getParentId(),
+                            e.getName(),
+                            e.getSort()
+                    );
+                    longTreeNode.setExtra(BeanUtil.beanToMap(e));
+                    return longTreeNode;
+                })
+                .collect(Collectors.toList());
 
         Tree<Long> root = new Tree<>();
         root.setId(0L);
