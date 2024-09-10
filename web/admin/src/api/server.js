@@ -28,5 +28,8 @@ export const serverApi = {
     },
     get(serverId){
         return client.get(`/api-admin/server/${serverId}/get`);
+    },
+    aiChat(params){
+        return client.post("/api-admin/ai/chat",  params);
     }
 }

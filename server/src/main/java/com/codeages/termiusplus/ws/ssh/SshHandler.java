@@ -100,6 +100,10 @@ public class SshHandler {
 
             log.info("创建连接成功：{}", session.getId());
             SSH_POOL.put(session.getId(), handlerItem);
+            String message = JSONUtil.toJsonStr(new MessageDto(EventType.SESSION,
+                    JSONUtil.toJsonStr(session.getId())
+            ));
+            handlerItem.sendMasterBinary(message);
         } else {
             // 如果不是0，说明是子连接，找到主连接，然后加入到主连接的sessions中
             HandlerItem handlerItem = SSH_POOL.get(masterSessionId);
@@ -285,6 +289,7 @@ public class SshHandler {
 
         private final File logFile;
         private final BufferedOutputStream logFileOutputStream;
+        private final RollingString lastCommandLog;
 
         @SneakyThrows
         HandlerItem(Long userId, String username, Long serverId, javax.websocket.Session session, SSHClient sshClient) {
@@ -294,7 +299,6 @@ public class SshHandler {
 
             this.masterSessionId = session.getId();
             this.masterSession = session;
-
             net.schmizz.sshj.connection.channel.direct.Session shellSession = sshClient.startSession();
             shellSession.allocatePTY("xterm", 80, 24, 640, 480, Map.of());
             shellSession.setAutoExpand(true);
@@ -329,6 +333,7 @@ public class SshHandler {
             logFileOutputStream = IoUtil.toBuffered(FileUtil.getOutputStream(logFile), MAX_LOG_BUFFER_SIZE);
 
             threadPoolExecutor.execute(this);
+            lastCommandLog = new RollingString();
         }
 
 
@@ -422,6 +427,7 @@ public class SshHandler {
                     String originData = new String(Arrays.copyOfRange(buffer, 0, i), openSession.getRemoteCharset());
                     MessageDto messageDto = new MessageDto(EventType.COMMAND, originData);
                     String s = JSONUtil.toJsonStr(messageDto);
+                    lastCommandLog.append(s);
                     logFileOutputStream.write(originData.getBytes());
                     sessions.forEach(session -> sendBinary(session.getValue(), s));
                 }
@@ -434,6 +440,10 @@ public class SshHandler {
 
                 sessions.stream().map(Pair::getValue).forEach(SshHandler.this::destroy);
             }
+        }
+
+        public String getLastCommandLog() {
+            return lastCommandLog.toString();
         }
 
         public void active() {

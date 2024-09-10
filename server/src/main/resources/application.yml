@@ -107,3 +107,5 @@ monitor:
 
 fitten:
     url: ${FITTEN_URL:www.fitten.com}
+spark:
+    httpKey: ${SPARK_HTTP_KEY:}

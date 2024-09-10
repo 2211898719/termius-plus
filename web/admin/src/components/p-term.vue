@@ -60,6 +60,7 @@ let frontColor = useStorage('frontColor', "#ffffff")
 let backColor = useStorage('backColor', "#000000")
 let AutoComplete = useStorage('autoComp', false)
 let currentFont = useStorage('currentFont', 'JetBrainsMono-ExtraBold')
+let socketSessionId = ref(null)
 
 let fontChannel = new BroadcastChannel("font")
 fontChannel.onmessage = (e) => {
@@ -336,6 +337,12 @@ const initTerm = () => {
         }
       case "MASTER_CLOSE":
         term.write("\r\n主会话已关闭\r\n")
+        return {
+          type: "MASTER_CLOSE",
+          data: ""
+        }
+      case "SESSION":
+        socketSessionId.value = data.data
         return {
           type: "MASTER_CLOSE",
           data: ""
@@ -617,6 +624,9 @@ defineExpose({
   requestAuthEditSession,
   setAutoComplete: (value) => {
     AutoComplete.value = value
+  },
+  getSessionId: () => {
+    return socketSessionId.value
   }
 })
 

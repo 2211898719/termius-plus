@@ -10,6 +10,10 @@ import {useStorage} from "@vueuse/core";
 import {useShepherd} from 'vue-shepherd'
 import OsEnum from "@/enums/OsEnum";
 import PRdp from "@/components/p-rdp.vue";
+import {serverApi} from "@/api/server";
+import markdownItHighlightjs from 'markdown-it-highlightjs';
+import 'highlight.js/styles/agate.css'
+import hljs from "highlight.js";
 
 const emit = defineEmits(['hot'])
 
@@ -95,7 +99,7 @@ const changeSftpEnable = () => {
   })
 }
 
-let rightTabKey = ref('remark')
+let rightTabKey = ref('AI')
 
 const commandData = ref([])
 
@@ -249,10 +253,106 @@ onMounted(() => {
       ]
     },
   ])
-  tour.onclose =()=>{
+  tour.onclose = () => {
   }
   tour.start();
 });
+
+let aiMessage = ref("")
+let chatLoading = ref(false)
+let AiResEl = ref(null)
+const chat = async () => {
+  chatLoading.value = true
+  try {
+    let res = await serverApi.aiChat({
+      sessionId: PTermRef.value.getSessionId(),
+      message: "写一条linux命令，" + aiMessage.value,
+      prompt: "你是一个专业的linux命令生成器，以markDown形式回答命令生成结果，，以下是用户想询问命令的前置信息：\n{{commandLog}}",
+    })
+    const hljs = require('highlight.js');
+    const md = require('markdown-it')({
+      html: true,
+      linkify: true,
+      typographer: true,
+      highlight: function (str, lang) {
+        if (lang && hljs.getLanguage(lang)) {
+          try {
+            return (
+                '<pre class="hljs"><code>' +
+                hljs.highlight(lang, str, true).value +
+                '</code></pre>'
+            );
+          } catch (__) {
+          }
+        }
+        return (
+            '<pre class="hljs"><code>' +
+            md.utils.escapeHtml(str) +
+            '</code></pre>'
+        );
+      },
+    });
+    md.use(markdownItHighlightjs);
+    md.use(require('markdown-it-container'), 'bash', {
+      marker: '```',
+      validate: function (params) {
+        return params.trim().match(/^bash\s+(.*)$/);
+      },
+
+      render: function (tokens, idx) {
+        let m = tokens[idx].info.trim().match(/^bash\s+(.*)$/);
+
+        if (tokens[idx].nesting === 1) {
+          // opening tag
+          return '<details><summary>' + md.utils.escapeHtml(m[1]) + '</summary>\n';
+
+        } else {
+          // closing tag
+          return '</details>\n';
+        }
+      }
+    });
+
+    console.log(res.message, md.render(res.message));
+
+    let root = document.createElement('div');
+    root.innerHTML = md.render(res.message);
+    //找到所有的pre节点下的code节点
+    root.querySelectorAll('pre').forEach(pre => {
+      //在pre内头部添加一个div
+      pre.style.position = "relative"
+      let execButton = document.createElement("div");
+      execButton.style.position = "absolute"
+      execButton.style.top = "4px"
+      execButton.style.right = "4px"
+      execButton.style.cursor = "pointer"
+      execButton.innerText = "执行"
+      execButton.style.color = "#fff"
+      //点击时间
+      execButton.addEventListener("click", () => {
+        let code = pre.querySelector("code").textContent
+        handleExecCommand(code)
+        console.log(code)
+      })
+      pre.prepend(execButton)
+    })
+
+    AiResEl.value.innerHTML = ""
+    AiResEl.value.appendChild(root)
+  } catch (e) {
+    console.error(e)
+  } finally {
+    chatLoading.value = false
+  }
+
+}
+
+
+//fixme 不知道为什么这里的容器不能滚动 要手动代理一下
+let CardContainerEl = ref(null)
+onMounted(() => {
+  CardContainerEl.value.addEventListener('wheel', (e) => CardContainerEl.value.scrollTop += e.deltaY)
+})
 
 </script>
 
@@ -289,7 +389,8 @@ onMounted(() => {
               </template>
               <!--windows的sftp其实是上传到guacamoleServer-->
               <p-sftp class="sftp" ref="sftpEl" :operation-id="server.operationId" :path="server.path"
-                      :server-id="server.os===OsEnum.WINDOWS.value?server.guacamoleServerId:server.id" :fixedPath="server.guacamoleServerFilePath" :server-name="server.name"></p-sftp>
+                      :server-id="server.os===OsEnum.WINDOWS.value?server.guacamoleServerId:server.id"
+                      :fixedPath="server.guacamoleServerFilePath" :server-name="server.name"></p-sftp>
             </a-card>
           </div>
         </div>
@@ -393,8 +494,20 @@ onMounted(() => {
                 </div>
               </div>
 
-              <div :class="{remark:true,'remark-enter':remarkStatus}" class="card-container">
+              <div :class="{remark:true,'remark-enter':remarkStatus}" ref="CardContainerEl" class="card-container">
                 <a-tabs v-model:activeKey="rightTabKey" style="margin: 8px" type="card">
+                  <a-tab-pane key="AI" tab="AI">
+                    <div>
+                      <a-input v-model:value="aiMessage"></a-input>
+                      <div style="margin-top: 8px;text-align: center">
+
+                        <a-button @click="chat" type="primary" :loading="chatLoading">询问</a-button>
+                      </div>
+                      <div class="ai-res" ref="AiResEl">
+
+                      </div>
+                    </div>
+                  </a-tab-pane>
                   <a-tab-pane key="remark" tab="备注">
                     <div class="w-e-text-container">
                       <div data-slate-editor v-html="server.remark">
@@ -533,6 +646,10 @@ onMounted(() => {
 
     .remark-enter {
       width: 70%;
+
+      .ai-res {
+        margin-top: 16px;
+      }
     }
 
     .left {
