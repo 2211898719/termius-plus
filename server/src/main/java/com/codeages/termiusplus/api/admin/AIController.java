@@ -11,10 +11,10 @@ import com.codeages.termiusplus.ws.ssh.SshHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import reactor.core.publisher.Flux;
 
 import java.util.Map;
 import java.util.Objects;
@@ -47,16 +47,33 @@ public class AIController {
         return Map.of("completion", map.get("generated_text").replace("<|endoftext|>", ""));
     }
 
-    @PostMapping("/chat")
-    public Map<String, Object> chat(@RequestBody AIChatParams params) {
+    @GetMapping(value = "/chat", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter streamChat(AIChatParams params) {
+        SseEmitter sseEmitter = new SseEmitter();
+
         String content = params.getPrompt();
         SshHandler.HandlerItem handlerItem = ServerContext.SSH_POOL.get(params.getSessionId());
+        String message = params.getMessage();
         String lastCommandLog = handlerItem.getLastCommandLog();
+        message = message.replace("{{commandLog}}", Objects.requireNonNullElse(lastCommandLog, ""));
         content = content.replace("{{commandLog}}", Objects.requireNonNullElse(lastCommandLog, ""));
 
-        String chat = aiService.chat(content, params.getMessage());
+        Flux<String> chat = aiService.chat(content, message);
+        chat.map(s->Map.of("message",s)).subscribe(data -> {
+            try {
+                sseEmitter.send(data);
+            } catch (Exception e) {
+                sseEmitter.completeWithError(e);
+            }
+        }, error -> {
+            try {
+                sseEmitter.completeWithError(error);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }, sseEmitter::complete);
 
-        return Map.of("message", chat);
+        return sseEmitter;
     }
 
 

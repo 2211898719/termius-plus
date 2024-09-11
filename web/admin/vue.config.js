@@ -11,6 +11,7 @@ module.exports = defineConfig({
     lintOnSave: false,
     devServer: {
         port: 8081,
+        compress: false,
         proxy: {
             '/api-admin': {
                 target: process.env.VUE_APP_PROXY_FOR_API,

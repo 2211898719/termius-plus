@@ -332,10 +332,8 @@ const handleDblclick = (item) => {
 }
 
 onMounted(() => {
-  let elements = document.getElementsByClassName('ant-row');
-  for (let i = 0; i < elements.length; i++) {
-    createSortEl(elements[i])
-  }
+  let elements = document.querySelector('.server-root .ant-row');
+  createSortEl(elements)
 })
 
 const handleAddGroup = () => {

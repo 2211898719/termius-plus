@@ -96,6 +96,22 @@ let frontFamilyViewFront = ref('')
 
 import viewData from "@/assets/view.json";
 
+let aiSystem = useStorage("aiSystem", "你是一个专业的linux命令生成器，以markDown形式回答命令生成结果。")
+
+let aiMessagePrefix = useStorage("aiMessagePrefix", "{{commandLog}} \n写一条linux命令，")
+
+let aiSettingChannel = new BroadcastChannel("aiSetting")
+
+const saveAI = () => {
+  aiSettingChannel.postMessage({aiSystem: aiSystem.value, aiMessagePrefix: aiMessagePrefix.value})
+  message.success("保存成功");
+}
+
+aiSettingChannel.onmessage = (e) => {
+  aiSystem.value = e.data.aiSystem
+  aiMessagePrefix.value = e.data.aiMessagePrefix
+}
+
 </script>
 
 <template>
@@ -123,13 +139,35 @@ import viewData from "@/assets/view.json";
           <a-button type="primary" @click.prevent="saveStyle">保存</a-button>
         </a-form-item>
       </a-form>
-      <a-card title="字体"  class="font-card">
+      <a-card title="字体" class="font-card">
         <a-card-grid @click="selectFont(item)"
                      :style="`font-family: '${item.name}', Arial, sans-serif`"
                      :class="{'font-item':true, 'font-selected': item.name === currentFont}"
                      v-for="item in fonts" :key="item.name" :title="item.name">
           {{ item.name }}
         </a-card-grid>
+      </a-card>
+      <a-card title="AI提示词" class="font-card">
+        <a-form :label-col="{ span: 4 }"
+                :wrapper-col="{ span: 20 }"
+                style="margin-top: 30px"
+                autocomplete="off">
+          <a-form-item label="AI系统提示词">
+            <a-textarea auto-size v-model:value="aiSystem"/>
+          </a-form-item>
+          <a-form-item label="AI消息前缀">
+            <a-textarea auto-size v-model:value="aiMessagePrefix"/>
+          </a-form-item>
+          <a-form-item label="说明">
+            <div v-pre>
+              {{commandLog}}用于插入终端上下文信息
+            </div>
+          </a-form-item>
+
+          <a-form-item :wrapper-col="{ span: 14, offset: 4 }">
+            <a-button type="primary" @click.prevent="saveAI">保存</a-button>
+          </a-form-item>
+        </a-form>
       </a-card>
     </a-card>
     <a-drawer title="字体预览" width="80%" v-model:visible="frontFamilyView" placement="right">
@@ -139,30 +177,33 @@ import viewData from "@/assets/view.json";
 </template>
 
 <style scoped lang="less">
-.content-wrapper{
+.content-wrapper {
   height: @height;
   overflow: scroll;
 }
-:deep(.font-card){
+
+:deep(.font-card) {
   margin-top: 20px;
-  .ant-card-body{
+
+  .ant-card-body {
     max-width: 100%;
     //栅格布局
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     grid-gap: 8px;
 
-    &:before{
+    &:before {
       display: none;
     }
 
-    .font-item{
+    .font-item {
       width: 200px;
       height: 100px;
       //padding: 8px !important;
 
     }
-    .font-selected{
+
+    .font-selected {
       border: 1px solid #1890ff;
     }
   }
