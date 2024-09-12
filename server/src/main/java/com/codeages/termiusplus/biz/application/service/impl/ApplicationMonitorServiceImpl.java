@@ -9,9 +9,11 @@ import cn.hutool.json.JSONUtil;
 import com.codeages.termiusplus.biz.ErrorCode;
 import com.codeages.termiusplus.biz.application.config.ApplicationMonitorRequestConfig;
 import com.codeages.termiusplus.biz.application.dto.*;
+import com.codeages.termiusplus.biz.application.entity.ApplicationMonitorLog;
 import com.codeages.termiusplus.biz.application.entity.QApplicationMonitor;
 import com.codeages.termiusplus.biz.application.enums.ApplicationMonitorTypeEnum;
 import com.codeages.termiusplus.biz.application.mapper.ApplicationMonitorMapper;
+import com.codeages.termiusplus.biz.application.repository.ApplicationMonitorLogRepository;
 import com.codeages.termiusplus.biz.application.repository.ApplicationMonitorRepository;
 import com.codeages.termiusplus.biz.application.service.ApplicationMonitorService;
 import com.codeages.termiusplus.exception.AppException;
@@ -26,9 +28,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import javax.validation.Validator;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -42,6 +46,8 @@ public class ApplicationMonitorServiceImpl implements ApplicationMonitorService 
 
     private final DingerSender dingerSender;
 
+    private final ApplicationMonitorLogRepository applicationMonitorLogRepository;
+
     @Value("${monitor.count:3}")
     private int monitorCount;
 
@@ -50,11 +56,12 @@ public class ApplicationMonitorServiceImpl implements ApplicationMonitorService 
 
     public ApplicationMonitorServiceImpl(ApplicationMonitorRepository applicationMonitorRepository,
                                          ApplicationMonitorMapper applicationMonitorMapper,
-                                         Validator validator, DingerSender dingerSender) {
+                                         Validator validator, DingerSender dingerSender, ApplicationMonitorLogRepository applicationMonitorLogRepository) {
         this.applicationMonitorRepository = applicationMonitorRepository;
         this.applicationMonitorMapper = applicationMonitorMapper;
         this.validator = validator;
         this.dingerSender = dingerSender;
+        this.applicationMonitorLogRepository = applicationMonitorLogRepository;
     }
 
     @Override
@@ -176,6 +183,12 @@ public class ApplicationMonitorServiceImpl implements ApplicationMonitorService 
                     "应用出现异常，应用名称：" + applicationMonitorDto.getApplicationName() + "，应用内容：" + applicationMonitorDto.getApplicationContent(),
                     testDto
             );
+
+            ApplicationMonitorLog applicationMonitorLog = new ApplicationMonitorLog();
+            applicationMonitorLog.setApplicationId(applicationMonitorDto.getApplicationId());
+            applicationMonitorLog.setDate(DateUtil.date());
+            applicationMonitorLogRepository.save(applicationMonitorLog);
+
             applicationMonitorUpdateParams.setFailureCount(applicationMonitorDto.getFailureCount() == null ? 1L : applicationMonitorDto.getFailureCount() + 1);
             applicationMonitorUpdateParams.setFailureTime(DateUtil.date());
             applicationMonitorUpdateParams.setResponseResult(testDto.getResponse());
@@ -199,6 +212,18 @@ public class ApplicationMonitorServiceImpl implements ApplicationMonitorService 
 
         applicationMonitorUpdateParams.setResponseTime(testDto.getResponseTime());
         update(applicationMonitorUpdateParams);
+    }
+
+    @Override
+    public List<ApplicationMonitorLogCountDto> getApplicationErrorRank() {
+        Date startDate = DateUtil.beginOfYear(DateUtil.date());
+        Date endDate = DateUtil.endOfYear(DateUtil.date());
+        return applicationMonitorLogRepository.rankApplicationMonitorLogs(startDate, endDate, Pageable.ofSize(10)).getContent().stream().map(e -> {
+            ApplicationMonitorLogCountDto dto = new ApplicationMonitorLogCountDto();
+            dto.setApplicationId(Long.valueOf(String.valueOf(e[0])));
+            dto.setErrorSeconds(Long.valueOf(String.valueOf(e[1])));
+            return dto;
+        }).collect(Collectors.toList());
     }
 }
 

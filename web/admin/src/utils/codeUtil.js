@@ -1,5 +1,3 @@
-import chatWindowScollLock from "lodash/seq";
-
 const States = {
 
     text: 0, // 文本状态
@@ -97,12 +95,9 @@ export class Pipe {
 
     start(cell) {
         this.target = cell
-
-
         const recursiveTimeoutFunction = () => requestAnimationFrame(() => {
             this.consume(this.getFirstStr())
             this.pop()
-            console.log(1)
             this.timer = recursiveTimeoutFunction()
         })
 
@@ -142,7 +137,7 @@ export function findLastNonEmptyTextNode(node) {
             // 去除首尾空格和换行符，并检查内容是否为空
             const trimmedText = node.nodeValue?.trim().replace(/\n/g, '');
             if (trimmedText) {
-                return node.parentNode;
+                return node;
             }
         } else if (node.childNodes.length > 0) {
             for (let i = node.childNodes.length - 1; i >= 0; i--) {

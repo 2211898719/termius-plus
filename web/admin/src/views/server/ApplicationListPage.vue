@@ -11,7 +11,7 @@ import {copyToClipboard} from "@/utils/copyUtil";
 import PEnumSelect from "@/components/p-enum-select.vue";
 import ApplicationMonitorTypeEnum from "@/enums/ApplicationMonitorTypeEnum";
 import MethodEnum from "@/enums/MethodEnum";
-import {formatSeconds} from "@/components/process";
+import {formatSeconds, formatSecondsMax} from "@/components/process";
 import {serverApi} from "@/api/server";
 import PCascader from "@/components/p-cascader.vue";
 import GroupCascader from "@/components/group-cascader.vue";
@@ -19,11 +19,11 @@ import RelationGraph from 'relation-graph/vue3'
 import {proxyApi} from "@/api/proxy";
 import PSelect from "@/components/p-select.vue";
 
-let termiusStyleColumn = ref(Math.floor(window.innerWidth / 350));
+let termiusStyleColumn = ref(Math.floor(window.innerWidth / 400));
 
 
 const resizeObserver = new ResizeObserver(() => {
-  termiusStyleColumn.value = Math.floor(window.innerWidth / 350);
+  termiusStyleColumn.value = Math.floor(window.innerWidth / 400);
 });
 
 resizeObserver.observe(window.document.body);
@@ -59,8 +59,7 @@ const creationState = reactive({
   monitorConfig: {
     url: "",
     method: MethodEnum.GET.value,
-    headers: [
-    ],
+    headers: [],
     body: "",
     responseRegex: "",
     timeRange: null,
@@ -318,7 +317,7 @@ const handleDblclick = (item) => {
   }
 
   openModalData.value = item
-  if ((!isJSON(item.identity) || JSON.parse(item.identity).length === 0) && (!item.serverList||item.serverList?.length === 0)) {
+  if ((!isJSON(item.identity) || JSON.parse(item.identity).length === 0) && (!item.serverList || item.serverList?.length === 0)) {
     window.open(item.content, '_blank')
     return;
   }
@@ -526,10 +525,47 @@ const handleOpenApplicationContact = (item) => {
 
 }
 
+let applicationErrorRankData = ref([])
+const getApplicationErrorRank = async () => {
+  let data = await applicationApi.getApplicationErrorRank()
+  let i = 1;
+  data.forEach(item => {
+    item.rank = i++
+  })
+  data[0].errorSeconds= 10000000
+  applicationErrorRankData.value = data
+}
+
+getApplicationErrorRank()
+
 defineExpose({
   getProxyData,
   setProxyId
 })
+
+let columns = [
+  {
+    title: '排名',
+    dataIndex: 'rank',
+    key: 'rank',
+    width: '60px'
+  },
+  {
+    title: '应用名称',
+    dataIndex: 'applicationName',
+    key: 'applicationName',
+  },
+  {
+    title: '宕机时间',
+    key: 'downTime',
+    dataIndex: 'downTime',
+    width: '100px',
+  },
+  {
+    title: '年稳定性',
+    key: 'yearStability',
+  },
+];
 
 </script>
 
@@ -538,93 +574,115 @@ defineExpose({
     <div class="server-pane">
       <a-space direction="vertical" size="middle" style="width: 100%;">
         <a-card :bodyStyle="{padding:'12px 12px'}" style="border:none">
-          <div class="body-root">
-            <div style="display: flex;justify-content: space-between">
-              <a-breadcrumb>
-                <a-breadcrumb-item v-for="item in groupBreadcrumb" :key="item.id" @click="handleDblclick(item)">
-                  <a>{{ item.name }}</a>
-                </a-breadcrumb-item>
-              </a-breadcrumb>
+          <div style="display: flex">
+            <div class="body-root" style="width: 70%">
+              <div style="display: flex;justify-content: space-between">
+                <a-breadcrumb>
+                  <a-breadcrumb-item v-for="item in groupBreadcrumb" :key="item.id" @click="handleDblclick(item)">
+                    <a>{{ item.name }}</a>
+                  </a-breadcrumb-item>
+                </a-breadcrumb>
 
-              <div>
-                <a-button @click="getApplicationList" class="my-button">刷新</a-button>
-                <a-button @click="handleAddApplication" class="ml10 my-button">新增应用</a-button>
-                <a-button class="ml10 my-button" @click="handleAddGroup">新增分组</a-button>
+                <div>
+                  <a-button @click="getApplicationList" class="my-button">刷新</a-button>
+                  <a-button @click="handleAddApplication" class="ml10 my-button">新增应用</a-button>
+                  <a-button class="ml10 my-button" @click="handleAddGroup">新增分组</a-button>
+                </div>
+              </div>
+              <div class="mt30 server">
+                <a-list :grid="{ gutter: 16, column: termiusStyleColumn }" :data-source="currentData" row-key="id">
+                  <template #renderItem="{ item }">
+                    <a-dropdown :trigger="['contextmenu']">
+
+                      <a-list-item class="sortEl" @dblclick="handleDblclick(item)">
+                        <template #actions>
+                          <a>
+                            <edit-outlined @click="handleEditApplication(item)"/>
+                          </a>
+                        </template>
+
+                        <a-badge-ribbon
+                            :text="item.failureCount?(item.isGroup?'异常':('异常'+(formatSeconds(item.failureCount*60)))):'正常'"
+                            :color="item.failureCount?'red':'green'"
+                            :class="{none:(!item.monitorType&&!item.isGroup)||item.failureCount===null}">
+                          <a-card>
+                            <a-skeleton avatar :title="false" :loading="!!item.loading" active>
+                              <a-list-item-meta
+                                  :description="item.isGroup?'group':item.content"
+                              >
+                                <template #title>
+                                  <span>{{ item.name }}</span>
+                                </template>
+                                <template #avatar>
+                                  <appstore-outlined v-if="item.isGroup" class="icon-server"/>
+                                  <svg v-else
+                                       class="icon-server"
+                                       style="width: 1em;color: #E45F2B;height: 1em;vertical-align: middle;fill: currentColor;overflow: hidden;"
+                                       viewBox="0 0 1024 1024"
+                                       version="1.1"
+                                       xmlns="http://www.w3.org/2000/svg"
+                                       p-id="4228">
+                                    <path
+                                        d="M889.75872 276.04992l-0.13824-0.0768-366.1312-209.75616a29.81376 29.81376 0 0 0-15.01696-4.00896 29.952 29.952 0 0 0-15.16032 4.08576L127.37536 276.03456c-9.02144 5.22752-15.0016 14.83264-15.01696 25.83552v419.60448c0 10.69056 5.73952 20.47488 15.01696 25.87648l366.07488 209.81248c4.3264 2.45248 9.50272 3.89632 15.01696 3.89632s10.69056-1.44384 15.17056-3.97824l365.9776-209.73568c9.0368-5.23264 15.01696-14.85824 15.01696-25.87648V301.8496a29.77792 29.77792 0 0 0-14.8736-25.79968zM508.47232 126.464l314.0864 179.98848-314.0864 181.36064-319.10912-178.45248L508.47232 126.464zM172.43136 368.50176l305.664 170.95168 0.3584 340.26496-306.0224-175.39584v-335.8208z m672.13312 335.81568l-306.03264 175.37536-0.3584-339.90656 306.39104-176.99328V704.31744z"
+                                        fill=""
+                                        p-id="4229"></path>
+                                  </svg>
+                                </template>
+                              </a-list-item-meta>
+                            </a-skeleton>
+                          </a-card>
+                        </a-badge-ribbon>
+                      </a-list-item>
+                      <template #overlay>
+                        <a-menu>
+                          <a-menu-item v-if="!item.isGroup" key="2" @click="handleDblclick(item)">
+                            <link-outlined/>
+                            打开
+                          </a-menu-item>
+                          <a-menu-item key="4" @click="handleEditApplication(item)">
+                            <edit-outlined/>
+                            修改
+                          </a-menu-item>
+                          <a-menu-item key="5" @click="handleOpenApplicationContact(item)">
+                            <read-outlined/>
+                            关系图
+                          </a-menu-item>
+                          <a-menu-item key="3" @click="handleCopyApplication(item)">
+                            <CopyOutlined/>
+                            复制
+                          </a-menu-item>
+                          <a-menu-item key="1" @click="handleDelApplication(item)">
+                            <DeleteOutlined/>
+                            删除
+                          </a-menu-item>
+                        </a-menu>
+                      </template>
+                    </a-dropdown>
+                  </template>
+                </a-list>
               </div>
             </div>
-            <div class="mt30 server">
-              <a-list :grid="{ gutter: 16, column: termiusStyleColumn }" :data-source="currentData" row-key="id">
-                <template #renderItem="{ item }">
-                  <a-dropdown :trigger="['contextmenu']">
-
-                    <a-list-item class="sortEl" @dblclick="handleDblclick(item)">
-                      <template #actions>
-                        <a>
-                          <edit-outlined @click="handleEditApplication(item)"/>
-                        </a>
-                      </template>
-
-                      <a-badge-ribbon :text="item.failureCount?(item.isGroup?'异常':('异常'+(formatSeconds(item.failureCount*60)))):'正常'"
-                                      :color="item.failureCount?'red':'green'"
-                                      :class="{none:(!item.monitorType&&!item.isGroup)||item.failureCount===null}">
-                        <a-card>
-                          <a-skeleton avatar :title="false" :loading="!!item.loading" active>
-                            <a-list-item-meta
-                                :description="item.isGroup?'group':item.content"
-                            >
-                              <template #title>
-                                <span>{{ item.name }}</span>
-                              </template>
-                              <template #avatar>
-                                <appstore-outlined v-if="item.isGroup" class="icon-server"/>
-                                <svg v-else
-                                     class="icon-server"
-                                     style="width: 1em;color: #E45F2B;height: 1em;vertical-align: middle;fill: currentColor;overflow: hidden;"
-                                     viewBox="0 0 1024 1024"
-                                     version="1.1"
-                                     xmlns="http://www.w3.org/2000/svg"
-                                     p-id="4228">
-                                  <path
-                                      d="M889.75872 276.04992l-0.13824-0.0768-366.1312-209.75616a29.81376 29.81376 0 0 0-15.01696-4.00896 29.952 29.952 0 0 0-15.16032 4.08576L127.37536 276.03456c-9.02144 5.22752-15.0016 14.83264-15.01696 25.83552v419.60448c0 10.69056 5.73952 20.47488 15.01696 25.87648l366.07488 209.81248c4.3264 2.45248 9.50272 3.89632 15.01696 3.89632s10.69056-1.44384 15.17056-3.97824l365.9776-209.73568c9.0368-5.23264 15.01696-14.85824 15.01696-25.87648V301.8496a29.77792 29.77792 0 0 0-14.8736-25.79968zM508.47232 126.464l314.0864 179.98848-314.0864 181.36064-319.10912-178.45248L508.47232 126.464zM172.43136 368.50176l305.664 170.95168 0.3584 340.26496-306.0224-175.39584v-335.8208z m672.13312 335.81568l-306.03264 175.37536-0.3584-339.90656 306.39104-176.99328V704.31744z"
-                                      fill=""
-                                      p-id="4229"></path>
-                                </svg>
-                              </template>
-                            </a-list-item-meta>
-                          </a-skeleton>
-                        </a-card>
-                      </a-badge-ribbon>
-                    </a-list-item>
-                    <template #overlay>
-                      <a-menu>
-                        <a-menu-item v-if="!item.isGroup" key="2" @click="handleDblclick(item)">
-                          <link-outlined/>
-                          打开
-                        </a-menu-item>
-                        <a-menu-item key="4" @click="handleEditApplication(item)">
-                          <edit-outlined/>
-                          修改
-                        </a-menu-item>
-                        <a-menu-item key="5" @click="handleOpenApplicationContact(item)">
-                          <read-outlined/>
-                          关系图
-                        </a-menu-item>
-                        <a-menu-item key="3" @click="handleCopyApplication(item)">
-                          <CopyOutlined/>
-                          复制
-                        </a-menu-item>
-                        <a-menu-item key="1" @click="handleDelApplication(item)">
-                          <DeleteOutlined/>
-                          删除
-                        </a-menu-item>
-                      </a-menu>
+            <div style="padding: 20px;width: 30%;">
+              <div
+                  style=" background-color: #E45F2B;color: #fff;padding: 10px;font-size: 18px;font-weight: bold;text-align: center;">
+                {{ new Date().getFullYear() }}年宕机时间排行榜
+              </div>
+              <div style="color: #fff;margin-top: 10px;font-size: 16px">
+                <a-table :columns="columns" :data-source="applicationErrorRankData" :pagination="false">
+                  <template #bodyCell="{ column, record }">
+                    <template v-if="column.key === 'downTime'">
+                      {{ formatSecondsMax(record.errorSeconds) }}
                     </template>
-                  </a-dropdown>
-                </template>
-              </a-list>
+                    <template v-if="column.key === 'yearStability'">
+                      {{ ((365 * 24 * 60 * 60 - record.errorSeconds) / (365 * 24 * 60 * 60) * 100).toFixed(2) }}%
+                    </template>
+                  </template>
+                </a-table>
+              </div>
             </div>
           </div>
         </a-card>
+
       </a-space>
       <a-drawer
           v-model:visible="contactVisible"
@@ -638,7 +696,8 @@ defineExpose({
             <a-switch v-model:checked="showApplicationContent"/>
           </a-form-item>
           <a-form-item label="节点距离" style="width: 200px">
-            <a-slider  @change="handleOpenApplicationContact(contactData)" v-model:value="relationOptions.layouts[0].min_per_width" :min="10" :max="500" :step="1"/>
+            <a-slider @change="handleOpenApplicationContact(contactData)"
+                      v-model:value="relationOptions.layouts[0].min_per_width" :min="10" :max="500" :step="1"/>
           </a-form-item>
         </a-form>
         <relation-graph ref="graphRef$" :options="relationOptions">
@@ -737,18 +796,20 @@ defineExpose({
 
             <a-divider>监控</a-divider>
             <div style="text-align: center">
-            <a-button v-if="!creationState.monitorType" @click="creationState.monitorType=ApplicationMonitorTypeEnum.REQUEST.value">
-              <template #icon>
-                <plus-outlined/>
-              </template>
-            </a-button>
+              <a-button v-if="!creationState.monitorType"
+                        @click="creationState.monitorType=ApplicationMonitorTypeEnum.REQUEST.value">
+                <template #icon>
+                  <plus-outlined/>
+                </template>
+              </a-button>
               <a-button v-else @click="creationState.monitorType=null">
                 <template #icon>
                   <minus-outlined/>
                 </template>
               </a-button>
             </div>
-            <div v-if="creationState.monitorType" style="display: flex; justify-content: space-between; margin-bottom: 16px;">
+            <div v-if="creationState.monitorType"
+                 style="display: flex; justify-content: space-between; margin-bottom: 16px;">
               <a-form autocomplete="off" :label-col="{ span: 3 }"
                       :wrapper-col="{ span: 18 }" style="margin-bottom: 8px; width: 50%;">
                 <a-form-item label="监控类型">
@@ -796,12 +857,13 @@ defineExpose({
                 </a-form-item>
                 <a-form-item label="校验返回正则">
                   <a-input v-model:value="creationState.monitorConfig.responseRegex"/>
-                  <p>单行包含xxx  = .*xxx.*</p>
-                  <p>多行包含xxx  = (?s).*xxx.*</p>
-                  <p>等于xxx  = ^xxx$</p>
+                  <p>单行包含xxx = .*xxx.*</p>
+                  <p>多行包含xxx = (?s).*xxx.*</p>
+                  <p>等于xxx = ^xxx$</p>
                 </a-form-item>
                 <a-form-item label="生效时间段">
-                  <a-time-range-picker v-model:value="creationState.monitorConfig.timeRange" format="HH:mm" value-format="HH:mm" />
+                  <a-time-range-picker v-model:value="creationState.monitorConfig.timeRange" format="HH:mm"
+                                       value-format="HH:mm"/>
                 </a-form-item>
               </a-form>
               <div style="display: flex;align-items:center">
@@ -881,19 +943,19 @@ defineExpose({
           </a-table>
         </template>
         <template v-if="openModalData.serverList?.length">
-        <a-divider style="margin-top: 36px;">应用服务器信息</a-divider>
+          <a-divider style="margin-top: 36px;">应用服务器信息</a-divider>
           <a-table :columns="serverColumns" :data-source="openModalData.serverList" :pagination="false">
-          <template #bodyCell="{ column, record }">
-            <template v-if="column.dataIndex === 'server'">
-              {{ record.server?.name }}
+            <template #bodyCell="{ column, record }">
+              <template v-if="column.dataIndex === 'server'">
+                {{ record.server?.name }}
+              </template>
+              <template v-if="column.dataIndex === 'action'">
+                <a-button type="link" @click="openServer(openModalData,record)">
+                  <link-outlined/>
+                </a-button>
+              </template>
             </template>
-            <template v-if="column.dataIndex === 'action'">
-              <a-button type="link" @click="openServer(openModalData,record)">
-                <link-outlined/>
-              </a-button>
-            </template>
-          </template>
-        </a-table>
+          </a-table>
         </template>
       </a-modal>
     </div>

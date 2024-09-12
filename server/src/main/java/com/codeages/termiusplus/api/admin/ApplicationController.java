@@ -10,6 +10,7 @@ import com.codeages.termiusplus.biz.server.dto.ProxyDto;
 import com.codeages.termiusplus.biz.server.dto.ProxySearchParams;
 import com.codeages.termiusplus.biz.server.dto.TreeSortParams;
 import com.codeages.termiusplus.biz.server.service.ProxyService;
+import com.codeages.termiusplus.biz.util.QueryUtils;
 import com.codeages.termiusplus.common.IdPayload;
 import com.codeages.termiusplus.common.OkResponse;
 import lombok.AllArgsConstructor;
@@ -45,11 +46,11 @@ public class ApplicationController {
                 Collectors.toMap(ApplicationMonitorDto::getApplicationId, Function.identity()));
 
         Map<Long, List<ApplicationServerDto>> applicationServerMap = applicationServerService.search(
-                                                                                                     new ApplicationServerSearchParams(),
-                                                                                                     Pageable.unpaged()
-                                                                                             ).getContent().stream()
-                                                                                             .collect(Collectors.groupingBy(
-                                                                                                     ApplicationServerDto::getApplicationId));
+                        new ApplicationServerSearchParams(),
+                        Pageable.unpaged()
+                ).getContent().stream()
+                .collect(Collectors.groupingBy(
+                        ApplicationServerDto::getApplicationId));
 
         Map<Long, ProxyDto> idProxyDto = proxyService.search(new ProxySearchParams(), Pageable.unpaged()).getContent().stream()
                 .collect(Collectors.toMap(ProxyDto::getId, Function.identity()));
@@ -91,10 +92,10 @@ public class ApplicationController {
             if (CollectionUtil.isNotEmpty(tree.getChildren())) {
                 setGroupFailureCount(tree.getChildren());
                 Long failureCount = tree.getChildren().stream()
-                                        .map(n -> n.get("failureCount"))
-                                        .filter(Objects::nonNull)
-                                        .map(Long.class::cast)
-                                        .reduce(0L, Long::sum);
+                        .map(n -> n.get("failureCount"))
+                        .filter(Objects::nonNull)
+                        .map(Long.class::cast)
+                        .reduce(0L, Long::sum);
                 tree.putExtra("failureCount", failureCount);
             } else {
                 tree.putExtra("failureCount", tree.get("failureCount"));
@@ -133,6 +134,22 @@ public class ApplicationController {
         applicationService.delete(idPayload.getId());
 
         return OkResponse.TRUE;
+    }
+
+    @GetMapping("/getApplicationErrorRank")
+    public List<ApplicationMonitorLogCountDto> getApplicationErrorRank() {
+        List<ApplicationMonitorLogCountDto> applicationErrorRank = applicationMonitorService.getApplicationErrorRank();
+        QueryUtils.batchQueryOneToOne(
+                applicationErrorRank,
+                ApplicationMonitorLogCountDto::getApplicationId,
+                applicationService::findAllByIds,
+                ApplicationDto::getId,
+                (applicationMonitorLogCountDto, applicationDto) -> {
+                    applicationMonitorLogCountDto.setApplicationName(applicationDto.getName());
+                    applicationMonitorLogCountDto.setApplicationContent(applicationDto.getContent());
+                }
+        );
+        return applicationErrorRank;
     }
 
 }

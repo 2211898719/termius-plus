@@ -33,6 +33,20 @@ public class PortForWardingController {
         );
     }
 
+    @PostMapping("/update")
+    public void updatePortForwarding(@RequestBody PortForwarderDto portForwarderDto) {
+        portForWardingService.stopPortForwarding(portForwarderDto.getLocalPort());
+
+        portForWardingService.startPortForwarding(
+                portForwarderDto.getForwardingName(),
+                portForwarderDto.getLocalPort(),
+                portForwarderDto.getServerId(),
+                portForwarderDto.getRemoteHost(),
+                portForwarderDto.getRemotePort()
+        );
+    }
+
+
     @PostMapping("/stop")
     public void stopPortForwarding(@RequestBody PortForwarderDto portForwarderDto) {
         portForWardingService.stopPortForwarding(portForwarderDto.getLocalPort());

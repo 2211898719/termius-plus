@@ -21,5 +21,8 @@ export const applicationApi = {
     },
     groupList: async () => {
         return client.get("/api-admin/application/groupList");
+    },
+    getApplicationErrorRank: async (params) => {
+        return client.get("/api-admin/application/getApplicationErrorRank", {params: params});
     }
 }

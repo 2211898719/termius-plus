@@ -11,9 +11,10 @@ import {useShepherd} from 'vue-shepherd'
 import OsEnum from "@/enums/OsEnum";
 import PRdp from "@/components/p-rdp.vue";
 import {serverApi} from "@/api/server";
-import markdownItHighlightjs from 'markdown-it-highlightjs';
+import markdownItHighlight from 'markdown-it-highlightjs';
 import 'highlight.js/styles/agate.css'
-import isInCode, {findLastNonEmptyTextNode, Pipe} from "@/utils/codeUtil";
+import {findLastNonEmptyTextNode, Pipe} from "@/utils/codeUtil";
+import {copyToClipboard} from "@/utils/copyUtil";
 
 const emit = defineEmits(['hot'])
 
@@ -265,49 +266,12 @@ let AiResEl = ref(null)
 let aiSystem = useStorage("aiSystem", "你是一个专业的linux命令生成器，以markDown形式回答命令生成结果。")
 
 let aiMessagePrefix = useStorage("aiMessagePrefix", "{{commandLog}} \n写一条linux命令，")
-const hljs = require('highlight.js');
 const md = require('markdown-it')({
   html: true,
   linkify: true,
-  typographer: true,
-  highlight: function (str, lang) {
-    if (lang && hljs.getLanguage(lang)) {
-      try {
-        return (
-            '<pre class="hljs"><code>' +
-            hljs.highlight(lang, str, true).value +
-            '</code></pre>'
-        );
-      } catch (__) {
-      }
-    }
-    return (
-        '<pre class="hljs"><code>' +
-        md.utils.escapeHtml(str) +
-        '</code></pre>'
-    );
-  },
+  typographer: true
 });
-md.use(markdownItHighlightjs);
-md.use(require('markdown-it-container'), 'bash', {
-  marker: '```',
-  validate: function (params) {
-    return params.trim().match(/^bash\s+(.*)$/);
-  },
-
-  render: function (tokens, idx) {
-    let m = tokens[idx].info.trim().match(/^bash\s+(.*)$/);
-
-    if (tokens[idx].nesting === 1) {
-      // opening tag
-      return '<details><summary>' + md.utils.escapeHtml(m[1]) + '</summary>\n';
-
-    } else {
-      // closing tag
-      return '</details>\n';
-    }
-  }
-});
+md.use(markdownItHighlight);
 
 let aiRes = ref("")
 let pos = ref({x: 0, y: 0})
@@ -319,22 +283,17 @@ const chat = async () => {
 
   chatLoading.value = true
   try {
-    // let res = await serverApi.aiChat({
-    //   sessionId: PTermRef.value.getSessionId(),
-    //   message: aiMessagePrefix.value + aiMessage.value,
-    //   prompt: aiSystem.value,
-    // })
-
-    const params = new URLSearchParams({
+    const eventSource = new EventSource(serverApi.aiChat({
       sessionId: PTermRef.value.getSessionId(),
       message: aiMessagePrefix.value + aiMessage.value,
       prompt: aiSystem.value,
-    });
-    const eventSource = new EventSource(`/api-admin/ai/chat?${params.toString()}`);
+    }));
 
     let originRes = "";
     let pipe = new Pipe();
-    pipe.start(e => {
+    let blinkClass = 'blink'
+    //刷新
+    const refresh = e => {
       originRes = originRes + e
       let root = document.createElement('div');
       root.innerHTML = md.render(originRes);
@@ -344,7 +303,7 @@ const chat = async () => {
         pre.style.position = "relative"
         let execButton = document.createElement("div");
         execButton.style.position = "absolute"
-        execButton.style.top = "4px"
+        execButton.style.top = "1px"
         execButton.style.right = "4px"
         execButton.style.cursor = "pointer"
         execButton.innerText = "执行"
@@ -354,27 +313,51 @@ const chat = async () => {
           handleExecCommand(pre.querySelector("code").textContent)
         })
         pre.prepend(execButton)
-      })
 
+        let copyButton = document.createElement("div");
+        copyButton.style.position = "absolute"
+        copyButton.style.top = "1px"
+        copyButton.style.right = "40px"
+        copyButton.style.cursor = "pointer"
+        copyButton.innerText = "复制"
+        copyButton.style.color = "#fff"
+        //点击时间
+        copyButton.addEventListener("click", () => {
+         copyToClipboard( pre.querySelector("code").textContent)
+        })
+
+        pre.prepend(copyButton)
+      })
+      let blink = document.createElement('div')
+      if (blinkClass) {
+        blink.classList.add(blinkClass)
+      }
+      root.appendChild(blink)
       AiResEl.value.innerHTML = ""
       AiResEl.value.appendChild(root)
 
-      //todo 这里需要处理是否有闭合标签，和光标位置 待处理
-      // let blanks = document.createElement('span');
-      // blanks.classList.add("blink")
-      // root.appendChild(blanks)
-      // if (isInCode(originRes)){
-      //   const lastText = findLastNonEmptyTextNode(AiResEl.value)
-      //   console.log(lastText)
-      //   if (lastText.appendChild) {
-      //     lastText.appendChild(blanks)
-      //   }
-      // }
+      let textNode = document.createTextNode('_')
+      const lastText = findLastNonEmptyTextNode(AiResEl.value)
+      if (lastText) {
+        lastText.parentNode.appendChild(textNode)
 
-    })
+        const range = document.createRange()
+        range.setStart(textNode, 0)
+        range.setEnd(textNode, 0)
+        const textNodeRect = range.getBoundingClientRect()
+        const containerRect = AiResEl.value.getBoundingClientRect()
+        pos.value.x = textNodeRect.left - containerRect.left
+        pos.value.y = textNodeRect.top - containerRect.top
+        textNode.remove()
+      }
+
+    }
+    pipe.start(refresh)
     eventSource.onmessage = function (event) {
       let data = JSON.parse(event.data)
       if (data.message === "DONE") {
+        blinkClass = ''
+        refresh('')
         eventSource.close(); // 关闭连接
         chatLoading.value = false
         pipe.consumeAll()
@@ -385,16 +368,16 @@ const chat = async () => {
     };
 
     eventSource.onerror = function (event) {
+      blinkClass = ''
+      refresh('')
       console.error("EventSource failed:", event);
       eventSource.close(); // 关闭连接
       chatLoading.value = false
     };
 
-
   } catch (e) {
     console.error(e)
   }
-
 }
 
 
@@ -456,54 +439,6 @@ const handleKeyup = (event) => {
       <template #front>
         <a-spin :spinning="pTermLoading" style="height: 100%">
           <div :class="{'ssh-content':true}">
-            <!--            <a-card :title="server.masterUserInfo?('观察'+server.masterUserInfo.username)+'的终端':'终端'" :body-style="{background:backColor}"  style="border:none">-->
-            <!--              <template #extra>-->
-            <!--                <div>-->
-            <!--                  <a-avatar-group :max-count="2" :max-style="{ color: '#f56a00', backgroundColor: '#fde3cf' }">-->
-            <!--                    <a-avatar :title="username" v-for="username in subSessionUsername" :key="username"-->
-            <!--                              style="background-color: #1890ff">-->
-            <!--                      {{ getSurname(username) }}-->
-            <!--                    </a-avatar>-->
-            <!--                  </a-avatar-group>-->
-            <!--                </div>-->
-            <!--                <div ref="CompChangeEl">-->
-            <!--                  <a-popover title="提示">-->
-            <!--                    <template #content>-->
-            <!--                      <p>根据history提示最接近的命令</p>-->
-            <!--                      <p>ctrl+w补全命令</p>-->
-            <!--                    </template>-->
-            <!--                    <a-button type="link" @click="handleChangeComp" :class="{green:autoComp,center:true}">-->
-            <!--                      <template v-slot:icon>-->
-            <!--                        <svg class="tags"-->
-            <!--                             style="vertical-align: middle;fill: currentColor;overflow: hidden;"-->
-            <!--                             viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1494">-->
-            <!--                          <path d="M512 512m-512 0a512 512 0 1 0 1024 0 512 512 0 1 0-1024 0Z"-->
-            <!--                                p-id="1495"></path>-->
-            <!--                          <path d="M651.2 672.7h-548l269.6-321.4h548z" fill="#FFFFFF" p-id="1496"></path>-->
-            <!--                          <path-->
-            <!--                              d="M662.4 696.7H51.7l309.9-369.3h610.7L662.4 696.7z m-507.8-48H640l229.4-273.3H384L154.6 648.7z"-->
-            <!--                              p-id="1497"></path>-->
-            <!--                          <path d="M512 512m-48.2 0a48.2 48.2 0 1 0 96.4 0 48.2 48.2 0 1 0-96.4 0Z"-->
-            <!--                                p-id="1498"></path>-->
-            <!--                          <path-->
-            <!--                              d="M512 584.2c-39.8 0-72.2-32.4-72.2-72.2s32.4-72.2 72.2-72.2 72.2 32.4 72.2 72.2-32.4 72.2-72.2 72.2z m0-96.4c-13.4 0-24.2 10.9-24.2 24.2 0 13.4 10.9 24.2 24.2 24.2 13.4 0 24.2-10.9 24.2-24.2 0-13.4-10.8-24.2-24.2-24.2z"-->
-            <!--                              p-id="1499"></path>-->
-            <!--                        </svg>-->
-            <!--                      </template>-->
-            <!--                    </a-button>-->
-            <!--                  </a-popover>-->
-            <!--                </div>-->
-
-            <!--                <div class="center-name">{{ server.name }}</div>-->
-            <!--                <div ref="reloadEl">-->
-            <!--                  <a-button type="link" @click="reloadServer">-->
-            <!--                    <template v-slot:icon>-->
-            <!--                      <reload-outlined/>-->
-            <!--                    </template>-->
-            <!--                  </a-button>-->
-            <!--                </div>-->
-            <!--              </template>-->
-
             <div class="p-term-root">
               <div style="width: 100%;position: relative;overflow: hidden">
                 <div v-if="server.os===OsEnum.WINDOWS.value">
@@ -660,9 +595,13 @@ const handleKeyup = (event) => {
   .blink {
     width: 10px;
     height: 2px;
+    position: absolute;
     transform: translateY(13px);
-    background: black;
+    background: #fff;
+    left: calc(v-bind('pos.x') * 1px);
+    top: calc(v-bind('pos.y') * 1px);
     animation: blink 1s steps(5, start) infinite;
+    mix-blend-mode: difference;
   }
 }
 
@@ -733,6 +672,8 @@ const handleKeyup = (event) => {
 
       .ai-res {
         margin-top: 16px;
+        position: relative;
+
       }
     }
 

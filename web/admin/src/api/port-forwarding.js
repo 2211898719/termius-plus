@@ -8,6 +8,9 @@ export const portForwardingApi = {
     create: async (params) => {
         return client.post("/api-admin/port-forwarding/start",  params);
     },
+    update: async (params) => {
+        return client.post("/api-admin/port-forwarding/update",  params);
+    },
     stop: async (params) => {
         return client.post("/api-admin/port-forwarding/stop",  params);
     },

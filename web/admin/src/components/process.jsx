@@ -31,3 +31,28 @@ export function formatSeconds(seconds) {
     }
     return result;
 }
+
+export function formatSecondsMax(seconds) {
+    let day = Math.floor(seconds / (60 * 60 * 24));
+    let hour = Math.floor(seconds / (60 * 60)) - (day * 24);
+    let minute = Math.floor(seconds / 60) - (day * 24 * 60) - (hour * 60);
+    let second = Math.floor(seconds) - (day * 24 * 60 * 60) - (hour * 60 * 60) - (minute * 60);
+    let result = '';
+    if (day) {
+        result += day + '天';
+        return result;
+    }
+    if (hour) {
+        result += hour + '小时';
+        return result;
+    }
+    if (minute) {
+        result += minute + '分钟';
+        return result;
+    }
+    if (second) {
+        result += second + '秒';
+        return result;
+    }
+    return result;
+}

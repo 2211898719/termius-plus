@@ -4,6 +4,7 @@ import com.codeages.termiusplus.biz.application.dto.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface ApplicationMonitorService {
@@ -23,6 +24,8 @@ public interface ApplicationMonitorService {
     ApplicationMonitorExecDto exec(ApplicationMonitorDto createParams);
 
     void updateStatusAndSendMessage(ApplicationMonitorDto applicationMonitorDto, ApplicationMonitorExecDto testDto);
+
+    List<ApplicationMonitorLogCountDto> getApplicationErrorRank();
 }
 
 

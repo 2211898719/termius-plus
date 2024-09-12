@@ -8,7 +8,7 @@ public interface PortForWardingService {
 
     List<PortForwarderDto> list();
 
-    void startPortForwarding(String forwardingName,
+    PortForwarderDto startPortForwarding(String forwardingName,
                              Integer localPort,
                              Long serverId,
                              String remoteHost,
