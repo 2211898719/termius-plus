@@ -532,7 +532,6 @@ const getApplicationErrorRank = async () => {
   data.forEach(item => {
     item.rank = i++
   })
-  data[0].errorSeconds= 10000000
   applicationErrorRankData.value = data
 }
 
