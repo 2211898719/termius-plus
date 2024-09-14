@@ -550,9 +550,9 @@ let columns = [
     width: '60px'
   },
   {
-    title: '应用名称',
-    dataIndex: 'applicationName',
-    key: 'applicationName',
+    title: '应用',
+    dataIndex: 'applicationContent',
+    key: 'applicationContent',
   },
   {
     title: '宕机时间',

@@ -11,6 +11,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.servlet.ServletUtil;
 import cn.hutool.json.JSONUtil;
 import com.codeages.termiusplus.biz.ErrorCode;
+import com.codeages.termiusplus.biz.job.dto.ExecuteCommandSSHClient;
 import com.codeages.termiusplus.biz.server.context.ServerContext;
 import com.codeages.termiusplus.biz.server.dto.*;
 import com.codeages.termiusplus.biz.server.entity.QServer;
@@ -41,6 +42,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.PostConstruct;
 import javax.net.SocketFactory;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.ConstraintViolation;

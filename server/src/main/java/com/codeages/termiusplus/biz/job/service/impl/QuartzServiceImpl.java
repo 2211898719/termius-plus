@@ -4,7 +4,7 @@ import cn.hutool.extra.spring.SpringUtil;
 import com.alibaba.fastjson.JSON;
 import com.codeages.termiusplus.biz.job.RunMvelJob;
 import com.codeages.termiusplus.biz.job.dto.MvelCronCreateDto;
-import com.codeages.termiusplus.biz.job.dto.MySSHClient;
+import com.codeages.termiusplus.biz.job.dto.ExecuteCommandSSHClient;
 import com.codeages.termiusplus.biz.job.service.QuartzService;
 import com.codeages.termiusplus.biz.server.dto.ServerDto;
 import com.codeages.termiusplus.biz.server.service.ServerService;
@@ -72,7 +72,7 @@ public class QuartzServiceImpl implements QuartzService {
                                 "dingerSender", SpringUtil.getBean(DingerSender.class),
                                 "MessageSubType", MessageSubType.class,
                                 "DingerRequest", DingerRequest.class,
-                                "session", new MySSHClient(sshClient),
+                                "session", new ExecuteCommandSSHClient(sshClient),
                                 "server", serverDto,
                                 "param", param
                         ),
