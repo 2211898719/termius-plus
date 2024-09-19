@@ -639,31 +639,8 @@ defineExpose({
             <a-form-item label="自动sudo" v-bind="creationValidations.aotoSudo">
               <a-switch v-model:checked="creationState.autoSudo"></a-switch>
             </a-form-item>
-
-<!--            <a-form-item label="自动保活" v-bind="creationValidations.keepAlive">-->
-<!--              <a-switch v-model:checked="creationState.keepAlive"></a-switch>-->
-<!--              <p>某些服务器ssl版本过新可能会出现连接失败</p>-->
-<!--              <pre>strict KEX violation: unexpected packet type 2 (seqnr 1)</pre>-->
-<!--              <p>可以通过关闭该设置解决</p>-->
-<!--            </a-form-item>-->
-
             <a-form-item label="私钥" v-bind="creationValidations.key">
               <a-textarea v-model:value="creationState.key"></a-textarea>
-            </a-form-item>
-            <a-form-item label="是否db服务器" v-bind="creationValidations.isDb">
-              <a-switch v-model:checked="creationState.isDb"></a-switch>
-            </a-form-item>
-            <a-form-item label="db端口" v-bind="creationValidations.dbPort" v-if="creationState.isDb">
-              <div :class="{mt5:index!==0}" v-for="(item,index) in creationState.dbPort" :key="index">
-                <a-input-number v-model:value="creationState.dbPort[index]"
-                                :min="1" :max="65535"/>
-                <a-button type="link" @click="creationState.dbPort.splice(index,1)">
-                  <delete-outlined/>
-                </a-button>
-              </div>
-              <div class="mt5">
-                <a-button @click="creationState.dbPort.push(3306)">+1</a-button>
-              </div>
             </a-form-item>
           </template>
           <a-form-item label="代理" v-bind="creationValidations.proxyId">

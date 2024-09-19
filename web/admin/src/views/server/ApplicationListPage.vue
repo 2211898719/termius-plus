@@ -11,7 +11,7 @@ import {copyToClipboard} from "@/utils/copyUtil";
 import PEnumSelect from "@/components/p-enum-select.vue";
 import ApplicationMonitorTypeEnum from "@/enums/ApplicationMonitorTypeEnum";
 import MethodEnum from "@/enums/MethodEnum";
-import {formatSeconds, formatSecondsMax} from "@/components/process";
+import {formatSeconds} from "@/components/process";
 import {serverApi} from "@/api/server";
 import PCascader from "@/components/p-cascader.vue";
 import GroupCascader from "@/components/group-cascader.vue";
@@ -19,11 +19,11 @@ import RelationGraph from 'relation-graph/vue3'
 import {proxyApi} from "@/api/proxy";
 import PSelect from "@/components/p-select.vue";
 
-let termiusStyleColumn = ref(Math.floor(window.innerWidth / 400));
+let termiusStyleColumn = ref(Math.floor(window.innerWidth / 300));
 
 
 const resizeObserver = new ResizeObserver(() => {
-  termiusStyleColumn.value = Math.floor(window.innerWidth / 400);
+  termiusStyleColumn.value = Math.floor(window.innerWidth / 300);
 });
 
 resizeObserver.observe(window.document.body);
@@ -525,46 +525,10 @@ const handleOpenApplicationContact = (item) => {
 
 }
 
-let applicationErrorRankData = ref([])
-const getApplicationErrorRank = async () => {
-  let data = await applicationApi.getApplicationErrorRank()
-  let i = 1;
-  data.forEach(item => {
-    item.rank = i++
-  })
-  applicationErrorRankData.value = data
-}
-
-getApplicationErrorRank()
-
 defineExpose({
   getProxyData,
   setProxyId
 })
-
-let columns = [
-  {
-    title: '排名',
-    dataIndex: 'rank',
-    key: 'rank',
-    width: '60px'
-  },
-  {
-    title: '应用',
-    dataIndex: 'applicationContent',
-    key: 'applicationContent',
-  },
-  {
-    title: '宕机时间',
-    key: 'downTime',
-    dataIndex: 'downTime',
-    width: '100px',
-  },
-  {
-    title: '年稳定性',
-    key: 'yearStability',
-  },
-];
 
 </script>
 
@@ -574,7 +538,7 @@ let columns = [
       <a-space direction="vertical" size="middle" style="width: 100%;">
         <a-card :bodyStyle="{padding:'12px 12px'}" style="border:none">
           <div style="display: flex">
-            <div class="body-root" style="width: 70%">
+            <div class="body-root" style="width: 100%;">
               <div style="display: flex;justify-content: space-between">
                 <a-breadcrumb>
                   <a-breadcrumb-item v-for="item in groupBreadcrumb" :key="item.id" @click="handleDblclick(item)">
@@ -661,24 +625,7 @@ let columns = [
                 </a-list>
               </div>
             </div>
-            <div style="padding: 20px;width: 30%;">
-              <div
-                  style=" background-color: #E45F2B;color: #fff;padding: 10px;font-size: 18px;font-weight: bold;text-align: center;">
-                {{ new Date().getFullYear() }}年宕机时间排行榜
-              </div>
-              <div style="color: #fff;margin-top: 10px;font-size: 16px">
-                <a-table :columns="columns" :data-source="applicationErrorRankData" :pagination="false">
-                  <template #bodyCell="{ column, record }">
-                    <template v-if="column.key === 'downTime'">
-                      {{ formatSecondsMax(record.errorSeconds) }}
-                    </template>
-                    <template v-if="column.key === 'yearStability'">
-                      {{ ((365 * 24 * 60 * 60 - record.errorSeconds) / (365 * 24 * 60 * 60) * 100).toFixed(2) }}%
-                    </template>
-                  </template>
-                </a-table>
-              </div>
-            </div>
+
           </div>
         </a-card>
 

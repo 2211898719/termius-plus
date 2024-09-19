@@ -1,5 +1,5 @@
 <script setup>
-import "xterm/css/xterm.css";
+import "@xterm/xterm/css/xterm.css";
 import Terminal from "@/utils/zmodem";
 import {nextTick, onMounted, ref, watch} from "vue";
 import {useStorage} from "@vueuse/core";

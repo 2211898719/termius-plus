@@ -16,6 +16,7 @@ import OsEnum from "@/enums/OsEnum";
 import {useStorage} from "@vueuse/core";
 import {ComponentItem, GoldenLayout, Stack} from "golden-layout";
 import ApplicationListPage from "@/views/server/ApplicationListPage.vue";
+import DashboardPage from "@/views/server/DashboardPage.vue";
 
 let spinning = ref(false)
 
@@ -473,6 +474,9 @@ const changeMiniTab = () => {
         <a-tab-pane tab="应用" key="application" :closable="false" :forceRender="true">
           <ApplicationListPage @openServer="handleOpenServer" ref="applicationListRef"></ApplicationListPage>
         </a-tab-pane>
+        <a-tab-pane tab="数据大屏" key="dashboard" :closable="false" :forceRender="true">
+          <DashboardPage></DashboardPage>
+        </a-tab-pane>
         <a-tab-pane class="setting-pane" tab="设置" key="setting" :closable="false" :forceRender="true">
           <setting-page></setting-page>
         </a-tab-pane>
@@ -573,6 +577,18 @@ const changeMiniTab = () => {
                 </div>
                 <div class="tab-title">
                   应用
+                </div>
+              </div>
+
+              <div class="right"></div>
+            </div>
+            <div class="tab-bar" :class="{'tab-active-normal':tagActiveKey==='dashboard'}" @click="changeTab('dashboard')">
+              <div class="left">
+                <div class="tab-icon">
+                  <pie-chart-outlined />
+                </div>
+                <div class="tab-title">
+                  数据大屏
                 </div>
               </div>
 

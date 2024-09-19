@@ -1,17 +1,18 @@
 <script setup>
-import "xterm/css/xterm.css";
+import "@xterm/xterm/css/xterm.css";
 import Terminal from '../utils/zmodem.js';
 // import {Terminal} from "xterm";
-import {FitAddon} from "xterm-addon-fit";
+import {FitAddon} from "@xterm/addon-fit";
 import {computed, h, nextTick, onBeforeUnmount, onMounted, ref, watch} from "vue";
 import _ from "lodash";
 import {useStorage, useWebSocket} from "@vueuse/core";
-import {SearchAddon} from "xterm-addon-search";
+import {SearchAddon} from "@xterm/addon-search";
 import {TrzszAddon} from 'trzsz';
 import {useAuthStore} from "@shared/store/useAuthStore";
 import {serverApi} from "@/api/server";
 import {Button, message, notification} from "ant-design-vue";
 import pako from 'pako';
+import {WebglAddon} from '@xterm/addon-webgl';
 
 let authStore = useAuthStore();
 // let networkInfo = useNetwork()
@@ -92,6 +93,7 @@ let options = {
 }
 
 let term = null;
+let searchAddon = null;
 let socket = null;
 let socketSend = null;
 let terminal = ref()
@@ -375,13 +377,19 @@ const initTerm = () => {
 
   const fitAddon = new FitAddon();
   term.fitAddon = fitAddon;
-  term.loadAddon(fitAddon);
-  term.loadAddon(attachAddon);
-  const searchAddon = new SearchAddon();
-  term.loadAddon(searchAddon);
-
   terminal.value.innerHTML = "";
   term.open(terminal.value);
+  term.loadAddon(fitAddon);
+  term.loadAddon(attachAddon);
+  searchAddon = new SearchAddon();
+  term.loadAddon(searchAddon);
+  term.loadAddon(new WebglAddon());
+  term.attachCustomKeyEventHandler((event) => {
+    if ((event.type === 'keydown' && ('f' === event.key || 'F' === event.key) && event.ctrlKey && event.shiftKey) || (event.type === 'keydown' && ('f' === event.key || 'F' === event.key) && event.metaKey && event.shiftKey)) {
+      searchVisible.value = !searchVisible.value
+      return false;
+    }
+  });
 
   term.focus();
   // term.onData(() => {
@@ -550,12 +558,6 @@ const resizeTerminal = () => {
     const {width, height} = content.getBoundingClientRect();
     if (width === 0 || height === 0) return
     term.fitAddon.fit();
-    const size = {
-      cols: parseInt(width / term._core._renderService._renderer.dimensions.actualCellWidth, 10) - 1,
-      rows: parseInt(height / term._core._renderService._renderer.dimensions.actualCellHeight, 10)
-    };
-
-    term.resize(size.cols, size.rows)
   }, 100, {leading: false, trailing: true})
 
   nextTick(() => {
@@ -575,8 +577,8 @@ const resizeTerminal = () => {
       data: {
         cols: size.cols,
         rows: size.rows,
-        width: term._core._renderService._renderer.dimensions.actualCellWidth,
-        height: term._core._renderService._renderer.dimensions.actualCellHeight
+        width: term._core._renderService._renderer._value.dimensions.css.canvas.width,
+        height: term._core._renderService._renderer._value.dimensions.css.canvas.height
       }
     }));
   });
@@ -630,16 +632,155 @@ defineExpose({
   }
 })
 
+let searchVisible = ref(false)
+let searchText = ref('')
+let searchTextInputRef = ref(null)
+let regexEnabled = useStorage('search-regex-' + props.server.id, false)
+watch(searchVisible, (value) => {
+  if (value) {
+    searchTextInputRef.value.focus()
+    let select = term.getSelection();
+    if (select) {
+      searchText.value = select
+    }
+  } else {
+    term.focus()
+    searchAddon.clearDecorations()
+  }
+})
+
+const closeSearch = () => {
+  searchVisible.value = false
+  searchText.value = ''
+}
+
+const handleKeyup = (event) => {
+  if (event.key === 'Enter' && event.isComposing) {
+    return; // 忽略输入法的回车
+  }
+
+  searchAddon.findNext(searchText.value, {
+    regex: regexEnabled.value
+  })
+}
+
+const searchKeyListener = (event) => {
+  if ((event.type === 'keydown' && ('f' === event.key || 'F' === event.key) && event.ctrlKey && event.shiftKey) || (event.type === 'keydown' && ('f' === event.key || 'F' === event.key) && event.metaKey && event.shiftKey)) {
+    searchVisible.value = !searchVisible.value
+    return false;
+  }
+
+  if (event.type === 'keydown' && event.key === 'Escape'){
+    closeSearch()
+  }
+}
+
+const searchNext = () => {
+  searchAddon.findNext(searchText.value, {
+    regex: regexEnabled.value
+  })
+}
+
+const searchPrev = () => {
+  searchAddon.findPrevious(searchText.value, {
+    regex: regexEnabled.value
+  })
+}
+
+const changeRegexEnabled = () => {
+  regexEnabled.value = !regexEnabled.value
+}
+
 </script>
 
 
 <template>
-  <div class="log" ref="log">
-    <div class="console" ref="terminal"></div>
+  <div style="position: relative;">
+    <div class="log" ref="log">
+      <div class="console" ref="terminal"></div>
+    </div>
+    <div :class="{'search-drawer':true, 'is-visible':!searchVisible}" @keydown="searchKeyListener">
+      <a-input ref="searchTextInputRef" v-model:value="searchText" placeholder="搜索"
+               @keydown.enter="handleKeyup"></a-input>
+      <a-divider type="vertical" style="height: 24px"/>
+      <span :class="{'search-option':true, 'is-active': regexEnabled}" @click="changeRegexEnabled">
+        <svg t="1726739810873" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"
+             p-id="2957" width="14" height="14"><path
+            d="M682.666667 721.92c-14.08 2.133333-28.16 3.413333-42.666667 3.413333-14.506667 0-28.586667-1.28-42.666667-3.413333v-149.76l-106.666666 105.813333c-21.333333-16.64-42.666667-37.973333-59.306667-59.306666l105.813333-106.666667H387.413333c-2.133333-14.08-3.413333-28.16-3.413333-42.666667 0-14.506667 1.28-28.586667 3.413333-42.666666h149.76l-105.813333-106.666667c8.106667-10.666667 16.64-21.333333 27.733333-31.573333 10.24-11.093333 20.906667-19.626667 31.573334-27.733334L597.333333 366.506667V216.746667c14.08-2.133333 28.16-3.413333 42.666667-3.413334 14.506667 0 28.586667 1.28 42.666667 3.413334v149.76l106.666666-105.813334c21.333333 16.64 42.666667 37.973333 59.306667 59.306667L742.826667 426.666667h149.76c2.133333 14.08 3.413333 28.16 3.413333 42.666666 0 14.506667-1.28 28.586667-3.413333 42.666667h-149.76l105.813333 106.666667c-8.106667 10.666667-16.64 21.333333-27.733333 31.573333-10.24 11.093333-20.906667 19.626667-31.573334 27.733333L682.666667 572.16v149.76M213.333333 810.666667a85.333333 85.333333 0 0 1 85.333334-85.333334 85.333333 85.333333 0 0 1 85.333333 85.333334 85.333333 85.333333 0 0 1-85.333333 85.333333 85.333333 85.333333 0 0 1-85.333334-85.333333z"
+            p-id="2958"></path></svg>
+      </span>
+      <a-divider type="vertical" style="height: 24px"/>
+      <up-outlined class="search-btn" @click="searchPrev"/>
+      <down-outlined class="search-btn" @click="searchNext"/>
+      <close-outlined class="search-btn" @click="closeSearch"/>
+    </div>
   </div>
 </template>
 
 <style lang="less">
+
+.search-drawer {
+  width: 350px;
+  right: 100px;
+  left: unset;
+  padding: 6px;
+  border-radius: 4px;
+  top: 12px;
+  //margin-top: 8px;
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all .3s cubic-bezier(.23, 1, .32, 1);
+  z-index: 1000;
+  background-color: #fff;
+  mix-blend-mode: difference;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+
+  .search-option {
+    padding: 4px;
+    cursor: pointer;
+    margin-left: 12px;
+    border-radius: 8px;
+    width: 28px;
+    height: 24px;
+
+    &:hover {
+      background-color: #d1d1d1;
+    }
+
+    &:first-of-type {
+      margin-left: 0;
+    }
+
+    &.is-active {
+      background-color: #d1d1d1;
+    }
+  }
+
+  .search-btn {
+    padding: 4px;
+    border-radius: 50%;
+    cursor: pointer;
+    margin-left: 6px;
+
+    &:hover {
+      background-color: #f5f5f5;
+    }
+
+    &:first-of-type {
+      margin-left: 0;
+    }
+  }
+
+}
+
+.is-visible {
+  //沿着z轴180旋转
+  transform: translateY(calc(-100% - 12px));
+  transform-origin: center bottom;
+  opacity: 0;
+}
 
 
 .log {

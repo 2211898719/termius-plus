@@ -27,7 +27,7 @@
  *  via `detach()` and a re-`attach()`.)
  */
 import ZmodemBrowser from 'nora-zmodemjs/src/zmodem_browser';
-import { Terminal } from 'xterm';
+import { Terminal } from '@xterm/xterm';
 
 Object.assign(Terminal.prototype, {
     zmodemAttach: function zmodemAttach(ws, opts) {
