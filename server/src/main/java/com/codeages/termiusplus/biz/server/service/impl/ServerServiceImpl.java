@@ -11,16 +11,23 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.servlet.ServletUtil;
 import cn.hutool.json.JSONUtil;
 import com.codeages.termiusplus.biz.ErrorCode;
+import com.codeages.termiusplus.biz.job.dto.ExecuteCommandSSHClient;
 import com.codeages.termiusplus.biz.server.context.ServerContext;
 import com.codeages.termiusplus.biz.server.dto.*;
 import com.codeages.termiusplus.biz.server.entity.QServer;
 import com.codeages.termiusplus.biz.server.entity.Server;
+import com.codeages.termiusplus.biz.server.entity.ServerRunLog;
 import com.codeages.termiusplus.biz.server.enums.OSEnum;
 import com.codeages.termiusplus.biz.server.mapper.ServerMapper;
+import com.codeages.termiusplus.biz.server.mapper.ServerRunLogMapper;
 import com.codeages.termiusplus.biz.server.repository.ServerRepository;
+import com.codeages.termiusplus.biz.server.repository.ServerRunLogRepository;
 import com.codeages.termiusplus.biz.server.service.ProxyService;
 import com.codeages.termiusplus.biz.server.service.ServerService;
 import com.codeages.termiusplus.biz.util.TreeUtils;
+import com.codeages.termiusplus.biz.util.command.CpuUsage;
+import com.codeages.termiusplus.biz.util.command.DiskUsage;
+import com.codeages.termiusplus.biz.util.command.NetworkUsage;
 import com.codeages.termiusplus.exception.AppException;
 import com.codeages.termiusplus.ws.ssh.AuthKeyBoardHandler;
 import com.codeages.termiusplus.ws.ssh.EventType;
@@ -51,8 +58,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.*;
 import java.util.*;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.*;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -60,6 +66,10 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class ServerServiceImpl implements ServerService {
+
+    private final ServerRunLogRepository serverRunLogRepository;
+
+    private final ServerRunLogMapper serverRunLogMapper;
 
     private final ServerRepository serverRepository;
 
@@ -69,14 +79,16 @@ public class ServerServiceImpl implements ServerService {
 
     private final ProxyService proxyService;
 
+
     @Value("${guacamole.serverId}")
     private Long guacamoleServerId;
 
     @Value("${guacamole.mapping}")
     private String guacamoleServerFilePath;
 
-    public ServerServiceImpl(ServerRepository serverRepository, ServerMapper serverMapper, Validator validator,
-                             ProxyService proxyService) {
+    public ServerServiceImpl(ServerRunLogRepository serverRunLogRepository, ServerRunLogMapper serverRunLogMapper, ServerRepository serverRepository, ServerMapper serverMapper, Validator validator, ProxyService proxyService) {
+        this.serverRunLogRepository = serverRunLogRepository;
+        this.serverRunLogMapper = serverRunLogMapper;
         this.serverRepository = serverRepository;
         this.serverMapper = serverMapper;
         this.validator = validator;
@@ -90,8 +102,7 @@ public class ServerServiceImpl implements ServerService {
             throw new AppException(ErrorCode.INVALID_ARGUMENT, errors);
         }
 
-        Server server = serverRepository.findById(params.getId())
-                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
+        Server server = serverRepository.findById(params.getId()).orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
 
         serverMapper.toUpdateEntity(server, params);
         serverRepository.save(server);
@@ -110,12 +121,7 @@ public class ServerServiceImpl implements ServerService {
 
     @Override
     public ServerDto findById(Long id) {
-        ServerDto serverDto = serverRepository.findById(id)
-                .map(serverMapper::toDto)
-                .orElseThrow(() -> new AppException(
-                        ErrorCode.INVALID_ARGUMENT,
-                        "服务器不存在"
-                ));
+        ServerDto serverDto = serverRepository.findById(id).map(serverMapper::toDto).orElseThrow(() -> new AppException(ErrorCode.INVALID_ARGUMENT, "服务器不存在"));
 
         Long proxyId = serverDto.getProxyId();
         ServerDto currentServer = serverDto;
@@ -124,21 +130,12 @@ public class ServerServiceImpl implements ServerService {
                 break;
             }
 
-            currentServer = serverRepository.findById(currentServer.getParentId())
-                    .map(serverMapper::toDto)
-                    .orElseThrow(() -> new AppException(
-                            ErrorCode.INVALID_ARGUMENT,
-                            "服务器不存在"
-                    ));
+            currentServer = serverRepository.findById(currentServer.getParentId()).map(serverMapper::toDto).orElseThrow(() -> new AppException(ErrorCode.INVALID_ARGUMENT, "服务器不存在"));
             proxyId = currentServer.getProxyId();
         }
 
         if (proxyId != null) {
-            serverDto.setProxy(proxyService.findById(proxyId)
-                    .orElseThrow(() -> new AppException(
-                            ErrorCode.INVALID_ARGUMENT,
-                            "代理不存在"
-                    )));
+            serverDto.setProxy(proxyService.findById(proxyId).orElseThrow(() -> new AppException(ErrorCode.INVALID_ARGUMENT, "代理不存在")));
         }
 
         return serverDto;
@@ -157,13 +154,7 @@ public class ServerServiceImpl implements ServerService {
         List<Server> servers = new ArrayList<>();
 
         for (TreeSortParams serverUpdateParam : serverUpdateParams) {
-            servers.add(
-                    serverMapper.toUpdateAllEntity(
-                            serverRepository.findById(serverUpdateParam.getId())
-                                    .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND)),
-                            serverUpdateParam
-                    )
-            );
+            servers.add(serverMapper.toUpdateAllEntity(serverRepository.findById(serverUpdateParam.getId()).orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND)), serverUpdateParam));
             servers.addAll(toUpdateAllEntity(serverUpdateParam.getChildren()));
         }
 
@@ -178,8 +169,7 @@ public class ServerServiceImpl implements ServerService {
             children.stream().map(Server::getId).forEach(this::delete);
         }
 
-        Server server = serverRepository.findById(id)
-                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
+        Server server = serverRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
 
         serverRepository.delete(server);
     }
@@ -206,32 +196,20 @@ public class ServerServiceImpl implements ServerService {
         allParent.addAll(findAllChildren(serverIds));
 
         List<ProxyDto> proxyDtoList = proxyService.search(new ProxySearchParams(), Pageable.unpaged()).getContent();
-        Map<Long, ProxyDto> proxyIdProxyMap = proxyDtoList.stream()
-                .collect(Collectors.toMap(
-                        ProxyDto::getId,
-                        Function.identity()
-                ));
+        Map<Long, ProxyDto> proxyIdProxyMap = proxyDtoList.stream().collect(Collectors.toMap(ProxyDto::getId, Function.identity()));
 
-        List<TreeNode<Long>> servers = allParent
-                .stream()
-                .map(e -> {
-                    TreeNode<Long> longTreeNode = new TreeNode<>(
-                            e.getId(),
-                            e.getParentId(),
-                            e.getName(),
-                            e.getSort()
-                    );
-                    Map<String, Object> beanMap = BeanUtil.beanToMap(e);
+        List<TreeNode<Long>> servers = allParent.stream().map(e -> {
+            TreeNode<Long> longTreeNode = new TreeNode<>(e.getId(), e.getParentId(), e.getName(), e.getSort());
+            Map<String, Object> beanMap = BeanUtil.beanToMap(e);
 
-                    longTreeNode.setExtra(beanMap);
-                    if (e.getOs().equals(OSEnum.WINDOWS)) {
-                        longTreeNode.getExtra().put("guacamoleServerId", guacamoleServerId);
-                        longTreeNode.getExtra().put("guacamoleServerFilePath", guacamoleServerFilePath);
-                    }
+            longTreeNode.setExtra(beanMap);
+            if (e.getOs().equals(OSEnum.WINDOWS)) {
+                longTreeNode.getExtra().put("guacamoleServerId", guacamoleServerId);
+                longTreeNode.getExtra().put("guacamoleServerFilePath", guacamoleServerFilePath);
+            }
 
-                    return longTreeNode;
-                })
-                .collect(Collectors.toList());
+            return longTreeNode;
+        }).collect(Collectors.toList());
 
         List<Tree<Long>> treeList = TreeUtil.build(servers, 0L);
 
@@ -247,37 +225,23 @@ public class ServerServiceImpl implements ServerService {
         builder.and(q.isDb.eq(true));
 
 
-        List<TreeNode<Long>> servers = findAllParent(serverRepository.findAll(builder, Pageable.unpaged()).getContent())
-                .stream()
-                .map(e -> {
-                    TreeNode<Long> longTreeNode = new TreeNode<>(
-                            e.getId(),
-                            e.getParentId(),
-                            e.getName(),
-                            e.getSort()
-                    );
+        List<TreeNode<Long>> servers = findAllParent(serverRepository.findAll(builder, Pageable.unpaged()).getContent()).stream().map(e -> {
+            TreeNode<Long> longTreeNode = new TreeNode<>(e.getId(), e.getParentId(), e.getName(), e.getSort());
 
-                    longTreeNode.setExtra(BeanUtil.beanToMap(e));
-                    return longTreeNode;
-                })
-                .collect(Collectors.toList());
+            longTreeNode.setExtra(BeanUtil.beanToMap(e));
+            return longTreeNode;
+        }).collect(Collectors.toList());
 
         return TreeUtil.build(servers, 0L);
     }
 
     public List<Server> findAllParent(List<Server> servers) {
         List<Server> parentServers = new ArrayList<>(servers);
-        List<Long> parentIds = servers.stream()
-                .map(Server::getParentId)
-                .filter(pId -> pId != 0)
-                .collect(Collectors.toList());
+        List<Long> parentIds = servers.stream().map(Server::getParentId).filter(pId -> pId != 0).collect(Collectors.toList());
         while (CollectionUtil.isNotEmpty(parentIds)) {
             List<Server> parentServer = serverRepository.findAllById(parentIds);
             parentServers.addAll(parentServer);
-            parentIds = parentServer.stream()
-                    .map(Server::getParentId)
-                    .filter(pId -> pId != 0)
-                    .collect(Collectors.toList());
+            parentIds = parentServer.stream().map(Server::getParentId).filter(pId -> pId != 0).collect(Collectors.toList());
         }
 
         return parentServers;
@@ -364,10 +328,7 @@ public class ServerServiceImpl implements ServerService {
                 }
 
                 @Override
-                public Socket createSocket(String host,
-                                           int port,
-                                           InetAddress localHost,
-                                           int localPort) throws IOException {
+                public Socket createSocket(String host, int port, InetAddress localHost, int localPort) throws IOException {
                     Socket socket = new Socket(createProxy(server));
                     socket.connect(new InetSocketAddress(host, port));
                     return socket;
@@ -381,10 +342,7 @@ public class ServerServiceImpl implements ServerService {
                 }
 
                 @Override
-                public Socket createSocket(InetAddress address,
-                                           int port,
-                                           InetAddress localAddress,
-                                           int localPort) throws IOException {
+                public Socket createSocket(InetAddress address, int port, InetAddress localAddress, int localPort) throws IOException {
                     Socket socket = new Socket(createProxy(server));
                     socket.connect(new InetSocketAddress(address, port));
                     return socket;
@@ -420,43 +378,36 @@ public class ServerServiceImpl implements ServerService {
             };
 
             log.info("ssh.isAuthenticated() = {}", ssh.isAuthenticated());
-            ssh.auth(
-                    server.getUsername(),
-                    new AuthPassword(pfinder),
-                    new CurrentAuthKeyboardInteractive(new PasswordResponseProvider(new PasswordFinder() {
-                        @Override
-                        public char[] reqPassword(Resource<?> resource) {
-                            //如果没有sessionId 无从发起获取 keyboard interactive的验证码，所以无法进行登录
-                            if (CharSequenceUtil.isBlank(sessionId)) {
-                                return server.getPassword().toCharArray().clone();
-                            }
+            ssh.auth(server.getUsername(), new AuthPassword(pfinder), new CurrentAuthKeyboardInteractive(new PasswordResponseProvider(new PasswordFinder() {
+                @Override
+                public char[] reqPassword(Resource<?> resource) {
+                    //如果没有sessionId 无从发起获取 keyboard interactive的验证码，所以无法进行登录
+                    if (CharSequenceUtil.isBlank(sessionId)) {
+                        return server.getPassword().toCharArray().clone();
+                    }
 
-                            String resourceKey = server.getName() + "-" + sessionId;
-                            MessageDto messageDto = new MessageDto(EventType.AUTH_KEYBOARD, resourceKey);
-                            log.info("向前端发送获取验证码的消息，message 是资源的验证码, messageDto = {}", messageDto);
-                            //向前端发送获取验证码的消息，message 是资源的验证码
-                            AuthKeyBoardHandler.sendMessage(sessionId, JSONUtil.toJsonStr(messageDto));
-                            BlockingQueue<String> queue = ServerContext.AUTH_KEYBOARD_INTERACTIVE_POOL.getOrDefault(
-                                    resourceKey,
-                                    new LinkedBlockingQueue<>()
-                            );
-                            ServerContext.AUTH_KEYBOARD_INTERACTIVE_POOL.put(resourceKey, queue);
-                            try {
-                                String take = queue.take();
-                                log.info("输入的验证码是：{}", take);
-                                return take.toCharArray();
-                            } catch (InterruptedException e) {
-                                throw new RuntimeException(e);
-                            }
-                        }
+                    String resourceKey = server.getName() + "-" + sessionId;
+                    MessageDto messageDto = new MessageDto(EventType.AUTH_KEYBOARD, resourceKey);
+                    log.info("向前端发送获取验证码的消息，message 是资源的验证码, messageDto = {}", messageDto);
+                    //向前端发送获取验证码的消息，message 是资源的验证码
+                    AuthKeyBoardHandler.sendMessage(sessionId, JSONUtil.toJsonStr(messageDto));
+                    BlockingQueue<String> queue = ServerContext.AUTH_KEYBOARD_INTERACTIVE_POOL.getOrDefault(resourceKey, new LinkedBlockingQueue<>());
+                    ServerContext.AUTH_KEYBOARD_INTERACTIVE_POOL.put(resourceKey, queue);
+                    try {
+                        String take = queue.take();
+                        log.info("输入的验证码是：{}", take);
+                        return take.toCharArray();
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
 
-                        @Override
-                        public boolean shouldRetry(Resource<?> resource) {
-                            return true;
-                        }
+                @Override
+                public boolean shouldRetry(Resource<?> resource) {
+                    return true;
+                }
 
-                    }, Pattern.compile("P.* ", Pattern.DOTALL)))
-            );
+            }, Pattern.compile("P.* ", Pattern.DOTALL))));
 
         }
 
@@ -472,27 +423,16 @@ public class ServerServiceImpl implements ServerService {
     @SneakyThrows
     public Proxy createProxy(ServerDto server) {
         ProxyDto proxyDto = server.getProxy();
-        return new Proxy(
-                proxyDto.getType().getType(),
-                new InetSocketAddress(proxyDto.getIp(), proxyDto.getPort().intValue())
-        );
+        return new Proxy(proxyDto.getType().getType(), new InetSocketAddress(proxyDto.getIp(), proxyDto.getPort().intValue()));
     }
 
     @Override
     public List<Tree<Long>> groupList() {
-        List<TreeNode<Long>> servers = serverRepository.findAllByIsGroupTrue()
-                .stream()
-                .map(e -> {
-                    TreeNode<Long> longTreeNode = new TreeNode<>(
-                            e.getId(),
-                            e.getParentId(),
-                            e.getName(),
-                            e.getSort()
-                    );
-                    longTreeNode.setExtra(BeanUtil.beanToMap(e));
-                    return longTreeNode;
-                })
-                .collect(Collectors.toList());
+        List<TreeNode<Long>> servers = serverRepository.findAllByIsGroupTrue().stream().map(e -> {
+            TreeNode<Long> longTreeNode = new TreeNode<>(e.getId(), e.getParentId(), e.getName(), e.getSort());
+            longTreeNode.setExtra(BeanUtil.beanToMap(e));
+            return longTreeNode;
+        }).collect(Collectors.toList());
 
         Tree<Long> root = new Tree<>();
         root.setId(0L);
@@ -518,6 +458,65 @@ public class ServerServiceImpl implements ServerService {
     @Override
     public List<String> getMysqlHistory(Long serverId) {
         return getHistory(serverId, "mysql").stream().map(s -> s.replace("\\040", " ")).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ServerRunLogDTO> syncAllServerRunInfo() {
+        List<Server> servers = serverRepository.findAllByIsGroupFalse();
+        servers=servers.stream().filter(server -> server.getOs().equals(OSEnum.LINUX)).collect(Collectors.toList());
+        List<ServerRunLog> serverRunInfoDTOS = new CopyOnWriteArrayList<>();
+        Date now = new Date();
+        CompletableFuture<?>[] futures = servers.stream().map(server ->
+                CompletableFuture.runAsync(() -> {
+                    SSHClient origin = createSSHClient(server.getId());
+                    log.info("获取服务器运行信息，serverId = {}, serverName = {}, serverIp = {}", server.getId(), server.getName(), server.getIp());
+                    origin.setTimeout(28000);
+                    ExecuteCommandSSHClient sshClient = new ExecuteCommandSSHClient(origin);
+
+                    List<NetworkUsage> networkUsages = sshClient.calculateNetworkSpeed(1);
+                    CpuUsage cpuUsage = sshClient.getCpuUsage();
+                    List<DiskUsage> diskUsage = sshClient.getDiskUsage();
+                    ServerRunLog serverRunLog = new ServerRunLog();
+                    serverRunLog.setServerId(server.getId());
+
+                    serverRunLog.setCpuUsage(JSONUtil.toJsonStr(cpuUsage));
+                    serverRunLog.setNetworkUsages(JSONUtil.toJsonStr(networkUsages));
+                    serverRunLog.setDiskUsages(JSONUtil.toJsonStr(diskUsage));
+                    serverRunLog.setDate(now);
+                    serverRunInfoDTOS.add(serverRunLog);
+                    try {
+                        origin.close();
+                    } catch (IOException e) {
+                        log.error("关闭ssh连接失败", e);
+                    }
+                }).orTimeout(30000, TimeUnit.MILLISECONDS).exceptionally(e -> {
+                    log.error("获取服务器运行信息失败:{}:{}", server.getName(), server.getIp(), e);
+                    return null;
+                })
+        ).toArray(CompletableFuture[]::new);
+
+        CompletableFuture.allOf(futures).join();
+
+        serverRunLogRepository.saveAll(serverRunInfoDTOS);
+
+        log.info("获取服务器运行信息成功，成功数量：{}/{}", serverRunInfoDTOS.size(), servers.size());
+
+        return serverRunLogMapper.toDtoList(serverRunInfoDTOS);
+    }
+
+    @Override
+    public List<ServerRunLogDTO> getServerLastRunInfoAfter(Date date) {
+        List<ServerRunLog> serverRunLogs = serverRunLogRepository.findByDateAfter(date);
+
+        //有多个取最新一条
+        return serverRunLogs.stream().collect(
+                        Collectors.toMap(
+                                ServerRunLog::getServerId,
+                                Function.identity(),
+                                (a, b) -> a.getDate().compareTo(b.getDate()) > 0? a : b
+                        )
+                )
+                .values().stream().map(serverRunLogMapper::toDto).collect(Collectors.toList());
     }
 
 

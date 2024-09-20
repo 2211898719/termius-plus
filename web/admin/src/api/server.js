@@ -31,5 +31,9 @@ export const serverApi = {
     },
     aiChat(data){
         return `/api-admin/ai/chat?${new URLSearchParams(data).toString()}`
-    }
+    },
+    getAllServerRunInfo(){
+        return client.get("/api-admin/server/getAllServerRunInfo");
+    },
+
 }

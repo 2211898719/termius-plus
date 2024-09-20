@@ -1,5 +1,6 @@
 package com.codeages.termiusplus.api.admin;
 
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.lang.tree.Tree;
 import cn.hutool.json.JSONUtil;
 import com.codeages.termiusplus.biz.server.dto.*;
@@ -15,10 +16,7 @@ import com.codeages.termiusplus.common.OkResponse;
 import com.codeages.termiusplus.security.SecurityContext;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.codeages.termiusplus.biz.server.context.ServerContext.SSH_POOL;
@@ -51,8 +49,8 @@ public class ServerController {
         List<Long> serverIds = new ArrayList<>();
 
         service.stream()
-               .map(roleDto -> JSONUtil.parseArray(roleDto.getServerPermission()))
-               .forEach(jsonArray -> jsonArray.forEach(o -> serverIds.add(Long.valueOf(o.toString()))));
+                .map(roleDto -> JSONUtil.parseArray(roleDto.getServerPermission()))
+                .forEach(jsonArray -> jsonArray.forEach(o -> serverIds.add(Long.valueOf(o.toString()))));
 
         List<Tree<Long>> treeList = serverService.findAll(serverIds);
 
@@ -67,20 +65,20 @@ public class ServerController {
         );
 
         Map<Long, List<SshHandler.HandlerItem>> serverIdMap = handlerItemArrayList.stream()
-                                                                                  .collect(Collectors.groupingBy(
-                                                                                          SshHandler.HandlerItem::getServerId));
+                .collect(Collectors.groupingBy(
+                        SshHandler.HandlerItem::getServerId));
 
         treeList.forEach(tree -> tree.walk(node -> {
             List<SshHandler.HandlerItem> handlerItems = serverIdMap.get(node.getId());
             if (handlerItems != null) {
                 List<Map<String, Object>> list = handlerItems.stream()
-                                                             .map(h -> Map.of(
-                                                                     "masterSessionId",
-                                                                     h.getMasterSessionId(),
-                                                                     "user",
-                                                                     h.getUserDto()
-                                                             ))
-                                                             .collect(Collectors.toList());
+                        .map(h -> Map.of(
+                                "masterSessionId",
+                                h.getMasterSessionId(),
+                                "user",
+                                h.getUserDto()
+                        ))
+                        .collect(Collectors.toList());
                 node.putExtra("onlyConnect", list);
             }
         }));
@@ -112,6 +110,7 @@ public class ServerController {
 
     /**
      * 给有onlyConnect或者
+     *
      * @return
      */
     @GetMapping("/groupList")
@@ -160,6 +159,29 @@ public class ServerController {
     @GetMapping("/{serverId}/get")
     public ServerDto get(@PathVariable Long serverId) {
         return serverService.findById(serverId);
+    }
+
+    @GetMapping("/getAllServerRunInfo")
+    public List<ServerRunLogDTO> getAllServerRunInfo() {
+        List<ServerRunLogDTO> serverRunLogDTOList = serverService.getServerLastRunInfoAfter(DateUtil.offsetDay(DateUtil.date(), -1));
+
+        QueryUtils.batchQueryOneToOne(
+                serverRunLogDTOList,
+                ServerRunLogDTO::getServerId,
+                serverService::findByIdIn,
+                ServerDto::getId,
+                (runInfo, server) -> {
+                    runInfo.setServerName(server.getName());
+                    runInfo.setServerIp(server.getIp());
+                    runInfo.setServerPort(server.getPort());
+                }
+        );
+        return serverRunLogDTOList;
+    }
+
+    @GetMapping("/syncAllServerRunInfo")
+    public List<ServerRunLogDTO> syncAllServerRunInfo() {
+        return serverService.syncAllServerRunInfo();
     }
 
 }

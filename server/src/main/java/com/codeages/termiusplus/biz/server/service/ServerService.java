@@ -1,13 +1,11 @@
 package com.codeages.termiusplus.biz.server.service;
 
 import cn.hutool.core.lang.tree.Tree;
-import com.codeages.termiusplus.biz.server.dto.ServerCreateParams;
-import com.codeages.termiusplus.biz.server.dto.ServerDto;
-import com.codeages.termiusplus.biz.server.dto.ServerUpdateParams;
-import com.codeages.termiusplus.biz.server.dto.TreeSortParams;
+import com.codeages.termiusplus.biz.server.dto.*;
 import com.codeages.termiusplus.biz.sshj.SSHClient;
 
 import java.net.Proxy;
+import java.util.Date;
 import java.util.List;
 
 public interface ServerService {
@@ -44,6 +42,10 @@ public interface ServerService {
     List<String> getHistory(Long serverId);
 
     List<String> getMysqlHistory(Long serverId);
+
+    List<ServerRunLogDTO> syncAllServerRunInfo();
+
+    List<ServerRunLogDTO> getServerLastRunInfoAfter(Date date);
 }
 
 

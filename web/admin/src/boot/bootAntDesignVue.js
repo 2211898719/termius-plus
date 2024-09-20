@@ -41,7 +41,8 @@ import {
     TimePicker,
     Slider,
     Tree,
-    Empty
+    Empty,
+    Progress
 } from 'ant-design-vue';
 
 import {Split} from 'view-ui-plus'
@@ -96,5 +97,6 @@ export function bootAntDesignVue(app) {
         .use(AutoComplete)
         .use(TimePicker)
         .use(Split)
+        .use(Progress)
     ;
 }

@@ -17,6 +17,8 @@ public interface ServerRepository extends JpaRepository<Server, Long>, QuerydslP
     Optional<Server> getFirstByParentIdOrderBySortDesc(Long parentId);
 
     List<Server> findAllByIsGroupTrue();
+
+    List<Server> findAllByIsGroupFalse();
 }
 
 
