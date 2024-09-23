@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.Date;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -19,9 +20,20 @@ public class ServerRunLogDTO {
     private String memoryUsage;
     private String diskUsages;
     private String networkUsages;
+    private ServerDto server;
 
+    private Boolean infoStatus;
     private String serverName;
     private String serverIp;
     private Long serverPort;
+    private List<ServerRunLogDTO> detail;
+
+    public ServerRunLogDTO(ServerDto server ,Boolean infoStatus, String serverName, String serverIp, Long serverPort) {
+        this.server = server;
+        this.infoStatus = infoStatus;
+        this.serverName = serverName;
+        this.serverIp = serverIp;
+        this.serverPort = serverPort;
+    }
 }
 

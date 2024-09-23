@@ -28,6 +28,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import javax.validation.Validator;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -152,6 +154,10 @@ public class ApplicationMonitorServiceImpl implements ApplicationMonitorService 
                     .method(config.getMethod())
                     .header(config.getHeaders())
                     .body(config.getBody());
+
+            if (monitorDto.getProxy() != null) {
+                request.setProxy(new Proxy(monitorDto.getProxy().getType().getType(), new InetSocketAddress(monitorDto.getProxy().getIp(), monitorDto.getProxy().getPort().intValue())));
+            }
 
             HttpResponse response = request.execute();
             String body = response.body();

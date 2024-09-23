@@ -17,6 +17,7 @@ import com.codeages.termiusplus.security.SecurityContext;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.codeages.termiusplus.biz.server.context.ServerContext.SSH_POOL;
@@ -163,20 +164,28 @@ public class ServerController {
 
     @GetMapping("/getAllServerRunInfo")
     public List<ServerRunLogDTO> getAllServerRunInfo() {
-        List<ServerRunLogDTO> serverRunLogDTOList = serverService.getServerLastRunInfoAfter(DateUtil.offsetDay(DateUtil.date(), -1));
+        List<ServerDto> allServer = serverService.findAllTestInfoServer();
+        List<ServerRunLogDTO> serverRunLogDTOList = serverService.getServerLastRunInfoAfterLimit(DateUtil.offsetDay(DateUtil.date(), -1));
 
-        QueryUtils.batchQueryOneToOne(
-                serverRunLogDTOList,
-                ServerRunLogDTO::getServerId,
-                serverService::findByIdIn,
-                ServerDto::getId,
-                (runInfo, server) -> {
-                    runInfo.setServerName(server.getName());
-                    runInfo.setServerIp(server.getIp());
-                    runInfo.setServerPort(server.getPort());
-                }
-        );
-        return serverRunLogDTOList;
+        Map<Long, List<ServerRunLogDTO>> group = serverService.getServerLastRunInfoAfter(DateUtil.offsetDay(DateUtil.date(), -7)).stream().collect(Collectors.groupingBy(ServerRunLogDTO::getServerId));
+
+        Map<Long, ServerRunLogDTO> infoMap = serverRunLogDTOList.stream().collect(Collectors.toMap(ServerRunLogDTO::getServerId, Function.identity()));
+
+        return allServer.stream().map(server -> {
+            ServerRunLogDTO serverRunLogDTO = infoMap.get(server.getId());
+            if (serverRunLogDTO == null) {
+                return new ServerRunLogDTO(server, false, server.getName(), server.getIp(), server.getPort());
+            }
+
+            serverRunLogDTO.setServer(server);
+            serverRunLogDTO.setInfoStatus(true);
+            serverRunLogDTO.setServerName(server.getName());
+            serverRunLogDTO.setServerIp(server.getIp());
+            serverRunLogDTO.setServerPort(server.getPort());
+            serverRunLogDTO.setDetail(group.get(server.getId()));
+
+            return serverRunLogDTO;
+        }).collect(Collectors.toList());
     }
 
     @GetMapping("/syncAllServerRunInfo")

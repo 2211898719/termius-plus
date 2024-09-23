@@ -26,6 +26,8 @@ public interface ServerService {
 
     List<ServerDto> findByIdIn(List<Long> ids);
 
+    List<ServerDto> findAllTestInfoServer();
+
     SSHClient createSSHClient(Long id);
 
     SSHClient createSSHClient(Long id, String sessionId);
@@ -44,6 +46,8 @@ public interface ServerService {
     List<String> getMysqlHistory(Long serverId);
 
     List<ServerRunLogDTO> syncAllServerRunInfo();
+
+    List<ServerRunLogDTO> getServerLastRunInfoAfterLimit(Date date);
 
     List<ServerRunLogDTO> getServerLastRunInfoAfter(Date date);
 }

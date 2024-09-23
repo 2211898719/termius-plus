@@ -439,7 +439,7 @@ const testMonitor = (monitor) => {
     headers[header.key] = header.value.split(',')
   })
   data.monitorConfig.headers = headers
-  applicationApi.testMonitor({type: data.monitorType, config: JSON.stringify(data.monitorConfig)}).then(res => {
+  applicationApi.testMonitor({type: data.monitorType, config: JSON.stringify(data.monitorConfig),proxyId: data.proxyId}).then(res => {
     if (!res.res) {
       message.error(res.message)
       return

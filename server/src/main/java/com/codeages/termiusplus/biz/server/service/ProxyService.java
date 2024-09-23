@@ -4,6 +4,7 @@ import com.codeages.termiusplus.biz.server.dto.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface ProxyService {
@@ -17,6 +18,8 @@ public interface ProxyService {
     void delete(Long id);
 
     Optional<ProxyDto> findById(Long proxyId);
+
+    List<ProxyDto> findByIds(List<Long> proxyId);
 
     ClashProxyDTO getClashProxy();
 

@@ -54,6 +54,7 @@ public class Server {
     private Boolean autoSudo;
     private Boolean isDb;
     private Boolean keepAlive;
+    private Boolean infoTest;
     private String dbPort;
     /**
      * 密钥

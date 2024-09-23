@@ -65,6 +65,7 @@ const creationState = reactive({
   username: "",
   remark: "<div></div>",
   autoSudo: true,
+  infoTest: true,
   isDb: false,
   keepAlive: true,
   dbPort: []
@@ -638,6 +639,9 @@ defineExpose({
 
             <a-form-item label="自动sudo" v-bind="creationValidations.aotoSudo">
               <a-switch v-model:checked="creationState.autoSudo"></a-switch>
+            </a-form-item>
+            <a-form-item label="信息检测" v-bind="creationValidations.infoTest">
+              <a-switch v-model:checked="creationState.infoTest"></a-switch>
             </a-form-item>
             <a-form-item label="私钥" v-bind="creationValidations.key">
               <a-textarea v-model:value="creationState.key"></a-textarea>

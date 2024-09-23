@@ -1,6 +1,7 @@
 package com.codeages.termiusplus.biz.server.repository;
 
 import com.codeages.termiusplus.biz.server.entity.Server;
+import com.codeages.termiusplus.biz.server.enums.OSEnum;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.querydsl.QuerydslPredicateExecutor;
 
@@ -19,6 +20,8 @@ public interface ServerRepository extends JpaRepository<Server, Long>, QuerydslP
     List<Server> findAllByIsGroupTrue();
 
     List<Server> findAllByIsGroupFalse();
+
+    List<Server> findAllByIsGroupAndOsAndInfoTest(Boolean isGroup, OSEnum os, Boolean infoTest);
 }
 
 

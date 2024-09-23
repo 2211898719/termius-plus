@@ -9,6 +9,8 @@ import com.codeages.termiusplus.biz.application.dto.ApplicationMonitorExecDto;
 import com.codeages.termiusplus.biz.application.dto.ApplicationMonitorSearchParams;
 import com.codeages.termiusplus.biz.application.service.ApplicationMonitorService;
 import com.codeages.termiusplus.biz.application.service.ApplicationService;
+import com.codeages.termiusplus.biz.server.dto.ProxyDto;
+import com.codeages.termiusplus.biz.server.service.ProxyService;
 import com.codeages.termiusplus.biz.util.QueryUtils;
 import com.github.jaemon.dinger.DingerSender;
 import com.github.jaemon.dinger.core.entity.DingerRequest;
@@ -40,6 +42,8 @@ public class MonitorJob {
     private ApplicationService applicationService;
     @Autowired
     private ApplicationMonitorService applicationMonitorService;
+    @Autowired
+    private ProxyService proxyService;
 
     @Autowired
     private DingerSender dingerSender;
@@ -73,8 +77,18 @@ public class MonitorJob {
                     monitorDto.setApplicationContent(applicationDto.getContent());
                     monitorDto.setApplicationName(applicationDto.getName());
                     monitorDto.setMasterMobile(applicationDto.getMasterMobile());
+                    monitorDto.setProxyId(applicationDto.getProxyId());
                 }
         );
+
+        QueryUtils.batchQueryOneToOne(
+                applicationMonitorList,
+                ApplicationMonitorDto::getProxyId,
+                proxyService::findByIds,
+                ProxyDto::getId,
+                ApplicationMonitorDto::setProxy
+        );
+
 
         for (ApplicationMonitorDto applicationMonitor : applicationMonitorList) {
             CompletableFuture.runAsync(() -> {

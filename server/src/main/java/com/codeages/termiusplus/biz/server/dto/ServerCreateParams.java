@@ -19,6 +19,7 @@ public class ServerCreateParams {
     private Long port;
     private Long sort;
     private OSEnum os;
+    private Boolean infoTest;
     private Boolean autoSudo;
     private Boolean isGroup;
     private Long parentId;

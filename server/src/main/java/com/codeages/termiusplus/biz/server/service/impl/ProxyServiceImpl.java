@@ -25,6 +25,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class ProxyServiceImpl implements ProxyService {
@@ -101,6 +102,11 @@ public class ProxyServiceImpl implements ProxyService {
     @Override
     public Optional<ProxyDto> findById(Long proxyId) {
         return proxyRepository.findById(proxyId).map(proxyMapper::toDto);
+    }
+
+    @Override
+    public List<ProxyDto> findByIds(List<Long> proxyId) {
+        return proxyRepository.findAllById(proxyId).stream().map(proxyMapper::toDto).collect(Collectors.toList());
     }
 
     @Override

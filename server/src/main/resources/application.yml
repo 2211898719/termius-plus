@@ -109,3 +109,6 @@ fitten:
     url: ${FITTEN_URL:www.fitten.com}
 spark:
     httpKey: ${SPARK_HTTP_KEY:}
+
+serverInfo:
+    timeout: ${SERVER_INFO_TIMEOUT:180s}

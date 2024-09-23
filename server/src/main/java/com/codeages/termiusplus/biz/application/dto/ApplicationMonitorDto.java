@@ -1,6 +1,7 @@
 package com.codeages.termiusplus.biz.application.dto;
 
 import com.codeages.termiusplus.biz.application.enums.ApplicationMonitorTypeEnum;
+import com.codeages.termiusplus.biz.server.dto.ProxyDto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -26,6 +27,8 @@ public class ApplicationMonitorDto {
     private String config;
 
     private String remark;
+    private ProxyDto proxy;
+    private Long proxyId;
 
     private Long failureCount;
     private Date failureTime;

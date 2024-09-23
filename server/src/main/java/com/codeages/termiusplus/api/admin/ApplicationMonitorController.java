@@ -2,6 +2,7 @@ package com.codeages.termiusplus.api.admin;
 
 import com.codeages.termiusplus.biz.application.dto.*;
 import com.codeages.termiusplus.biz.application.service.ApplicationMonitorService;
+import com.codeages.termiusplus.biz.server.service.ProxyService;
 import com.codeages.termiusplus.common.IdPayload;
 import com.codeages.termiusplus.common.OkResponse;
 import com.codeages.termiusplus.common.PagerResponse;
@@ -15,9 +16,11 @@ import org.springframework.web.bind.annotation.*;
 public class ApplicationMonitorController {
 
     private final ApplicationMonitorService applicationMonitorService;
+    private final ProxyService proxyService;
 
-    public ApplicationMonitorController(ApplicationMonitorService applicationMonitorService) {
+    public ApplicationMonitorController(ApplicationMonitorService applicationMonitorService, ProxyService proxyService) {
         this.applicationMonitorService = applicationMonitorService;
+        this.proxyService = proxyService;
     }
 
     @GetMapping("/search")
@@ -53,6 +56,10 @@ public class ApplicationMonitorController {
 
     @PostMapping("/test")
     public ApplicationMonitorExecDto test(@RequestBody ApplicationMonitorDto createParams) {
+        if (createParams.getProxyId() != null) {
+            createParams.setProxy(proxyService.findById(createParams.getProxyId()).orElse(null));
+        }
+
         return applicationMonitorService.exec(createParams);
     }
 

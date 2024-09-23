@@ -18,6 +18,7 @@ public class ServerUpdateParams {
     private String firstCommand;
     private Long sort;
     private OSEnum os;
+    private Boolean infoTest;
     private Boolean autoSudo;
     private Long port;
     private String password;

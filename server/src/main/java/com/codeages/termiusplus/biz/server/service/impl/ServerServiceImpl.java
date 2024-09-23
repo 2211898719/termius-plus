@@ -57,6 +57,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.*;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Function;
@@ -82,6 +83,9 @@ public class ServerServiceImpl implements ServerService {
 
     @Value("${guacamole.serverId}")
     private Long guacamoleServerId;
+
+    @Value("${serverInfo.timeout:60s}")
+    private Duration timeout;
 
     @Value("${guacamole.mapping}")
     private String guacamoleServerFilePath;
@@ -144,6 +148,11 @@ public class ServerServiceImpl implements ServerService {
     @Override
     public List<ServerDto> findByIdIn(List<Long> ids) {
         return serverRepository.findAllById(ids).stream().map(serverMapper::toDto).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ServerDto> findAllTestInfoServer() {
+        return serverRepository.findAllByIsGroupAndOsAndInfoTest( false, OSEnum.LINUX, true).stream().map(serverMapper::toDto).collect(Collectors.toList());
     }
 
     private List<Server> toUpdateAllEntity(List<TreeSortParams> serverUpdateParams) {
@@ -460,17 +469,17 @@ public class ServerServiceImpl implements ServerService {
         return getHistory(serverId, "mysql").stream().map(s -> s.replace("\\040", " ")).collect(Collectors.toList());
     }
 
+
     @Override
     public List<ServerRunLogDTO> syncAllServerRunInfo() {
-        List<Server> servers = serverRepository.findAllByIsGroupFalse();
-        servers=servers.stream().filter(server -> server.getOs().equals(OSEnum.LINUX)).collect(Collectors.toList());
+        List<ServerDto> servers = findAllTestInfoServer();
         List<ServerRunLog> serverRunInfoDTOS = new CopyOnWriteArrayList<>();
         Date now = new Date();
         CompletableFuture<?>[] futures = servers.stream().map(server ->
                 CompletableFuture.runAsync(() -> {
                     SSHClient origin = createSSHClient(server.getId());
                     log.info("获取服务器运行信息，serverId = {}, serverName = {}, serverIp = {}", server.getId(), server.getName(), server.getIp());
-                    origin.setTimeout(28000);
+                    origin.setTimeout((int) timeout.toMillis());
                     ExecuteCommandSSHClient sshClient = new ExecuteCommandSSHClient(origin);
 
                     List<NetworkUsage> networkUsages = sshClient.calculateNetworkSpeed(1);
@@ -489,7 +498,7 @@ public class ServerServiceImpl implements ServerService {
                     } catch (IOException e) {
                         log.error("关闭ssh连接失败", e);
                     }
-                }).orTimeout(30000, TimeUnit.MILLISECONDS).exceptionally(e -> {
+                }).orTimeout((int) timeout.toMillis(), TimeUnit.MILLISECONDS).exceptionally(e -> {
                     log.error("获取服务器运行信息失败:{}:{}", server.getName(), server.getIp(), e);
                     return null;
                 })
@@ -505,7 +514,7 @@ public class ServerServiceImpl implements ServerService {
     }
 
     @Override
-    public List<ServerRunLogDTO> getServerLastRunInfoAfter(Date date) {
+    public List<ServerRunLogDTO> getServerLastRunInfoAfterLimit(Date date) {
         List<ServerRunLog> serverRunLogs = serverRunLogRepository.findByDateAfter(date);
 
         //有多个取最新一条
@@ -513,10 +522,15 @@ public class ServerServiceImpl implements ServerService {
                         Collectors.toMap(
                                 ServerRunLog::getServerId,
                                 Function.identity(),
-                                (a, b) -> a.getDate().compareTo(b.getDate()) > 0? a : b
+                                (a, b) -> a.getDate().compareTo(b.getDate()) > 0 ? a : b
                         )
                 )
                 .values().stream().map(serverRunLogMapper::toDto).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ServerRunLogDTO> getServerLastRunInfoAfter(Date date) {
+        return serverRunLogRepository.findByDateAfter(date).stream().map(serverRunLogMapper::toDto).collect(Collectors.toList());
     }
 
 

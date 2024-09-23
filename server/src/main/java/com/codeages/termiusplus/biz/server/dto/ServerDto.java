@@ -19,6 +19,7 @@ public class ServerDto {
     private String name;
     private String ip;
     private Long port;
+    private Boolean infoTest;
     private OSEnum os;
     private String password;
     private Boolean isDb;
