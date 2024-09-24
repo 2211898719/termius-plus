@@ -167,7 +167,7 @@ public class ServerController {
         List<ServerDto> allServer = serverService.findAllTestInfoServer();
         List<ServerRunLogDTO> serverRunLogDTOList = serverService.getServerLastRunInfoAfterLimit(DateUtil.offsetDay(DateUtil.date(), -1));
 
-        Map<Long, List<ServerRunLogDTO>> group = serverService.getServerLastRunInfoAfter(DateUtil.offsetDay(DateUtil.date(), -7)).stream().collect(Collectors.groupingBy(ServerRunLogDTO::getServerId));
+        Map<Long, List<ServerRunLogDTO>> group = serverService.getServerLastRunInfoAfter(DateUtil.offsetDay(DateUtil.date(), -365)).stream().collect(Collectors.groupingBy(ServerRunLogDTO::getServerId));
 
         Map<Long, ServerRunLogDTO> infoMap = serverRunLogDTOList.stream().collect(Collectors.toMap(ServerRunLogDTO::getServerId, Function.identity()));
 

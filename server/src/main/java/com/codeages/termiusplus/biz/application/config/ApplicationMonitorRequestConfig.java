@@ -1,6 +1,7 @@
 package com.codeages.termiusplus.biz.application.config;
 
 import cn.hutool.http.Method;
+import com.codeages.termiusplus.biz.application.enums.ApplicationMonitorCheckTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -17,5 +18,6 @@ public class ApplicationMonitorRequestConfig {
     private Map<String, List<String>> headers;
     private String body;
     private String responseRegex;
+    private ApplicationMonitorCheckTypeEnum checkType;
     private List<String> timeRange;
 }

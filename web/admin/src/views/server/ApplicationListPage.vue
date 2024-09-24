@@ -18,6 +18,12 @@ import GroupCascader from "@/components/group-cascader.vue";
 import RelationGraph from 'relation-graph/vue3'
 import {proxyApi} from "@/api/proxy";
 import PSelect from "@/components/p-select.vue";
+import {Codemirror} from "vue-codemirror";
+import {java} from "@codemirror/lang-java";
+import {oneDark} from "@codemirror/theme-one-dark";
+import {javascript} from "@codemirror/lang-javascript";
+import OsEnum from "@/enums/OsEnum";
+import ApplicationMonitorCheckTypeEnum from "@/enums/ApplicationMonitorCheckTypeEnum";
 
 let termiusStyleColumn = ref(Math.floor(window.innerWidth / 300));
 
@@ -58,6 +64,7 @@ const creationState = reactive({
   monitorType: null,
   monitorConfig: {
     url: "",
+    checkType: ApplicationMonitorCheckTypeEnum.REGEX.value,
     method: MethodEnum.GET.value,
     headers: [],
     body: "",
@@ -149,6 +156,9 @@ const handleEditApplication = (row, flag = true) => {
   if (isJSON(creationState.monitorConfig)) {
     try {
       creationState.monitorConfig = JSON.parse(creationState.monitorConfig)
+      if (!creationState.monitorConfig.checkType){
+        creationState.monitorConfig.checkType = ApplicationMonitorCheckTypeEnum.REGEX.value
+      }
       let headers = []
       Object.keys(creationState.monitorConfig.headers).forEach(key => {
             headers.push({
@@ -439,7 +449,11 @@ const testMonitor = (monitor) => {
     headers[header.key] = header.value.split(',')
   })
   data.monitorConfig.headers = headers
-  applicationApi.testMonitor({type: data.monitorType, config: JSON.stringify(data.monitorConfig),proxyId: data.proxyId}).then(res => {
+  applicationApi.testMonitor({
+    type: data.monitorType,
+    config: JSON.stringify(data.monitorConfig),
+    proxyId: data.proxyId
+  }).then(res => {
     if (!res.res) {
       message.error(res.message)
       return
@@ -522,6 +536,29 @@ const handleOpenApplicationContact = (item) => {
     graphRef$.value.setJsonData(jsonData)
     graphRef$.value.setOptions(relationOptions.value)
   })
+}
+
+const extensions = [javascript(), oneDark]
+
+let editorOptions = ref({
+  mode: 'text/x-javascript',
+  theme: 'default',
+  lineNumbers: true,
+  tabSize: 4,
+  autoCloseBrackets: true,
+});
+
+
+const handleMonitorCheckTypeChange = (value) => {
+  if (value === ApplicationMonitorCheckTypeEnum.JAVASCRIPT.value) {
+    creationState.monitorConfig.responseRegex =
+`function check(body) {
+  var json = JSON.parse(body)
+  return 'success'
+}`
+  } else {
+    creationState.monitorConfig.responseRegex = ''
+  }
 
 }
 
@@ -801,11 +838,29 @@ defineExpose({
                 <a-form-item label="请求体">
                   <a-textarea v-model:value="creationState.monitorConfig.body"></a-textarea>
                 </a-form-item>
-                <a-form-item label="校验返回正则">
-                  <a-input v-model:value="creationState.monitorConfig.responseRegex"/>
-                  <p>单行包含xxx = .*xxx.*</p>
-                  <p>多行包含xxx = (?s).*xxx.*</p>
-                  <p>等于xxx = ^xxx$</p>
+                <a-form-item label="校验方法">
+                  <p-enum-select :module="ApplicationMonitorCheckTypeEnum"
+                                 v-model:value="creationState.monitorConfig.checkType"
+                                 @change="handleMonitorCheckTypeChange"></p-enum-select>
+                </a-form-item>
+                <a-form-item label="校验">
+                  <template
+                      v-if="creationState.monitorConfig.checkType === ApplicationMonitorCheckTypeEnum.JAVASCRIPT.value">
+                    <codemirror v-model:model-value="creationState.monitorConfig.responseRegex"
+                                :extensions="extensions"
+                                :options="editorOptions"></codemirror>
+                    <p>javascript代码，实现校验方法check</p>
+                    <p>入参为body，字符串类型</p>
+                    <p>返回值类型字符串，若为success则校验成功，否则校验失败。校验失败时返回值为失败原因</p>
+                  </template>
+                  <template v-else>
+                    <a-input v-model:value="creationState.monitorConfig.responseRegex"/>
+                    <p>单行包含xxx = .*xxx.*</p>
+                    <p>多行包含xxx = (?s).*xxx.*</p>
+                    <p>等于xxx = ^xxx$</p>
+                  </template>
+
+
                 </a-form-item>
                 <a-form-item label="生效时间段">
                   <a-time-range-picker v-model:value="creationState.monitorConfig.timeRange" format="HH:mm"

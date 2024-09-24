@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.codeages</groupId>
     <artifactId>termius-plus</artifactId>
-    <version>v1.7.4</version>
+    <version>v1.7.5</version>
     <name>Termius Plus</name>
     <description>Termius Plus</description>
     <properties>
@@ -168,11 +168,6 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webflux</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.integration</groupId>
-            <artifactId>spring-integration-sftp</artifactId>
-            <version>6.3.3</version>
         </dependency>
     </dependencies>
 

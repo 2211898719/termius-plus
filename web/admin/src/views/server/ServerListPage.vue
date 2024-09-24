@@ -28,11 +28,6 @@ resizeObserver.observe(window.document.body);
 
 let route = useRoute()
 
-
-
-
-
-
 const emit = defineEmits(['openServer', 'proxyCreation', 'update:value', 'change'])
 
 const props = defineProps({
@@ -141,6 +136,36 @@ const handleQuery = () => {
       }
     })
   })
+}
+
+const findServer = (server) => {
+  let clickList = [{
+    id: 0,
+    isGroup: true,
+    name: "all"
+  }]
+  findNodePath(data.value, server.id).forEach((id) => {
+    walk(data.value, (node) => {
+      if (node.id === id) {
+        clickList.push(node)
+      }
+    })
+  })
+
+  for (let i = 1; i <= clickList.length; i++) {
+    setTimeout(() => {
+      if (clickList[i - 1].isGroup) {
+        handleDblclick(clickList[i - 1])
+      } else {
+        //把元素变成:active状态
+        let el = document.getElementById('serverCardRef' + server.id)
+        el.classList.add('ant-card-active')
+        setTimeout(() => {
+          el.classList.remove('ant-card-active')
+        }, 800)
+      }
+    }, i * 600)
+  }
 }
 
 let {
@@ -323,7 +348,7 @@ const handleDblclick = (item, masterSessionId = 0) => {
     nextTick(() => {
       sorting.value = false
       resetAutoAnimateAndSortable()
-      if (!searchData.value.length && currentData.value.length){
+      if (!searchData.value.length && currentData.value.length) {
         searchText.value = ''
       }
     })
@@ -336,7 +361,7 @@ const handleDblclick = (item, masterSessionId = 0) => {
     return
   }
 
-  emit('openServer', {...item, path: groupBreadcrumb.value.slice(1).map(g=>g.name).join("/")}, masterSessionId)
+  emit('openServer', {...item, path: groupBreadcrumb.value.slice(1).map(g => g.name).join("/")}, masterSessionId)
 }
 
 const handleDownloadWindowsRdp = (item) => {
@@ -477,7 +502,8 @@ const changeSortEnable = (enable) => {
 
 defineExpose({
   getProxyData,
-  setProxyId
+  setProxyId,
+  findServer
 })
 
 </script>
@@ -509,7 +535,8 @@ defineExpose({
                       row-key="id">
                 <template #renderItem="{ item }">
                   <a-dropdown :trigger="['contextmenu']">
-                    <a-list-item class="sortEl selected-active" @dblclick="handleDblclick(item)" @click="handleSelect(item)">
+                    <a-list-item class="sortEl selected-active" @dblclick="handleDblclick(item)"
+                                 @click="handleSelect(item)">
                       <template #actions>
                         <a-popover :visible="item.onlyUserVisible" v-if="item.onlyConnect?.length" @dblclick.stop
                                    @click.stop title="在线用户"
@@ -532,7 +559,7 @@ defineExpose({
                       </template>
 
                       <a-badge-ribbon :text="item.onlyTag" :class="{none:!item.onlyTag}">
-                        <a-card>
+                        <a-card :id="'serverCardRef'+item.id">
                           <a-skeleton avatar :title="false" :loading="!!item.loading" active>
                             <a-list-item-meta
                                 :description="item.isGroup?'group':'server'"

@@ -27,6 +27,11 @@ let serverList = ref([])
 let serverListRef = ref()
 let proxyListRef = ref()
 
+const handleFindServer = (server) => {
+  tagActiveKey.value = 'server'
+  serverListRef.value.findServer(server)
+}
+
 const handleOpenServer = (item, masterSessionId = 0) => {
   let uuid = v4();
   while (serverList.value.findIndex(e => e.operationId === uuid) !== -1) {
@@ -475,7 +480,7 @@ const changeMiniTab = () => {
           <ApplicationListPage @openServer="handleOpenServer" ref="applicationListRef"></ApplicationListPage>
         </a-tab-pane>
         <a-tab-pane tab="数据大屏" key="dashboard" :closable="false" :forceRender="true">
-          <DashboardPage></DashboardPage>
+          <DashboardPage @openServer="handleOpenServer" @findServer="handleFindServer"></DashboardPage>
         </a-tab-pane>
         <a-tab-pane class="setting-pane" tab="设置" key="setting" :closable="false" :forceRender="true">
           <setting-page></setting-page>
@@ -588,7 +593,7 @@ const changeMiniTab = () => {
                   <pie-chart-outlined />
                 </div>
                 <div class="tab-title">
-                  数据大屏
+                  监控看板
                 </div>
               </div>
 

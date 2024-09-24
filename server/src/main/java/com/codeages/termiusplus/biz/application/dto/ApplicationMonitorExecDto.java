@@ -14,6 +14,7 @@ public class ApplicationMonitorExecDto {
     private String response;
     private boolean success;
     private String message;
+    private String remark;
     private Long responseTime;
 }
 

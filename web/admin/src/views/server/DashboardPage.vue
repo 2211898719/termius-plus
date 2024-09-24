@@ -1,11 +1,15 @@
 <script setup>
 
 import {formatSecondsMax} from "@/components/process";
-import {onMounted, ref} from "vue";
+import {defineEmits, nextTick, onBeforeUnmount, onMounted, ref} from "vue";
 import {applicationApi} from "@/api/application";
 import {serverApi} from "@/api/server";
 import autoAnimate from "@formkit/auto-animate";
 import * as echarts from 'echarts';
+import {computedFileSize} from "@/utils/File";
+import {getFirstDayOfMonth} from "view-ui-plus/src/components/date-picker/util";
+import dayjs from "dayjs";
+import {useStorage} from "@vueuse/core";
 
 let applicationErrorRankData = ref([])
 const getApplicationErrorRank = async () => {
@@ -60,7 +64,7 @@ const getServerRunInfo = async () => {
       d.useNum = parseFloat(d.use.replace('%', ''))
     })
 
-    if (item.detail){
+    if (item.detail) {
       item.detail.forEach(d => {
         d.diskUsages = JSON.parse(d.diskUsages)
         d.networkUsages = JSON.parse(d.networkUsages)
@@ -96,48 +100,39 @@ const getServerRunInfo = async () => {
 
 getServerRunInfo();
 
-let height = ref(window.innerHeight*0.8)
-let width = ref(window.innerWidth*0.6)
+let interval = setInterval(() => {
+  getServerRunInfo()
+}, 1000 * 120)
 
-const openDetail = async (item, index) => {
-  let i = serverRunInfo.value.findIndex(i => i.active)
+onBeforeUnmount(() => {
+  clearInterval(interval)
+})
 
-  serverRunInfo.value.forEach(i => {
-    i.active = false;
-    i.transform = ''
-  })
+const emit = defineEmits(['openServer','findServer'])
 
-  if (index !== i) {
-    item.active = true;
+let currentServer = ref(null)
+const openDetail = async (item) => {
+  if (!item.infoStatus) {
+    emit('findServer', item.server)
+    return
   }
-
-//根据浏览器窗口居中
-  let me = serverItem.value[index]
-  let meWidth = width.value
-  let meHeight = height.value
-  let mePos = me.getBoundingClientRect()
-  let windowWidth = window.innerWidth
-  let windowHeight = window.innerHeight
-  //视口大小
-  let left = windowWidth / 2 - meWidth / 2 - mePos.left
-  let top = windowHeight / 2 - meHeight / 2 - mePos.top
-
-  //y轴反转180度，放大到2 倍
-  if (item.active) {
-    item.transform = `translateX(${left}px) translateY(${top}px)  rotate3d(0,1,0,180deg) `
-  } else {
-    item.transform = ''
-  }
-
-  updateChart(item, index)
+  currentServer.value = item
+  detailVisible.value = true
+  await nextTick()
+  updateChart(item)
 }
 
-const updateChart = (item, index) => {
-  let myChart = echarts.init(chartCpu.value[index]);
+let allChart = [];
+const updateChart = (item) => {
+  let myChart = echarts.init(chartCpu.value);
+  allChart.push(myChart);
+  myChart.clear()
   let option;
   option = {
     title: {
-      text: 'cpu使用率'
+      text: 'cpu使用率',
+      left: 'center',
+      bottom: 0
     },
     tooltip: {
       trigger: 'axis',
@@ -167,6 +162,7 @@ const updateChart = (item, index) => {
     },
     yAxis: {
       type: 'value',
+      max: 100,
       boundaryGap: [0, '100%'],
       splitLine: {
         show: false
@@ -177,35 +173,40 @@ const updateChart = (item, index) => {
         name: '日期',
         type: 'line',
         showSymbol: false,
-        data: item.detail.map(d => ({name:new Date(d.date).toString(), value:[new Date(d.date).getTime(),d.cpuUsage.us]}))
+        data: item.detail.map(d => ({
+          name: new Date(d.date).toString(),
+          value: [new Date(d.date).getTime(), d.cpuUsage.us]
+        }))
       }
     ]
   };
   myChart.setOption(option);
 
 
-  let chartDiskChart = echarts.init(chartDisk.value[index]);
+  let chartDiskChart = echarts.init(chartDisk.value);
+  allChart.push(chartDiskChart)
+  chartDiskChart.clear()
   let chartDiskOption;
+  let diskRes = {}
+  item.detail.forEach(e => {
+    e.diskUsages.forEach(d => {
+      if (!diskRes[d.filesystem]) {
+        diskRes[d.filesystem] = []
+      }
+      diskRes[d.filesystem].push({date: e.date, data: d})
+    })
+  })
   chartDiskOption = {
     title: {
-      text: '硬盘使用率'
+      text: '硬盘使用率',
+      left: 'center',
+      bottom: 0
+    },
+    legend: {
+      data: Object.keys(diskRes)
     },
     tooltip: {
       trigger: 'axis',
-      formatter: function (params) {
-        params = params[0];
-        var date = new Date(params.name);
-        console.log(params)
-        return (
-            date.getDate() +
-            '/' +
-            (date.getMonth() + 1) +
-            '/' +
-            date.getFullYear() +
-            ' : ' +
-            params.value[1]
-        );
-      },
       axisPointer: {
         animation: false
       }
@@ -218,44 +219,48 @@ const updateChart = (item, index) => {
     },
     yAxis: {
       type: 'value',
+      max: 100,
       boundaryGap: [0, '100%'],
       splitLine: {
         show: false
       }
     },
-    series: [
-      {
-        name: '日期',
-        type: 'line',
-        showSymbol: false,
-        data: item.detail.map(d => ({name:new Date(d.date).toString(), value:[new Date(d.date).getTime(),d.diskUsages[0].use.replace('%','')]}))
-      }
-    ]
+    series: Object.keys(diskRes).map(k => ({
+      name: k,
+      type: 'line',
+      showSymbol: false,
+      data: diskRes[k].map(d => ({
+        name: new Date(d.date).toString(),
+        value: [new Date(d.date).getTime(), d.data.use.replace('%', '')]
+      }))
+    }))
   };
+
   chartDiskChart.setOption(chartDiskOption);
 
-  let memoryChart = echarts.init(chartMemory.value[index]);
-  let memoryOption;
-  memoryOption = {
+
+  let networkRes = {}
+  item.detail.forEach(e => {
+    e.networkUsages.forEach(d => {
+      if (!networkRes[d.interfaceName]) {
+        networkRes[d.interfaceName] = []
+      }
+      networkRes[d.interfaceName].push({date: e.date, data: d})
+    })
+  })
+
+  let chartNetworkTransmitChart = echarts.init(chartNetworkTransmit.value);
+  chartNetworkTransmitChart.clear()
+  allChart.push(chartNetworkTransmitChart)
+  let chartNetworkTransmitOption;
+  chartNetworkTransmitOption = {
     title: {
-      text: '内存使用率'
+      text: '上行网络使用率',
+      left: 'center',
+      bottom: 0
     },
     tooltip: {
       trigger: 'axis',
-      formatter: function (params) {
-        params = params[0];
-        var date = new Date(params.name);
-        console.log(params)
-        return (
-            date.getDate() +
-            '/' +
-            (date.getMonth() + 1) +
-            '/' +
-            date.getFullYear() +
-            ' : ' +
-            params.value[1]
-        );
-      },
       axisPointer: {
         animation: false
       }
@@ -271,30 +276,103 @@ const updateChart = (item, index) => {
       boundaryGap: [0, '100%'],
       splitLine: {
         show: false
+      },
+      axisLabel: {
+        formatter: function (value) {
+          return computedFileSize(value)
+        }
       }
     },
-    series: [
-      {
-        name: '日期',
-        type: 'line',
-        showSymbol: false,
-        data: item.detail.map(d => ({name:new Date(d.date).toString(), value:[new Date(d.date).getTime(),d.diskUsages[0].use.replace('%','')]}))
-      }
-    ]
+    series: Object.keys(networkRes).map(k => ({
+      name: k,
+      type: 'line',
+      showSymbol: false,
+      data: networkRes[k].map(d => ({
+        name: new Date(d.date).toString(),
+        value: [new Date(d.date).getTime(), d.data.transmitBytes]
+      }))
+    }))
   };
-  memoryChart.setOption(memoryOption);
+  chartNetworkTransmitChart.setOption(chartNetworkTransmitOption);
+
+  let chartNetworkReceiveChart = echarts.init(chartNetworkReceive.value);
+  chartNetworkReceiveChart.clear()
+  let chartNetworkReceiveOption;
+  chartNetworkReceiveOption = {
+    title: {
+      text: '下行网络使用率',
+      left: 'center',
+      bottom: 0
+    },
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: {
+        animation: false
+      }
+    },
+    xAxis: {
+      type: 'time',
+      splitLine: {
+        show: false
+      }
+    },
+    yAxis: {
+      type: 'value',
+      boundaryGap: [0, '100%'],
+      splitLine: {
+        show: false
+      },
+      axisLabel: {
+        formatter: function (value) {
+          return computedFileSize(value)
+        }
+      }
+    },
+    series: Object.keys(networkRes).map(k => ({
+      name: k,
+      type: 'line',
+      showSymbol: false,
+      data: networkRes[k].map(d => ({
+        name: new Date(d.date).toString(),
+        value: [new Date(d.date).getTime(), d.data.receiveBytes]
+      }))
+    }))
+  };
+  chartNetworkReceiveChart.setOption(chartNetworkReceiveOption);
+
+  const resizeObserver = new ResizeObserver(() => {
+    myChart.resize();
+    chartDiskChart.resize();
+    chartNetworkTransmitChart.resize();
+    chartNetworkReceiveChart.resize();
+  });
+
+  resizeObserver.observe(window.document.body);
 }
 
-let chartCpu = ref([])
-let chartDisk = ref([])
-let chartMemory = ref([])
-let chartNetwork = ref([])
+let chartCpu = ref()
+let chartDisk = ref()
+let chartNetworkTransmit = ref()
+let chartNetworkReceive = ref()
 let animateRef = ref()
 let serverItem = ref([])
 onMounted(() => {
-  autoAnimate(animateRef.value, {duration: 300})
+  autoAnimate(animateRef.value, {duration: 600})
 })
 
+let detailVisible = ref(false)
+const handleDetailOk = () => {
+  detailVisible.value = false
+  emit('openServer', {
+    ...currentServer.value.server
+  }, 0)
+}
+
+let miniTabBar = useStorage('miniTabBar', false)
+
+const handleDetailClose = () => {
+  detailVisible.value = false
+}
 
 </script>
 
@@ -305,8 +383,8 @@ onMounted(() => {
            :key="item.serverId"
            ref="serverItem"
            :class="{'server-item':true, 'server-item-active': item.active}"
-           style="position: relative;cursor: pointer;transform-style: preserve-3d;"
-           :style="{'grid-row': `span ${(item.diskUsages?item.diskUsages.length * 1:0)+4}`,'transform': item.transform,'z-index': item.active? 1001 : 1}">
+           @click="openDetail(item)"
+           :style="{'grid-row': `span ${(item.diskUsages?Math.round(item.diskUsages.length * 0.8):0)+4}`}">
         <div class="front">
           <div class="server-name">{{ item.serverName }}</div>
           <div>
@@ -326,20 +404,18 @@ onMounted(() => {
             </div>
           </div>
         </div>
-        <div class="back">
-          <div class="detail">
-            <div class="title">{{ item.serverName }}</div>
-            <div style="height: 100%;width: 100%;overflow: hidden;">
-              <div ref="chartCpu"  style="display: inline-block" :style="{width: width/2-10+'px',height: height/2-10+'px'}"></div>
-              <div ref="chartDisk" style="display: inline-block" :style="{width: width/2-10+'px',height: height/2-10+'px'}"></div>
-              <div ref="chartMemory" style="display: inline-block" :style="{width: width/2-10+'px',height: height/2-10+'px'}"></div>
-              <div ref="chartNetwork" style="display: inline-block" :style="{width: width/2-10+'px',height: height/2-10+'px'}"></div>
-            </div>
-
-          </div>
-        </div>
       </div>
     </div>
+    <a-modal v-model:visible="detailVisible" :title="currentServer?.serverName" @ok="handleDetailOk"
+             @close="handleDetailClose" width="100%"
+             wrap-class-name="full-modal" ok-text="进入服务器" cancel-text="关闭">
+      <div class="dashboard-page-detail">
+        <div class="dashboard-page-detail-chart" ref="chartCpu"></div>
+        <div class="dashboard-page-detail-chart" ref="chartDisk"></div>
+        <div class="dashboard-page-detail-chart" ref="chartNetworkTransmit"></div>
+        <div class="dashboard-page-detail-chart" ref="chartNetworkReceive"></div>
+      </div>
+    </a-modal>
     <div style="padding: 20px;width: 50%;">
       <div
           style=" background-color: #E45F2B;color: #fff;padding: 10px;font-size: 18px;font-weight: bold;text-align: center;">
@@ -361,13 +437,50 @@ onMounted(() => {
   </div>
 </template>
 
+<style lang="less">
+.full-modal {
+  .ant-modal {
+    max-width: 100%;
+    top: 0;
+    padding-bottom: 0;
+    margin: 0;
+  }
+
+  .ant-modal-content {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh);
+  }
+
+  .ant-modal-body {
+    flex: 1;
+  }
+}
+
+.dashboard-page-detail {
+  padding: 8px;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-between;
+
+  .dashboard-page-detail-chart {
+    width: 46%;
+    height: 49%;
+  }
+}
+</style>
 <style scoped lang="less">
+
+
 .dashboard-page {
   height: @height;
   overflow-y: scroll;
 
   .root {
-    width: calc(100vw - 180px);
+    width: calc(100vw - v-bind(miniTabBar) * 180px);
 
     padding: 8px;
     display: grid;
@@ -375,6 +488,7 @@ onMounted(() => {
     grid-auto-rows: 10px;
     column-gap: 20px;
     row-gap: 20px;
+
 
     .server-item {
       //overflow: scroll;
@@ -405,43 +519,6 @@ onMounted(() => {
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
       }
 
-      .back {
-        position: absolute;
-        left: 0;
-        top: 0;
-        transform: rotateY(180deg);
-        z-index: 1000;
-        backface-visibility: hidden;
-        //width: calc(v-bind(width) * 1px);
-        //height: calc(v-bind(height) * 1px);
-        pointer-events: auto;
-
-        .detail {
-          padding: 8px;
-          width: 100%;
-          height: 100%;
-
-          .title {
-            text-align: center;
-            font-size: 16px;
-            font-weight: bold;
-            margin-bottom: 8px;
-            color: green;
-          }
-        }
-
-      }
-
-      &-active {
-        //移动到中间位置
-        //transform: translate3d(-50%, -50%, 0);
-        max-width: calc(v-bind(width) * 1px);
-        max-height: calc(v-bind(height) * 1px);
-        width: calc(v-bind(width) * 1px);
-        height: calc(v-bind(height) * 1px);
-        background-color: #fff;
-
-      }
 
       .server-name {
         color: green;
