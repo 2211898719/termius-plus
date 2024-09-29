@@ -123,7 +123,7 @@ requireApi.keys().forEach(e => {
 
 const downloadFile = async (file) => {
   let url = sftpApi.download({id: props.sftpId, remotePath: file.path})
-  window.open(url)
+  window.open(url).close()
 }
 </script>
 

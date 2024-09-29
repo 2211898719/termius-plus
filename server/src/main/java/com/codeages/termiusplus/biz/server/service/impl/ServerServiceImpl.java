@@ -152,7 +152,7 @@ public class ServerServiceImpl implements ServerService {
 
     @Override
     public List<ServerDto> findAllTestInfoServer() {
-        return serverRepository.findAllByIsGroupAndOsAndInfoTest( false, OSEnum.LINUX, true).stream().map(serverMapper::toDto).collect(Collectors.toList());
+        return serverRepository.findAllByIsGroupAndOsAndInfoTest(false, OSEnum.LINUX, true).stream().map(serverMapper::toDto).collect(Collectors.toList());
     }
 
     private List<Server> toUpdateAllEntity(List<TreeSortParams> serverUpdateParams) {
@@ -318,7 +318,9 @@ public class ServerServiceImpl implements ServerService {
         ssh.setTimeout(3600 * 1000);
         ssh.setConnectTimeout(3600 * 1000);
         ssh.getTransport().setTimeoutMs(0);
-        ssh.getConnection().getKeepAlive().setKeepAliveInterval(30);
+        if (Boolean.TRUE.equals(server.getKeepAlive())) {
+            ssh.getConnection().getKeepAlive().setKeepAliveInterval(60);
+        }
         //设置sshj代理
         if (server.getProxy() != null) {
             ssh.setSocketFactory(new SocketFactory() {

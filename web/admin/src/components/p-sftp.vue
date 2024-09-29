@@ -173,11 +173,13 @@ defineExpose({
 })
 
 const handleDownload = (file) => {
-  const ele = document.createElement('a'); //新建一个a标签
-  ele.style.display = 'none';
-  ele.setAttribute('href', sftpApi.download({id: sessionId.value, remotePath: currentPath.value + '/' + file.name}));
-  ele.setAttribute('target', '_blank');
-  ele.click();
+  // const ele = document.createElement('a'); //新建一个a标签
+  // ele.style.display = 'none';
+  // ele.setAttribute('href', sftpApi.download({id: sessionId.value, remotePath: currentPath.value + '/' + file.name}));
+  // ele.setAttribute('target', '_blank');
+  // ele.click();
+
+  window.open(sftpApi.download({id: sessionId.value, remotePath: currentPath.value + '/' + file.name}))
 }
 
 

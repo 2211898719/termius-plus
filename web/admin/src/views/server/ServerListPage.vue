@@ -663,7 +663,12 @@ defineExpose({
               <a-textarea :auto-size="{ minRows: 2, maxRows: 5 }"
                           v-model:value="creationState.firstCommand"></a-textarea>
             </a-form-item>
-
+            <a-form-item label="自动保活" v-bind="creationValidations.keepAlive">
+              <a-switch v-model:checked="creationState.keepAlive"></a-switch>
+              <p>某些服务器ssl版本过新可能会出现连接失败</p>
+              <pre>strict KEX violation: unexpected packet type 2 (seqnr 1)</pre>
+              <p>可以通过关闭该设置解决</p>
+            </a-form-item>
             <a-form-item label="自动sudo" v-bind="creationValidations.aotoSudo">
               <a-switch v-model:checked="creationState.autoSudo"></a-switch>
             </a-form-item>

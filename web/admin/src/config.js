@@ -1,3 +1,3 @@
 module.exports = {
-    name: "Termius-Plus",
+    name: "速维web服务器运维管理系统",
 }

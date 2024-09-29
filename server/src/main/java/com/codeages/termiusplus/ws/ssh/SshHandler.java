@@ -72,10 +72,7 @@ public class SshHandler {
     }
 
     @OnOpen
-    public void onOpen(javax.websocket.Session session,
-                       @PathParam("sessionId") String sessionId,
-                       @PathParam("serverId") Long serverId,
-                       @PathParam("masterSessionId") String masterSessionId) {
+    public void onOpen(javax.websocket.Session session, @PathParam("sessionId") String sessionId, @PathParam("serverId") Long serverId, @PathParam("masterSessionId") String masterSessionId) {
         log.info("ssh onOpen");
         Long userId = AuthTokenFilter.userIdThreadLocal.get();
         if (userId == null) {
@@ -91,18 +88,11 @@ public class SshHandler {
 
         // 如果是主连接 0，就创建一个新的连接
         if (isMasterSession(masterSessionId)) {
-            HandlerItem handlerItem = new HandlerItem(userId,
-                    username,
-                    serverId,
-                    session,
-                    serverService.createSSHClient(serverId, sessionId)
-            );
+            HandlerItem handlerItem = new HandlerItem(userId, username, serverId, session, serverService.createSSHClient(serverId, sessionId));
 
             log.info("创建连接成功：{}", session.getId());
             SSH_POOL.put(session.getId(), handlerItem);
-            String message = JSONUtil.toJsonStr(new MessageDto(EventType.SESSION,
-                    JSONUtil.toJsonStr(session.getId())
-            ));
+            String message = JSONUtil.toJsonStr(new MessageDto(EventType.SESSION, JSONUtil.toJsonStr(session.getId())));
             handlerItem.sendMasterBinary(message);
         } else {
             // 如果不是0，说明是子连接，找到主连接，然后加入到主连接的sessions中
@@ -119,9 +109,7 @@ public class SshHandler {
 
 
     @OnMessage
-    public void onMessage(@PathParam("masterSessionId") String masterSessionId,
-                          byte[] message,
-                          javax.websocket.Session session) {
+    public void onMessage(@PathParam("masterSessionId") String masterSessionId, byte[] message, javax.websocket.Session session) {
         HandlerItem handlerItem = SSH_POOL.get(session.getId());
         if (!isMasterSession(masterSessionId)) {
             handlerItem = SSH_POOL.get(masterSessionId);
@@ -143,11 +131,7 @@ public class SshHandler {
                 //只有主连接才能调整窗口大小
                 if (isMasterSession(masterSessionId)) {
                     ResizeDto resizeDto = JSONUtil.toBean(messageDto.getData(), ResizeDto.class);
-                    handlerItem.reSize(resizeDto.getCols(),
-                            resizeDto.getRows(),
-                            resizeDto.getWidth(),
-                            resizeDto.getHeight()
-                    );
+                    handlerItem.reSize(resizeDto.getCols(), resizeDto.getRows(), resizeDto.getWidth(), resizeDto.getHeight());
                 }
                 break;
             case REQUEST_AUTH_EDIT_SESSION:
@@ -179,9 +163,7 @@ public class SshHandler {
     }
 
     @OnError
-    public void onError(javax.websocket.Session session,
-                        Throwable error,
-                        @PathParam("masterSessionId") String masterSessionId) {
+    public void onError(javax.websocket.Session session, Throwable error, @PathParam("masterSessionId") String masterSessionId) {
         log.error("发生错误：{}，Session ID： {}", error.getMessage(), session.getId());
 
         String message = "发生错误：" + error.getMessage();
@@ -322,10 +304,7 @@ public class SshHandler {
 
             this.openSession = shellSession;
 
-            CommandLogDto commandLogDto = commandLogService.create(new CommandLogCreateParams(userId,
-                    session.getId(),
-                    serverId
-            ));
+            CommandLogDto commandLogDto = commandLogService.create(new CommandLogCreateParams(userId, session.getId(), serverId));
             log.info("创建命令记录成功：{}", commandLogDto.getId());
             logFile = FileUtil.file(commandLogDto.getCommandData());
 
@@ -348,23 +327,45 @@ public class SshHandler {
         public void close() {
             try {
                 IoUtil.close(this.inputStream);
+            } catch (Exception ignored) {
+
+            }
+            try {
                 IoUtil.close(this.outputStream);
+            } catch (Exception ignored) {
+
+            }
+
+            try {
                 IoUtil.close(this.logFileOutputStream);
+            } catch (Exception ignored) {
+
+            }
+
+            try {
                 String message = JSONUtil.toJsonStr(new MessageDto(EventType.MASTER_CLOSE, "主连接已关闭"));
 
-                sessions.stream()
-                        .map(Pair::getValue)
-                        .filter(s -> s.isOpen() && !s.getId().equals(masterSessionId))
-                        .forEach(s -> sendBinary(s, message));
-                this.shell.close();
-                this.openSession.close();
+                sessions.stream().map(Pair::getValue).filter(s -> s.isOpen() && !s.getId().equals(masterSessionId)).forEach(s -> sendBinary(s, message));
+            } catch (Exception ignored) {
 
-                sessions.stream()
-                        .map(Pair::getValue)
-                        .filter(s -> s.isOpen() && !s.getId().equals(masterSessionId))
-                        .forEach(IoUtil::close);
-            } catch (IOException e) {
-                log.error("关闭连接失败：{}", e.getMessage());
+            }
+
+            try {
+                this.shell.close();
+            } catch (Exception ignored) {
+
+            }
+
+            try {
+                this.openSession.close();
+            } catch (Exception ignored) {
+
+            }
+
+            try {
+                sessions.stream().map(Pair::getValue).filter(s -> s.isOpen() && !s.getId().equals(masterSessionId)).forEach(IoUtil::close);
+            } catch (Exception ignored) {
+
             }
         }
 
@@ -375,9 +376,7 @@ public class SshHandler {
             //写入内存缓冲区中的数据到文件
             logFileOutputStream.flush();
 
-            MessageDto messageDto = new MessageDto(EventType.COMMAND,
-                    FileUtil.readString(logFile, openSession.getRemoteCharset())
-            );
+            MessageDto messageDto = new MessageDto(EventType.COMMAND, FileUtil.readString(logFile, openSession.getRemoteCharset()));
 
             //把之前的服务器上下文的数据发送给新的子连接
             sendBinary(session, JSONUtil.toJsonStr(messageDto));
@@ -451,17 +450,11 @@ public class SshHandler {
         }
 
         public void reqAuthEditSession(Session session) {
-            String username = sessions.stream()
-                    .filter(s -> s.getValue().getId().equals(session.getId()))
-                    .map(Pair::getKey)
-                    .findFirst()
-                    .orElse("");
+            String username = sessions.stream().filter(s -> s.getValue().getId().equals(session.getId())).map(Pair::getKey).findFirst().orElse("");
 
             AuthEditSessionDto authEditSessionDto = new AuthEditSessionDto(username, session.getId(), null);
 
-            String message = JSONUtil.toJsonStr(new MessageDto(EventType.REQUEST_AUTH_EDIT_SESSION,
-                    JSONUtil.toJsonStr(authEditSessionDto)
-            ));
+            String message = JSONUtil.toJsonStr(new MessageDto(EventType.REQUEST_AUTH_EDIT_SESSION, JSONUtil.toJsonStr(authEditSessionDto)));
             sendMasterBinary(message);
         }
 
@@ -471,11 +464,7 @@ public class SshHandler {
 
         public void handleResAuthEditSession(Session session, MessageDto messageDto) {
             AuthEditSessionDto authEditSessionDto = JSONUtil.toBean(messageDto.getData(), AuthEditSessionDto.class);
-            sessions.stream()
-                    .filter(s -> s.getValue().getId().equals(authEditSessionDto.getSessionId()))
-                    .map(Pair::getValue)
-                    .findFirst()
-                    .ifPresent(subSession -> sendBinary(subSession, JSONUtil.toJsonStr(messageDto)));
+            sessions.stream().filter(s -> s.getValue().getId().equals(authEditSessionDto.getSessionId())).map(Pair::getValue).findFirst().ifPresent(subSession -> sendBinary(subSession, JSONUtil.toJsonStr(messageDto)));
         }
     }
 }

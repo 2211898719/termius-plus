@@ -373,7 +373,7 @@ const initTerm = () => {
   };
 
 
-  const attachAddon = new TrzszAddon(socket);
+  const attachAddon = new TrzszAddon(socket,{chooseSendFiles:()=>{},chooseSaveDirectory:()=>{}});
 
   const fitAddon = new FitAddon();
   term.fitAddon = fitAddon;
