@@ -32,6 +32,7 @@ import org.springframework.stereotype.Service;
 import javax.validation.Validator;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
+import java.time.Duration;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -54,6 +55,9 @@ public class ApplicationMonitorServiceImpl implements ApplicationMonitorService 
 
     @Value("${monitor.count:3}")
     private int monitorCount;
+
+    @Value("${monitor.timeout:60s}")
+    private Duration timeout;
 
     @Value("${monitor.debounce:5}")
     private int monitorDebounce;
@@ -146,6 +150,7 @@ public class ApplicationMonitorServiceImpl implements ApplicationMonitorService 
             }
 
             HttpRequest request = HttpRequest.of(config.getUrl()).method(config.getMethod()).header(config.getHeaders()).body(config.getBody());
+            request.timeout((int) timeout.toMillis());
 
             if (monitorDto.getProxy() != null) {
                 request.setProxy(new Proxy(monitorDto.getProxy().getType().getType(), new InetSocketAddress(monitorDto.getProxy().getIp(), monitorDto.getProxy().getPort().intValue())));

@@ -2,6 +2,7 @@ package com.codeages.termiusplus.api.admin;
 
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.lang.tree.Tree;
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.codeages.termiusplus.biz.server.dto.*;
 import com.codeages.termiusplus.biz.server.service.ServerService;
@@ -14,6 +15,9 @@ import com.codeages.termiusplus.biz.util.QueryUtils;
 import com.codeages.termiusplus.common.IdPayload;
 import com.codeages.termiusplus.common.OkResponse;
 import com.codeages.termiusplus.security.SecurityContext;
+import com.dingtalk.open.app.api.OpenDingTalkStreamClientBuilder;
+import com.dingtalk.open.app.api.security.AuthClientCredential;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -24,6 +28,7 @@ import static com.codeages.termiusplus.biz.server.context.ServerContext.SSH_POOL
 
 @RestController
 @RequestMapping("/api-admin/server")
+@Slf4j
 public class ServerController {
 
     private final ServerService serverService;
@@ -165,7 +170,7 @@ public class ServerController {
     @GetMapping("/getAllServerRunInfo")
     public List<ServerRunLogDTO> getAllServerRunInfo() {
         List<ServerDto> allServer = serverService.findAllTestInfoServer();
-        List<ServerRunLogDTO> serverRunLogDTOList = serverService.getServerLastRunInfoAfterLimit(DateUtil.offsetDay(DateUtil.date(), -1));
+        List<ServerRunLogDTO> serverRunLogDTOList = serverService.getServerLastRunInfoAfterLimit(DateUtil.offsetDay(DateUtil.date(), -3));
 
         Map<Long, List<ServerRunLogDTO>> group = serverService.getServerLastRunInfoAfter(DateUtil.offsetDay(DateUtil.date(), -365)).stream().collect(Collectors.groupingBy(ServerRunLogDTO::getServerId));
 

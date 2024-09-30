@@ -45,6 +45,7 @@ import net.schmizz.sshj.userauth.password.PasswordFinder;
 import net.schmizz.sshj.userauth.password.Resource;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -84,11 +85,30 @@ public class ServerServiceImpl implements ServerService {
     @Value("${guacamole.serverId}")
     private Long guacamoleServerId;
 
+    @Value("${server.connectCount:5}")
+    private int connectCount;
+
     @Value("${serverInfo.timeout:60s}")
     private Duration timeout;
 
+    @Value("${serverInfo.allTimeout:120s}")
+    private Duration allTimeout;
+
     @Value("${guacamole.mapping}")
     private String guacamoleServerFilePath;
+
+
+    private static ThreadPoolTaskExecutor executor;
+
+    static {
+        executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(20); // 设置核心线程池大小
+        executor.setMaxPoolSize(20); // 设置最大线程池大小
+        executor.setQueueCapacity(5000); // 设置队列容量
+        executor.setThreadNamePrefix("Monitor-"); // 设置线程名前缀
+        executor.initialize();
+    }
+
 
     public ServerServiceImpl(ServerRunLogRepository serverRunLogRepository, ServerRunLogMapper serverRunLogMapper, ServerRepository serverRepository, ServerMapper serverMapper, Validator validator, ProxyService proxyService) {
         this.serverRunLogRepository = serverRunLogRepository;
@@ -361,12 +381,24 @@ public class ServerServiceImpl implements ServerService {
 
         // 设置主机和端口号
         ssh.addHostKeyVerifier(new PromiscuousVerifier());
-        try {
-            ssh.connect(server.getIp(), server.getPort().intValue());
-        } catch (ConnectException connectException) {
-            throw new AppException(ErrorCode.INVALID_ARGUMENT, "连接失败，请检查网络或者服务器是否开启");
-        } catch (TransportException e) {
-            throw new AppException(ErrorCode.INVALID_ARGUMENT, "连接失败，请检查服务器配置");
+        int errorCount = 0;
+        AppException appException = new AppException(ErrorCode.INVALID_ARGUMENT, "连接失败，请检查网络或者服务器是否开启");
+
+        while (errorCount < connectCount) {
+            try {
+                ssh.connect(server.getIp(), server.getPort().intValue());
+                break;
+            } catch (ConnectException connectException) {
+                appException = new AppException(ErrorCode.INVALID_ARGUMENT, "连接失败，请检查网络或者服务器是否开启");
+                errorCount++;
+            } catch (TransportException e) {
+                appException = new AppException(ErrorCode.INVALID_ARGUMENT, "连接失败，请检查服务器配置");
+                errorCount++;
+            }
+        }
+
+        if (errorCount >= connectCount) {
+            throw appException;
         }
 
         // 配置身份验证使用的私钥
@@ -498,7 +530,7 @@ public class ServerServiceImpl implements ServerService {
                     } catch (IOException e) {
                         log.error("关闭ssh连接失败", e);
                     }
-                }).orTimeout((int) timeout.toMillis(), TimeUnit.MILLISECONDS).exceptionally(e -> {
+                }, executor).orTimeout((int) allTimeout.toMillis(), TimeUnit.MILLISECONDS).exceptionally(e -> {
                     log.error("获取服务器运行信息失败:{}:{}", server.getName(), server.getIp(), e);
                     return null;
                 })

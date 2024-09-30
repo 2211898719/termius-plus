@@ -22,6 +22,7 @@ rocketmq:
 server:
     forward-headers-strategy: native
     port: 8080
+    connectCount: ${SERVER_CONNECT_COUNT:6}
     servlet:
         session:
             timeout: 1200
@@ -103,6 +104,7 @@ guacamole:
 
 monitor:
     count: ${MONITOR_COUNT:5}
+    timeout: ${MONITOR_TIMEOUT:30s}
     debounce: ${MONITOR_DEBOUNCE:6}
 
 fitten:
@@ -112,3 +114,5 @@ spark:
 
 serverInfo:
     timeout: ${SERVER_INFO_TIMEOUT:180s}
+    allTimeout: ${SERVER_INFO_ALL_TIMEOUT:300s}
+
