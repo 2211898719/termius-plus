@@ -3,18 +3,17 @@ import {defineEmits, defineExpose, reactive, ref, watch} from "vue";
 import ProxyTypeEnum from "@/enums/ProxyTypeEnum";
 import {useForm} from "ant-design-vue/es/form";
 import {proxyApi} from "@/api/proxy";
-import {message} from "ant-design-vue";
+import {message, Modal} from "ant-design-vue";
 import PEnumSelect from "@/components/p-enum-select.vue";
+import {ExclamationCircleOutlined} from "@ant-design/icons-vue";
 
-let termiusStyleColumn =ref(Math.floor(window.innerWidth / 300));
-
+let termiusStyleColumn = ref(Math.floor(window.innerWidth / 300));
 
 const resizeObserver = new ResizeObserver(() => {
   termiusStyleColumn.value = Math.floor(window.innerWidth / 300);
 });
 
 resizeObserver.observe(window.document.body);
-
 
 const creationProxyType = ref('create');
 const creationProxyState = reactive({
@@ -39,7 +38,7 @@ const creationProxyRules = reactive({
       message: "请输入host",
     },
     {
-      pattern: /^(?:(?:[0-9]{1,3}\.){3}[0-9]{1,3}|(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,})$/,
+      pattern: /^(?:(?:[0-9]{1,3}\.){3}[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,})$/,
       message: "host格式不正确"
     }
   ],
@@ -101,7 +100,6 @@ const handleProxyCreate = async () => {
   message.success("操作成功");
 }
 
-
 const handleEditProxy = (row) => {
   proxyCreationVisible.value = true;
   creationProxyType.value = 'update'
@@ -113,56 +111,84 @@ const proxyCreation = () => {
   creationProxyType.value = 'create'
 }
 
+const handleDeleteProxy = (item) => {
+  let modal = Modal.confirm({
+    title: '确定要删除吗?',
+    icon: createVNode(ExclamationCircleOutlined),
+    content: '',
+    onOk: async () => {
+      try {
+        await proxyApi.delete({id: item.id})
+        await getProxyData()
+        message.success("操作成功");
+      } catch (e) {
+        modal.destroy()
+      }
+    },
+    onCancel() {
+    },
+  });
+}
+
 defineExpose({
   proxyCreation
 })
-
 
 </script>
 
 <template>
   <div class="server-root">
     <div class="server-pane">
-
       <a-space direction="vertical" size="middle" style="width: 100%;">
         <a-card :bodyStyle="{padding:'12px 12px'}" style="border:none">
           <div class="body-root">
-          <div style="display: flex;justify-content: space-between">
-            <div>
-
+            <div style="display: flex;justify-content: space-between">
+              <div>
+              </div>
+              <div>
+                <a-button @click="proxyCreation" class="my-button">新增代理</a-button>
+              </div>
             </div>
-            <div>
-              <a-button @click="proxyCreation" class="my-button">新增代理</a-button>
+            <div class="mt30 server">
+              <a-list :grid="{ gutter: 16, column: termiusStyleColumn }" :data-source="proxyData" row-key="id">
+                <template #renderItem="{ item }">
+                  <a-dropdown :trigger="['contextmenu']">
+                    <a-list-item>
+                      <template #actions>
+                        <a key="list-loadmore-edit">
+                          <edit-outlined @click="handleEditProxy(item)"/>
+                        </a>
+                      </template>
+                      <a-card>
+                        <a-skeleton avatar :title="false" :loading="!!item.loading" active>
+                          <a-list-item-meta
+                              :description="item.type+','+item.ip+':'+item.port"
+                          >
+                            <template #title>
+                              <span>{{ item.name }}</span>
+                            </template>
+                            <template #avatar>
+                              <safety-certificate-outlined class="icon-server" style="color: #E45F2B;"/>
+                            </template>
+                          </a-list-item-meta>
+                        </a-skeleton>
+                      </a-card>
+                    </a-list-item>
+                    <template #overlay>
+                      <a-menu>
+                        <a-menu-item key="edit" @click="handleEditProxy(item)">
+                          <edit-outlined/>
+                          修改
+                        </a-menu-item>
+                        <a-menu-item key="delete" @click="handleDeleteProxy(item)">
+                          删除
+                        </a-menu-item>
+                      </a-menu>
+                    </template>
+                  </a-dropdown>
+                </template>
+              </a-list>
             </div>
-          </div>
-          <div class="mt30 server">
-            <a-list :grid="{ gutter: 16, column: termiusStyleColumn }" :data-source="proxyData" row-key="id">
-              <template #renderItem="{ item }">
-                <a-list-item>
-                  <template #actions>
-                    <a key="list-loadmore-edit">
-                      <edit-outlined @click="handleEditProxy(item)"/>
-                    </a>
-                  </template>
-                  <a-card>
-                    <a-skeleton avatar :title="false" :loading="!!item.loading" active>
-                      <a-list-item-meta
-                          :description="item.type+','+item.ip+':'+item.port"
-                      >
-                        <template #title>
-                          <span>{{ item.name }}</span>
-                        </template>
-                        <template #avatar>
-                          <safety-certificate-outlined class="icon-server" style="color: #E45F2B;"/>
-                        </template>
-                      </a-list-item-meta>
-                    </a-skeleton>
-                  </a-card>
-
-                </a-list-item>
-              </template>
-            </a-list>
-          </div>
           </div>
         </a-card>
         <a-drawer
