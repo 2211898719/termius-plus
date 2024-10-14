@@ -35,7 +35,7 @@ import com.codeages.termiusplus.ws.ssh.MessageDto;
 import com.querydsl.core.BooleanBuilder;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import com.codeages.termiusplus.biz.sshj.SSHClient;
+import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.connection.channel.direct.Session;
 import net.schmizz.sshj.transport.TransportException;
 import net.schmizz.sshj.transport.verification.PromiscuousVerifier;
@@ -245,6 +245,11 @@ public class ServerServiceImpl implements ServerService {
         buildProxy(treeList, proxyIdProxyMap, null);
 
         return treeList;
+    }
+
+    @Override
+    public boolean existServerByProxyId(Long proxyId) {
+        return serverRepository.existsByProxyId(proxyId);
     }
 
     public List<Tree<Long>> findAllDb() {
@@ -568,6 +573,10 @@ public class ServerServiceImpl implements ServerService {
 
     private List<String> getHistory(Long serverId, String type) {
         ServerDto serverDto = findById(serverId);
+        if(Boolean.FALSE.equals(serverDto.getHistoryGet())){
+            return Collections.emptyList();
+        }
+
         SSHClient sshClient = createSSHClient(serverId);
         String originHistoryStr;
 

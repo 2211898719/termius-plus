@@ -27,15 +27,20 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     private final ObjectMapper objectMapper;
 
-    public SecurityConfig(UserAuthService userAuthService, AuthAccessDeniedHandler authAccessDeniedHandler, ObjectMapper objectMapper) {
+    private final UriConfig uriConfig;
+
+    public SecurityConfig(UserAuthService userAuthService, AuthAccessDeniedHandler authAccessDeniedHandler,
+                          ObjectMapper objectMapper,
+                          UriConfig uriConfig) {
         this.userAuthService = userAuthService;
         this.authAccessDeniedHandler = authAccessDeniedHandler;
         this.objectMapper = objectMapper;
+        this.uriConfig = uriConfig;
     }
 
     @Bean
     public AuthTokenFilter authenticationJwtTokenFilter() {
-        return new AuthTokenFilter(userAuthService, objectMapper);
+        return new AuthTokenFilter(userAuthService, objectMapper, uriConfig);
     }
 
     @Bean
@@ -51,25 +56,37 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http.cors().and()
-                // 禁用 CSRF
-                .csrf().disable()
-                .exceptionHandling()
-                .accessDeniedHandler(authAccessDeniedHandler)
-                .authenticationEntryPoint(unauthorizedHandler()).and()
-                // 不需要session（不创建会话）
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
-                .authorizeRequests()
-                .antMatchers("/api-admin/public/**").permitAll()
-                .antMatchers("/api-app/public/**").permitAll()
-                .antMatchers("/ws/**").permitAll()
-                .antMatchers("/socket/**").permitAll()
-                .antMatchers("/api-admin/file/get/**").permitAll()
-                // 其他都需要鉴权
-                .anyRequest().authenticated();
+        http.cors()
+            .and()
+            // 禁用 CSRF
+            .csrf()
+            .disable()
+            .exceptionHandling()
+            .accessDeniedHandler(authAccessDeniedHandler)
+            .authenticationEntryPoint(unauthorizedHandler())
+            .and()
+            // 不需要session（不创建会话）
+            .sessionManagement()
+            .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            .and()
+            .authorizeRequests()
+            .antMatchers("/api-admin/public/**")
+            .permitAll()
+            .antMatchers("/api-app/public/**")
+            .permitAll()
+            .antMatchers("/ws/**")
+            .permitAll()
+            .antMatchers("/socket/**")
+            .permitAll()
+            .antMatchers("/api-admin/file/get/**")
+            .permitAll()
+            // 其他都需要鉴权
+            .anyRequest()
+            .authenticated();
 
         // 禁用缓存
-        http.headers().cacheControl();
+        http.headers()
+            .cacheControl();
 
         http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
     }

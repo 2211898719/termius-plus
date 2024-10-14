@@ -149,6 +149,7 @@ public class ApplicationController {
                     applicationMonitorLogCountDto.setApplicationContent(applicationDto.getContent());
                 }
         );
+
         return applicationErrorRank;
     }
 

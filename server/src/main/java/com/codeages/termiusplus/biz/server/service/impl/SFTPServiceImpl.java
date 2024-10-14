@@ -21,7 +21,7 @@ import com.codeages.termiusplus.ws.ssh.SftpServerUploadServerProgressDto;
 import lombok.Cleanup;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import com.codeages.termiusplus.biz.sshj.SSHClient;
+import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.connection.ConnectionException;
 import net.schmizz.sshj.sftp.*;
 import org.springframework.stereotype.Service;

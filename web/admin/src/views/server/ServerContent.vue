@@ -169,7 +169,7 @@ const handleRequestInputTerm = () => {
   }
 }
 
-let autoComp = useStorage('autoComp', false)
+let autoComp = useStorage('autoComp-' + props.server.id, true)
 
 const handleChangeComp = () => {
   autoComp.value = !autoComp.value
@@ -226,6 +226,10 @@ onMounted(() => {
   }
 
   tour.addSteps([
+    {
+      attachTo: {element: CompChangeEl.value, on: 'bottom'},
+      text: '开启后可根据history提示最接近的命令,使用双击shift补全命令',
+    },
     {
       attachTo: {element: SftpChangeEl.value, on: 'bottom'},
       text: '开启sftp,图形化管理文件',
@@ -323,7 +327,7 @@ const chat = async () => {
         copyButton.style.color = "#fff"
         //点击时间
         copyButton.addEventListener("click", () => {
-         copyToClipboard( pre.querySelector("code").textContent)
+          copyToClipboard(pre.querySelector("code").textContent)
         })
 
         pre.prepend(copyButton)
@@ -451,8 +455,6 @@ const handleKeyup = (event) => {
                         @hot="onHot"
                         v-model:inputTerminal="inputTerm"
                         v-model:sub-session-username="subSessionUsername"></p-term>
-
-
                 <div style="position: absolute;right: 16px;top: calc(50% - 1em / 2);color: aliceblue;z-index: 100"
                      ref="openPopover"
                      @click="remarkStatus=!remarkStatus">
@@ -476,6 +478,25 @@ const handleKeyup = (event) => {
                     <path
                         d="M531.968 441.344c-9.216 1.536-17.408 7.168-22.528 15.36-9.728 15.872-6.144 36.864 8.192 48.128l28.16 22.016-183.808 1.024c-18.432 0-33.28 16.384-33.28 35.84s15.36 35.328 33.792 35.328l284.16-1.536c18.432 0 33.28-16.384 33.28-35.84 0-9.728-4.096-18.944-10.752-25.6-1.536-2.048-3.584-4.096-5.632-5.632l-106.496-82.944c-7.168-5.632-15.872-7.68-25.088-6.144zM647.168 639.488l-283.648 2.048c-18.432 0-33.28 16.384-33.28 35.84 0 9.728 4.096 18.944 10.752 25.6 1.536 2.048 3.584 4.096 5.632 5.632l106.496 82.944c5.632 4.608 12.8 6.656 19.968 6.656 11.264 0 21.504-6.144 27.648-15.872 4.608-7.68 6.656-16.896 5.12-25.6-1.536-9.216-6.144-17.408-13.312-22.528l-28.16-22.016 183.808-1.024c18.432 0 33.28-16.384 33.28-35.84-1.024-19.968-15.872-35.84-34.304-35.84z"
                         p-id="19509"></path>
+                  </svg>
+                </div>
+                <div :class="{green:autoComp,center:true}" @click="handleChangeComp"
+                     style="position: absolute;right:75px;top: 17px;color: red;z-index: 99999;fill: red"
+                     class="left" ref="CompChangeEl">
+                  <svg class="tags"
+                       style="vertical-align: middle;fill: currentColor;overflow: hidden;"
+                       viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1494">
+                    <path d="M512 512m-512 0a512 512 0 1 0 1024 0 512 512 0 1 0-1024 0Z"
+                          p-id="1495"></path>
+                    <path d="M651.2 672.7h-548l269.6-321.4h548z" fill="#FFFFFF" p-id="1496"></path>
+                    <path
+                        d="M662.4 696.7H51.7l309.9-369.3h610.7L662.4 696.7z m-507.8-48H640l229.4-273.3H384L154.6 648.7z"
+                        p-id="1497"></path>
+                    <path d="M512 512m-48.2 0a48.2 48.2 0 1 0 96.4 0 48.2 48.2 0 1 0-96.4 0Z"
+                          p-id="1498"></path>
+                    <path
+                        d="M512 584.2c-39.8 0-72.2-32.4-72.2-72.2s32.4-72.2 72.2-72.2 72.2 32.4 72.2 72.2-32.4 72.2-72.2 72.2z m0-96.4c-13.4 0-24.2 10.9-24.2 24.2 0 13.4 10.9 24.2 24.2 24.2 13.4 0 24.2-10.9 24.2-24.2 0-13.4-10.8-24.2-24.2-24.2z"
+                        p-id="1499"></path>
                   </svg>
                 </div>
                 <div v-if="server.masterSessionId"

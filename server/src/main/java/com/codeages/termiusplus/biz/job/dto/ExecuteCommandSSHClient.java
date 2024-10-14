@@ -2,12 +2,12 @@ package com.codeages.termiusplus.biz.job.dto;
 
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.thread.ThreadUtil;
-import com.codeages.termiusplus.biz.sshj.SSHClient;
 import com.codeages.termiusplus.biz.util.command.CpuUsage;
 import com.codeages.termiusplus.biz.util.command.DiskUsage;
 import com.codeages.termiusplus.biz.util.command.NetworkUsage;
 
 import lombok.SneakyThrows;
+import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.connection.channel.direct.Session;
 
 import java.io.BufferedReader;

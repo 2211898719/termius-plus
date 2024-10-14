@@ -22,7 +22,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import com.codeages.termiusplus.biz.sshj.SSHClient;
+import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.userauth.UserAuthException;
 import org.springframework.stereotype.Component;
 
@@ -72,7 +72,8 @@ public class SshHandler {
     }
 
     @OnOpen
-    public void onOpen(javax.websocket.Session session, @PathParam("sessionId") String sessionId, @PathParam("serverId") Long serverId, @PathParam("masterSessionId") String masterSessionId) {
+    public void onOpen(javax.websocket.Session session, @PathParam("sessionId") String sessionId,
+                       @PathParam("serverId") Long serverId, @PathParam("masterSessionId") String masterSessionId) {
         log.info("ssh onOpen");
         Long userId = AuthTokenFilter.userIdThreadLocal.get();
         if (userId == null) {
@@ -82,13 +83,21 @@ public class SshHandler {
         // 为了防止内存泄漏，这里需要手动清理
         AuthTokenFilter.userIdThreadLocal.remove();
 
-        String username = userService.get(userId).map(UserDto::getUsername).orElse("");
+        String username = userService.get(userId)
+                                     .map(UserDto::getUsername)
+                                     .orElse("");
 
         log.info("有连接加入,sessionId={}", session.getId());
 
         // 如果是主连接 0，就创建一个新的连接
         if (isMasterSession(masterSessionId)) {
-            HandlerItem handlerItem = new HandlerItem(userId, username, serverId, session, serverService.createSSHClient(serverId, sessionId));
+            HandlerItem handlerItem = new HandlerItem(
+                    userId,
+                    username,
+                    serverId,
+                    session,
+                    serverService.createSSHClient(serverId, sessionId)
+            );
 
             log.info("创建连接成功：{}", session.getId());
             SSH_POOL.put(session.getId(), handlerItem);
@@ -109,7 +118,8 @@ public class SshHandler {
 
 
     @OnMessage
-    public void onMessage(@PathParam("masterSessionId") String masterSessionId, byte[] message, javax.websocket.Session session) {
+    public void onMessage(@PathParam("masterSessionId") String masterSessionId, byte[] message,
+                          javax.websocket.Session session) {
         HandlerItem handlerItem = SSH_POOL.get(session.getId());
         if (!isMasterSession(masterSessionId)) {
             handlerItem = SSH_POOL.get(masterSessionId);
@@ -131,7 +141,12 @@ public class SshHandler {
                 //只有主连接才能调整窗口大小
                 if (isMasterSession(masterSessionId)) {
                     ResizeDto resizeDto = JSONUtil.toBean(messageDto.getData(), ResizeDto.class);
-                    handlerItem.reSize(resizeDto.getCols(), resizeDto.getRows(), resizeDto.getWidth(), resizeDto.getHeight());
+                    handlerItem.reSize(
+                            resizeDto.getCols(),
+                            resizeDto.getRows(),
+                            resizeDto.getWidth(),
+                            resizeDto.getHeight()
+                                      );
                 }
                 break;
             case REQUEST_AUTH_EDIT_SESSION:
@@ -163,7 +178,8 @@ public class SshHandler {
     }
 
     @OnError
-    public void onError(javax.websocket.Session session, Throwable error, @PathParam("masterSessionId") String masterSessionId) {
+    public void onError(javax.websocket.Session session, Throwable error,
+                        @PathParam("masterSessionId") String masterSessionId) {
         log.error("发生错误：{}，Session ID： {}", error.getMessage(), session.getId());
 
         String message = "发生错误：" + error.getMessage();
@@ -225,9 +241,11 @@ public class SshHandler {
             return;
         }
 
-        synchronized (session.getId().intern()) {
+        synchronized (session.getId()
+                             .intern()) {
             try {
-                session.getBasicRemote().sendBinary(ByteBuffer.wrap(compressString(msg, Charset.defaultCharset())));
+                session.getBasicRemote()
+                       .sendBinary(ByteBuffer.wrap(compressString(msg, Charset.defaultCharset())));
             } catch (IOException e) {
                 log.error("发送消息出错：{}", e.getMessage());
             }
@@ -304,7 +322,11 @@ public class SshHandler {
 
             this.openSession = shellSession;
 
-            CommandLogDto commandLogDto = commandLogService.create(new CommandLogCreateParams(userId, session.getId(), serverId));
+            CommandLogDto commandLogDto = commandLogService.create(new CommandLogCreateParams(
+                    userId,
+                    session.getId(),
+                    serverId
+            ));
             log.info("创建命令记录成功：{}", commandLogDto.getId());
             logFile = FileUtil.file(commandLogDto.getCommandData());
 
@@ -345,7 +367,11 @@ public class SshHandler {
             try {
                 String message = JSONUtil.toJsonStr(new MessageDto(EventType.MASTER_CLOSE, "主连接已关闭"));
 
-                sessions.stream().map(Pair::getValue).filter(s -> s.isOpen() && !s.getId().equals(masterSessionId)).forEach(s -> sendBinary(s, message));
+                sessions.stream()
+                        .map(Pair::getValue)
+                        .filter(s -> s.isOpen() && !s.getId()
+                                                     .equals(masterSessionId))
+                        .forEach(s -> sendBinary(s, message));
             } catch (Exception ignored) {
 
             }
@@ -363,7 +389,11 @@ public class SshHandler {
             }
 
             try {
-                sessions.stream().map(Pair::getValue).filter(s -> s.isOpen() && !s.getId().equals(masterSessionId)).forEach(IoUtil::close);
+                sessions.stream()
+                        .map(Pair::getValue)
+                        .filter(s -> s.isOpen() && !s.getId()
+                                                     .equals(masterSessionId))
+                        .forEach(IoUtil::close);
             } catch (Exception ignored) {
 
             }
@@ -376,7 +406,10 @@ public class SshHandler {
             //写入内存缓冲区中的数据到文件
             logFileOutputStream.flush();
 
-            MessageDto messageDto = new MessageDto(EventType.COMMAND, FileUtil.readString(logFile, openSession.getRemoteCharset()));
+            MessageDto messageDto = new MessageDto(
+                    EventType.COMMAND,
+                    FileUtil.readString(logFile, openSession.getRemoteCharset())
+            );
 
             //把之前的服务器上下文的数据发送给新的子连接
             sendBinary(session, JSONUtil.toJsonStr(messageDto));
@@ -409,7 +442,9 @@ public class SshHandler {
 
         private void sendMasterBinary(String msg) {
             for (Pair<String, Session> session : sessions) {
-                if (session.getValue().getId().equals(masterSessionId)) {
+                if (session.getValue()
+                           .getId()
+                           .equals(masterSessionId)) {
                     sendBinary(session.getValue(), msg);
                     break;
                 }
@@ -426,7 +461,7 @@ public class SshHandler {
                     String originData = new String(Arrays.copyOfRange(buffer, 0, i), openSession.getRemoteCharset());
                     MessageDto messageDto = new MessageDto(EventType.COMMAND, originData);
                     String s = JSONUtil.toJsonStr(messageDto);
-                    lastCommandLog.append(s);
+                    lastCommandLog.append(originData);
                     logFileOutputStream.write(originData.getBytes());
                     sessions.forEach(session -> sendBinary(session.getValue(), s));
                 }
@@ -437,7 +472,9 @@ public class SshHandler {
 
                 log.error("读取数据失败：{}", e.getMessage());
 
-                sessions.stream().map(Pair::getValue).forEach(SshHandler.this::destroy);
+                sessions.stream()
+                        .map(Pair::getValue)
+                        .forEach(SshHandler.this::destroy);
             }
         }
 
@@ -450,11 +487,20 @@ public class SshHandler {
         }
 
         public void reqAuthEditSession(Session session) {
-            String username = sessions.stream().filter(s -> s.getValue().getId().equals(session.getId())).map(Pair::getKey).findFirst().orElse("");
+            String username = sessions.stream()
+                                      .filter(s -> s.getValue()
+                                                    .getId()
+                                                    .equals(session.getId()))
+                                      .map(Pair::getKey)
+                                      .findFirst()
+                                      .orElse("");
 
             AuthEditSessionDto authEditSessionDto = new AuthEditSessionDto(username, session.getId(), null);
 
-            String message = JSONUtil.toJsonStr(new MessageDto(EventType.REQUEST_AUTH_EDIT_SESSION, JSONUtil.toJsonStr(authEditSessionDto)));
+            String message = JSONUtil.toJsonStr(new MessageDto(
+                    EventType.REQUEST_AUTH_EDIT_SESSION,
+                    JSONUtil.toJsonStr(authEditSessionDto)
+            ));
             sendMasterBinary(message);
         }
 
@@ -464,7 +510,13 @@ public class SshHandler {
 
         public void handleResAuthEditSession(Session session, MessageDto messageDto) {
             AuthEditSessionDto authEditSessionDto = JSONUtil.toBean(messageDto.getData(), AuthEditSessionDto.class);
-            sessions.stream().filter(s -> s.getValue().getId().equals(authEditSessionDto.getSessionId())).map(Pair::getValue).findFirst().ifPresent(subSession -> sendBinary(subSession, JSONUtil.toJsonStr(messageDto)));
+            sessions.stream()
+                    .filter(s -> s.getValue()
+                                  .getId()
+                                  .equals(authEditSessionDto.getSessionId()))
+                    .map(Pair::getValue)
+                    .findFirst()
+                    .ifPresent(subSession -> sendBinary(subSession, JSONUtil.toJsonStr(messageDto)));
         }
     }
 }

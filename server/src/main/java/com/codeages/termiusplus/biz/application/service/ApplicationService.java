@@ -26,6 +26,8 @@ public interface ApplicationService {
     List<ApplicationDto> findAllByIds(Collection<Long> ids);
 
     List<Tree<Long>> groupList();
+
+    boolean existByProxyId(Long proxyId);
 }
 
 

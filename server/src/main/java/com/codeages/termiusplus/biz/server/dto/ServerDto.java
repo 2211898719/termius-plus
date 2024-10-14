@@ -23,6 +23,7 @@ public class ServerDto {
     private OSEnum os;
     private String password;
     private Boolean isDb;
+    private Boolean historyGet;
     private String dbPort;
     private String key;
     private String remark;

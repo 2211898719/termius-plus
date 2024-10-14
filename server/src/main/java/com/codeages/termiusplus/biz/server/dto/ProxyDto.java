@@ -14,6 +14,7 @@ public class ProxyDto {
     private String ip;
     private Long port;
     private ProxyTypeEnum type;
+    private Boolean open;
     private String password;
     private String username;
 }

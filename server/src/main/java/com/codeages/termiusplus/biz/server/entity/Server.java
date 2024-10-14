@@ -55,6 +55,7 @@ public class Server {
     private Boolean isDb;
     private Boolean keepAlive;
     private Boolean infoTest;
+    private Boolean historyGet;
     private String dbPort;
     /**
      * 密钥

@@ -13,6 +13,7 @@ import {serverApi} from "@/api/server";
 import {Button, message, notification} from "ant-design-vue";
 import pako from 'pako';
 import {WebglAddon} from '@xterm/addon-webgl';
+import {useShepherd} from "vue-shepherd";
 
 let authStore = useAuthStore();
 // let networkInfo = useNetwork()
@@ -59,7 +60,7 @@ const emit = defineEmits(['update:loading', 'update:subSessionUsername', 'update
 
 let frontColor = useStorage('frontColor', "#ffffff")
 let backColor = useStorage('backColor', "#000000")
-let AutoComplete = useStorage('autoComp', false)
+let AutoComplete = useStorage('autoComp-' + props.server.id, true)
 let currentFont = useStorage('currentFont', 'JetBrainsMono-ExtraBold')
 let socketSessionId = ref(null)
 
@@ -70,11 +71,11 @@ fontChannel.onmessage = (e) => {
 }
 
 let options = {
-  rendererType: AutoComplete.value ? "dom" : "canvas", //渲染类型canvas或者dom
+  rendererType: "canvas", //渲染类型canvas或者dom
   // rows: 123, //行数
   // cols: 321,// 设置之后会输入多行之后覆盖现象
   convertEol: true, //启用时，光标将设置为下一行的开头
-  scrollback: AutoComplete.value ? 5000 : 30000, //滚动缓冲区大小
+  scrollback: 30000, //滚动缓冲区大小
   fontSize: 14, //字体大小
   fontFamily: currentFont.value + ", -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji'",
   height: "100%", //终端高度
@@ -174,35 +175,9 @@ const initSocket = () => {
 }
 
 /**
- * 获取当前终端中最后一行的字符
- */
-const getCommand = () => {
-  let rows = terminal.value.getElementsByClassName("xterm-rows")[0].childNodes;
-  let row = rows[rows.length - 1];
-  while (row.childNodes.length === 0) {
-    row = row.previousSibling
-  }
-  let command = ""
-  row.childNodes.forEach(item => {
-    if (item.className) {
-      return
-    }
-    if (item.innerText) {
-      command += item.innerText
-    } else {
-      command += " "
-    }
-  })
-
-  return command
-}
-
-
-/**
  * 获取终端中未执行的命令 例如：root@localhost:~# 则去掉
  */
-const getUnExecutedCommand = () => {
-  let command = getCommand()
+const getUnExecutedCommand = (command) => {
 
   /**
    * 如果进入了mysql模式，则获取mysql的历史命令
@@ -210,14 +185,14 @@ const getUnExecutedCommand = () => {
   if (command.startsWith("mysql> ")) {
     getMysqlHistory()
     history.value.currentType = "mysql"
-    return command.substring("mysql> ".length)
+    return command.substring("mysql> ".length).trim()
   }
 
   history.value.currentType = "bash"
   const regex = /^.*?@.*?:.*?[#$]/
 
   if (regex.test(command)) {
-    return command.replace(regex, "")
+    return command.replace(regex, "").trim()
   }
 
   return ""
@@ -250,12 +225,18 @@ const initTerm = () => {
 
   const originalAddEventListener = socket.addEventListener;
 
+  let lastCommand = ""
+
   function preprocessEvent(event) {
 
     let data = JSON.parse(arrayBufferToString(decompressArrayBuffer(event.data)));
     switch (data.event) {
       case "COMMAND":
         emit("hot", currentServer.value)
+        lastCommand += data.data
+        if (lastCommand.length > 2000) {
+          lastCommand = lastCommand.substring(lastCommand.length - 2000)
+        }
         return {
           type: "COMMAND",
           data: data.data
@@ -373,7 +354,11 @@ const initTerm = () => {
   };
 
 
-  const attachAddon = new TrzszAddon(socket,{chooseSendFiles:()=>{},chooseSaveDirectory:()=>{}});
+  const attachAddon = new TrzszAddon(socket, {
+    chooseSendFiles: () => {
+    }, chooseSaveDirectory: () => {
+    }
+  });
 
   const fitAddon = new FitAddon();
   term.fitAddon = fitAddon;
@@ -384,49 +369,39 @@ const initTerm = () => {
   searchAddon = new SearchAddon();
   term.loadAddon(searchAddon);
   term.loadAddon(new WebglAddon());
+  let lastShiftTime = 0;
   term.attachCustomKeyEventHandler((event) => {
     if ((event.type === 'keydown' && ('f' === event.key || 'F' === event.key) && event.ctrlKey && event.shiftKey) || (event.type === 'keydown' && ('f' === event.key || 'F' === event.key) && event.metaKey && event.shiftKey)) {
       searchVisible.value = !searchVisible.value
       return false;
     }
+    //0.5秒内双击shift
+    if (event.type === 'keydown' && event.shiftKey) {
+      let nowTime = new Date().getTime()
+      if (nowTime - lastShiftTime < 500) {
+        let command = getCompleteCommand()
+        if (command) {
+          execCommand(command)
+          displayNoneCompletion()
+        }
+      }
+      lastShiftTime = nowTime;
+    }
+
   });
 
   term.focus();
-  // term.onData(() => {
-  //   if (!AutoComplete.value) {
-  //     return
-  //   }
-  //
-  //   setTimeout(() => {
-  //     completeCommand.value = getCompleteCommand();
-  //     writeCompletionToCursorPosition(completeCommand.value)
-  //   }, 100)
-  // })
+  term.onData(() => {
+    if (!AutoComplete.value) {
+      return
+    }
 
-  // term.onKey(e => {
-  //   return;
-  //   if (!AutoComplete.value) {
-  //     return
-  //   }
-  //
-  //   if (e.domEvent.ctrlKey && (e.domEvent.key === 'w' || e.domEvent.key === 'W')) {
-  //     let command = getCompleteCommand()
-  //     if (command) {
-  //       execCommand(command)
-  //       displayNoneCompletion()
-  //     }
-  //     /**
-  //      * 由于xterm.js的实现原理，无法直接阻止事件的默认行为，所以只能抛出一个异常来阻止事件的默认行为
-  //      */
-  //     throw new Error("stop")
-  //   }
-  //
-  //   if (e.domEvent.ctrlKey && e.domEvent.key === 'q') {
-  //     displayNoneCompletion()
-  //
-  //     throw new Error("stop")
-  //   }
-  // });
+    setTimeout(() => {
+      completeCommand.value = getCompleteCommand();
+      writeCompletionToCursorPosition(completeCommand.value)
+      console.log(completeCommand.value)
+    }, 100)
+  })
 
   if (props.server.execCommand && props.masterSessionId == 0) {
     nextTick(() => {
@@ -462,11 +437,11 @@ channel.onmessage = (e) => {
 }
 
 const getHistory = async () => {
-  // try {
-  //   history.value.bash = _.reverse(await serverApi.getHistory(props.server.id));
-  // } catch (e) {
-  //   message.error(e.message)
-  // }
+  try {
+    history.value.bash = _.reverse(await serverApi.getHistory(props.server.id));
+  } catch (e) {
+    message.error(e.message)
+  }
 }
 
 const getMysqlHistory = async () => {
@@ -493,7 +468,9 @@ const requestAuthEditSession = () => {
  * 根据 history 和 getUnExecutedCommand 获取可能的补全命令
  */
 const getCompleteCommand = () => {
-  let command = getUnExecutedCommand()
+  let last = getTerminalLastNotBlackCommand();
+  console.log("原始命令", last,term)
+  let command = getUnExecutedCommand(last)
   //去掉头部的空格，不能去掉尾部的空格
   command = command.replace(/^\s+/, "")
   if (command) {
@@ -506,6 +483,15 @@ const getCompleteCommand = () => {
   }
 
   return ""
+}
+
+const getTerminalLastNotBlackCommand = () => {
+  for (let i = term.buffer.active.length - 1; i >= 0; i--) {
+    let line = term.buffer.active.getLine(i).translateToString();
+    if (line.trim()){
+      return line
+    }
+  }
 }
 
 let completeCommand = ref('')
@@ -545,6 +531,28 @@ const writeCompletionToCursorPosition = (autoComp) => {
   autoEL.style.lineHeight = "1"
   autoEL.className = "auto-complete"
   console.append(autoEL)
+  if (hasAutoComplete.value) {
+    return
+  }
+
+  tour.addSteps([
+    {
+      attachTo: {element: autoEL, on: 'bottom'},
+      text: '根据history提示最接近的命令,使用双击shift补全命令',
+      buttons: [
+        {
+          action() {
+            hasAutoComplete.value = true
+            return this.cancel()
+          },
+          text: '知道了'
+        }
+      ]
+    }
+  ])
+  tour.onclose = () => {
+  }
+  tour.start();
 }
 
 const displayNoneCompletion = () => {
@@ -670,7 +678,7 @@ const searchKeyListener = (event) => {
     return false;
   }
 
-  if (event.type === 'keydown' && event.key === 'Escape'){
+  if (event.type === 'keydown' && event.key === 'Escape') {
     closeSearch()
   }
 }
@@ -690,6 +698,43 @@ const searchPrev = () => {
 const changeRegexEnabled = () => {
   regexEnabled.value = !regexEnabled.value
 }
+
+const defaultConfig = {
+  // 是否显示黑色遮罩层
+  useModalOverlay: true,
+  // 键盘按钮控制步骤
+  keyboardNavigation: true,
+  defaultStepOptions: {
+    // 显示关闭按钮
+    cancelIcon: {
+      enabled: false
+    },
+    scrollTo: {behavior: 'smooth', block: 'center'},
+    // 高亮元素四周要填充的空白像素
+    modalOverlayOpeningPadding: 4,
+    // 空白像素的圆角
+    modalOverlayOpeningRadius: 4,
+    buttons: [{
+      action() {
+        return this.back()
+      },
+      text: '上一步'
+    }, {
+      action() {
+        return this.next()
+      },
+      text: '下一步'
+    }]
+  }
+}
+
+const tour = useShepherd({
+  useModalOverlay: true,
+  ...defaultConfig
+});
+
+let hasAutoComplete = useStorage('hasAutoComplete', false)
+
 
 </script>
 
@@ -800,15 +845,16 @@ const changeRegexEnabled = () => {
   }
 }
 
-/deep/ .auto-complete {
+.auto-complete {
   position: absolute;
   color: v-bind(frontColor);
   font-family: courier-new, courier, monospace;
   font-size: 14px;
+  mix-blend-mode: difference;
   opacity: 0.6;
 }
 
-/deep/ .xterm {
+.xterm {
   height: 100%;
 }
 

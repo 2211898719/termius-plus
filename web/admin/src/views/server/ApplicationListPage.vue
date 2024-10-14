@@ -1,7 +1,18 @@
 <script setup>
 import {applicationApi} from "@/api/application";
 import {message, Modal} from "ant-design-vue";
-import {computed, createVNode, defineEmits, defineExpose, nextTick, onMounted, reactive, ref, watch} from "vue";
+import {
+  computed,
+  createVNode,
+  defineEmits,
+  defineExpose,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  reactive,
+  ref,
+  watch
+} from "vue";
 import {ExclamationCircleOutlined} from "@ant-design/icons-vue";
 import {walk} from "@/utils/treeUtil";
 import {useForm} from "ant-design-vue/es/form";
@@ -156,7 +167,7 @@ const handleEditApplication = (row, flag = true) => {
   if (isJSON(creationState.monitorConfig)) {
     try {
       creationState.monitorConfig = JSON.parse(creationState.monitorConfig)
-      if (!creationState.monitorConfig.checkType){
+      if (!creationState.monitorConfig.checkType) {
         creationState.monitorConfig.checkType = ApplicationMonitorCheckTypeEnum.REGEX.value
       }
       let headers = []
@@ -204,9 +215,13 @@ const getApplicationList = async () => {
 
 getApplicationList()
 
-setInterval(() => {
+let interval = setInterval(() => {
   getApplicationList()
 }, 1000 * 10)
+
+onBeforeUnmount(() => {
+  clearInterval(interval)
+})
 
 const handleCopyApplication = async (row) => {
   handleEditApplication(row, false);
@@ -552,7 +567,7 @@ let editorOptions = ref({
 const handleMonitorCheckTypeChange = (value) => {
   if (value === ApplicationMonitorCheckTypeEnum.JAVASCRIPT.value) {
     creationState.monitorConfig.responseRegex =
-`function check(body) {
+        `function check(body) {
   var json = JSON.parse(body)
   return 'success'
 }`

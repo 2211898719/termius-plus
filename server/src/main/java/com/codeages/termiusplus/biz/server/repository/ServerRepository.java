@@ -22,6 +22,8 @@ public interface ServerRepository extends JpaRepository<Server, Long>, QuerydslP
     List<Server> findAllByIsGroupFalse();
 
     List<Server> findAllByIsGroupAndOsAndInfoTest(Boolean isGroup, OSEnum os, Boolean infoTest);
+
+    boolean existsByProxyId(Long proxyId);
 }
 
 

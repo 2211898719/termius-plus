@@ -1,7 +1,18 @@
 <script setup>
 import {serverApi} from "@/api/server";
 import {message, Modal} from "ant-design-vue";
-import {computed, createVNode, defineEmits, defineExpose, nextTick, onMounted, reactive, ref, watch} from "vue";
+import {
+  computed,
+  createVNode,
+  defineEmits,
+  defineExpose,
+  nextTick,
+  onMounted,
+  onUnmounted,
+  reactive,
+  ref,
+  watch
+} from "vue";
 import {ExclamationCircleOutlined} from "@ant-design/icons-vue";
 import {findNodePath, walk} from "@/utils/treeUtil";
 import {proxyApi} from "@/api/proxy";
@@ -61,6 +72,7 @@ const creationState = reactive({
   remark: "<div></div>",
   autoSudo: true,
   infoTest: true,
+  historyGet: true,
   isDb: false,
   keepAlive: true,
   dbPort: []
@@ -220,9 +232,13 @@ const getServerList = async () => {
 
 getServerList()
 
-setInterval(() => {
+let interval = setInterval(() => {
   getServerList()
 }, 1000 * 10)
+
+onUnmounted(()=>{
+  clearInterval(interval)
+})
 
 const handleCopyServer = async (row) => {
   creationType.value = 'create'
@@ -674,6 +690,10 @@ defineExpose({
             </a-form-item>
             <a-form-item label="信息检测" v-bind="creationValidations.infoTest">
               <a-switch v-model:checked="creationState.infoTest"></a-switch>
+            </a-form-item>
+            <a-form-item label="获取history" v-bind="creationValidations.historyGet">
+              <a-switch v-model:checked="creationState.historyGet"></a-switch>
+              <p>获取服务器的历史命令，以提供命令补全功能，需要服务器支持</p>
             </a-form-item>
             <a-form-item label="私钥" v-bind="creationValidations.key">
               <a-textarea v-model:value="creationState.key"></a-textarea>

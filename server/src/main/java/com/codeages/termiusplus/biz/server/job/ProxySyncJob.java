@@ -16,19 +16,22 @@ public class ProxySyncJob {
     @Autowired
     private ProxyService proxyService;
 
-//    @PostConstruct
-//    public void init() {
-//        log.info("ProxySyncJob init");
-//        CompletableFuture.runAsync(() -> {
-//            proxyService.syncClashProxy();
-//            log.info("ProxySyncJob finished");
-//        });
-//    }
-//
-//    // 每周一凌晨2点执行
-//    @Scheduled(cron = "0 0 2 ? * MON")
-//    @Async
-//    public void clearTimeOutSFTP() {
-//        proxyService.syncClashProxy();
-//    }
+    @PostConstruct
+    public void init() {
+        log.info("init ProxySyncJob");
+        proxyService.syncProxyOpen();
+    }
+
+    // 每5分钟同步一次
+    @Scheduled(cron = "0 */5 * * * *")
+    @Async
+    public void clearTimeOutSFTP() {
+        CompletableFuture.runAsync(() -> {
+            try {
+                proxyService.syncProxyOpen();
+            } catch (Exception e) {
+                log.error("sync proxy error", e);
+            }
+        });
+    }
 }

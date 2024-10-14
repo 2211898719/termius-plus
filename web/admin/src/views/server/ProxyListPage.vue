@@ -6,7 +6,7 @@ import {proxyApi} from "@/api/proxy";
 import {message} from "ant-design-vue";
 import PEnumSelect from "@/components/p-enum-select.vue";
 
-let termiusStyleColumn =ref(Math.floor(window.innerWidth / 300));
+let termiusStyleColumn = ref(Math.floor(window.innerWidth / 300));
 
 
 const resizeObserver = new ResizeObserver(() => {
@@ -113,6 +113,16 @@ const proxyCreation = () => {
   creationProxyType.value = 'create'
 }
 
+const handleDel = async (row) => {
+  try {
+    await proxyApi.delete(row)
+    await getProxyData()
+    message.success("删除成功")
+  }catch (error) {
+    message.error(error.message)
+  }
+}
+
 defineExpose({
   proxyCreation
 })
@@ -127,42 +137,54 @@ defineExpose({
       <a-space direction="vertical" size="middle" style="width: 100%;">
         <a-card :bodyStyle="{padding:'12px 12px'}" style="border:none">
           <div class="body-root">
-          <div style="display: flex;justify-content: space-between">
-            <div>
+            <div style="display: flex;justify-content: space-between">
+              <div>
 
+              </div>
+              <div>
+                <a-button @click="proxyCreation" class="my-button">新增代理</a-button>
+              </div>
             </div>
-            <div>
-              <a-button @click="proxyCreation" class="my-button">新增代理</a-button>
-            </div>
-          </div>
-          <div class="mt30 server">
-            <a-list :grid="{ gutter: 16, column: termiusStyleColumn }" :data-source="proxyData" row-key="id">
-              <template #renderItem="{ item }">
-                <a-list-item>
-                  <template #actions>
-                    <a key="list-loadmore-edit">
-                      <edit-outlined @click="handleEditProxy(item)"/>
-                    </a>
-                  </template>
-                  <a-card>
-                    <a-skeleton avatar :title="false" :loading="!!item.loading" active>
-                      <a-list-item-meta
-                          :description="item.type+','+item.ip+':'+item.port"
-                      >
-                        <template #title>
-                          <span>{{ item.name }}</span>
-                        </template>
-                        <template #avatar>
-                          <safety-certificate-outlined class="icon-server" style="color: #E45F2B;"/>
-                        </template>
-                      </a-list-item-meta>
-                    </a-skeleton>
-                  </a-card>
+            <div class="mt30 server">
+              <a-list :grid="{ gutter: 16, column: termiusStyleColumn }" :data-source="proxyData" row-key="id">
+                <template #renderItem="{ item }">
+                  <a-dropdown :trigger="['contextmenu']">
+                    <a-list-item>
+                      <template #actions>
+                        <a key="list-loadmore-edit">
+                          <edit-outlined @click="handleEditProxy(item)"/>
+                        </a>
+                      </template>
+                      <a-badge-ribbon :text="item.open? '正常' : '异常'" :color="item.open? 'green' : 'red'">
+                        <a-card>
+                          <a-skeleton avatar :title="false" :loading="!!item.loading" active>
+                            <a-list-item-meta
+                                :description="item.type+','+item.ip+':'+item.port"
+                            >
+                              <template #title>
+                                <span>{{ item.name }}</span>
+                              </template>
+                              <template #avatar>
+                                <safety-certificate-outlined class="icon-server" style="color: #E45F2B;"/>
+                              </template>
+                            </a-list-item-meta>
+                          </a-skeleton>
+                        </a-card>
 
-                </a-list-item>
-              </template>
-            </a-list>
-          </div>
+                      </a-badge-ribbon>
+                    </a-list-item>
+                    <template #overlay>
+                      <a-menu>
+                        <a-menu-item key="1" @click="handleDel(item)">
+                          <DeleteOutlined/>
+                          删除
+                        </a-menu-item>
+                      </a-menu>
+                    </template>
+                  </a-dropdown>
+                </template>
+              </a-list>
+            </div>
           </div>
         </a-card>
         <a-drawer

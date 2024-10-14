@@ -83,6 +83,7 @@ const onFinish = async (params) => {
     loading.value = false
   } catch (err) {
     message.error(err.message);
+    store.logout();
   } finally {
     loading.value = false
   }

@@ -2,7 +2,7 @@ package com.codeages.termiusplus.biz.server.service;
 
 import cn.hutool.core.lang.tree.Tree;
 import com.codeages.termiusplus.biz.server.dto.*;
-import com.codeages.termiusplus.biz.sshj.SSHClient;
+import net.schmizz.sshj.SSHClient;
 
 import java.net.Proxy;
 import java.util.Date;
@@ -11,6 +11,8 @@ import java.util.List;
 public interface ServerService {
 
     List<Tree<Long>> findAll(List<Long> serverIds);
+
+    boolean existServerByProxyId(Long proxyId);
 
     List<Tree<Long>> findAllDb();
 

@@ -24,6 +24,8 @@ public interface ProxyService {
     ClashProxyDTO getClashProxy();
 
     ClashProxyDTO syncClashProxy();
+
+    void syncProxyOpen();
 }
 
 

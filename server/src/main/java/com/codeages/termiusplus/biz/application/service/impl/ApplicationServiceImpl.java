@@ -215,6 +215,11 @@ public class ApplicationServiceImpl implements ApplicationService {
         return List.of(root);
     }
 
+    @Override
+    public boolean existByProxyId(Long proxyId) {
+        return applicationRepository.existsByProxyId(proxyId);
+    }
+
     private List<Application> toUpdateAllEntity(List<TreeSortParams> serverUpdateParams) {
         if (CollUtil.isEmpty(serverUpdateParams)) {
             return Collections.emptyList();

@@ -34,6 +34,8 @@ public class Proxy {
      * 代理端口
      */
     private Long port;
+
+    private Boolean open;
     /**
      * 代理类型,HTTP,SOCKS5
      */

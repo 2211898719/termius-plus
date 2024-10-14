@@ -20,6 +20,7 @@ public class ServerUpdateParams {
     private OSEnum os;
     private Boolean infoTest;
     private Boolean autoSudo;
+    private Boolean historyGet;
     private Long port;
     private String password;
     private String key;

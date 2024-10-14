@@ -14,6 +14,8 @@ public interface ApplicationRepository extends JpaRepository<Application, Long>,
 
     List<Application> findAllByIsGroupFalse();
 
+    boolean existsByProxyId(Long proxyId);
+
 }
 
 
