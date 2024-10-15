@@ -470,8 +470,7 @@ public class SshHandler {
                     return;
                 }
 
-                log.error("读取数据失败：{}", e.getMessage());
-
+                log.error("读取数据失败", e);
                 sessions.stream()
                         .map(Pair::getValue)
                         .forEach(SshHandler.this::destroy);

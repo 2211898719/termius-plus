@@ -177,7 +177,7 @@ const initSocket = () => {
 /**
  * 获取终端中未执行的命令 例如：root@localhost:~# 则去掉
  */
-const getUnExecutedCommand = (command) => {
+const getUnExecutedCommand = (command, trim = true) => {
 
   /**
    * 如果进入了mysql模式，则获取mysql的历史命令
@@ -185,14 +185,14 @@ const getUnExecutedCommand = (command) => {
   if (command.startsWith("mysql> ")) {
     getMysqlHistory()
     history.value.currentType = "mysql"
-    return command.substring("mysql> ".length).trim()
+    return trim ? command.substring("mysql> ".length).trim() : command.substring("mysql> ".length)
   }
 
   history.value.currentType = "bash"
   const regex = /^.*?@.*?:.*?[#$]/
 
   if (regex.test(command)) {
-    return command.replace(regex, "").trim()
+    return trim ? command.replace(regex, "").trim() : command.replace(regex, "")
   }
 
   return ""
@@ -370,22 +370,43 @@ const initTerm = () => {
   term.loadAddon(searchAddon);
   term.loadAddon(new WebglAddon());
   let lastShiftTime = 0;
+  let lastCtrlTime = 0;
   term.attachCustomKeyEventHandler((event) => {
     if ((event.type === 'keydown' && ('f' === event.key || 'F' === event.key) && event.ctrlKey && event.shiftKey) || (event.type === 'keydown' && ('f' === event.key || 'F' === event.key) && event.metaKey && event.shiftKey)) {
       searchVisible.value = !searchVisible.value
       return false;
     }
     //0.5秒内双击shift
-    if (event.type === 'keydown' && event.shiftKey) {
+    if (event.type === 'keydown' && event.key === 'Shift') {
       let nowTime = new Date().getTime()
       if (nowTime - lastShiftTime < 500) {
+
         let command = getCompleteCommand()
         if (command) {
           execCommand(command)
           displayNoneCompletion()
         }
+
       }
       lastShiftTime = nowTime;
+    }
+
+    //0.5秒内双击ctrl
+    if (event.type === 'keydown' && event.key === 'Control') {
+      let nowTime = new Date().getTime()
+      if (nowTime - lastCtrlTime < 500) {
+        autoCompleteText.value = getUnExecutedCommand(getTerminalLastNotBlackCommand())
+        autoCompleteVisible.value = true
+
+        nextTick(() => {
+          autoCompleteTextInputRef.value.focus()
+
+          if (searchedHistory.value.length) {
+            selectCommand.value = searchedHistory.value[0]
+          }
+        })
+      }
+      lastCtrlTime = nowTime;
     }
 
   });
@@ -399,7 +420,6 @@ const initTerm = () => {
     setTimeout(() => {
       completeCommand.value = getCompleteCommand();
       writeCompletionToCursorPosition(completeCommand.value)
-      console.log(completeCommand.value)
     }, 100)
   })
 
@@ -438,7 +458,7 @@ channel.onmessage = (e) => {
 
 const getHistory = async () => {
   try {
-    history.value.bash = _.reverse(await serverApi.getHistory(props.server.id));
+    history.value.bash = [...new Set(await serverApi.getHistory(props.server.id))];
   } catch (e) {
     message.error(e.message)
   }
@@ -451,7 +471,7 @@ const getMysqlHistory = async () => {
 
   history.value.mysqlInit = true
   try {
-    history.value.mysql = _.reverse(await serverApi.getMysqlHistory(currentServer.value.id));
+    history.value.mysql = [...new Set(await serverApi.getMysqlHistory(currentServer.value.id))];
   } catch (e) {
     message.error(e.message)
   }
@@ -464,19 +484,15 @@ const requestAuthEditSession = () => {
   }));
 }
 
-/**
- * 根据 history 和 getUnExecutedCommand 获取可能的补全命令
- */
-const getCompleteCommand = () => {
+const findFirstCompleteCommand = () => {
   let last = getTerminalLastNotBlackCommand();
-  console.log("原始命令", last,term)
   let command = getUnExecutedCommand(last)
   //去掉头部的空格，不能去掉尾部的空格
   command = command.replace(/^\s+/, "")
   if (command) {
     let find = history.value[history.value.currentType].find(item => item.startsWith(command))
     if (find) {
-      return find.substring(command.length)
+      return find
     }
 
     return ""
@@ -485,10 +501,24 @@ const getCompleteCommand = () => {
   return ""
 }
 
+/**
+ * 根据 history 和 getUnExecutedCommand 获取可能的补全命令
+ */
+const getCompleteCommand = () => {
+  let find = findFirstCompleteCommand()
+  if (find) {
+    let last = getTerminalLastNotBlackCommand();
+    let command = getUnExecutedCommand(last)
+    return find.substring(command.length)
+  }
+
+  return ""
+}
+
 const getTerminalLastNotBlackCommand = () => {
   for (let i = term.buffer.active.length - 1; i >= 0; i--) {
     let line = term.buffer.active.getLine(i).translateToString();
-    if (line.trim()){
+    if (line.trim()) {
       return line
     }
   }
@@ -735,6 +765,66 @@ const tour = useShepherd({
 
 let hasAutoComplete = useStorage('hasAutoComplete', false)
 
+let autoCompleteVisible = ref(false)
+let autoCompleteText = ref('')
+let selectCommand = ref('')
+
+let autoCompleteTextInputRef = ref(null)
+
+const onCloseAutoComplete = () => {
+  term.focus()
+}
+
+const handleAutoCompleteSelect = (item) => {
+  selectCommand.value = item
+  autoCompleteTextInputRef.value.focus()
+}
+
+let searchedHistory = computed(() => {
+  let result = history.value[history.value.currentType]
+  if (autoCompleteText.value) {
+    result = history.value[history.value.currentType].filter(item => item.includes(autoCompleteText.value))
+  }
+  return result
+})
+
+const searchHistoryChange = (type) => {
+  let currentIndex = searchedHistory.value.indexOf(selectCommand.value)
+  currentIndex = currentIndex - (type === 'up' ? 1 : -1)
+  if (currentIndex < 0) {
+    currentIndex = searchedHistory.value.length - 1
+  } else if (currentIndex >= searchedHistory.value.length) {
+    currentIndex = 0
+  }
+
+  selectCommand.value = searchedHistory.value[currentIndex]
+
+  autoCompleteTextItemRefs.value[currentIndex].scrollIntoView({behavior: 'smooth', block: 'center'})
+}
+
+
+const handleAutoCompleteSelectDown = (event) => {
+  if (event.key === 'ArrowUp') {
+    searchHistoryChange('up')
+    event.preventDefault()
+  } else if (event.key === 'ArrowDown') {
+    searchHistoryChange('down')
+    event.preventDefault()
+  } else if (event.key === 'Enter') {
+    let last = getTerminalLastNotBlackCommand();
+    let command = getUnExecutedCommand(last, false)
+    console.log(last, command.length)
+    //去除command = 输入command的长度的退格键
+    execCommand("\b".repeat(command.length))
+    execCommand(selectCommand.value)
+    selectCommand.value = ''
+    autoCompleteVisible.value = false
+    event.preventDefault()
+  }
+}
+
+
+let autoCompleteTextItemRefs = ref([])
 
 </script>
 
@@ -744,6 +834,28 @@ let hasAutoComplete = useStorage('hasAutoComplete', false)
     <div class="log" ref="log">
       <div class="console" ref="terminal"></div>
     </div>
+    <a-modal class="auto-complete-modal" v-model:visible="autoCompleteVisible" :closable="false" :mask="false"
+             :after-close="onCloseAutoComplete"
+             width="35%">
+
+      <template #header></template>
+      <div class="auto-complete-root">
+        <a-input ref="autoCompleteTextInputRef" v-model:value="autoCompleteText" placeholder="搜索历史命令"
+                 @keydown="handleAutoCompleteSelectDown"></a-input>
+        <div class="auto-complete-list">
+          <div ref="autoCompleteTextItemRefs"
+               :class="{'auto-complete-item':true,'auto-complete-item-active':selectCommand===item}"
+               @click="handleAutoCompleteSelect(item)"
+               v-for="(item,index) in searchedHistory" :key="index"> {{
+              item
+            }}
+          </div>
+        </div>
+      </div>
+      <template #footer>
+        <div style="text-align: left">{{ selectCommand }}</div>
+      </template>
+    </a-modal>
     <div :class="{'search-drawer':true, 'is-visible':!searchVisible}" @keydown="searchKeyListener">
       <a-input ref="searchTextInputRef" v-model:value="searchText" placeholder="搜索"
                @keydown.enter="handleKeyup"></a-input>
@@ -858,5 +970,33 @@ let hasAutoComplete = useStorage('hasAutoComplete', false)
   height: 100%;
 }
 
+.auto-complete-modal {
+  .ant-modal-body {
+    padding: 12px;
+  }
+
+
+  .auto-complete-root {
+
+    .auto-complete-list {
+      margin-top: 12px;
+      height: 50vh;
+      overflow-y: auto;
+
+      .auto-complete-item {
+        padding: 2px 6px;
+        border-radius: 4px;
+        width: 100%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+
+        &-active {
+          background-color: #f5f5f5;
+        }
+      }
+    }
+  }
+}
 
 </style>
