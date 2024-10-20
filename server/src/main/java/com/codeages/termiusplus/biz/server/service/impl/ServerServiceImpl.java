@@ -9,6 +9,7 @@ import cn.hutool.core.lang.tree.TreeUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.servlet.ServletUtil;
+import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONUtil;
 import com.codeages.termiusplus.biz.ErrorCode;
 import com.codeages.termiusplus.biz.job.dto.ExecuteCommandSSHClient;
@@ -32,6 +33,9 @@ import com.codeages.termiusplus.exception.AppException;
 import com.codeages.termiusplus.ws.ssh.AuthKeyBoardHandler;
 import com.codeages.termiusplus.ws.ssh.EventType;
 import com.codeages.termiusplus.ws.ssh.MessageDto;
+import com.maxmind.geoip2.DatabaseReader;
+import com.maxmind.geoip2.model.CityResponse;
+import com.maxmind.geoip2.record.Location;
 import com.querydsl.core.BooleanBuilder;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -43,12 +47,14 @@ import net.schmizz.sshj.userauth.method.AuthPassword;
 import net.schmizz.sshj.userauth.method.PasswordResponseProvider;
 import net.schmizz.sshj.userauth.password.PasswordFinder;
 import net.schmizz.sshj.userauth.password.Resource;
+import org.aspectj.util.FileUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.PostConstruct;
 import javax.net.SocketFactory;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.ConstraintViolation;
@@ -107,6 +113,34 @@ public class ServerServiceImpl implements ServerService {
         executor.setQueueCapacity(5000); // 设置队列容量
         executor.setThreadNamePrefix("Monitor-"); // 设置线程名前缀
         executor.initialize();
+    }
+
+    @SneakyThrows
+    @PostConstruct
+    public void init() {
+        DatabaseReader bean = SpringUtil.getBean(DatabaseReader.class);
+
+        List<String> list = FileUtil.readAsLines(cn.hutool.core.io.FileUtil.file(
+                "/Users/hongjunlong/Downloads/ip_list.txt"));
+        list=list.stream().distinct().collect(Collectors.toList());
+        int count = 0;
+        for (String ip : list) {
+            try{
+                InetAddress inetAddress = InetAddress.getByName(ip);
+                CityResponse response = bean.city(inetAddress);
+                if (response.getCity().getName()==null){
+                    System.out.println("IP地址：" + ip + " 未找到地理位置信息");
+                    count++;
+                    continue;
+                }
+                Location location = response.getLocation();
+                System.out.println("IP地址："+ip+" 经纬度："+location.getLongitude()+","+location.getLatitude());
+            }catch (Exception e){
+                System.out.println("IP地址："+ip+" 经纬度："+"未知");
+                count++;
+            }
+        }
+        System.out.println("未找到地理位置信息的IP地址数量："+count+"/"+list.size());
     }
 
 
