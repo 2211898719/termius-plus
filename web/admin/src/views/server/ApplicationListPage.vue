@@ -30,10 +30,8 @@ import RelationGraph from 'relation-graph/vue3'
 import {proxyApi} from "@/api/proxy";
 import PSelect from "@/components/p-select.vue";
 import {Codemirror} from "vue-codemirror";
-import {java} from "@codemirror/lang-java";
 import {oneDark} from "@codemirror/theme-one-dark";
 import {javascript} from "@codemirror/lang-javascript";
-import OsEnum from "@/enums/OsEnum";
 import ApplicationMonitorCheckTypeEnum from "@/enums/ApplicationMonitorCheckTypeEnum";
 
 let termiusStyleColumn = ref(Math.floor(window.innerWidth / 300));
@@ -515,6 +513,10 @@ let relationOptions = ref({
   ]
 })
 
+const handleOpenRequestMap = (item) => {
+  window.open("/requestMap?id=" + item.id, '_blank')
+}
+
 
 const handleOpenApplicationContact = (item) => {
   contactVisible.value = true
@@ -661,6 +663,10 @@ defineExpose({
                           <a-menu-item key="5" @click="handleOpenApplicationContact(item)">
                             <read-outlined/>
                             关系图
+                          </a-menu-item>
+                          <a-menu-item key="6" @click="handleOpenRequestMap(item)">
+                            <fund-outlined/>
+                            请求路径图
                           </a-menu-item>
                           <a-menu-item key="3" @click="handleCopyApplication(item)">
                             <CopyOutlined/>
@@ -917,6 +923,14 @@ defineExpose({
                     <a-input></a-input>
                   </a-auto-complete>
                 </a-form-item>
+                <a-form-item label="nginx access_log路径">
+                  <a-auto-complete
+                      v-model:value="creationState.serverList[index].nginxLogPath"
+                      :options="[]"
+                  >
+                    <a-input></a-input>
+                  </a-auto-complete>
+                </a-form-item>
                 <a-form-item>
                   <a-button @click="creationState.serverList.splice(index, 1)">
                     <template #icon>
@@ -927,7 +941,7 @@ defineExpose({
               </a-form>
             </template>
             <div style="text-align: center">
-              <a-button @click="creationState.serverList.push({serverId: '', tag: ''})">
+              <a-button @click="creationState.serverList.push({serverId: '', tag: '',nginxLogPath:''})">
                 <template #icon>
                   <plus-outlined/>
                 </template>

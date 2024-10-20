@@ -38,6 +38,7 @@
     "core-js": "^3.8.3",
     "dayjs": "^1.11.0",
     "echarts": "^5.5.0",
+    "globe.gl": "^2.33.1",
     "golden-layout": "^2.6.0",
     "highlight": "^0.2.4",
     "lodash": "^4.17.21",

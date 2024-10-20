@@ -2,6 +2,7 @@ package com.codeages.termiusplus.api.admin;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.lang.tree.Tree;
+import cn.hutool.extra.spring.SpringUtil;
 import com.codeages.termiusplus.biz.application.dto.*;
 import com.codeages.termiusplus.biz.application.service.ApplicationMonitorService;
 import com.codeages.termiusplus.biz.application.service.ApplicationServerService;
@@ -13,10 +14,16 @@ import com.codeages.termiusplus.biz.server.service.ProxyService;
 import com.codeages.termiusplus.biz.util.QueryUtils;
 import com.codeages.termiusplus.common.IdPayload;
 import com.codeages.termiusplus.common.OkResponse;
+import com.maxmind.geoip2.DatabaseReader;
+import com.maxmind.geoip2.model.CityResponse;
+import com.maxmind.geoip2.record.Location;
 import lombok.AllArgsConstructor;
+import org.aspectj.util.FileUtil;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.InetAddress;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -109,6 +116,39 @@ public class ApplicationController {
 
         return OkResponse.TRUE;
     }
+
+
+    @GetMapping("/getApplicationRequestMap")
+    public List<Map<String, Object>> getApplicationRequestMap(IdPayload idPayload) {
+        DatabaseReader bean = SpringUtil.getBean(DatabaseReader.class);
+
+        List<String> list = FileUtil.readAsLines(cn.hutool.core.io.FileUtil.file(
+                "/Users/hongjunlong/Downloads/ip_list.txt"));
+        list = list.stream().distinct().collect(Collectors.toList());
+        int count = 0;
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (String ip : list) {
+            try {
+                InetAddress inetAddress = InetAddress.getByName(ip);
+                CityResponse response = bean.city(inetAddress);
+                if (response.getCity().getName() == null) {
+                    System.out.println("IP地址：" + ip + " 未找到地理位置信息");
+                    count++;
+                    continue;
+                }
+                Location location = response.getLocation();
+                System.out.println("IP地址：" + ip + " 经纬度：" + location.getLongitude() + "," + location.getLatitude());
+                result.add(Map.of("ip", ip, "longitude", location.getLongitude(), "latitude", location.getLatitude()));
+            } catch (Exception e) {
+                System.out.println("IP地址：" + ip + " 经纬度：" + "未知");
+                count++;
+            }
+        }
+        System.out.println("未找到地理位置信息的IP地址数量：" + count + "/" + list.size());
+
+        return result;
+    }
+
 
     @PostMapping("/create")
     public OkResponse create(@RequestBody ApplicationCreateParams createParams) {

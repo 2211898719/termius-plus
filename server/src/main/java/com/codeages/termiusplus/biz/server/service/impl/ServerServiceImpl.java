@@ -115,35 +115,6 @@ public class ServerServiceImpl implements ServerService {
         executor.initialize();
     }
 
-    @SneakyThrows
-    @PostConstruct
-    public void init() {
-        DatabaseReader bean = SpringUtil.getBean(DatabaseReader.class);
-
-        List<String> list = FileUtil.readAsLines(cn.hutool.core.io.FileUtil.file(
-                "/Users/hongjunlong/Downloads/ip_list.txt"));
-        list=list.stream().distinct().collect(Collectors.toList());
-        int count = 0;
-        for (String ip : list) {
-            try{
-                InetAddress inetAddress = InetAddress.getByName(ip);
-                CityResponse response = bean.city(inetAddress);
-                if (response.getCity().getName()==null){
-                    System.out.println("IP地址：" + ip + " 未找到地理位置信息");
-                    count++;
-                    continue;
-                }
-                Location location = response.getLocation();
-                System.out.println("IP地址："+ip+" 经纬度："+location.getLongitude()+","+location.getLatitude());
-            }catch (Exception e){
-                System.out.println("IP地址："+ip+" 经纬度："+"未知");
-                count++;
-            }
-        }
-        System.out.println("未找到地理位置信息的IP地址数量："+count+"/"+list.size());
-    }
-
-
     public ServerServiceImpl(ServerRunLogRepository serverRunLogRepository, ServerRunLogMapper serverRunLogMapper, ServerRepository serverRepository, ServerMapper serverMapper, Validator validator, ProxyService proxyService) {
         this.serverRunLogRepository = serverRunLogRepository;
         this.serverRunLogMapper = serverRunLogMapper;
