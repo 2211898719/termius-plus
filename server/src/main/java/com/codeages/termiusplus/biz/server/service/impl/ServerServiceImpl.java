@@ -8,6 +8,7 @@ import cn.hutool.core.lang.tree.TreeNode;
 import cn.hutool.core.lang.tree.TreeUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.extra.servlet.JakartaServletUtil;
 import cn.hutool.extra.servlet.ServletUtil;
 import cn.hutool.json.JSONUtil;
 import com.codeages.termiusplus.biz.ErrorCode;
@@ -49,10 +50,11 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
+
 import javax.net.SocketFactory;
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.ConstraintViolation;
-import javax.validation.Validator;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -626,7 +628,7 @@ public class ServerServiceImpl implements ServerService {
      * 获取当前请求的网络延迟
      */
     public int getCurrentRequestNetworkDelay(HttpServletRequest request) {
-        return getNetworkDelay(ServletUtil.getClientIP(request));
+        return getNetworkDelay(JakartaServletUtil.getClientIP(request));
     }
 
     /**

@@ -820,6 +820,9 @@ const handleAutoCompleteSelectDown = (event) => {
     selectCommand.value = ''
     autoCompleteVisible.value = false
     event.preventDefault()
+    nextTick(() => {
+      displayNoneCompletion()
+    })
   }
 }
 

@@ -23,7 +23,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLHandshakeException;
 import java.io.IOException;
@@ -52,8 +51,8 @@ public class MonitorJob {
 
     static {
         executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(10); // 设置核心线程池大小
-        executor.setMaxPoolSize(10); // 设置最大线程池大小
+        executor.setCorePoolSize(5); // 设置核心线程池大小
+        executor.setMaxPoolSize(5); // 设置最大线程池大小
         executor.setQueueCapacity(5000); // 设置队列容量
         executor.setThreadNamePrefix("Monitor-"); // 设置线程名前缀
         executor.initialize();

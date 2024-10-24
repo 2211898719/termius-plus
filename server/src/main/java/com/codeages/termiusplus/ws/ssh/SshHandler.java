@@ -26,9 +26,9 @@ import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.userauth.UserAuthException;
 import org.springframework.stereotype.Component;
 
-import javax.websocket.*;
-import javax.websocket.server.PathParam;
-import javax.websocket.server.ServerEndpoint;
+import jakarta.websocket.*;
+import jakarta.websocket.server.PathParam;
+import jakarta.websocket.server.ServerEndpoint;
 import java.io.*;
 import java.net.ConnectException;
 import java.nio.ByteBuffer;
@@ -72,7 +72,7 @@ public class SshHandler {
     }
 
     @OnOpen
-    public void onOpen(javax.websocket.Session session, @PathParam("sessionId") String sessionId,
+    public void onOpen(Session session, @PathParam("sessionId") String sessionId,
                        @PathParam("serverId") Long serverId, @PathParam("masterSessionId") String masterSessionId) {
         log.info("ssh onOpen");
         Long userId = AuthTokenFilter.userIdThreadLocal.get();
@@ -119,7 +119,7 @@ public class SshHandler {
 
     @OnMessage
     public void onMessage(@PathParam("masterSessionId") String masterSessionId, byte[] message,
-                          javax.websocket.Session session) {
+                          Session session) {
         HandlerItem handlerItem = SSH_POOL.get(session.getId());
         if (!isMasterSession(masterSessionId)) {
             handlerItem = SSH_POOL.get(masterSessionId);
@@ -162,7 +162,7 @@ public class SshHandler {
     }
 
     @OnClose
-    public void onClose(javax.websocket.Session session, @PathParam("masterSessionId") String masterSessionId) {
+    public void onClose(Session session, @PathParam("masterSessionId") String masterSessionId) {
         if (isMasterSession(masterSessionId)) {
             HandlerItem handlerItem = SSH_POOL.get(session.getId());
             handlerItem.close();
@@ -178,7 +178,7 @@ public class SshHandler {
     }
 
     @OnError
-    public void onError(javax.websocket.Session session, Throwable error,
+    public void onError(Session session, Throwable error,
                         @PathParam("masterSessionId") String masterSessionId) {
         log.error("发生错误：{}，Session ID： {}", error.getMessage(), session.getId());
 
@@ -235,7 +235,7 @@ public class SshHandler {
         return IoUtil.read(gzipIn, charset);
     }
 
-    private static void sendBinary(javax.websocket.Session session, String msg) {
+    private static void sendBinary(Session session, String msg) {
         if (!session.isOpen()) {
             // 会话关闭不能发送消息
             return;
@@ -257,7 +257,7 @@ public class SshHandler {
     }
 
     @SneakyThrows
-    public void destroy(javax.websocket.Session session) {
+    public void destroy(Session session) {
         HandlerItem handlerItem = SSH_POOL.get(session.getId());
         if (handlerItem != null) {
             handlerItem.close();
@@ -278,7 +278,7 @@ public class SshHandler {
         private UserDto userDto;
         @Getter
         private final String masterSessionId;
-        private final javax.websocket.Session masterSession;
+        private final Session masterSession;
         private final List<Pair<String, Session>> sessions = new CopyOnWriteArrayList<>();
         private final InputStream inputStream;
         private final OutputStream outputStream;
@@ -292,7 +292,7 @@ public class SshHandler {
         private final RollingString lastCommandLog;
 
         @SneakyThrows
-        HandlerItem(Long userId, String username, Long serverId, javax.websocket.Session session, SSHClient sshClient) {
+        HandlerItem(Long userId, String username, Long serverId, Session session, SSHClient sshClient) {
             this.sessions.add(Pair.of(username, session));
             this.userId = userId;
             this.serverId = serverId;
@@ -333,8 +333,8 @@ public class SshHandler {
             //日志内存缓冲区
             logFileOutputStream = IoUtil.toBuffered(FileUtil.getOutputStream(logFile), MAX_LOG_BUFFER_SIZE);
 
-            threadPoolExecutor.execute(this);
             lastCommandLog = new RollingString();
+            threadPoolExecutor.execute(this);
         }
 
 
@@ -400,7 +400,7 @@ public class SshHandler {
         }
 
         @SneakyThrows
-        public synchronized void addSubSession(javax.websocket.Session session, String username) {
+        public synchronized void addSubSession(Session session, String username) {
             this.sessions.add(Pair.of(username, session));
 
             //写入内存缓冲区中的数据到文件
@@ -421,7 +421,7 @@ public class SshHandler {
         }
 
         @SneakyThrows
-        public synchronized void removeSubSession(javax.websocket.Session session) {
+        public synchronized void removeSubSession(Session session) {
             log.info("有连接关闭,session:{}", sessions.size());
             String username = null;
             for (int i = 0; i < sessions.size(); i++) {

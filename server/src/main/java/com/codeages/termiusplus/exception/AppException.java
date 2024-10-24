@@ -2,7 +2,7 @@ package com.codeages.termiusplus.exception;
 
 import com.codeages.termiusplus.common.ErrorCodeInterface;
 
-import javax.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolation;
 import java.util.Set;
 import java.util.stream.Collectors;
 

@@ -8,6 +8,9 @@ import com.codeages.termiusplus.biz.server.service.ServerService;
 import com.codeages.termiusplus.biz.user.dto.UserDto;
 import com.codeages.termiusplus.biz.user.service.UserService;
 import com.codeages.termiusplus.security.AuthTokenFilter;
+import jakarta.websocket.EndpointConfig;
+import jakarta.websocket.Session;
+import jakarta.websocket.server.ServerEndpoint;
 import org.apache.guacamole.GuacamoleException;
 import org.apache.guacamole.net.GuacamoleSocket;
 import org.apache.guacamole.net.GuacamoleTunnel;
@@ -16,13 +19,10 @@ import org.apache.guacamole.net.SimpleGuacamoleTunnel;
 import org.apache.guacamole.protocol.ConfiguredGuacamoleSocket;
 import org.apache.guacamole.protocol.GuacamoleClientInformation;
 import org.apache.guacamole.protocol.GuacamoleConfiguration;
-import org.apache.guacamole.websocket.GuacamoleWebSocketTunnelEndpoint;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import javax.websocket.EndpointConfig;
-import javax.websocket.Session;
-import javax.websocket.server.ServerEndpoint;
+
 
 @Component
 @ServerEndpoint(value = "/socket/{protocol}/{serverId}")
