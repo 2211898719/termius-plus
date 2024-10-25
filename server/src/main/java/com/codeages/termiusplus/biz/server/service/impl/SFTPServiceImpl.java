@@ -4,6 +4,7 @@ import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.lang.UUID;
 import cn.hutool.core.lang.func.VoidFunc1;
+import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONUtil;
 import com.codeages.termiusplus.biz.ErrorCode;
 import com.codeages.termiusplus.biz.server.annotation.SftpActive;
@@ -43,11 +44,9 @@ public class SFTPServiceImpl implements SFTPService {
 
     private final ServerService serverService;
 
-    private final HttpServletResponse response;
 
-    public SFTPServiceImpl(ServerService serverService, HttpServletResponse response) {
+    public SFTPServiceImpl(ServerService serverService) {
         this.serverService = serverService;
-        this.response = response;
     }
 
     @SneakyThrows
@@ -161,7 +160,7 @@ public class SFTPServiceImpl implements SFTPService {
     public void download(String id, String remotePath) throws IOException {
         log.info("下载文件：{}", remotePath);
         String filename = remotePath.substring(remotePath.lastIndexOf("/") + 1);
-        ServletOutputStream outputStream = response.getOutputStream();
+        ServletOutputStream outputStream = SpringUtil.getBean(HttpServletResponse.class).getOutputStream();
 
         SFTPClient sftp = getSftp(id);
         RemoteFile readFile;
@@ -184,7 +183,7 @@ public class SFTPServiceImpl implements SFTPService {
         com.codeages.termiusplus.biz.storage.utils.FileUtil.initResponse(
                 readFile.length(),
                 filename,
-                response,
+                SpringUtil.getBean(HttpServletResponse.class),
                 false
         );
 
