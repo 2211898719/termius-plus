@@ -16,12 +16,6 @@ public class ProxySyncJob {
     @Autowired
     private ProxyService proxyService;
 
-    @PostConstruct
-    public void init() {
-        log.info("init ProxySyncJob");
-        proxyService.syncProxyOpen();
-    }
-
     // 每5分钟同步一次
     @Scheduled(cron = "0 */5 * * * *")
     @Async

@@ -1,15 +1,16 @@
 <script setup>
 
-import {nextTick, onMounted, ref} from "vue";
-import Globe from "globe.gl";
+import {nextTick, ref} from "vue";
 import {applicationApi} from "@/api/application";
+import {initCesiumMap} from "@/views/dashboard/cesium";
+import {serverApi} from "@/api/server";
 
 let GlobeVizRef = ref()
 let applicationRequestMapData = ref([])
 const getRequestMap = async () => {
     applicationRequestMapData.value = await applicationApi.getApplicationRequestMap()
 
-  nextTick(()=>{
+   await nextTick(()=>{
     makeMap()
   })
 }
@@ -17,34 +18,14 @@ getRequestMap()
 
 const makeMap = () => {
 
-  const arcsData = [];
+  let add = initCesiumMap(GlobeVizRef.value);
 
-  var globeInstanceGlobeGenericInstance = Globe()
-      .globeImageUrl('//unpkg.com/three-globe/example/img/earth-night.jpg')
-      .arcsData(arcsData)
-      .arcColor('color')
-      .arcDashLength(() => Math.random())
-      .arcDashGap(() => Math.random())
-      .arcDashAnimateTime(() => Math.random() * 4000 + 500)
-      (GlobeVizRef.value);
-
-  let index = 0;
-  setInterval(()=>{
-    arcsData.push({
-      startLat: applicationRequestMapData.value[index].latitude,
-      startLng: applicationRequestMapData.value[index].longitude,
-      endLat: 30.259500,
-      endLng: 120.129800,
-      color: [['red', 'white', 'blue', 'green'][Math.round(Math.random() * 3)], ['red', 'white', 'blue', 'green'][Math.round(Math.random() * 3)]]
-    })
-
-    index++;
-    requestAnimationFrame(()=>{
-      globeInstanceGlobeGenericInstance.arcsData(arcsData)
-    })
-
-  },2000)
-
+  const eventSource = new EventSource(serverApi.requestMap(288));
+  eventSource.onmessage = (event) => {
+    let data = JSON.parse(event.data)
+    console.log(data)
+    add(data.longitude,data.latitude,12.129800,30.259500)
+  }
 }
 </script>
 

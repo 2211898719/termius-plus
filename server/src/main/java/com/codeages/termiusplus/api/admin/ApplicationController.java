@@ -11,25 +11,35 @@ import com.codeages.termiusplus.biz.server.dto.ProxyDto;
 import com.codeages.termiusplus.biz.server.dto.ProxySearchParams;
 import com.codeages.termiusplus.biz.server.dto.TreeSortParams;
 import com.codeages.termiusplus.biz.server.service.ProxyService;
+import com.codeages.termiusplus.biz.server.service.ServerService;
 import com.codeages.termiusplus.biz.util.QueryUtils;
 import com.codeages.termiusplus.common.IdPayload;
 import com.codeages.termiusplus.common.OkResponse;
+import com.codeages.termiusplus.ws.ssh.EventType;
+import com.codeages.termiusplus.ws.ssh.MessageDto;
 import com.maxmind.geoip2.DatabaseReader;
 import com.maxmind.geoip2.model.CityResponse;
 import com.maxmind.geoip2.record.Location;
 import lombok.AllArgsConstructor;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import net.schmizz.sshj.SSHClient;
+import net.schmizz.sshj.connection.channel.direct.Session;
 import org.aspectj.util.FileUtil;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.InetAddress;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@Slf4j
 @RestController
 @RequestMapping("/api-admin/application")
 @AllArgsConstructor
@@ -42,6 +52,8 @@ public class ApplicationController {
     private final ApplicationServerService applicationServerService;
 
     private final ProxyService proxyService;
+
+    private final ServerService serverService;
 
     @GetMapping("/list")
     public List<Tree<Long>> findAll() {
@@ -117,6 +129,67 @@ public class ApplicationController {
         return OkResponse.TRUE;
     }
 
+
+    @SneakyThrows
+    @GetMapping("/requestMap/{id}")
+    public SseEmitter requestMap(@PathVariable("id") Long id) {
+        SseEmitter sseEmitter = new SseEmitter();
+
+        SSHClient sshClient = serverService.createSSHClient(id);
+        net.schmizz.sshj.connection.channel.direct.Session shellSession = sshClient.startSession();
+        shellSession.allocatePTY("xterm", 80, 24, 640, 480, Map.of());
+        shellSession.setAutoExpand(true);
+
+        Session.Shell shell = shellSession.startShell();
+
+        InputStream inputStream = shell.getInputStream();
+        OutputStream outputStream = shell.getOutputStream();
+
+        try {
+            outputStream.write("tail -100f  /var/log/nginx/open_access.log | awk '{print $1}'\n".getBytes());
+            outputStream.flush();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        DatabaseReader bean = SpringUtil.getBean(DatabaseReader.class);
+        Thread thread = new Thread(() -> {
+            byte[] buffer = new byte[1024];
+            int i;
+            //如果没有数据来，线程会一直阻塞在这个地方等待数据。
+            while (true) {
+                try {
+                    if ((i = inputStream.read(buffer)) == -1) break;
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                String originData = new String(Arrays.copyOfRange(buffer, 0, i), StandardCharsets.UTF_8);
+                MessageDto messageDto = new MessageDto(EventType.COMMAND, originData);
+                String[] ips = messageDto.getData().split("\n");
+                for (String ip : ips) {
+                    try {
+                        ip=ip.trim();
+                        InetAddress inetAddress = InetAddress.getByName(ip);
+                        CityResponse response = bean.city(inetAddress);
+                        if (response.getCity().getName() == null) {
+                            System.out.println("IP地址：" + ip + " 未找到地理位置信息");
+                            continue;
+                        }
+                        Location location = response.getLocation();
+                        System.out.println("IP地址：" + ip + " 经纬度：" + location.getLongitude() + "," + location.getLatitude());
+                        sseEmitter.send(Map.of("ip", ip, "longitude", location.getLongitude(), "latitude", location.getLatitude()));
+                    } catch (Exception e) {
+                        log.error("解析IP地址失败", e);
+                    }
+                }
+
+            }
+        });
+
+        thread.start();
+
+        return sseEmitter;
+    }
 
     @GetMapping("/getApplicationRequestMap")
     public List<Map<String, Object>> getApplicationRequestMap(IdPayload idPayload) {
