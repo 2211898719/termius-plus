@@ -12,7 +12,7 @@ function initCesiumMap(dom) {
         animation: false, // 是否显示动画控件
         baseLayerPicker: true, // 是否显示图层选择控件
         vrButton: false, // 是否显示VR控件
-        geocoder: false, // 是否显示地名查找控件
+        geocoder: true, // 是否显示地名查找控件
         timeline: false, // 是否显示时间线控件
         sceneModePicker: false, // 是否显示投影方式控件
         navigationHelpButton: false, // 是否显示帮助信息控件
@@ -34,7 +34,7 @@ function initCesiumMap(dom) {
         const point2 = Cesium.Cartesian3.fromDegrees(lon2, lat2); // 上海
 
         // 绘制线段
-        viewer.entities.add({
+        let entity = viewer.entities.add({
             polyline: {
                 positions: [point1, point2],
                 width: 3,
@@ -74,7 +74,7 @@ function initCesiumMap(dom) {
 
                 //删除线和动画
                 viewer.entities.remove(meteorEntity);
-                viewer.entities.remove(viewer.entities.values[0]);
+                viewer.entities.remove(entity);
             }
         }
 

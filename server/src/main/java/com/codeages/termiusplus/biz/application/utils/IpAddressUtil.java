@@ -235,17 +235,4 @@ public class IpAddressUtil {
         return "未知";
     }
 
-    public static void main(String[] args) {
-        List<String> list = FileUtil.readAsLines(cn.hutool.core.io.FileUtil.file(
-                "/Users/hongjunlong/Downloads/ip_list.txt"));
-        list = list.stream().distinct().collect(Collectors.toList());
-        for (String ip : list) {
-            try{
-                System.out.println("IP地址："+ip+"地址："+getCityInfoByVectorIndex(ip.trim()));
-            }catch (Exception e){
-                System.out.println("IP地址："+ip+" 经纬度："+"未知");
-            }
-
-        }
-    }
 }

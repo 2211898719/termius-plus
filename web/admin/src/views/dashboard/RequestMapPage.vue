@@ -1,30 +1,29 @@
 <script setup>
 
-import {nextTick, ref} from "vue";
+import {nextTick, onMounted, ref} from "vue";
 import {applicationApi} from "@/api/application";
 import {initCesiumMap} from "@/views/dashboard/cesium";
 import {serverApi} from "@/api/server";
+import {useRoute} from "vue-router";
 
+let route = useRoute()
 let GlobeVizRef = ref()
-let applicationRequestMapData = ref([])
-const getRequestMap = async () => {
-    applicationRequestMapData.value = await applicationApi.getApplicationRequestMap()
-
-   await nextTick(()=>{
+let serverIpData = ref({})
+onMounted( async () => {
+  serverIpData.value =  await applicationApi.getServerLocation(route.query.id)
+  await nextTick(()=>{
     makeMap()
   })
-}
-getRequestMap()
-
+})
 const makeMap = () => {
 
   let add = initCesiumMap(GlobeVizRef.value);
 
-  const eventSource = new EventSource(serverApi.requestMap(288));
+  const eventSource = new EventSource(serverApi.requestMap(route.query.id));
   eventSource.onmessage = (event) => {
     let data = JSON.parse(event.data)
     console.log(data)
-    add(data.longitude,data.latitude,12.129800,30.259500)
+    add(data.longitude,data.latitude,serverIpData.value.longitude,serverIpData.value.latitude)
   }
 }
 </script>

@@ -2,11 +2,14 @@ package com.codeages.termiusplus.api.admin;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.lang.tree.Tree;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
+import com.codeages.termiusplus.biz.ErrorCode;
 import com.codeages.termiusplus.biz.application.dto.*;
 import com.codeages.termiusplus.biz.application.service.ApplicationMonitorService;
 import com.codeages.termiusplus.biz.application.service.ApplicationServerService;
 import com.codeages.termiusplus.biz.application.service.ApplicationService;
+import com.codeages.termiusplus.biz.job.dto.ExecuteCommandSSHClient;
 import com.codeages.termiusplus.biz.server.dto.ProxyDto;
 import com.codeages.termiusplus.biz.server.dto.ProxySearchParams;
 import com.codeages.termiusplus.biz.server.dto.TreeSortParams;
@@ -15,8 +18,7 @@ import com.codeages.termiusplus.biz.server.service.ServerService;
 import com.codeages.termiusplus.biz.util.QueryUtils;
 import com.codeages.termiusplus.common.IdPayload;
 import com.codeages.termiusplus.common.OkResponse;
-import com.codeages.termiusplus.ws.ssh.EventType;
-import com.codeages.termiusplus.ws.ssh.MessageDto;
+import com.codeages.termiusplus.exception.AppException;
 import com.maxmind.geoip2.DatabaseReader;
 import com.maxmind.geoip2.model.CityResponse;
 import com.maxmind.geoip2.record.Location;
@@ -25,7 +27,6 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.connection.channel.direct.Session;
-import org.aspectj.util.FileUtil;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -35,7 +36,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -131,97 +135,105 @@ public class ApplicationController {
 
 
     @SneakyThrows
+    @GetMapping("/getServerLocation/{id}")
+    public Map<String, Object> getServerLocation(@PathVariable("id") Long id) {
+        List<ApplicationServerDto> servers = applicationServerService.getServers(id);
+
+        ApplicationServerDto webServers = servers.stream().filter(e -> StrUtil.isNotBlank(e.getNginxLogPath())).findAny()
+                                                       .orElseThrow(() -> new AppException(ErrorCode.INTERNAL_ERROR,"没有找到web服务器"));
+
+        SSHClient sshClient = serverService.createSSHClient(webServers.getServerId());
+        ExecuteCommandSSHClient executeCommandSSHClient = new ExecuteCommandSSHClient(sshClient);
+        String localIPAddress = executeCommandSSHClient.getLocalIPAddress();
+        DatabaseReader bean = SpringUtil.getBean(DatabaseReader.class);
+        InetAddress inetAddress = InetAddress.getByName(localIPAddress);
+        CityResponse response = bean.city(inetAddress);
+        if (response.getCity().getName() == null) {
+            return Map.of("ip", localIPAddress, "longitude", "未知", "latitude", "未知");
+        }
+
+        Location location = response.getLocation();
+        return Map.of("ip", localIPAddress, "longitude", location.getLongitude(), "latitude", location.getLatitude());
+    }
+
+    @SneakyThrows
     @GetMapping("/requestMap/{id}")
     public SseEmitter requestMap(@PathVariable("id") Long id) {
         SseEmitter sseEmitter = new SseEmitter();
+        List<ApplicationServerDto> servers = applicationServerService.getServers(id);
 
-        SSHClient sshClient = serverService.createSSHClient(id);
-        net.schmizz.sshj.connection.channel.direct.Session shellSession = sshClient.startSession();
-        shellSession.allocatePTY("xterm", 80, 24, 640, 480, Map.of());
-        shellSession.setAutoExpand(true);
+        List<ApplicationServerDto> webServers = servers.stream().filter(e -> StrUtil.isNotBlank(e.getNginxLogPath()))
+                                                       .collect(Collectors.toList());
 
-        Session.Shell shell = shellSession.startShell();
+        for (ApplicationServerDto webServer : webServers) {
+            SSHClient sshClient = serverService.createSSHClient(webServer.getServerId());
+            net.schmizz.sshj.connection.channel.direct.Session shellSession = sshClient.startSession();
+            shellSession.allocatePTY("xterm", 80, 24, 640, 480, Map.of());
+            shellSession.setAutoExpand(true);
 
-        InputStream inputStream = shell.getInputStream();
-        OutputStream outputStream = shell.getOutputStream();
+            Session.Shell shell = shellSession.startShell();
 
-        try {
-            outputStream.write("tail -100f  /var/log/nginx/open_access.log | awk '{print $1}'\n".getBytes());
+            InputStream inputStream = shell.getInputStream();
+            OutputStream outputStream = shell.getOutputStream();
+
+            outputStream.write(("tail -100f " + webServer.getNginxLogPath() + " | awk '{print $1}' \n").getBytes());
             outputStream.flush();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+
+            DatabaseReader bean = SpringUtil.getBean(DatabaseReader.class);
+            Thread thread = new Thread(() -> {
+                byte[] buffer = new byte[1024];
+                int i;
+                //如果没有数据来，线程会一直阻塞在这个地方等待数据。
+                loop:
+                while (true) {
+                    try {
+                        if ((i = inputStream.read(buffer)) == -1) break;
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                    String originData = new String(Arrays.copyOfRange(buffer, 0, i), StandardCharsets.UTF_8);
+                    String[] ips = originData.split("\n");
+                    log.info("解析IP地址：{}", originData);
+                    for (String ip : ips) {
+                        try {
+                            ip = ip.trim();
+                            if (!ip.matches("\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}")){
+                                System.out.println("IP地址：" + ip + " 未找到地理位置信息");
+                                continue;
+                            }
+                            InetAddress inetAddress = InetAddress.getByName(ip);
+                            CityResponse response = bean.city(inetAddress);
+                            if (response.getCity().getName() == null) {
+                                System.out.println("IP地址：" + ip + " 未找到地理位置信息");
+                                continue;
+                            }
+                            Location location = response.getLocation();
+                            System.out.println("IP地址：" + ip + " 经纬度：" + location.getLongitude() + "," + location.getLatitude());
+                            sseEmitter.send(Map.of(
+                                    "ip",
+                                    ip,
+                                    "longitude",
+                                    location.getLongitude(),
+                                    "latitude",
+                                    location.getLatitude()
+                            ));
+                        } catch (IllegalStateException e) {
+                            log.error("请求结束关闭流", e);
+                            break loop;
+                        } catch (Exception e) {
+                            log.error("解析IP地址失败", e);
+                        }
+                    }
+
+                }
+            });
+
+            thread.start();
         }
 
-        DatabaseReader bean = SpringUtil.getBean(DatabaseReader.class);
-        Thread thread = new Thread(() -> {
-            byte[] buffer = new byte[1024];
-            int i;
-            //如果没有数据来，线程会一直阻塞在这个地方等待数据。
-            while (true) {
-                try {
-                    if ((i = inputStream.read(buffer)) == -1) break;
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-                String originData = new String(Arrays.copyOfRange(buffer, 0, i), StandardCharsets.UTF_8);
-                MessageDto messageDto = new MessageDto(EventType.COMMAND, originData);
-                String[] ips = messageDto.getData().split("\n");
-                for (String ip : ips) {
-                    try {
-                        ip=ip.trim();
-                        InetAddress inetAddress = InetAddress.getByName(ip);
-                        CityResponse response = bean.city(inetAddress);
-                        if (response.getCity().getName() == null) {
-                            System.out.println("IP地址：" + ip + " 未找到地理位置信息");
-                            continue;
-                        }
-                        Location location = response.getLocation();
-                        System.out.println("IP地址：" + ip + " 经纬度：" + location.getLongitude() + "," + location.getLatitude());
-                        sseEmitter.send(Map.of("ip", ip, "longitude", location.getLongitude(), "latitude", location.getLatitude()));
-                    } catch (Exception e) {
-                        log.error("解析IP地址失败", e);
-                    }
-                }
-
-            }
-        });
-
-        thread.start();
 
         return sseEmitter;
     }
-
-    @GetMapping("/getApplicationRequestMap")
-    public List<Map<String, Object>> getApplicationRequestMap(IdPayload idPayload) {
-        DatabaseReader bean = SpringUtil.getBean(DatabaseReader.class);
-
-        List<String> list = FileUtil.readAsLines(cn.hutool.core.io.FileUtil.file(
-                "/Users/hongjunlong/Downloads/ip_list.txt"));
-        list = list.stream().distinct().collect(Collectors.toList());
-        int count = 0;
-        List<Map<String, Object>> result = new ArrayList<>();
-        for (String ip : list) {
-            try {
-                InetAddress inetAddress = InetAddress.getByName(ip);
-                CityResponse response = bean.city(inetAddress);
-                if (response.getCity().getName() == null) {
-                    System.out.println("IP地址：" + ip + " 未找到地理位置信息");
-                    count++;
-                    continue;
-                }
-                Location location = response.getLocation();
-                System.out.println("IP地址：" + ip + " 经纬度：" + location.getLongitude() + "," + location.getLatitude());
-                result.add(Map.of("ip", ip, "longitude", location.getLongitude(), "latitude", location.getLatitude()));
-            } catch (Exception e) {
-                System.out.println("IP地址：" + ip + " 经纬度：" + "未知");
-                count++;
-            }
-        }
-        System.out.println("未找到地理位置信息的IP地址数量：" + count + "/" + list.size());
-
-        return result;
-    }
-
 
     @PostMapping("/create")
     public OkResponse create(@RequestBody ApplicationCreateParams createParams) {
