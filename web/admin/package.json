@@ -55,6 +55,8 @@
     "resize-observer-polyfill": "^1.5.1",
     "sortablejs": "^1.15.0",
     "splitpanes": "^3.1.5",
+    "@vuemap/vue-amap": "^2.1.2",
+    "@amap/amap-jsapi-loader": "^1.0.1",
     "trzsz": "^1.1.4",
     "uuid": "^9.0.1",
     "view-ui-plus": "^1.3.19",

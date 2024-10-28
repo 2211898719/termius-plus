@@ -220,6 +220,13 @@ public class ApplicationServiceImpl implements ApplicationService {
         return applicationRepository.existsByProxyId(proxyId);
     }
 
+    @Override
+    public ApplicationDto findById(Long id) {
+                return applicationRepository.findById(id)
+                                           .map(applicationMapper::toDto)
+                                           .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
+    }
+
     private List<Application> toUpdateAllEntity(List<TreeSortParams> serverUpdateParams) {
         if (CollUtil.isEmpty(serverUpdateParams)) {
             return Collections.emptyList();

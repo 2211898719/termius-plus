@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Data
@@ -30,6 +31,8 @@ public class ApplicationDto {
     private String icon;
 
     private String masterMobile;
+    private BigDecimal latitude;
+    private BigDecimal longitude;
 
     private String content;
 

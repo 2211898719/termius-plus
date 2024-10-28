@@ -137,6 +137,11 @@ public class ApplicationController {
     @SneakyThrows
     @GetMapping("/getServerLocation/{id}")
     public Map<String, Object> getServerLocation(@PathVariable("id") Long id) {
+        ApplicationDto applicationDto = applicationService.findById(id);
+        if (applicationDto.getLatitude() != null && applicationDto.getLongitude() != null) {
+            return Map.of("latitude", applicationDto.getLatitude(), "longitude", applicationDto.getLongitude());
+        }
+
         List<ApplicationServerDto> servers = applicationServerService.getServers(id);
 
         ApplicationServerDto webServers = servers.stream().filter(e -> StrUtil.isNotBlank(e.getNginxLogPath())).findAny()
@@ -176,7 +181,7 @@ public class ApplicationController {
             InputStream inputStream = shell.getInputStream();
             OutputStream outputStream = shell.getOutputStream();
 
-            outputStream.write(("tail -100f " + webServer.getNginxLogPath() + " | awk '{print $1}' \n").getBytes());
+            outputStream.write(("tail -1f " + webServer.getNginxLogPath() + " | awk '{print $1}' \n").getBytes());
             outputStream.flush();
 
             DatabaseReader bean = SpringUtil.getBean(DatabaseReader.class);
@@ -193,22 +198,18 @@ public class ApplicationController {
                     }
                     String originData = new String(Arrays.copyOfRange(buffer, 0, i), StandardCharsets.UTF_8);
                     String[] ips = originData.split("\n");
-                    log.info("解析IP地址：{}", originData);
                     for (String ip : ips) {
                         try {
                             ip = ip.trim();
                             if (!ip.matches("\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}")){
-                                System.out.println("IP地址：" + ip + " 未找到地理位置信息");
                                 continue;
                             }
                             InetAddress inetAddress = InetAddress.getByName(ip);
                             CityResponse response = bean.city(inetAddress);
                             if (response.getCity().getName() == null) {
-                                System.out.println("IP地址：" + ip + " 未找到地理位置信息");
                                 continue;
                             }
                             Location location = response.getLocation();
-                            System.out.println("IP地址：" + ip + " 经纬度：" + location.getLongitude() + "," + location.getLatitude());
                             sseEmitter.send(Map.of(
                                     "ip",
                                     ip,
@@ -221,7 +222,7 @@ public class ApplicationController {
                             log.error("请求结束关闭流", e);
                             break loop;
                         } catch (Exception e) {
-                            log.error("解析IP地址失败", e);
+
                         }
                     }
 

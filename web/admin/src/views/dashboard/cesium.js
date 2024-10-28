@@ -29,6 +29,7 @@ function initCesiumMap(dom) {
     viewer.cesiumWidget.creditContainer.style.display = "none";
 
     function add(lon1, lat1, lon2, lat2) {
+        console.log(lon1, lat1, lon2, lat2)
         // 定义两个经纬度坐标
         const point1 = Cesium.Cartesian3.fromDegrees(lon1, lat1); // 北京
         const point2 = Cesium.Cartesian3.fromDegrees(lon2, lat2); // 上海

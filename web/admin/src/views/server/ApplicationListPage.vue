@@ -33,6 +33,7 @@ import {Codemirror} from "vue-codemirror";
 import {oneDark} from "@codemirror/theme-one-dark";
 import {javascript} from "@codemirror/lang-javascript";
 import ApplicationMonitorCheckTypeEnum from "@/enums/ApplicationMonitorCheckTypeEnum";
+import {lazyAMapApiLoaderInstance, useCitySearch} from "@vuemap/vue-amap";
 
 let termiusStyleColumn = ref(Math.floor(window.innerWidth / 300));
 
@@ -67,6 +68,8 @@ const creationState = reactive({
   parentId: 0,
   content: "",
   sort: 0,
+  latitude: 0,
+  longitude: 0,
   identity: "",
   masterMobile: "",
   identityArray: [],
@@ -517,7 +520,6 @@ const handleOpenRequestMap = (item) => {
   window.open("/requestMap?id=" + item.id, '_blank')
 }
 
-
 const handleOpenApplicationContact = (item) => {
   contactVisible.value = true
   contactData.value = item
@@ -583,6 +585,69 @@ defineExpose({
   getProxyData,
   setProxyId
 })
+
+
+const center = ref(null);
+let zoom = ref(18);
+let map = null;
+let formRef = ref(null);
+watch(
+    () => creationVisible.value,
+    (v) => {
+      if (v) {
+        lazyAMapApiLoaderInstance.then(() => {
+          if (creationState.latitude && creationState.longitude) {
+            center.value = [creationState.longitude, creationState.latitude];
+          } else {
+            useCitySearch().then((res) => {
+              const { getLocalCity } = res;
+              getLocalCity().then((cityResult) => {
+                center.value = cityResult.bounds.getCenter().toArray();
+              });
+            });
+          }
+        });
+      } else {
+
+        selectedPoi.value = null;
+      }
+    },
+);
+
+let selectedPoi = ref(null);
+const selectPoi = (e) => {
+  center.value = [e.poi.location.lng, e.poi.location.lat];
+  creationState.address = e.poi.district + e.poi.address + e.poi.name;
+  creationState.latitude = e.poi.location.lat;
+  creationState.longitude = e.poi.location.lng;
+};
+const choosePoi = (e) => {};
+
+const handleMapClick = (e) => {
+  let poi = [e.lnglat.lng, e.lnglat.lat];
+  selectedPoi.value = {
+    position: poi,
+  };
+
+  geocoder.getAddress(new AMap.LngLat(...poi));
+  creationState.latitude = e.lnglat.lat;
+  creationState.longitude = e.lnglat.lng;
+};
+
+let geocoder = null;
+const init = (mapObj) => {
+  mapObj.plugin(['AMap.Geocoder'], function () {
+    //加载地理编码插件
+    geocoder = new AMap.Geocoder({
+      radius: 1000, //以已知坐标为中心点，radius为半径，返回范围内兴趣点和道路信息
+      extensions: 'all', //返回地址描述以及附近兴趣点和道路信息，默认“base”
+    });
+    //返回地理编码结果
+    geocoder.on('complete', (e) => {
+      creationState.address = e.regeocode.formattedAddress;
+    });
+  });
+};
 
 </script>
 
@@ -763,6 +828,24 @@ defineExpose({
             <a-form-item label="代理" v-bind="creationValidations.proxyId">
               <p-select ref="proxyRef" :api="proxyApi.list" v-model:value="creationState.proxyId"
                         style="width: 90%"></p-select>
+            </a-form-item>
+            <a-form-item
+                label="位置"
+                name="latitude"
+                :rules="[{ required: true, message: '选择位置！' }]"
+            >
+              <div style="height: 300px">
+                <el-amap
+                    v-if="center"
+                    v-model:center="center"
+                    v-model:zoom="zoom"
+                    @click="handleMapClick"
+                    @init="init"
+                >
+                  <el-amap-search-box :debounce="1000" @select="selectPoi" @choose="choosePoi" />
+                  <el-amap-marker v-if="selectedPoi" :position="selectedPoi.position" />
+                </el-amap>
+              </div>
             </a-form-item>
             <a-divider>身份</a-divider>
             <a-form autocomplete="off" layout="inline" v-for="(item, index) in creationState.identityArray"

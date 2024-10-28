@@ -28,6 +28,8 @@ public interface ApplicationService {
     List<Tree<Long>> groupList();
 
     boolean existByProxyId(Long proxyId);
+
+    ApplicationDto findById(Long id);
 }
 
 
