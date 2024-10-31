@@ -133,6 +133,10 @@ public class ExecuteCommandSSHClient {
         return networkStats;
     }
 
+    public String getLocalIPAddress() {
+        return executeCommand("curl icanhazip.com");
+    }
+
 
     private static CpuUsage parseCpuUsage(String cpuOutput) {
         // 解析 CPU 使用情况

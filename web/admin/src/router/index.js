@@ -69,6 +69,12 @@ let routes = [
     ]
   },
   {
+    path: '/requestMap',
+    name: 'requestMap',
+    meta: {title: '请求地图'},
+    component: () => import('../views/dashboard/RequestMapPage.vue'),
+  },
+  {
     path: '/codeEditor',
     name: 'codeEditor',
     meta: {title: '编辑器'},

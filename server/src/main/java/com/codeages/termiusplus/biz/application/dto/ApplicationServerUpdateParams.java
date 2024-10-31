@@ -24,6 +24,8 @@ public class ApplicationServerUpdateParams {
 
     private String tag;
 
+    private String nginxLogPath;
+
 
     private String remark;
 }

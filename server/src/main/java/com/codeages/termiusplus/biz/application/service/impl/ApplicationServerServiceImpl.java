@@ -19,7 +19,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import jakarta.validation.Validator;
+import javax.validation.Validator;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ApplicationServerServiceImpl implements ApplicationServerService {
@@ -103,6 +105,14 @@ public class ApplicationServerServiceImpl implements ApplicationServerService {
     @Override
     public void deleteByApplicationId(Long applicationId) {
         applicationServerRepository.deleteByApplicationId(applicationId);
+    }
+
+    @Override
+    public List<ApplicationServerDto> getServers(Long applicationId) {
+        return applicationServerRepository.findByApplicationId(applicationId)
+                                          .stream()
+                                          .map(applicationServerMapper::toDto)
+                                          .collect(Collectors.toList());
     }
 }
 

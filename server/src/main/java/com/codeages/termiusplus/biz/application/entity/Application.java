@@ -7,7 +7,8 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import jakarta.persistence.*;
+import javax.persistence.*;
+import java.math.BigDecimal;
 
 /**
  * 应用
@@ -57,6 +58,14 @@ public class Application {
      * 负责人手机号
      */
     private String masterMobile;
+    /**
+     * 应用位置，绘制请求地图使用
+     */
+    private BigDecimal latitude;
+    /**
+     * 应用位置，绘制请求地图使用
+     */
+    private BigDecimal longitude;
     /**
      * 创建时间
      */

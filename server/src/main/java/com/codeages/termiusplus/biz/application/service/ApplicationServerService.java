@@ -7,6 +7,8 @@ import com.codeages.termiusplus.biz.application.dto.ApplicationServerUpdateParam
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.List;
+
 public interface ApplicationServerService {
 
     Page<ApplicationServerDto> search(ApplicationServerSearchParams searchParams, Pageable pageable);
@@ -18,6 +20,8 @@ public interface ApplicationServerService {
     void delete(Long id);
 
     void deleteByApplicationId(Long applicationId);
+
+    List<ApplicationServerDto> getServers(Long applicationId);
 }
 
 

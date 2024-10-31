@@ -24,5 +24,7 @@ public class ApplicationServerCreateParams {
 
 
     private String remark;
+
+    private String nginxLogPath;
 }
 

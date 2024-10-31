@@ -2,27 +2,48 @@ package com.codeages.termiusplus.api.admin;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.lang.tree.Tree;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.extra.spring.SpringUtil;
+import com.codeages.termiusplus.biz.ErrorCode;
 import com.codeages.termiusplus.biz.application.dto.*;
 import com.codeages.termiusplus.biz.application.service.ApplicationMonitorService;
 import com.codeages.termiusplus.biz.application.service.ApplicationServerService;
 import com.codeages.termiusplus.biz.application.service.ApplicationService;
+import com.codeages.termiusplus.biz.job.dto.ExecuteCommandSSHClient;
 import com.codeages.termiusplus.biz.server.dto.ProxyDto;
 import com.codeages.termiusplus.biz.server.dto.ProxySearchParams;
 import com.codeages.termiusplus.biz.server.dto.TreeSortParams;
 import com.codeages.termiusplus.biz.server.service.ProxyService;
+import com.codeages.termiusplus.biz.server.service.ServerService;
 import com.codeages.termiusplus.biz.util.QueryUtils;
 import com.codeages.termiusplus.common.IdPayload;
 import com.codeages.termiusplus.common.OkResponse;
+import com.codeages.termiusplus.exception.AppException;
+import com.maxmind.geoip2.DatabaseReader;
+import com.maxmind.geoip2.model.CityResponse;
+import com.maxmind.geoip2.record.Location;
 import lombok.AllArgsConstructor;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import net.schmizz.sshj.SSHClient;
+import net.schmizz.sshj.connection.channel.direct.Session;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.InetAddress;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@Slf4j
 @RestController
 @RequestMapping("/api-admin/application")
 @AllArgsConstructor
@@ -35,6 +56,8 @@ public class ApplicationController {
     private final ApplicationServerService applicationServerService;
 
     private final ProxyService proxyService;
+
+    private final ServerService serverService;
 
     @GetMapping("/list")
     public List<Tree<Long>> findAll() {
@@ -108,6 +131,109 @@ public class ApplicationController {
         applicationService.sort(treeSortParams);
 
         return OkResponse.TRUE;
+    }
+
+
+    @SneakyThrows
+    @GetMapping("/getServerLocation/{id}")
+    public Map<String, Object> getServerLocation(@PathVariable("id") Long id) {
+        ApplicationDto applicationDto = applicationService.findById(id);
+        if (applicationDto.getLatitude() != null && applicationDto.getLongitude() != null) {
+            return Map.of("latitude", applicationDto.getLatitude(), "longitude", applicationDto.getLongitude());
+        }
+
+        List<ApplicationServerDto> servers = applicationServerService.getServers(id);
+
+        ApplicationServerDto webServers = servers.stream().filter(e -> StrUtil.isNotBlank(e.getNginxLogPath())).findAny()
+                                                       .orElseThrow(() -> new AppException(ErrorCode.INTERNAL_ERROR,"没有找到web服务器"));
+
+        SSHClient sshClient = serverService.createSSHClient(webServers.getServerId());
+        ExecuteCommandSSHClient executeCommandSSHClient = new ExecuteCommandSSHClient(sshClient);
+        String localIPAddress = executeCommandSSHClient.getLocalIPAddress();
+        DatabaseReader bean = SpringUtil.getBean(DatabaseReader.class);
+        InetAddress inetAddress = InetAddress.getByName(localIPAddress);
+        CityResponse response = bean.city(inetAddress);
+        if (response.getCity().getName() == null) {
+            return Map.of("ip", localIPAddress, "longitude", "未知", "latitude", "未知");
+        }
+
+        Location location = response.getLocation();
+        return Map.of("ip", localIPAddress, "longitude", location.getLongitude(), "latitude", location.getLatitude());
+    }
+
+    @SneakyThrows
+    @GetMapping("/requestMap/{id}")
+    public SseEmitter requestMap(@PathVariable("id") Long id) {
+        SseEmitter sseEmitter = new SseEmitter();
+        List<ApplicationServerDto> servers = applicationServerService.getServers(id);
+
+        List<ApplicationServerDto> webServers = servers.stream().filter(e -> StrUtil.isNotBlank(e.getNginxLogPath()))
+                                                       .collect(Collectors.toList());
+
+        for (ApplicationServerDto webServer : webServers) {
+            SSHClient sshClient = serverService.createSSHClient(webServer.getServerId());
+            net.schmizz.sshj.connection.channel.direct.Session shellSession = sshClient.startSession();
+            shellSession.allocatePTY("xterm", 80, 24, 640, 480, Map.of());
+            shellSession.setAutoExpand(true);
+
+            Session.Shell shell = shellSession.startShell();
+
+            InputStream inputStream = shell.getInputStream();
+            OutputStream outputStream = shell.getOutputStream();
+
+            outputStream.write(("tail -1f " + webServer.getNginxLogPath() + " | awk '{print $1}' \n").getBytes());
+            outputStream.flush();
+
+            DatabaseReader bean = SpringUtil.getBean(DatabaseReader.class);
+            Thread thread = new Thread(() -> {
+                byte[] buffer = new byte[1024];
+                int i;
+                //如果没有数据来，线程会一直阻塞在这个地方等待数据。
+                loop:
+                while (true) {
+                    try {
+                        if ((i = inputStream.read(buffer)) == -1) break;
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                    String originData = new String(Arrays.copyOfRange(buffer, 0, i), StandardCharsets.UTF_8);
+                    String[] ips = originData.split("\n");
+                    for (String ip : ips) {
+                        try {
+                            ip = ip.trim();
+                            if (!ip.matches("\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}")){
+                                continue;
+                            }
+                            InetAddress inetAddress = InetAddress.getByName(ip);
+                            CityResponse response = bean.city(inetAddress);
+                            if (response.getCity().getName() == null) {
+                                continue;
+                            }
+                            Location location = response.getLocation();
+                            sseEmitter.send(Map.of(
+                                    "ip",
+                                    ip,
+                                    "longitude",
+                                    location.getLongitude(),
+                                    "latitude",
+                                    location.getLatitude()
+                            ));
+                        } catch (IllegalStateException e) {
+                            log.error("请求结束关闭流", e);
+                            break loop;
+                        } catch (Exception e) {
+
+                        }
+                    }
+
+                }
+            });
+
+            thread.start();
+        }
+
+
+        return sseEmitter;
     }
 
     @PostMapping("/create")

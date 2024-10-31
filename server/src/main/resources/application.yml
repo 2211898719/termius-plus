@@ -118,3 +118,10 @@ serverInfo:
 
 public:
     uri: [/api-admin/public/login]
+
+geo:
+    path: ${GEO_PATH:/var/www/GeoLite2-City.mmdb}
+
+map:
+    key: ${MAP_KEY:test}
+    secret: ${MAP_SECRET:test}

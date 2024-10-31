@@ -24,5 +24,8 @@ export const applicationApi = {
     },
     getApplicationErrorRank: async (params) => {
         return client.get("/api-admin/application/getApplicationErrorRank", {params: params});
-    }
+    },
+    getServerLocation: async (id) => {
+        return client.get("/api-admin/application/getServerLocation/" + id);
+    },
 }

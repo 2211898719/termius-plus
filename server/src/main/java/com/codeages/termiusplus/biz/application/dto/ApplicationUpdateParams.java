@@ -5,7 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import jakarta.validation.constraints.NotNull;
+import javax.validation.constraints.NotNull;
+import java.math.BigDecimal;
 import java.util.List;
 
 @Data
@@ -41,6 +42,8 @@ public class ApplicationUpdateParams {
 
     private String content;
 
+    private BigDecimal latitude;
+    private BigDecimal longitude;
 
     private String identity;
 
