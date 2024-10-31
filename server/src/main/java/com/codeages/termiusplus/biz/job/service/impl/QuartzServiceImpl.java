@@ -1,7 +1,6 @@
 package com.codeages.termiusplus.biz.job.service.impl;
 
 import cn.hutool.extra.spring.SpringUtil;
-import com.alibaba.fastjson.JSON;
 import com.codeages.termiusplus.biz.job.RunMvelJob;
 import com.codeages.termiusplus.biz.job.dto.MvelCronCreateDto;
 import com.codeages.termiusplus.biz.job.dto.ExecuteCommandSSHClient;
@@ -20,6 +19,7 @@ import org.quartz.*;
 import org.quartz.impl.matchers.GroupMatcher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import shade.com.alibaba.fastjson2.JSON;
 
 import java.util.ArrayList;
 import java.util.HashMap;

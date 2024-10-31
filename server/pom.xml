@@ -14,20 +14,21 @@
     <name>Termius Plus</name>
     <description>Termius Plus</description>
     <properties>
-        <java.version>21</java.version>
+        <java.version>17</java.version>
         <org.mapstruct.version>1.4.2.Final</org.mapstruct.version>
         <org.projectlombok.version>1.18.34</org.projectlombok.version>
         <org.apache.maven.compiler-plugin>3.13.0</org.apache.maven.compiler-plugin>
+        <maven.install.version>3.1.1</maven.install.version>
     </properties>
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-redis</artifactId>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.springframework.boot</groupId>-->
+<!--            <artifactId>spring-boot-starter-data-redis</artifactId>-->
+<!--        </dependency>-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-quartz</artifactId>
@@ -44,11 +45,11 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.apache.rocketmq</groupId>
-            <artifactId>rocketmq-spring-boot-starter</artifactId>
-            <version>2.2.2</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.apache.rocketmq</groupId>-->
+<!--            <artifactId>rocketmq-spring-boot-starter</artifactId>-->
+<!--            <version>2.3.1</version>-->
+<!--        </dependency>-->
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-mysql</artifactId>
@@ -168,10 +169,10 @@
             <version>17.0.0</version>
             <scope>compile</scope>
         </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-webflux</artifactId>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.springframework.boot</groupId>-->
+<!--            <artifactId>spring-boot-starter-webflux</artifactId>-->
+<!--        </dependency>-->
         <dependency>
             <groupId>com.dingtalk.open</groupId>
             <artifactId>dingtalk-stream</artifactId>
@@ -196,6 +197,12 @@
             <version>2.3.1</version>
         </dependency>
         <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context-indexer</artifactId>
+            <optional>true</optional>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
             <groupId>org.openjdk.nashorn</groupId>
             <artifactId>nashorn-core</artifactId>
             <version>15.4</version>
@@ -208,6 +215,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
+                    <mainClass>com.codeages.termiusplus.TermiusPlusApplication</mainClass>
                     <excludes>
                         <exclude>
                             <groupId>org.projectlombok</groupId>
@@ -215,43 +223,51 @@
                         </exclude>
                     </excludes>
                 </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
-            <plugin>
-                <groupId>com.google.cloud.tools</groupId>
-                <artifactId>jib-maven-plugin</artifactId>
-                <version>3.3.2</version>
-                <configuration>
-                    <from>
-                        <image>registry.cn-hangzhou.aliyuncs.com/kuozhi/termius-plus:jdk-11</image>
-                    </from>
-                    <to>
-                        <!--配置仓库名、镜像名-->
-                        <image>registry.cn-hangzhou.aliyuncs.com/kuozhi/termius-plus</image>
-                        <!--配置Tag信息-->
-                        <tags>
-                            <tag>server-${project.version}</tag>
-                        </tags>
-                    </to>
-                    <allowInsecureRegistries>true</allowInsecureRegistries>
-                    <container>
-                        <!--暴露容器端口-->
-                        <mainClass>com.codeages.termiusplus.TermiusPlusApplication</mainClass>
-                        <ports>
-                            <port>8080</port>
-                        </ports>
-                        <creationTime>USE_CURRENT_TIMESTAMP</creationTime>
-                        <volumes>
-                            <volume>/var/www/data</volume>
-                            <volume>/var/www/data/tmp/</volume>
-                        </volumes>
-                    </container>
-                </configuration>
-            </plugin>
+<!--            <plugin>-->
+<!--                <groupId>com.google.cloud.tools</groupId>-->
+<!--                <artifactId>jib-maven-plugin</artifactId>-->
+<!--                <version>3.3.2</version>-->
+<!--                <configuration>-->
+<!--                    <from>-->
+<!--                        <image>registry.cn-hangzhou.aliyuncs.com/kuozhi/termius-plus:jdk-11</image>-->
+<!--                    </from>-->
+<!--                    <to>-->
+<!--                        &lt;!&ndash;配置仓库名、镜像名&ndash;&gt;-->
+<!--                        <image>registry.cn-hangzhou.aliyuncs.com/kuozhi/termius-plus</image>-->
+<!--                        &lt;!&ndash;配置Tag信息&ndash;&gt;-->
+<!--                        <tags>-->
+<!--                            <tag>server-${project.version}</tag>-->
+<!--                        </tags>-->
+<!--                    </to>-->
+<!--                    <allowInsecureRegistries>true</allowInsecureRegistries>-->
+<!--                    <container>-->
+<!--                        &lt;!&ndash;暴露容器端口&ndash;&gt;-->
+<!--                        <mainClass>com.codeages.termiusplus.TermiusPlusApplication</mainClass>-->
+<!--                        <ports>-->
+<!--                            <port>8080</port>-->
+<!--                        </ports>-->
+<!--                        <creationTime>USE_CURRENT_TIMESTAMP</creationTime>-->
+<!--                        <volumes>-->
+<!--                            <volume>/var/www/data</volume>-->
+<!--                            <volume>/var/www/data/tmp/</volume>-->
+<!--                        </volumes>-->
+<!--                    </container>-->
+<!--                </configuration>-->
+<!--            </plugin>-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>${org.apache.maven.compiler-plugin}</version>
                 <configuration>
+                    <encoding>${project.build.sourceEncoding}</encoding>
                     <source>${java.version}</source>
                     <target>${java.version}</target>
                     <annotationProcessorPaths>
@@ -278,6 +294,10 @@
                         </compilerArg>
                     </compilerArgs>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.graalvm.buildtools</groupId>
+                <artifactId>native-maven-plugin</artifactId>
             </plugin>
             <plugin>
                 <groupId>com.mysema.maven</groupId>

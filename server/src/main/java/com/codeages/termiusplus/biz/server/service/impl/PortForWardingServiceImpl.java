@@ -32,21 +32,13 @@ public class PortForWardingServiceImpl implements PortForWardingService {
 
     private final ServerService serverService;
 
-    private final HttpServletRequest httpServletRequest;
-
-    private final ServerSocket serverSocket;
-
     private final Map<Integer, PortForwarderDto> localPortForwarderMap;
 
     @Value("${current.ip}")
     private String currentIp;
 
-    public PortForWardingServiceImpl(ServerService serverService,
-                                     HttpServletRequest httpServletRequest,
-                                     ServerSocket serverSocket) {
+    public PortForWardingServiceImpl(ServerService serverService) {
         this.serverService = serverService;
-        this.httpServletRequest = httpServletRequest;
-        this.serverSocket = serverSocket;
         this.localPortForwarderMap = new ConcurrentHashMap<>();
     }
 

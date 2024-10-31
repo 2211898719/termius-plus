@@ -32,16 +32,14 @@ public class UserAuthServiceImpl implements UserAuthService {
 
     private final UserCacheManager cacheManager;
 
-    private final HttpServletResponse response;
 
     private final UserRoleRepository userRoleRepository;
 
     public UserAuthServiceImpl(AppConfig config, PasswordEncoder encoder, UserCacheManager cacheManager,
-                               HttpServletResponse response, UserRoleRepository userRoleRepository) {
+                                UserRoleRepository userRoleRepository) {
         this.config = config;
         this.encoder = encoder;
         this.cacheManager = cacheManager;
-        this.response = response;
         this.userRoleRepository = userRoleRepository;
     }
 
@@ -65,13 +63,13 @@ public class UserAuthServiceImpl implements UserAuthService {
             throw new AppException(ErrorCode.NOT_FOUND, "用户不存在");
         }
 
-        Cookie cookie = new Cookie("token", token);
-
-        cookie.setPath("/");
-        cookie.setHttpOnly(true);
-        cookie.setMaxAge(60 * 60 * 24 * 90);
-
-        response.addCookie(cookie);
+//        Cookie cookie = new Cookie("token", token);
+//
+//        cookie.setPath("/");
+//        cookie.setHttpOnly(true);
+//        cookie.setMaxAge(60 * 60 * 24 * 90);
+//
+//        response.addCookie(cookie);
 
         return makeUserAuthedDto(userOp.get(), token);
     }
