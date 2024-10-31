@@ -7,6 +7,7 @@ import org.springframework.scheduling.quartz.SchedulerFactoryBean;
 
 import javax.sql.DataSource;
 
+
 @Configuration
 public class QuartzConfig {
 

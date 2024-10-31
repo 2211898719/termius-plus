@@ -6,8 +6,8 @@ import com.codeages.termiusplus.security.AuthTokenFilter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import javax.websocket.*;
-import javax.websocket.server.ServerEndpoint;
+import jakarta.websocket.*;
+import jakarta.websocket.server.ServerEndpoint;
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -52,7 +52,7 @@ public class AuthKeyBoardHandler {
         error.printStackTrace();
     }
 
-    public static void sendMessage(javax.websocket.Session session, String message) {
+    public static void sendMessage(Session session, String message) {
         try {
             session.getBasicRemote().sendText(message);
         } catch (IOException e) {

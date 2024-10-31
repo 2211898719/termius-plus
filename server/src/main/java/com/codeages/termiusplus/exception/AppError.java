@@ -3,7 +3,7 @@ package com.codeages.termiusplus.exception;
 import com.codeages.termiusplus.biz.ErrorCode;
 import lombok.Data;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 
 @Data

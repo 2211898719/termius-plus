@@ -72,7 +72,7 @@ public class ObjectLogServiceImpl implements ObjectLogService {
         log.setOid(oid);
         log.setEvent(event);
         log.setMessage(message);
-        log.setContext(context);
+        log.setContext("");
 
         var user = this.context.getUser();
         if (user != null) {

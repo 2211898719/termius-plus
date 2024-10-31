@@ -23,7 +23,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.validation.Validator;
+import jakarta.validation.Validator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
