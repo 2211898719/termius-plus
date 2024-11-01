@@ -1,11 +1,11 @@
 package com.codeages.termiusplus.biz.application.dto;
 
 import com.codeages.termiusplus.biz.application.enums.ApplicationMonitorTypeEnum;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.util.List;
 

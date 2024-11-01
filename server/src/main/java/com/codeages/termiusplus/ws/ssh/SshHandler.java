@@ -4,7 +4,6 @@ import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.lang.Pair;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONUtil;
@@ -29,6 +28,7 @@ import org.springframework.stereotype.Component;
 import jakarta.websocket.*;
 import jakarta.websocket.server.PathParam;
 import jakarta.websocket.server.ServerEndpoint;
+
 import java.io.*;
 import java.net.ConnectException;
 import java.nio.ByteBuffer;
@@ -37,7 +37,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -57,13 +59,16 @@ public class SshHandler {
 
     private static final String NONE_MASTER_SESSION_ID = "0";
 
-    private static final ThreadPoolExecutor threadPoolExecutor = ThreadUtil.newExecutorByBlockingCoefficient(0.99f);
+    private static final ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor();
 
     private final ServerService serverService;
 
     private final CommandLogService commandLogService;
 
     private final UserService userService;
+
+    private final ReentrantLock lock = new ReentrantLock();
+
 
     public SshHandler() {
         this.serverService = SpringUtil.getBean(ServerService.class);
@@ -222,11 +227,11 @@ public class SshHandler {
 
     @SneakyThrows
     private static byte[] compressString(String input, Charset charset) {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        GZIPOutputStream gzipOut = new GZIPOutputStream(baos);
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        GZIPOutputStream gzipOut = new GZIPOutputStream(bytes);
         gzipOut.write(input.getBytes(charset));
         gzipOut.close();
-        return baos.toByteArray();
+        return bytes.toByteArray();
     }
 
     @SneakyThrows
@@ -235,21 +240,22 @@ public class SshHandler {
         return IoUtil.read(gzipIn, charset);
     }
 
-    private static void sendBinary(Session session, String msg) {
+    private void sendBinary(Session session, String msg) {
         if (!session.isOpen()) {
             // 会话关闭不能发送消息
             return;
         }
 
-        synchronized (session.getId()
-                             .intern()) {
-            try {
-                session.getBasicRemote()
-                       .sendBinary(ByteBuffer.wrap(compressString(msg, Charset.defaultCharset())));
-            } catch (IOException e) {
-                log.error("发送消息出错：{}", e.getMessage());
-            }
+        lock.lock();
+
+        try {
+            session.getBasicRemote()
+                   .sendBinary(ByteBuffer.wrap(compressString(msg, Charset.defaultCharset())));
+        } catch (Exception e) {
+            log.error("发送消息出错", e);
         }
+
+        lock.unlock();
     }
 
     private boolean isMasterSession(String masterSessionId) {
@@ -286,10 +292,8 @@ public class SshHandler {
         private final net.schmizz.sshj.connection.channel.direct.Session.Shell shell;
         @Getter
         private long lastActiveTime = System.currentTimeMillis();
-
         private final File logFile;
         private final BufferedOutputStream logFileOutputStream;
-        private final RollingString lastCommandLog;
 
         @SneakyThrows
         HandlerItem(Long userId, String username, Long serverId, Session session, SSHClient sshClient) {
@@ -333,8 +337,7 @@ public class SshHandler {
             //日志内存缓冲区
             logFileOutputStream = IoUtil.toBuffered(FileUtil.getOutputStream(logFile), MAX_LOG_BUFFER_SIZE);
 
-            lastCommandLog = new RollingString();
-            threadPoolExecutor.execute(this);
+            executorService.submit(this);
         }
 
 
@@ -400,7 +403,7 @@ public class SshHandler {
         }
 
         @SneakyThrows
-        public synchronized void addSubSession(Session session, String username) {
+        public void addSubSession(Session session, String username) {
             this.sessions.add(Pair.of(username, session));
 
             //写入内存缓冲区中的数据到文件
@@ -421,7 +424,7 @@ public class SshHandler {
         }
 
         @SneakyThrows
-        public synchronized void removeSubSession(Session session) {
+        public void removeSubSession(Session session) {
             log.info("有连接关闭,session:{}", sessions.size());
             String username = null;
             for (int i = 0; i < sessions.size(); i++) {
@@ -461,7 +464,6 @@ public class SshHandler {
                     String originData = new String(Arrays.copyOfRange(buffer, 0, i), openSession.getRemoteCharset());
                     MessageDto messageDto = new MessageDto(EventType.COMMAND, originData);
                     String s = JSONUtil.toJsonStr(messageDto);
-                    lastCommandLog.append(originData);
                     logFileOutputStream.write(originData.getBytes());
                     sessions.forEach(session -> sendBinary(session.getValue(), s));
                 }
@@ -475,10 +477,6 @@ public class SshHandler {
                         .map(Pair::getValue)
                         .forEach(SshHandler.this::destroy);
             }
-        }
-
-        public String getLastCommandLog() {
-            return lastCommandLog.toString();
         }
 
         public void active() {

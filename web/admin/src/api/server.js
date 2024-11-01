@@ -38,5 +38,7 @@ export const serverApi = {
     getAllServerRunInfo(){
         return client.get("/api-admin/server/getAllServerRunInfo");
     },
-
+    clearAllConnections() {
+         return client.post("/api-admin/server/clearConnect");
+    }
 }

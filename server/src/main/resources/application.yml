@@ -78,8 +78,8 @@ spring:
                         threadCount: 50
                         class: org.quartz.simpl.SimpleThreadPool
                         threadsInheritContextClassLoaderOfInitializingThread: true
-    redis:
-        database: ${REDIS_DATABASE:0}
+    data:
+      redis:
         host: ${REDIS_HOST:localhost}
         password: ${REDIS_PASSWORD:}
         port: ${REDIS_PORT:6379}

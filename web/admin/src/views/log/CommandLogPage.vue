@@ -2,6 +2,7 @@
   <page-container :title="route.meta.title">
     <template #extra>
       <a-button @click="exportBack">导出sql备份</a-button>
+      <a-button @click="clearAllConnections">清理所有服务器连接</a-button>
     </template>
 
     <a-space direction="vertical" size="middle" style="width: 100%;">
@@ -54,6 +55,7 @@ import {serverApi} from "@/api/server";
 import PCascader from "@/components/p-cascader.vue";
 import PSelect from "@/components/p-select.vue";
 import {userApi} from "@/api/user";
+import {message} from "ant-design-vue";
 
 const router = useRouter();
 const route = useRoute();
@@ -106,6 +108,11 @@ const showDetail = (record) => {
 
 const exportBack = () => {
   download(fileApi.back())
+}
+
+const clearAllConnections = async () => {
+  await serverApi.clearAllConnections()
+  message.success("清理成功")
 }
 </script>
 

@@ -15,11 +15,11 @@ import com.codeages.termiusplus.biz.server.service.ServerService;
 import com.codeages.termiusplus.biz.util.QueryUtils;
 import com.codeages.termiusplus.exception.AppException;
 import com.querydsl.core.BooleanBuilder;
+import jakarta.validation.Validator;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import javax.validation.Validator;
 import java.util.List;
 import java.util.stream.Collectors;
 

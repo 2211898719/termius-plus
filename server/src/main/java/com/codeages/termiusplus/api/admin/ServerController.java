@@ -5,6 +5,7 @@ import cn.hutool.core.lang.tree.Tree;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.codeages.termiusplus.biz.server.dto.*;
+import com.codeages.termiusplus.biz.server.job.ConnectTimeoutJob;
 import com.codeages.termiusplus.biz.server.service.ServerService;
 import com.codeages.termiusplus.ws.ssh.SshHandler;
 import com.codeages.termiusplus.biz.user.dto.RoleDto;
@@ -93,6 +94,16 @@ public class ServerController {
 
         return treeList;
     }
+
+    @PostMapping("/clearConnect")
+    public OkResponse clearConnect() {
+        log.info("强制清除所有连接");
+
+        ConnectTimeoutJob.clearConnect(true);
+
+        return OkResponse.TRUE;
+    }
+
 
     /**
      * 递归构建在线标记，如果子节点有一个onlyConnect，那么父节点加上onlyTag: 数量
