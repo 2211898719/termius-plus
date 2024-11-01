@@ -30,6 +30,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletResponse;
+
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.EnumSet;
@@ -157,10 +158,10 @@ public class SFTPServiceImpl implements SFTPService {
 
     @Override
     @SftpActive("#id")
-    public void download(String id, String remotePath) throws IOException {
+    public void download(HttpServletResponse response, String id, String remotePath) throws IOException {
         log.info("下载文件：{}", remotePath);
         String filename = remotePath.substring(remotePath.lastIndexOf("/") + 1);
-        ServletOutputStream outputStream = SpringUtil.getBean(HttpServletResponse.class).getOutputStream();
+        ServletOutputStream outputStream = response.getOutputStream();
 
         SFTPClient sftp = getSftp(id);
         RemoteFile readFile;
@@ -176,16 +177,16 @@ public class SFTPServiceImpl implements SFTPService {
 
             ServerContext.SFTP_POOL.put(id, s);
 
-            download(id, remotePath);
+            download(response, id, remotePath);
             return;
         }
 
         com.codeages.termiusplus.biz.storage.utils.FileUtil.initResponse(
                 readFile.length(),
                 filename,
-                SpringUtil.getBean(HttpServletResponse.class),
+                response,
                 false
-        );
+                                                                        );
 
         RemoteFile.ReadAheadRemoteFileInputStream readAheadRemoteFileInputStream = readFile.new ReadAheadRemoteFileInputStream(
                 15);
@@ -227,7 +228,8 @@ public class SFTPServiceImpl implements SFTPService {
             return;
         }
 
-        sftp.getSftp().close();
+        sftp.getSftp()
+            .close();
         ServerContext.SFTP_POOL.remove(id);
     }
 
@@ -299,15 +301,18 @@ public class SFTPServiceImpl implements SFTPService {
                     15);
 
             transferWithProgress(readAheadRemoteFileInputStream, remoteFileOutputStream, progress -> {
-                MessageDto messageDto = new MessageDto(EventType.SFTP_SERVER_UPLOAD_SERVER_PROGRESS, JSONUtil.toJsonStr(new SftpServerUploadServerProgressDto(
-                        params.getSourceServerName(),
-                        source,
-                        params.getTargetServerName(),
-                        target,
-                        progress,
-                        params.getSourceId(),
-                        params.getTargetId()
-                )));
+                MessageDto messageDto = new MessageDto(
+                        EventType.SFTP_SERVER_UPLOAD_SERVER_PROGRESS,
+                        JSONUtil.toJsonStr(new SftpServerUploadServerProgressDto(
+                                params.getSourceServerName(),
+                                source,
+                                params.getTargetServerName(),
+                                target,
+                                progress,
+                                params.getSourceId(),
+                                params.getTargetId()
+                        ))
+                );
                 AuthKeyBoardHandler.sendMessage(params.getClientSessionId(), JSONUtil.toJsonStr(messageDto));
             });
 

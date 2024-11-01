@@ -2,6 +2,7 @@ package com.codeages.termiusplus.biz.server.service;
 
 import com.codeages.termiusplus.biz.server.dto.SFTPBean;
 import com.codeages.termiusplus.biz.server.dto.SFTPServerUploadServerParams;
+import jakarta.servlet.http.HttpServletResponse;
 import net.schmizz.sshj.sftp.RemoteResourceInfo;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -94,7 +95,7 @@ public interface SFTPService {
      * @param id
      * @param remotePath
      */
-    void download(String id, String remotePath) throws IOException;
+    void download(HttpServletResponse response, String id, String remotePath) throws IOException;
 
     long size(String id, String remotePath);
 

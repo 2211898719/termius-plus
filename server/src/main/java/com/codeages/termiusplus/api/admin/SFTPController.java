@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.servlet.http.HttpServletResponse;
+
 import java.util.List;
 import java.util.Map;
 
@@ -71,8 +72,8 @@ public class SFTPController {
 
     @PostMapping("/{id}/uploadFile")
     public void uploadFile(@PathVariable String id,
-                       @RequestParam("file") MultipartFile file,
-                       @RequestParam("remotePath") String remotePath) {
+                           @RequestParam("file") MultipartFile file,
+                           @RequestParam("remotePath") String remotePath) {
         sftpService.uploadFile(id, file, remotePath);
     }
 
@@ -83,8 +84,8 @@ public class SFTPController {
 
     @SneakyThrows
     @GetMapping("/{id}/download")
-    public void download(@PathVariable String id, SFTPParams params) {
-        sftpService.download(id, params.getRemotePath());
+    public void download(HttpServletResponse response, @PathVariable String id, SFTPParams params) {
+        sftpService.download(response, id, params.getRemotePath());
     }
 
     @PostMapping("/{id}/close")
@@ -97,7 +98,11 @@ public class SFTPController {
     public ResponseEntity<String> readFile(@PathVariable String id, SFTPParams params) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.TEXT_PLAIN); // 设置为纯文本
-        return new ResponseEntity<>(new String(sftpService.readFile(id, params.getRemotePath())), headers, HttpStatus.OK);
+        return new ResponseEntity<>(
+                new String(sftpService.readFile(id, params.getRemotePath())),
+                headers,
+                HttpStatus.OK
+        );
     }
 
     //写入文件内容
