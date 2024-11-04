@@ -70,6 +70,10 @@ fontChannel.onmessage = (e) => {
   options.fontFamily = currentFont.value + ", sans-serif"
 }
 
+const cssFamily = computed(() => {
+  return currentFont.value + ", -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji'";
+})
+
 let options = {
   rendererType: "canvas", //渲染类型canvas或者dom
   // rows: 123, //行数
@@ -77,7 +81,7 @@ let options = {
   convertEol: true, //启用时，光标将设置为下一行的开头
   scrollback: 30000, //滚动缓冲区大小
   fontSize: 14, //字体大小
-  fontFamily: currentFont.value + ", -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji'",
+  fontFamily: cssFamily.value,
   height: "100%", //终端高度
   disableStdin: false, //禁用输入
   // cursorStyle: "block", //光标样式
@@ -161,6 +165,7 @@ const initSocket = () => {
   useSocket = useWebSocket(wsProtocol + '://' + host + '/socket/ssh/' + authStore.session + '/' + currentServer.value.id + '/' + props.masterSessionId, {
     onMessage: (w, e) => {
       emit("update:loading", false)
+      handleComplete()
     },
     onError: (e) => {
 
@@ -213,7 +218,7 @@ function compressArrayBuffer(str) {
 }
 
 const initTerm = () => {
-  term = new Terminal({...options, disableStdin: props.masterSessionId != 0});
+  term = new Terminal({...options, disableStdin: props.masterSessionId !== 0});
   socket.send = (data) => {
     if (socket.readyState === 1) {
       sendEvent(JSON.stringify({
@@ -412,18 +417,8 @@ const initTerm = () => {
   });
 
   term.focus();
-  term.onData(() => {
-    if (!AutoComplete.value) {
-      return
-    }
 
-    setTimeout(() => {
-      completeCommand.value = getCompleteCommand();
-      writeCompletionToCursorPosition(completeCommand.value)
-    }, 100)
-  })
-
-  if (props.server.execCommand && props.masterSessionId == 0) {
+  if (props.server.execCommand && props.masterSessionId === 0) {
     nextTick(() => {
       execCommand(props.server.execCommand + "\n")
     })
@@ -445,20 +440,30 @@ const initTerm = () => {
 
 }
 
-let channel = new BroadcastChannel("theme")
-channel.onmessage = (e) => {
-  frontColor.value = e.data.frontColor
-  backColor.value = e.data.backColor
-  term.setOption("theme", {
-    foreground: frontColor.value, //前景色
-    background: backColor.value, //背景色
-    cursor: "white" //设置光标
-  });
+const handleComplete = _.debounce( () => {
+  nextTick(()=>{
+    completeCommand.value = getCompleteCommand();
+    writeCompletionToCursorPosition(completeCommand.value)
+  })
+}, 100, {leading: false, trailing: true})
+
+function uniqueArray(arr) {
+  const uniqueSet = new Set();
+  const uniqueArray = [];
+
+  for (const item of arr) {
+    if (!uniqueSet.has(item)) {
+      uniqueSet.add(item);
+      uniqueArray.push(item);
+    }
+  }
+
+  return uniqueArray;
 }
 
 const getHistory = async () => {
   try {
-    history.value.bash = [...new Set(await serverApi.getHistory(props.server.id))];
+    history.value.bash = uniqueArray(await serverApi.getHistory(props.server.id));
   } catch (e) {
     message.error(e.message)
   }
@@ -471,7 +476,7 @@ const getMysqlHistory = async () => {
 
   history.value.mysqlInit = true
   try {
-    history.value.mysql = [...new Set(await serverApi.getMysqlHistory(currentServer.value.id))];
+    history.value.mysql = uniqueArray(await serverApi.getMysqlHistory(currentServer.value.id));
   } catch (e) {
     message.error(e.message)
   }
@@ -490,7 +495,7 @@ const findFirstCompleteCommand = () => {
   //去掉头部的空格，不能去掉尾部的空格
   command = command.replace(/^\s+/, "")
   if (command) {
-    let find = history.value[history.value.currentType].find(item => item.startsWith(command))
+    let find = history.value[history.value.currentType].findLast(item => item.startsWith(command))
     if (find) {
       return find
     }
@@ -554,35 +559,14 @@ const writeCompletionToCursorPosition = (autoComp) => {
   }
 
   autoEL.innerText = autoComp
-  autoEL.style.left = parseFloat(el.style.left.substring(0, el.style.left.length - 2)) + spaceCount * 8.4 + "px"
-  autoEL.style.top = parseFloat(el.style.top.substring(0, el.style.top.length - 2)) + 1 + "px"
+  autoEL.style.left = parseFloat(el.style.left.substring(0, el.style.left.length - 2)) + spaceCount * 8.5 + "px"
+  autoEL.style.top = parseFloat(el.style.top.substring(0, el.style.top.length - 2)) + 2 + "px"
   autoEL.style.position = 'fixed'
   autoEL.id = "auto"
   autoEL.style.lineHeight = "1"
   autoEL.className = "auto-complete"
   console.append(autoEL)
-  if (hasAutoComplete.value) {
-    return
-  }
 
-  tour.addSteps([
-    {
-      attachTo: {element: autoEL, on: 'bottom'},
-      text: '根据history提示最接近的命令,使用双击shift补全命令',
-      buttons: [
-        {
-          action() {
-            hasAutoComplete.value = true
-            return this.cancel()
-          },
-          text: '知道了'
-        }
-      ]
-    }
-  ])
-  tour.onclose = () => {
-  }
-  tour.start();
 }
 
 const displayNoneCompletion = () => {
@@ -729,42 +713,6 @@ const changeRegexEnabled = () => {
   regexEnabled.value = !regexEnabled.value
 }
 
-const defaultConfig = {
-  // 是否显示黑色遮罩层
-  useModalOverlay: true,
-  // 键盘按钮控制步骤
-  keyboardNavigation: true,
-  defaultStepOptions: {
-    // 显示关闭按钮
-    cancelIcon: {
-      enabled: false
-    },
-    scrollTo: {behavior: 'smooth', block: 'center'},
-    // 高亮元素四周要填充的空白像素
-    modalOverlayOpeningPadding: 4,
-    // 空白像素的圆角
-    modalOverlayOpeningRadius: 4,
-    buttons: [{
-      action() {
-        return this.back()
-      },
-      text: '上一步'
-    }, {
-      action() {
-        return this.next()
-      },
-      text: '下一步'
-    }]
-  }
-}
-
-const tour = useShepherd({
-  useModalOverlay: true,
-  ...defaultConfig
-});
-
-let hasAutoComplete = useStorage('hasAutoComplete', false)
-
 let autoCompleteVisible = ref(false)
 let autoCompleteText = ref('')
 let selectCommand = ref('')
@@ -803,6 +751,20 @@ const searchHistoryChange = (type) => {
 }
 
 
+function writeCommandToTerminal(event) {
+  let last = getTerminalLastNotBlackCommand();
+  let command = getUnExecutedCommand(last, false)
+  //去除command = 输入command的长度的退格键
+  execCommand("\b".repeat(command.length))
+  execCommand(selectCommand.value)
+  selectCommand.value = ''
+  autoCompleteVisible.value = false
+  event.preventDefault()
+  nextTick(() => {
+    displayNoneCompletion()
+  })
+}
+
 const handleAutoCompleteSelectDown = (event) => {
   if (event.key === 'ArrowUp') {
     searchHistoryChange('up')
@@ -811,18 +773,7 @@ const handleAutoCompleteSelectDown = (event) => {
     searchHistoryChange('down')
     event.preventDefault()
   } else if (event.key === 'Enter') {
-    let last = getTerminalLastNotBlackCommand();
-    let command = getUnExecutedCommand(last, false)
-    console.log(last, command.length)
-    //去除command = 输入command的长度的退格键
-    execCommand("\b".repeat(command.length))
-    execCommand(selectCommand.value)
-    selectCommand.value = ''
-    autoCompleteVisible.value = false
-    event.preventDefault()
-    nextTick(() => {
-      displayNoneCompletion()
-    })
+    writeCommandToTerminal(event);
   }
 }
 
@@ -849,6 +800,7 @@ let autoCompleteTextItemRefs = ref([])
           <div ref="autoCompleteTextItemRefs"
                :class="{'auto-complete-item':true,'auto-complete-item-active':selectCommand===item}"
                @click="handleAutoCompleteSelect(item)"
+               @dblclick="writeCommandToTerminal"
                v-for="(item,index) in searchedHistory" :key="index"> {{
               item
             }}
@@ -894,7 +846,6 @@ let autoCompleteTextItemRefs = ref([])
   transition: all .3s cubic-bezier(.23, 1, .32, 1);
   z-index: 1000;
   background-color: #fff;
-  mix-blend-mode: difference;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 
   .search-option {
@@ -963,7 +914,7 @@ let autoCompleteTextItemRefs = ref([])
 .auto-complete {
   position: absolute;
   color: v-bind(frontColor);
-  font-family: courier-new, courier, monospace;
+  font-family: v-bind(cssFamily);
   font-size: 14px;
   mix-blend-mode: difference;
   opacity: 0.6;
@@ -977,7 +928,6 @@ let autoCompleteTextItemRefs = ref([])
   .ant-modal-body {
     padding: 12px;
   }
-
 
   .auto-complete-root {
 
