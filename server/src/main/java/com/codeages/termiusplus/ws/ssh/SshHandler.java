@@ -4,6 +4,7 @@ import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.lang.Pair;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONUtil;
@@ -39,6 +40,7 @@ import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -59,7 +61,10 @@ public class SshHandler {
 
     private static final String NONE_MASTER_SESSION_ID = "0";
 
-    private static final ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor();
+//    private static final ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor();、
+
+    private static final ThreadPoolExecutor threadPoolExecutor = ThreadUtil.newExecutorByBlockingCoefficient(0.99f);
+
 
     private final ServerService serverService;
 
@@ -337,7 +342,7 @@ public class SshHandler {
             //日志内存缓冲区
             logFileOutputStream = IoUtil.toBuffered(FileUtil.getOutputStream(logFile), MAX_LOG_BUFFER_SIZE);
 
-            executorService.submit(this);
+            threadPoolExecutor.submit(this);
         }
 
 
