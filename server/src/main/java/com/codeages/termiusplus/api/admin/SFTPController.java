@@ -4,6 +4,8 @@ import com.codeages.termiusplus.biz.server.dto.SFTPInitParams;
 import com.codeages.termiusplus.biz.server.dto.SFTPParams;
 import com.codeages.termiusplus.biz.server.dto.SFTPServerUploadServerParams;
 import com.codeages.termiusplus.biz.server.service.SFTPService;
+import com.cxytiandi.encrypt.springboot.annotation.DecryptIgnore;
+import com.cxytiandi.encrypt.springboot.annotation.EncryptIgnore;
 import lombok.SneakyThrows;
 import net.schmizz.sshj.sftp.RemoteResourceInfo;
 import org.springframework.http.HttpHeaders;
@@ -64,6 +66,7 @@ public class SFTPController {
     }
 
     @PostMapping("/{id}/upload")
+    @DecryptIgnore
     public void upload(@PathVariable String id,
                        @RequestParam("file") MultipartFile file,
                        @RequestParam("remotePath") String remotePath) {
@@ -71,6 +74,7 @@ public class SFTPController {
     }
 
     @PostMapping("/{id}/uploadFile")
+    @DecryptIgnore
     public void uploadFile(@PathVariable String id,
                            @RequestParam("file") MultipartFile file,
                            @RequestParam("remotePath") String remotePath) {
@@ -84,6 +88,8 @@ public class SFTPController {
 
     @SneakyThrows
     @GetMapping("/{id}/download")
+    @EncryptIgnore
+    @DecryptIgnore
     public void download(HttpServletResponse response, @PathVariable String id, SFTPParams params) {
         sftpService.download(response, id, params.getRemotePath());
     }

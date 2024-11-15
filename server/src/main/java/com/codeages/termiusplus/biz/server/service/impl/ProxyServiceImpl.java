@@ -15,6 +15,7 @@ import com.codeages.termiusplus.biz.server.repository.ProxyRepository;
 import com.codeages.termiusplus.biz.server.service.ProxyService;
 import com.codeages.termiusplus.exception.AppException;
 import com.querydsl.core.BooleanBuilder;
+import jakarta.validation.Validator;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,13 +23,15 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.validation.Validator;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -84,7 +87,10 @@ public class ProxyServiceImpl implements ProxyService {
             throw new AppException(ErrorCode.INVALID_ARGUMENT, errors);
         }
 
-        return proxyMapper.toDto(proxyRepository.save(proxyMapper.toCreateEntity(createParams)));
+        createParams.setOpen(false);
+        Proxy save = proxyRepository.save(proxyMapper.toCreateEntity(createParams));
+        testProxy(save);
+        return proxyMapper.toDto(save);
     }
 
     @Override
@@ -101,6 +107,7 @@ public class ProxyServiceImpl implements ProxyService {
     }
 
     @Override
+    @Transactional
     public void delete(Long id) {
         Proxy proxy = proxyRepository.findById(id)
                                      .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));

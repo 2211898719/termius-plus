@@ -23,12 +23,18 @@ server:
     forward-headers-strategy: native
     port: 8080
     connectCount: ${SERVER_CONNECT_COUNT:6}
+    estimateDiskUsageDays: ${SERVER_ESTIMATE_DISK_USAGE_DAYS:30}
+    estimateDiskUsageLogDays: ${SERVER_ESTIMATE_DISK_USAGE_LOG_DAYS:365}
     servlet:
         session:
             timeout: 1200
+    compression:
+        enabled: true
+        min-response-size: 1024
+        mime-types: application/json, application/xml, text/html, text/plain, text/xml
 spring:
     application:
-        name: termius-plus
+        name: ${SPRING_APPLICATION_NAME:termius-plus}
     config:
         import: optional:file:.env[.properties]
     datasource:
@@ -41,6 +47,13 @@ spring:
                 secret: ${DINGTALK_SECRET}
                 token-id: ${DINGTALK_TOKEN_ID}
         project-id: ${spring.application.name}
+    dingtalk:
+        enabled: ${DINGTALK_ENABLED:false}
+        agent-id: ${DINGTALK_AGENT_ID:}
+        client-id: ${DINGTALK_CLIENT_ID:}
+        client-secret: ${DINGTALK_CLIENT_SECRET:}
+        robot-code: ${DINGTALK_ROBOT_CODE:}
+        cool-app-code: ${DINGTALK_COOL_APP_CODE:}
     flyway:
         out-of-order: true
     jpa:
@@ -90,6 +103,18 @@ spring:
             max-file-size: 8000MB
             max-request-size: 8000MB
             resolve-lazily: true
+    encrypt:
+        enabled: ${ENCRYPT_ENABLE:false}
+        request:
+            public:
+                key: ${ENCRYPT_REQ_PUB_KEY}
+            private:
+                key: ${ENCRYPT_REQ_PRI_KEY}
+        response:
+            public:
+                key: ${ENCRYPT_RES_PUB_KEY}
+            private:
+                key: ${ENCRYPT_RES_PRI_KEY}
 PortForWarding:
     minPort: ${PORT_FOR_WARDING_MIN:8200}
     maxPort: ${PORT_FOR_WARDING_MAX:8500}

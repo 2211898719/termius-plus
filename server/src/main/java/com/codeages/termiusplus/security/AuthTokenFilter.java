@@ -1,6 +1,7 @@
 package com.codeages.termiusplus.security;
 
 import cn.hutool.core.util.StrUtil;
+import com.codeages.termiusplus.biz.ErrorCode;
 import com.codeages.termiusplus.biz.user.service.UserAuthService;
 import com.codeages.termiusplus.exception.AppError;
 import com.codeages.termiusplus.exception.AppException;
@@ -20,6 +21,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,7 +48,10 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
         //是公开的URI，不需要验证token
-        if (uriConfig.getUri().stream().anyMatch(uri -> request.getRequestURI().startsWith(uri))) {
+        if (uriConfig.getUri()
+                     .stream()
+                     .anyMatch(uri -> request.getRequestURI()
+                                             .startsWith(uri))) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -80,6 +85,13 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             response.setStatus(e.getStatus());
             response.getWriter()
                     .write(objectMapper.writeValueAsString(AppError.fromAppException(e, request)));
+        } catch (Exception e) {
+            response.setCharacterEncoding("UTF-8");
+            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+            response.setStatus(500);
+            response.getWriter()
+                    .write(objectMapper.writeValueAsString(AppError.fromAppException(new AppException(ErrorCode.INTERNAL_ERROR, "服务器内部错误"), request)));
+            log.error("服务器内部错误", e);
         }
     }
 

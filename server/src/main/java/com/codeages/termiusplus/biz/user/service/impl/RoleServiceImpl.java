@@ -1,24 +1,22 @@
 package com.codeages.termiusplus.biz.user.service.impl;
 
 import cn.hutool.core.util.StrUtil;
-
 import com.codeages.termiusplus.biz.ErrorCode;
-import com.codeages.termiusplus.biz.user.entity.QRole;
-import com.codeages.termiusplus.biz.user.repository.RoleRepository;
-import com.codeages.termiusplus.biz.user.service.RoleService;
+import com.codeages.termiusplus.biz.user.dto.RoleCreateParams;
 import com.codeages.termiusplus.biz.user.dto.RoleDto;
 import com.codeages.termiusplus.biz.user.dto.RoleSearchParams;
-import com.codeages.termiusplus.biz.user.dto.RoleCreateParams;
 import com.codeages.termiusplus.biz.user.dto.RoleUpdateParams;
+import com.codeages.termiusplus.biz.user.entity.QRole;
 import com.codeages.termiusplus.biz.user.mapper.RoleMapper;
-
+import com.codeages.termiusplus.biz.user.repository.RoleRepository;
+import com.codeages.termiusplus.biz.user.service.RoleService;
 import com.codeages.termiusplus.exception.AppException;
 import com.querydsl.core.BooleanBuilder;
-import org.springframework.stereotype.Service;
+import jakarta.validation.Validator;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
 
-import jakarta.validation.Validator;
 import java.util.List;
 
 @Service

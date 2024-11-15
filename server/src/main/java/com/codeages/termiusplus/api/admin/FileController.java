@@ -9,6 +9,8 @@ import com.codeages.termiusplus.biz.storage.vo.FileDto;
 import com.codeages.termiusplus.biz.user.dto.UserDto;
 import com.codeages.termiusplus.biz.user.service.UserService;
 import com.codeages.termiusplus.biz.util.QueryUtils;
+import com.cxytiandi.encrypt.springboot.annotation.DecryptIgnore;
+import com.cxytiandi.encrypt.springboot.annotation.EncryptIgnore;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -33,12 +35,15 @@ public class FileController {
     }
 
     @PostMapping("/upload")
+    @DecryptIgnore
     public FileDto upload(@RequestParam("file") MultipartFile file,
                           @RequestParam(value = "targetType", defaultValue = "BASE") FileTargetTypeEnum targetType) {
         return storageService.store(file, targetType);
     }
 
     @GetMapping("/get/{uuid}")
+    @EncryptIgnore
+    @DecryptIgnore
     public void get(@PathVariable("uuid") String uuid, HttpServletResponse response) {
         FileUtil.writeFileToResponse(storageService.getFileByUUID(uuid), response);
     }

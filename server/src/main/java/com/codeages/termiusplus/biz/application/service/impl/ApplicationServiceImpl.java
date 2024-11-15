@@ -17,10 +17,10 @@ import com.codeages.termiusplus.biz.application.service.ApplicationService;
 import com.codeages.termiusplus.biz.server.dto.TreeSortParams;
 import com.codeages.termiusplus.biz.util.TreeUtils;
 import com.codeages.termiusplus.exception.AppException;
-import org.springframework.stereotype.Service;
-
 import jakarta.transaction.Transactional;
 import jakarta.validation.Validator;
+import org.springframework.stereotype.Service;
+
 import java.util.*;
 import java.util.stream.Collectors;
 

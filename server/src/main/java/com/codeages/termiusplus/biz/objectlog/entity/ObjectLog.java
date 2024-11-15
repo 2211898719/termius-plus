@@ -1,13 +1,9 @@
 package com.codeages.termiusplus.biz.objectlog.entity;
 
-import com.vladmihalcea.hibernate.type.json.JsonStringType;
+import jakarta.persistence.*;
 import lombok.Data;
-import org.hibernate.annotations.Type;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
-import jakarta.persistence.*;
-import java.util.Map;
 
 @Entity
 @EntityListeners(AuditingEntityListener.class)

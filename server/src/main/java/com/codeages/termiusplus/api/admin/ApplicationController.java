@@ -9,7 +9,7 @@ import com.codeages.termiusplus.biz.application.dto.*;
 import com.codeages.termiusplus.biz.application.service.ApplicationMonitorService;
 import com.codeages.termiusplus.biz.application.service.ApplicationServerService;
 import com.codeages.termiusplus.biz.application.service.ApplicationService;
-import com.codeages.termiusplus.biz.job.dto.ExecuteCommandSSHClient;
+import com.codeages.termiusplus.biz.util.ExecuteCommandSSHClient;
 import com.codeages.termiusplus.biz.server.dto.ProxyDto;
 import com.codeages.termiusplus.biz.server.dto.ProxySearchParams;
 import com.codeages.termiusplus.biz.server.dto.TreeSortParams;
@@ -147,8 +147,7 @@ public class ApplicationController {
         ApplicationServerDto webServers = servers.stream().filter(e -> StrUtil.isNotBlank(e.getNginxLogPath())).findAny()
                                                        .orElseThrow(() -> new AppException(ErrorCode.INTERNAL_ERROR,"没有找到web服务器"));
 
-        SSHClient sshClient = serverService.createSSHClient(webServers.getServerId());
-        ExecuteCommandSSHClient executeCommandSSHClient = new ExecuteCommandSSHClient(sshClient);
+        ExecuteCommandSSHClient executeCommandSSHClient = new ExecuteCommandSSHClient(webServers.getServerId());
         String localIPAddress = executeCommandSSHClient.getLocalIPAddress();
         DatabaseReader bean = SpringUtil.getBean(DatabaseReader.class);
         InetAddress inetAddress = InetAddress.getByName(localIPAddress);

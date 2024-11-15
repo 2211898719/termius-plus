@@ -48,7 +48,6 @@ let columns = [
   },
 ];
 
-let maxDistNum = ref(3);
 let serverRunInfo = ref([])
 const getServerRunInfo = async () => {
   serverRunInfo.value = await serverApi.getAllServerRunInfo()
@@ -59,18 +58,10 @@ const getServerRunInfo = async () => {
     item.diskUsages = JSON.parse(item.diskUsages)
     item.networkUsages = JSON.parse(item.networkUsages)
     item.cpuUsage = JSON.parse(item.cpuUsage)
-    maxDistNum = Math.max(maxDistNum, item.diskUsages.length)
     item.diskUsages.forEach(d => {
       d.useNum = parseFloat(d.use.replace('%', ''))
     })
 
-    if (item.detail) {
-      item.detail.forEach(d => {
-        d.diskUsages = JSON.parse(d.diskUsages)
-        d.networkUsages = JSON.parse(d.networkUsages)
-        d.cpuUsage = JSON.parse(d.cpuUsage)
-      })
-    }
   })
 
   //硬盘空间有一个大于80的置顶,有多个大于80的按使用率排序
@@ -86,27 +77,19 @@ const getServerRunInfo = async () => {
     }
     let aMax = Math.max(...a.diskUsages.map(d => d.useNum))
     let bMax = Math.max(...b.diskUsages.map(d => d.useNum))
-    if (aMax > 80 && bMax > 80) {
-      return bMax - aMax
-    } else if (aMax > 80) {
-      return -1
-    } else if (bMax > 80) {
-      return 1
-    } else {
-      return 0
-    }
+    return  bMax - aMax
   })
 }
 
 getServerRunInfo();
 
-let interval = setInterval(() => {
-  getServerRunInfo()
-}, 1000 * 120)
-
-onBeforeUnmount(() => {
-  clearInterval(interval)
-})
+// let interval = setInterval(() => {
+//   getServerRunInfo()
+// }, 1000 * 120)
+//
+// onBeforeUnmount(() => {
+//   clearInterval(interval)
+// })
 
 const emit = defineEmits(['openServer','findServer'])
 
@@ -115,6 +98,14 @@ const openDetail = async (item) => {
   if (!item.infoStatus) {
     emit('findServer', item.server)
     return
+  }
+  item.detail = await serverApi.getServerDetail(item.serverId)
+  if (item.detail) {
+    item.detail.forEach(d => {
+      d.diskUsages = JSON.parse(d.diskUsages)
+      d.networkUsages = JSON.parse(d.networkUsages)
+      d.cpuUsage = JSON.parse(d.cpuUsage)
+    })
   }
   currentServer.value = item
   detailVisible.value = true
@@ -139,7 +130,6 @@ const updateChart = (item) => {
       formatter: function (params) {
         params = params[0];
         var date = new Date(params.name);
-        console.log(params)
         return (
             date.getDate() +
             '/' +

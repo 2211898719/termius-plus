@@ -38,10 +38,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -71,9 +68,6 @@ public class SshHandler {
     private final CommandLogService commandLogService;
 
     private final UserService userService;
-
-    private final ReentrantLock lock = new ReentrantLock();
-
 
     public SshHandler() {
         this.serverService = SpringUtil.getBean(ServerService.class);
@@ -245,13 +239,11 @@ public class SshHandler {
         return IoUtil.read(gzipIn, charset);
     }
 
-    private void sendBinary(Session session, String msg) {
+    private synchronized void sendBinary(Session session, String msg) {
         if (!session.isOpen()) {
             // 会话关闭不能发送消息
             return;
         }
-
-        lock.lock();
 
         try {
             session.getBasicRemote()
@@ -259,8 +251,6 @@ public class SshHandler {
         } catch (Exception e) {
             log.error("发送消息出错", e);
         }
-
-        lock.unlock();
     }
 
     private boolean isMasterSession(String masterSessionId) {

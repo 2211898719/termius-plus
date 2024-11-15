@@ -16,6 +16,7 @@ public class ProxyCreateParams {
     private String ip;
     private Long port;
     private ProxyTypeEnum type;
+    private Boolean open;
     private String username;
     private String password;
 }

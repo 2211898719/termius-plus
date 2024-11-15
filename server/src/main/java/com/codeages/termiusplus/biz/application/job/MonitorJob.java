@@ -1,7 +1,11 @@
 package com.codeages.termiusplus.biz.application.job;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DateUnit;
 import cn.hutool.core.date.DateUtil;
-import cn.hutool.core.thread.ThreadUtil;
+import cn.hutool.core.lang.Pair;
+import cn.hutool.core.lang.tree.Tree;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.codeages.termiusplus.biz.application.dto.ApplicationDto;
 import com.codeages.termiusplus.biz.application.dto.ApplicationMonitorDto;
@@ -9,15 +13,15 @@ import com.codeages.termiusplus.biz.application.dto.ApplicationMonitorExecDto;
 import com.codeages.termiusplus.biz.application.dto.ApplicationMonitorSearchParams;
 import com.codeages.termiusplus.biz.application.service.ApplicationMonitorService;
 import com.codeages.termiusplus.biz.application.service.ApplicationService;
+import com.codeages.termiusplus.biz.message.MessageService;
 import com.codeages.termiusplus.biz.server.dto.ProxyDto;
 import com.codeages.termiusplus.biz.server.service.ProxyService;
 import com.codeages.termiusplus.biz.util.QueryUtils;
-import com.github.jaemon.dinger.DingerSender;
-import com.github.jaemon.dinger.core.entity.DingerRequest;
 import com.github.jaemon.dinger.core.entity.enums.MessageSubType;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -28,10 +32,11 @@ import javax.net.ssl.SSLHandshakeException;
 import java.io.IOException;
 import java.net.URL;
 import java.security.cert.X509Certificate;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Component
 @Slf4j
@@ -45,9 +50,16 @@ public class MonitorJob {
     private ProxyService proxyService;
 
     @Autowired
-    private DingerSender dingerSender;
+    private MessageService messageService;
 
     private static ThreadPoolTaskExecutor executor;
+
+    @Value("${monitor.count:3}")
+    private int monitorCount;
+
+    @Value("${monitor.debounce:5}")
+    private int monitorDebounce;
+
 
     static {
         executor = new ThreadPoolTaskExecutor();
@@ -60,12 +72,14 @@ public class MonitorJob {
 
 
     // 每1分钟执行一次
+    @SchedulerLock(name = "MonitorJob_applicationMonitor")
     @Scheduled(cron = "0 0/1 * * * ?")
     public void applicationMonitor() {
         List<ApplicationMonitorDto> applicationMonitorList = applicationMonitorService.search(
-                new ApplicationMonitorSearchParams(),
-                Pageable.unpaged()
-        ).getContent();
+                                                                                              new ApplicationMonitorSearchParams(),
+                                                                                              Pageable.unpaged()
+                                                                                             )
+                                                                                      .getContent();
 
         QueryUtils.batchQueryOneToOne(
                 applicationMonitorList,
@@ -78,7 +92,7 @@ public class MonitorJob {
                     monitorDto.setMasterMobile(applicationDto.getMasterMobile());
                     monitorDto.setProxyId(applicationDto.getProxyId());
                 }
-        );
+                                     );
 
         QueryUtils.batchQueryOneToOne(
                 applicationMonitorList,
@@ -86,38 +100,93 @@ public class MonitorJob {
                 proxyService::findByIds,
                 ProxyDto::getId,
                 ApplicationMonitorDto::setProxy
-        );
+                                     );
 
-
-        for (ApplicationMonitorDto applicationMonitor : applicationMonitorList) {
-            CompletableFuture.runAsync(() -> {
+        Map<ApplicationMonitorDto, ApplicationMonitorExecDto> execMap = new ConcurrentHashMap<>();
+        CompletableFuture<Void>[] futures = new CompletableFuture[applicationMonitorList.size()];
+        for (int i = 0; i < applicationMonitorList.size(); i++) {
+            ApplicationMonitorDto applicationMonitor = applicationMonitorList.get(i);
+            futures[i] = CompletableFuture.runAsync(() -> {
                 ApplicationMonitorExecDto applicationMonitorTest = applicationMonitorService.exec(applicationMonitor);
                 applicationMonitorService.updateStatusAndSendMessage(applicationMonitor, applicationMonitorTest);
+                if (!applicationMonitorTest.isSuccess() || applicationMonitor.getFailureCount() != 0) {
+                    execMap.put(applicationMonitor, applicationMonitorTest);
+                }
             }, executor);
         }
+
+        try {
+            CompletableFuture.allOf(futures)
+                             .get(30, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            log.error("监控任务执行超时", e);
+        }
+
+        if (CollUtil.isEmpty(execMap)) {
+            return;
+        }
+
+        List<Tree<Long>> all = applicationService.findAll();
+
+        String title = "应用监控提醒";
+        String content = "\n # 以下应用有异常，请注意⚠️：\n";
+
+        String body = execMap.entrySet()
+                             .stream()
+                             .filter(execDtoEntry -> {
+                                 long count = execDtoEntry.getKey()
+                                                          .getFailureCount();
+                                 return (count <= monitorCount + monitorDebounce && count > monitorDebounce) || execDtoEntry.getValue()
+                                                                                                                            .isSuccess();
+                             })
+                             .map(execDtoEntry -> {
+                                 ApplicationMonitorDto applicationMonitorDto = execDtoEntry.getKey();
+                                 ApplicationMonitorExecDto testDto = execDtoEntry.getValue();
+                                 long count = applicationMonitorDto.getFailureCount();
+                                 String applicationGroupPath = findApplicationGroupPath(
+                                         all,
+                                         applicationMonitorDto.getApplicationId()
+                                                                                       );
+                                 //恢复正常通知
+                                 if (execDtoEntry.getValue()
+                                                 .isSuccess()) {
+                                     return "- [" + applicationGroupPath + "](" + applicationMonitorDto.getApplicationContent() + ")：" + count + "分钟内,恢复正常";
+                                 }
+
+
+                                 return "- [" + applicationGroupPath + "](" + applicationMonitorDto.getApplicationContent() + ")：" + count + "分钟无响应，" + (testDto.getRemark()
+                                                                                                                                                               .equals("failed") ? "" : "[" + testDto.getRemark() + "]");
+                             })
+                             .collect(Collectors.joining("\n"));
+
+        if (StrUtil.isEmpty(body)) {
+            return;
+        }
+
+        messageService.send(
+                MessageSubType.MARKDOWN,
+                title,
+                content + body
+                         );
+
     }
 
     // 每天 10点30分执行一次
+    @SchedulerLock(name = "MonitorJob_checkCertExpiryDate")
     @Scheduled(cron = "0 30 10 * * ?")
     public void checkCertExpiryDate() {
         List<ApplicationDto> application = applicationService.findAllApplication();
+
+        Date date = new Date();
+        List<Pair<ApplicationDto, Long>> pairList = new ArrayList<>();
         for (ApplicationDto app : application) {
             String url = app.getContent();
-
             Date expiryDate = null;
 
             try {
                 expiryDate = getCertExpiryDate(url);
             } catch (SSLHandshakeException e) {
-                dingerSender.send(
-                        MessageSubType.TEXT,
-                        DingerRequest.request(
-                                "应用证书验证失败，可能为dns解析错误或证书已经过期，请尽快处理，应用名称：" + app.getName() + "，应用内容：" + app.getContent(),
-                                StrUtil.isEmpty(app.getMasterMobile()) ? null : List.of(app.getMasterMobile())
-                        )
-                );
-                ThreadUtil.sleep(2, TimeUnit.SECONDS);
-                log.error("获取证书到期时间失败:{}", url, e);
+                pairList.add(Pair.of(app, -1L));
                 continue;
             } catch (Exception e) {
                 log.error("获取证书到期时间失败:{}", url, e);
@@ -127,22 +196,61 @@ public class MonitorJob {
                 continue;
             }
 
-            long lastDay = DateUtil.betweenDay(expiryDate, new Date(), false);
+            long lastDay = DateUtil.between(date, expiryDate, DateUnit.DAY, false);
             log.info("应用{}:,{}证书到期时间还有{}天", app.getName(), url, lastDay);
 
-            if (lastDay < 30) {
-                dingerSender.send(
-                        MessageSubType.TEXT,
-                        DingerRequest.request(
-                                "应用证书即将过期，还有" + lastDay + "天，请尽快处理，应用名称：" + app.getName() + "，应用内容：" + app.getContent(),
-                                StrUtil.isEmpty(app.getMasterMobile()) ? null : List.of(app.getMasterMobile())
-                        )
-                );
-                ThreadUtil.sleep(2, TimeUnit.SECONDS);
+            if (lastDay < 90) {
+                pairList.add(Pair.of(app, lastDay));
             }
 
-
         }
+
+        if (CollUtil.isEmpty(pairList)) {
+            return;
+        }
+
+        List<Tree<Long>> all = applicationService.findAll();
+
+        pairList = pairList.stream()
+                           .sorted(Comparator.comparing(Pair::getValue))
+                           .collect(Collectors.toList());
+        String title = "证书到期提醒";
+        String content = "\n # 以下证书即将过期，请尽快处理：\n";
+        String body = pairList.stream()
+                              .map(pair -> {
+                                  ApplicationDto app = pair.getKey();
+                                  String applicationGroupPath = findApplicationGroupPath(all, app.getId());
+                                  long lastDay = pair.getValue();
+                                  if (lastDay <= 0) {
+                                      return " - [" + applicationGroupPath + "](" + app.getContent() + ")：" + "已过期" + (lastDay == 0L ? "" : -lastDay) + "天";
+                                  }
+
+                                  return " - [" + applicationGroupPath + "](" + app.getContent() + ")" + "：" + lastDay + "天";
+                              })
+                              .collect(Collectors.joining("\n"));
+
+        messageService.send(
+                MessageSubType.MARKDOWN,
+                title,
+                content + body
+                         );
+    }
+
+    private String findApplicationGroupPath(List<Tree<Long>> all, Long applicationId) {
+        for (Tree<Long> tree : all) {
+            if (tree.getId()
+                    .equals(applicationId)) {
+                return CollUtil.join(tree.getParentsName(true)
+                                         .reversed(), "-");
+            } else if (CollUtil.isNotEmpty(tree.getChildren())) {
+                String applicationGroupPath = findApplicationGroupPath(tree.getChildren(), applicationId);
+                if (CharSequenceUtil.isNotEmpty(applicationGroupPath)) {
+                    return applicationGroupPath;
+                }
+            }
+        }
+
+        return "";
     }
 
     private static Date getCertExpiryDate(String urlStr) throws IOException {
@@ -155,9 +263,19 @@ public class MonitorJob {
         }
 
         URL url = new URL(urlStr);
-        HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
-        //忽略证书验证
-        connection.connect();
+        HttpsURLConnection connection;
+        try {
+            connection = (HttpsURLConnection) url.openConnection();
+            //忽略证书验证
+            connection.connect();
+        } catch (SSLHandshakeException e) {
+            Throwable cause = e.getCause()
+                               .getCause()
+                               .getCause();
+            return DateUtil.parse(cause.getMessage()
+                                       .split(": ")[1]);
+        }
+
 
         java.security.cert.Certificate[] certificates = connection.getServerCertificates();
 

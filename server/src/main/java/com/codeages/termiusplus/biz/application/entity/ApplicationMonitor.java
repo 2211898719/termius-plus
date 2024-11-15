@@ -1,6 +1,7 @@
 package com.codeages.termiusplus.biz.application.entity;
 
 import com.codeages.termiusplus.biz.application.enums.ApplicationMonitorTypeEnum;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -8,7 +9,6 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import jakarta.persistence.*;
 import java.util.Date;
 
 /**

@@ -51,13 +51,14 @@ public class ServerController {
 
     @GetMapping("/list")
     public List<Tree<Long>> findAll() {
-        List<Long> roleIds = securityContext.getUser().getRoleIds();
+        List<Long> roleIds = securityContext.getUser()
+                                            .getRoleIds();
         List<RoleDto> service = roleService.findByIds(roleIds);
         List<Long> serverIds = new ArrayList<>();
 
         service.stream()
-                .map(roleDto -> JSONUtil.parseArray(roleDto.getServerPermission()))
-                .forEach(jsonArray -> jsonArray.forEach(o -> serverIds.add(Long.valueOf(o.toString()))));
+               .map(roleDto -> JSONUtil.parseArray(roleDto.getServerPermission()))
+               .forEach(jsonArray -> jsonArray.forEach(o -> serverIds.add(Long.valueOf(o.toString()))));
 
         List<Tree<Long>> treeList = serverService.findAll(serverIds);
 
@@ -69,23 +70,23 @@ public class ServerController {
                 userService::findAllByIdIn,
                 UserDto::getId,
                 SshHandler.HandlerItem::setUserDto
-        );
+                                     );
 
         Map<Long, List<SshHandler.HandlerItem>> serverIdMap = handlerItemArrayList.stream()
-                .collect(Collectors.groupingBy(
-                        SshHandler.HandlerItem::getServerId));
+                                                                                  .collect(Collectors.groupingBy(
+                                                                                          SshHandler.HandlerItem::getServerId));
 
         treeList.forEach(tree -> tree.walk(node -> {
             List<SshHandler.HandlerItem> handlerItems = serverIdMap.get(node.getId());
             if (handlerItems != null) {
                 List<Map<String, Object>> list = handlerItems.stream()
-                        .map(h -> Map.of(
-                                "masterSessionId",
-                                h.getMasterSessionId(),
-                                "user",
-                                h.getUserDto()
-                        ))
-                        .collect(Collectors.toList());
+                                                             .map(h -> Map.of(
+                                                                     "masterSessionId",
+                                                                     h.getMasterSessionId(),
+                                                                     "user",
+                                                                     h.getUserDto()
+                                                                             ))
+                                                             .collect(Collectors.toList());
                 node.putExtra("onlyConnect", list);
             }
         }));
@@ -116,7 +117,7 @@ public class ServerController {
             int currentTag = node.hasChild() ? buildOnlyTag(node.getChildren()) : ((List) node.getOrDefault(
                     "onlyConnect",
                     Collections.emptyList()
-            )).size();
+                                                                                                           )).size();
             node.putExtra("onlyTag", currentTag);
 
             onlyTag = onlyTag + currentTag;
@@ -181,27 +182,45 @@ public class ServerController {
     @GetMapping("/getAllServerRunInfo")
     public List<ServerRunLogDTO> getAllServerRunInfo() {
         List<ServerDto> allServer = serverService.findAllTestInfoServer();
-        List<ServerRunLogDTO> serverRunLogDTOList = serverService.getServerLastRunInfoAfterLimit(DateUtil.offsetDay(DateUtil.date(), -3));
+        List<ServerRunLogDTO> serverRunLogDTOList = serverService.getServerLastRunInfoAfterLimit(DateUtil.offsetDay(
+                DateUtil.date(),
+                -3
+                                                                                                                   ));
 
-        Map<Long, List<ServerRunLogDTO>> group = serverService.getServerLastRunInfoAfter(DateUtil.offsetDay(DateUtil.date(), -365)).stream().collect(Collectors.groupingBy(ServerRunLogDTO::getServerId));
 
-        Map<Long, ServerRunLogDTO> infoMap = serverRunLogDTOList.stream().collect(Collectors.toMap(ServerRunLogDTO::getServerId, Function.identity()));
+        Map<Long, ServerRunLogDTO> infoMap = serverRunLogDTOList.stream()
+                                                                .collect(Collectors.toMap(
+                                                                        ServerRunLogDTO::getServerId,
+                                                                        Function.identity()
+                                                                                         ));
 
-        return allServer.stream().map(server -> {
-            ServerRunLogDTO serverRunLogDTO = infoMap.get(server.getId());
-            if (serverRunLogDTO == null) {
-                return new ServerRunLogDTO(server, false, server.getName(), server.getIp(), server.getPort());
-            }
+        return allServer.stream()
+                        .map(server -> {
+                            ServerRunLogDTO serverRunLogDTO = infoMap.get(server.getId());
+                            if (serverRunLogDTO == null) {
+                                return new ServerRunLogDTO(
+                                        server,
+                                        false,
+                                        server.getName(),
+                                        server.getIp(),
+                                        server.getPort()
+                                );
+                            }
 
-            serverRunLogDTO.setServer(server);
-            serverRunLogDTO.setInfoStatus(true);
-            serverRunLogDTO.setServerName(server.getName());
-            serverRunLogDTO.setServerIp(server.getIp());
-            serverRunLogDTO.setServerPort(server.getPort());
-            serverRunLogDTO.setDetail(group.get(server.getId()));
+                            serverRunLogDTO.setServer(server);
+                            serverRunLogDTO.setInfoStatus(true);
+                            serverRunLogDTO.setServerName(server.getName());
+                            serverRunLogDTO.setServerIp(server.getIp());
+                            serverRunLogDTO.setServerPort(server.getPort());
 
-            return serverRunLogDTO;
-        }).collect(Collectors.toList());
+                            return serverRunLogDTO;
+                        })
+                        .collect(Collectors.toList());
+    }
+
+    @GetMapping("/getServerRunInfoDetail/{serverId}")
+    public List<ServerRunLogDTO> getServerRunInfoDetail(@PathVariable Long serverId) {
+        return serverService.getServerLastRunInfoAfter(serverId, DateUtil.offsetDay(DateUtil.date(), -365));
     }
 
     @GetMapping("/syncAllServerRunInfo")

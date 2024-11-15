@@ -1,7 +1,6 @@
 <script setup>
 import "@xterm/xterm/css/xterm.css";
 import Terminal from '../utils/zmodem.js';
-// import {Terminal} from "xterm";
 import {FitAddon} from "@xterm/addon-fit";
 import {computed, h, nextTick, onBeforeUnmount, onMounted, ref, watch} from "vue";
 import _ from "lodash";
@@ -13,10 +12,8 @@ import {serverApi} from "@/api/server";
 import {Button, message, notification} from "ant-design-vue";
 import pako from 'pako';
 import {WebglAddon} from '@xterm/addon-webgl';
-import {useShepherd} from "vue-shepherd";
 
 let authStore = useAuthStore();
-// let networkInfo = useNetwork()
 
 let props = defineProps({
   server: {
@@ -183,6 +180,9 @@ const initSocket = () => {
  * 获取终端中未执行的命令 例如：root@localhost:~# 则去掉
  */
 const getUnExecutedCommand = (command, trim = true) => {
+  if (!command) {
+    return ""
+  }
 
   /**
    * 如果进入了mysql模式，则获取mysql的历史命令
@@ -440,8 +440,8 @@ const initTerm = () => {
 
 }
 
-const handleComplete = _.debounce( () => {
-  nextTick(()=>{
+const handleComplete = _.debounce(() => {
+  nextTick(() => {
     completeCommand.value = getCompleteCommand();
     writeCompletionToCursorPosition(completeCommand.value)
   })

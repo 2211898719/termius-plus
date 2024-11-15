@@ -47,11 +47,10 @@ mvn compile jib:build
 ### 镜像的版本号
 是pom.xml文件中version的值
 
-
 # windows远程桌面实现
 #### windows 远程桌面以来与guacamole server实现
 #### guacamole server可以将微软的rdp协议翻译为socket协议，可以简单的实现远程桌面功能
-## 本地搭建guacamole server
+## <span style="color:red">本地搭建guacamole server</span>
 #### docker 镜像为guacamole/guacd:latest
 ```
 docker run -d --name guacd -p 4822:4822 guacamole/guacd

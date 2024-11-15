@@ -5,6 +5,7 @@ import com.codeages.termiusplus.biz.server.context.ServerContext;
 import com.codeages.termiusplus.biz.server.dto.SFTPBean;
 import com.codeages.termiusplus.ws.ssh.SshHandler;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -17,8 +18,8 @@ import java.util.Map;
 @Slf4j
 public class ConnectTimeoutJob {
 
-    // 每半小时清理一次超时的连接
     @Scheduled(cron = "0 0 0/23 *  * ?")
+    @SchedulerLock(name = "ConnectTimeoutJob_clearTimeOutSFTP")
     public void clearTimeOutSFTP() {
         for (String k : ServerContext.SFTP_POOL.keySet()) {
             SFTPBean v = ServerContext.SFTP_POOL.get(k);
@@ -42,6 +43,7 @@ public class ConnectTimeoutJob {
 
 
     @Scheduled(cron = "0 */7 * * * ?")
+    @SchedulerLock(name = "ConnectTimeoutJob_clearTimeOutSsh")
     public void clearTimeOutSsh() {
         log.info("开始清理超时的SSH连接");
         clearConnect(false);

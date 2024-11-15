@@ -216,13 +216,13 @@ const getApplicationList = async () => {
 
 getApplicationList()
 
-let interval = setInterval(() => {
-  getApplicationList()
-}, 1000 * 10)
-
-onBeforeUnmount(() => {
-  clearInterval(interval)
-})
+// let interval = setInterval(() => {
+//   getApplicationList()
+// }, 1000 * 10)
+//
+// onBeforeUnmount(() => {
+//   clearInterval(interval)
+// })
 
 const handleCopyApplication = async (row) => {
   handleEditApplication(row, false);

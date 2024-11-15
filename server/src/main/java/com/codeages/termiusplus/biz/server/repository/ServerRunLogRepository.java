@@ -10,6 +10,8 @@ import java.util.List;
 public interface ServerRunLogRepository extends JpaRepository<ServerRunLog, Long>, QuerydslPredicateExecutor<ServerRunLog> {
 
     List<ServerRunLog> findByDateAfter(Date date);
+
+    List<ServerRunLog> findByServerIdAndDateAfter(Long serverId, Date date);
 }
 
 

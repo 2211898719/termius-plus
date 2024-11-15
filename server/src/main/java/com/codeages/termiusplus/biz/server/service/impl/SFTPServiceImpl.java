@@ -4,7 +4,6 @@ import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.lang.UUID;
 import cn.hutool.core.lang.func.VoidFunc1;
-import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONUtil;
 import com.codeages.termiusplus.biz.ErrorCode;
 import com.codeages.termiusplus.biz.server.annotation.SftpActive;
@@ -19,6 +18,8 @@ import com.codeages.termiusplus.ws.ssh.AuthKeyBoardHandler;
 import com.codeages.termiusplus.ws.ssh.EventType;
 import com.codeages.termiusplus.ws.ssh.MessageDto;
 import com.codeages.termiusplus.ws.ssh.SftpServerUploadServerProgressDto;
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.Cleanup;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -27,9 +28,6 @@ import net.schmizz.sshj.connection.ConnectionException;
 import net.schmizz.sshj.sftp.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
-import jakarta.servlet.ServletOutputStream;
-import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;

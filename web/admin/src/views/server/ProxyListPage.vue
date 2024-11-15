@@ -93,12 +93,17 @@ const handleProxyCreate = async () => {
     return false;
   }
 
-  let res = await proxyApi[creationProxyType.value](creationProxyState);
-  emit('createSuccess', res)
-  await getProxyData();
+  try {
+    let res = await proxyApi[creationProxyType.value](creationProxyState);
+    emit('createSuccess', res)
+    await getProxyData();
 
-  proxyCreationVisible.value = false;
-  message.success("操作成功");
+    proxyCreationVisible.value = false;
+    message.success("操作成功");
+  } catch (error) {
+    message.error(error.message)
+  }
+
 }
 
 
@@ -115,10 +120,10 @@ const proxyCreation = () => {
 
 const handleDel = async (row) => {
   try {
-    await proxyApi.delete(row)
+    await proxyApi.delete({id: row.id})
     await getProxyData()
     message.success("删除成功")
-  }catch (error) {
+  } catch (error) {
     message.error(error.message)
   }
 }

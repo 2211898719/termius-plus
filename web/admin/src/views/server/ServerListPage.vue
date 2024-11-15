@@ -221,24 +221,31 @@ const handleBreadcrumbData = (item) => {
   }
 }
 
+let loading = ref(false)
 const getServerList = async () => {
-  let list = await serverApi.list()
-  data.value.splice(0)
-  data.value.push(...list)
+  loading.value = true
+  try {
+    let list = await serverApi.list()
+    data.value.splice(0)
+    data.value.push(...list)
 
-  handleBreadcrumbData(groupBreadcrumb.value[groupBreadcrumb.value.length - 1])
-  handleQuery()
+    handleBreadcrumbData(groupBreadcrumb.value[groupBreadcrumb.value.length - 1])
+    handleQuery()
+  } finally {
+    loading.value = false
+  }
+
 }
 
 getServerList()
 
-let interval = setInterval(() => {
-  getServerList()
-}, 1000 * 10)
-
-onUnmounted(()=>{
-  clearInterval(interval)
-})
+// let interval = setInterval(() => {
+//   getServerList()
+// }, 1000 * 120)
+//
+// onUnmounted(() => {
+//   clearInterval(interval)
+// })
 
 const handleCopyServer = async (row) => {
   creationType.value = 'create'
@@ -528,7 +535,7 @@ defineExpose({
   <div class="server-root">
     <div class="server-pane">
       <a-space direction="vertical" size="middle" style="width: 100%;">
-        <a-card :bodyStyle="{padding:'12px 12px'}" style="border:none">
+        <a-card :bodyStyle="{padding:'12px 12px'}" style="border:none" >
           <div class="search">
             <a-input v-model:value="searchText" class="search-input" placeholder="搜索服务器"/>
           </div>
@@ -546,8 +553,9 @@ defineExpose({
                 <a-button class="ml10 my-button" @click="handleAddGroup">新增分组</a-button>
               </div>
             </div>
-            <div class="mt30 server">
+            <div class="mt30 server"     >
               <a-list ref="list" :grid="{ gutter: 16, column: termiusStyleColumn }" :data-source="searchData"
+
                       row-key="id">
                 <template #renderItem="{ item }">
                   <a-dropdown :trigger="['contextmenu']">

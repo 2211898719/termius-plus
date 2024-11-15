@@ -3,16 +3,15 @@ package com.codeages.termiusplus.biz.job.service.impl;
 import cn.hutool.extra.spring.SpringUtil;
 import com.codeages.termiusplus.biz.job.RunMvelJob;
 import com.codeages.termiusplus.biz.job.dto.MvelCronCreateDto;
-import com.codeages.termiusplus.biz.job.dto.ExecuteCommandSSHClient;
 import com.codeages.termiusplus.biz.job.service.QuartzService;
 import com.codeages.termiusplus.biz.server.dto.ServerDto;
 import com.codeages.termiusplus.biz.server.service.ServerService;
+import com.codeages.termiusplus.biz.util.ExecuteCommandSSHClient;
 import com.github.jaemon.dinger.DingerSender;
 import com.github.jaemon.dinger.core.entity.DingerRequest;
 import com.github.jaemon.dinger.core.entity.enums.MessageSubType;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import net.schmizz.sshj.SSHClient;
 import org.mvel2.MVEL;
 import org.mvel2.integration.impl.DefaultLocalVariableResolverFactory;
 import org.quartz.*;
@@ -61,7 +60,6 @@ public class QuartzServiceImpl implements QuartzService {
 
             try {
                 Long serverId = serverIds.get(i);
-                SSHClient sshClient = serverService.createSSHClient(serverId);
                 ServerDto serverDto = serverService.findById(serverId);
                 log.info("服务器id：{}，mvel脚本: {}", serverId, mvelScript);
                 DefaultLocalVariableResolverFactory variableResolverFactory = new DefaultLocalVariableResolverFactory();
@@ -72,7 +70,7 @@ public class QuartzServiceImpl implements QuartzService {
                                 "dingerSender", SpringUtil.getBean(DingerSender.class),
                                 "MessageSubType", MessageSubType.class,
                                 "DingerRequest", DingerRequest.class,
-                                "session", new ExecuteCommandSSHClient(sshClient),
+                                "session", new ExecuteCommandSSHClient(serverId),
                                 "server", serverDto,
                                 "param", param
                         ),

@@ -23,8 +23,6 @@ public class AuthEntryPoint implements AuthenticationEntryPoint {
         this.objectMapper = objectMapper;
     }
 
-    private static final Logger log = LoggerFactory.getLogger(AuthEntryPoint.class);
-
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
         var error = AppError.fromAppException(new AppException(ErrorCode.UNAUTHORIZED), request);

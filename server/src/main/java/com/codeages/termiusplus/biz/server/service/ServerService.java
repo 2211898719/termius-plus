@@ -52,6 +52,8 @@ public interface ServerService {
     List<ServerRunLogDTO> getServerLastRunInfoAfterLimit(Date date);
 
     List<ServerRunLogDTO> getServerLastRunInfoAfter(Date date);
+
+    List<ServerRunLogDTO> getServerLastRunInfoAfter(Long serverId, Date date);
 }
 
 

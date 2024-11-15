@@ -19,17 +19,14 @@ import com.codeages.termiusplus.biz.application.repository.ApplicationMonitorLog
 import com.codeages.termiusplus.biz.application.repository.ApplicationMonitorRepository;
 import com.codeages.termiusplus.biz.application.service.ApplicationMonitorService;
 import com.codeages.termiusplus.exception.AppException;
-import com.github.jaemon.dinger.DingerSender;
-import com.github.jaemon.dinger.core.entity.DingerRequest;
-import com.github.jaemon.dinger.core.entity.enums.MessageSubType;
 import com.querydsl.core.BooleanBuilder;
+import jakarta.validation.Validator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import jakarta.validation.Validator;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.time.Duration;
@@ -49,27 +46,19 @@ public class ApplicationMonitorServiceImpl implements ApplicationMonitorService 
 
     private final Validator validator;
 
-    private final DingerSender dingerSender;
-
     private final ApplicationMonitorLogRepository applicationMonitorLogRepository;
-
-    @Value("${monitor.count:3}")
-    private int monitorCount;
 
     @Value("${monitor.timeout:60s}")
     private Duration timeout;
 
-    @Value("${monitor.debounce:5}")
-    private int monitorDebounce;
+
 
     public ApplicationMonitorServiceImpl(ApplicationMonitorRepository applicationMonitorRepository,
                                          ApplicationMonitorMapper applicationMonitorMapper, Validator validator,
-                                         DingerSender dingerSender,
                                          ApplicationMonitorLogRepository applicationMonitorLogRepository) {
         this.applicationMonitorRepository = applicationMonitorRepository;
         this.applicationMonitorMapper = applicationMonitorMapper;
         this.validator = validator;
-        this.dingerSender = dingerSender;
         this.applicationMonitorLogRepository = applicationMonitorLogRepository;
     }
 
@@ -163,6 +152,7 @@ public class ApplicationMonitorServiceImpl implements ApplicationMonitorService 
                                              .method(config.getMethod())
                                              .header(config.getHeaders())
                                              .body(config.getBody());
+            request.setMaxRedirectCount(5);
             request.timeout((int) timeout.toMillis());
 
             if (monitorDto.getProxy() != null) {
@@ -190,7 +180,7 @@ public class ApplicationMonitorServiceImpl implements ApplicationMonitorService 
             if (ApplicationMonitorCheckTypeEnum.JAVASCRIPT.equals(config.getCheckType())) {
                 checkResult = (String) ScriptUtil.invoke(config.getResponseRegex(), "check", body);
             } else {
-                checkResult = Pattern.matches(responseRegex, body) ? "success" : "返回值匹配失败";
+                checkResult = Pattern.matches(responseRegex, body) ? "success" : "返回值不匹配";
             }
 
             return new ApplicationMonitorExecDto(
@@ -204,7 +194,7 @@ public class ApplicationMonitorServiceImpl implements ApplicationMonitorService 
             );
         } catch (Exception e) {
             log.error("请求监控失败", e);
-            return new ApplicationMonitorExecDto(false, null, null, false, e.getMessage(), "failure", -1L);
+            return new ApplicationMonitorExecDto(false, null, null, false, e.getMessage(), "请求无响应", -1L);
         }
     }
 
@@ -225,23 +215,11 @@ public class ApplicationMonitorServiceImpl implements ApplicationMonitorService 
             applicationMonitorLogRepository.save(applicationMonitorLog);
 
             applicationMonitorUpdateParams.setFailureCount(applicationMonitorDto.getFailureCount() == null ? 1L : applicationMonitorDto.getFailureCount() + 1);
+            applicationMonitorDto.setFailureCount(applicationMonitorUpdateParams.getFailureCount());
             applicationMonitorUpdateParams.setFailureTime(DateUtil.date());
             applicationMonitorUpdateParams.setResponseResult(testDto.getResponse());
 
             update(applicationMonitorUpdateParams);
-
-            if ((applicationMonitorUpdateParams.getFailureCount() <= monitorCount + monitorDebounce) && (applicationMonitorUpdateParams.getFailureCount() > monitorDebounce)) {
-                dingerSender.send(
-                        MessageSubType.TEXT, DingerRequest.request(
-                                "第" + (applicationMonitorUpdateParams.getFailureCount() - monitorDebounce) + "次提醒，连续提醒" + (monitorCount) + "次，" +
-                                        "应用出现异常，请尽快处理，应用名称：" + applicationMonitorDto.getApplicationName() +
-                                        "，应用内容：" + applicationMonitorDto.getApplicationContent() +
-                                        "，异常原因：" + testDto.getRemark(),
-                                StrUtil.isEmpty(applicationMonitorDto.getMasterMobile()) ? null : List.of(
-                                        applicationMonitorDto.getMasterMobile())
-                                                                  )
-                                 );
-            }
         } else {
             applicationMonitorUpdateParams.setFailureCount(0L);
             applicationMonitorUpdateParams.setFailureTime(null);

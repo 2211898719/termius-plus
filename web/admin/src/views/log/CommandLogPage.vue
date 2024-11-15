@@ -3,6 +3,7 @@
     <template #extra>
       <a-button @click="exportBack">导出sql备份</a-button>
       <a-button @click="clearAllConnections">清理所有服务器连接</a-button>
+      <a-button @click="syncAllServerRunInfo" :loading="syncLoading">同步所有服务器运行信息</a-button>
     </template>
 
     <a-space direction="vertical" size="middle" style="width: 100%;">
@@ -113,6 +114,14 @@ const exportBack = () => {
 const clearAllConnections = async () => {
   await serverApi.clearAllConnections()
   message.success("清理成功")
+}
+
+let syncLoading = ref(false)
+const syncAllServerRunInfo = async () => {
+  syncLoading.value = true
+  await serverApi.syncAllServerRunInfo()
+  message.success("同步成功")
+  syncLoading.value = false
 }
 </script>
 

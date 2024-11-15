@@ -14,7 +14,7 @@ public class MvelCronCreateDto {
     private String jobName;
     private String jobGroup;
     private List<Long> serverIds;
-    private List<ServerDto> serverDtos;
+    private List<ServerDto> serverDtoList;
     private List<String> params;
     private String mvelScript;
     private String cronExpression;

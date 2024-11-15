@@ -1,6 +1,5 @@
 package com.codeages.termiusplus.biz.application.repository;
 
-import com.codeages.termiusplus.biz.application.dto.ApplicationMonitorLogCountDto;
 import com.codeages.termiusplus.biz.application.entity.ApplicationMonitorLog;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -10,7 +9,6 @@ import org.springframework.data.querydsl.QuerydslPredicateExecutor;
 import org.springframework.data.repository.query.Param;
 
 import java.util.Date;
-import java.util.List;
 
 public interface ApplicationMonitorLogRepository extends JpaRepository<ApplicationMonitorLog, Long>, QuerydslPredicateExecutor<ApplicationMonitorLog> {
 

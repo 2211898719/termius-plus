@@ -1,6 +1,5 @@
 package com.codeages.termiusplus.biz.application.repository;
 
-import com.codeages.termiusplus.biz.application.dto.ApplicationServerDto;
 import com.codeages.termiusplus.biz.application.entity.ApplicationServer;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.querydsl.QuerydslPredicateExecutor;

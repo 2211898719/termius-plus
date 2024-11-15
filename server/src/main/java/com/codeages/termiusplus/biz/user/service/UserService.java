@@ -1,6 +1,9 @@
 package com.codeages.termiusplus.biz.user.service;
 
-import com.codeages.termiusplus.biz.user.dto.*;
+import com.codeages.termiusplus.biz.user.dto.UserCreateParams;
+import com.codeages.termiusplus.biz.user.dto.UserDto;
+import com.codeages.termiusplus.biz.user.dto.UserSearchParams;
+import com.codeages.termiusplus.biz.user.dto.UserUpdateParams;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 

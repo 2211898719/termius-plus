@@ -18,7 +18,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.List;
@@ -131,18 +130,6 @@ public class PortForWardingServiceImpl implements PortForWardingService {
 
         return portForwarderDto;
     }
-
-    // 每1分钟
-    @Scheduled(cron = "0 0/1 * * * ?")
-    @Async
-    public void checkPortForwarding() {
-        localPortForwarderMap.forEach((k, v) -> {
-            if (!v.getLocalPortForwarder().isRunning()) {
-                log.error("localPortForwarder is not running, localPort:{}, forwardingName:{}", k, v.getForwardingName());
-            }
-        });
-    }
-
 
     @Override
     public Integer startPortForwarding(String forwardingName, Long serverId, Integer remotePort) {

@@ -1,12 +1,9 @@
 package com.codeages.termiusplus.biz.application.utils;
 
 import com.google.gson.Gson;
-import com.maxmind.geoip2.model.CityResponse;
-import com.maxmind.geoip2.record.Location;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.aspectj.util.FileUtil;
 import org.lionsoul.ip2region.xdb.Searcher;
 
 import java.io.BufferedReader;
@@ -18,10 +15,8 @@ import java.net.NetworkInterface;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 /**
  * IP地址Util

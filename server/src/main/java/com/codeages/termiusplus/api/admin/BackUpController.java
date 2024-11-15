@@ -7,6 +7,8 @@ import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.util.ZipUtil;
 import com.codeages.termiusplus.biz.storage.enums.FileTargetTypeEnum;
 import com.codeages.termiusplus.biz.storage.service.StorageService;
+import com.cxytiandi.encrypt.springboot.annotation.DecryptIgnore;
+import com.cxytiandi.encrypt.springboot.annotation.EncryptIgnore;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.text.StringSubstitutor;
@@ -72,6 +74,8 @@ public class BackUpController {
     }
 
     @GetMapping("/back")
+    @EncryptIgnore
+    @DecryptIgnore
     public void back(HttpServletResponse response) {
         String backUri = FileUtil.getTmpDirPath() + FileUtil.FILE_SEPARATOR + this.DATABASE_NAME + "-" + DateUtil.format(
                 DateUtil.date(),
