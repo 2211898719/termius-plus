@@ -1,5 +1,6 @@
-package com.codeages.termiusplus.biz.message;
+package com.codeages.termiusplus.biz.message.impl;
 
+import com.codeages.termiusplus.biz.message.MessageService;
 import com.github.jaemon.dinger.DingerSender;
 import com.github.jaemon.dinger.core.entity.DingerRequest;
 import com.github.jaemon.dinger.core.entity.enums.MessageSubType;

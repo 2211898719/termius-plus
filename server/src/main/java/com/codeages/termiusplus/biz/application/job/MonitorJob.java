@@ -136,8 +136,8 @@ public class MonitorJob {
                              .filter(execDtoEntry -> {
                                  long count = execDtoEntry.getKey()
                                                           .getFailureCount();
-                                 return (count <= monitorCount + monitorDebounce && count > monitorDebounce) || execDtoEntry.getValue()
-                                                                                                                            .isSuccess();
+                                 return (count <= monitorCount + monitorDebounce && count > monitorDebounce) || (execDtoEntry.getValue()
+                                                                                                                             .isSuccess() && count > monitorDebounce);
                              })
                              .map(execDtoEntry -> {
                                  ApplicationMonitorDto applicationMonitorDto = execDtoEntry.getKey();
@@ -155,7 +155,7 @@ public class MonitorJob {
 
 
                                  return "- [" + applicationGroupPath + "](" + applicationMonitorDto.getApplicationContent() + ")：" + count + "分钟无响应，" + (testDto.getRemark()
-                                                                                                                                                               .equals("failed") ? "" : "[" + testDto.getRemark() + "]");
+                                                                                                                                                                     .equals("failed") ? "" : "[" + testDto.getRemark() + "]");
                              })
                              .collect(Collectors.joining("\n"));
 
@@ -167,7 +167,7 @@ public class MonitorJob {
                 MessageSubType.MARKDOWN,
                 title,
                 content + body
-                         );
+                           );
 
     }
 
@@ -233,7 +233,7 @@ public class MonitorJob {
                 MessageSubType.MARKDOWN,
                 title,
                 content + body
-                         );
+                           );
     }
 
     private String findApplicationGroupPath(List<Tree<Long>> all, Long applicationId) {

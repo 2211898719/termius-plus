@@ -1,4 +1,4 @@
-package com.codeages.termiusplus.biz.message;
+package com.codeages.termiusplus.biz.message.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.extra.spring.SpringUtil;
@@ -10,6 +10,7 @@ import com.aliyun.dingtalkrobot_1_0.models.OrgGroupSendRequest;
 import com.aliyun.dingtalkrobot_1_0.models.OrgGroupSendResponse;
 import com.aliyun.tea.TeaException;
 import com.aliyun.teaopenapi.models.Config;
+import com.codeages.termiusplus.biz.message.MessageService;
 import com.codeages.termiusplus.biz.server.job.ServerRunInfoJob;
 import com.dingtalk.api.DefaultDingTalkClient;
 import com.dingtalk.api.DingTalkClient;
