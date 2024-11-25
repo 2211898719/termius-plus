@@ -89,23 +89,30 @@ public class MessageServiceDingtalkCorpRobotImpl implements MessageService {
                                          .trim();
 
                     DINGTALK_TOKEN_THREAD_LOCAL.set(json.getStr("sessionWebhook"));
-                    if (content.equals("订阅监控消息")) {
-                        redis.opsForValue()
-                             .set("dingtalk-robot-message", json.getStr("conversationId"));
-                        sendMessageByConversationId(
-                                json.getStr("conversationId"),
-                                List.of(),
-                                "回复",
-                                "订阅成功"
-                                                   );
-                    } else if (content.equals("取消订阅监控消息")) {
-                        redis.delete("dingtalk-robot-message");
-                        send(MessageSubType.MARKDOWN, "取消订阅监控消息", "已取消订阅监控消息");
-                    } else if (content.equals("获取服务器硬盘情况")) {
-                        send(MessageSubType.MARKDOWN, "服务器硬盘情况", "正在获取服务器硬盘情况，请稍后...");
+                    switch (content) {
+                        case "订阅监控消息" -> {
+                            redis.opsForValue()
+                                 .set("dingtalk-robot-message", json.getStr("conversationId"));
+                            sendMessageByConversationId(
+                                    json.getStr("conversationId"),
+                                    List.of(),
+                                    "回复",
+                                    "订阅成功"
+                                                       );
+                        }
+                        case "取消订阅监控消息" -> {
+                            redis.delete("dingtalk-robot-message");
+                            send(MessageSubType.MARKDOWN, "取消订阅监控消息", "已取消订阅监控消息");
+                        }
+                        case "获取服务器硬盘情况" -> {
+                            send(MessageSubType.MARKDOWN, "服务器硬盘情况", "正在获取服务器硬盘情况，请稍后...");
 
-                        SpringUtil.getBean(ServerRunInfoJob.class)
-                                  .estimateDiskUsage();
+                            SpringUtil.getBean(ServerRunInfoJob.class)
+                                      .estimateDiskUsage();
+                        }
+                        default -> send(MessageSubType.MARKDOWN, "目前支持的指令", "1. 订阅监控消息\n" +
+                                "2. 取消订阅监控消息\n" +
+                                "3. 获取服务器硬盘情况");
                     }
 
                     DINGTALK_TOKEN_THREAD_LOCAL.remove();

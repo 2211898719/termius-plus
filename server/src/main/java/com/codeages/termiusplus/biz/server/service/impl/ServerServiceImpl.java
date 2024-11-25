@@ -377,6 +377,7 @@ public class ServerServiceImpl implements ServerService {
             if (Boolean.TRUE.equals(serverTree.get("isGroup"))) {
                 if (serverTree.hasChild()) {
                     Long proxyId = (Long) serverTree.get("proxyId");
+                    serverTree.put("proxy", proxyIdProxyMap.get(proxyId));
                     buildProxy(serverTree.getChildren(), proxyIdProxyMap, proxyId == null ? parentProxyId : proxyId);
                 }
                 continue;

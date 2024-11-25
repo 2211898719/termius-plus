@@ -6,6 +6,7 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.codeages.termiusplus.biz.server.dto.*;
 import com.codeages.termiusplus.biz.server.job.ConnectTimeoutJob;
+import com.codeages.termiusplus.biz.server.service.ProxyService;
 import com.codeages.termiusplus.biz.server.service.ServerService;
 import com.codeages.termiusplus.ws.ssh.SshHandler;
 import com.codeages.termiusplus.biz.user.dto.RoleDto;
@@ -40,12 +41,15 @@ public class ServerController {
 
     private final UserService userService;
 
+    private final ProxyService proxyService;
+
     public ServerController(ServerService serverService, SecurityContext securityContext, RoleService roleService,
-                            UserService userService) {
+                            UserService userService, ProxyService proxyService) {
         this.serverService = serverService;
         this.securityContext = securityContext;
         this.roleService = roleService;
         this.userService = userService;
+        this.proxyService = proxyService;
     }
 
 
@@ -72,9 +76,12 @@ public class ServerController {
                 SshHandler.HandlerItem::setUserDto
                                      );
 
+
         Map<Long, List<SshHandler.HandlerItem>> serverIdMap = handlerItemArrayList.stream()
                                                                                   .collect(Collectors.groupingBy(
                                                                                           SshHandler.HandlerItem::getServerId));
+
+
 
         treeList.forEach(tree -> tree.walk(node -> {
             List<SshHandler.HandlerItem> handlerItems = serverIdMap.get(node.getId());

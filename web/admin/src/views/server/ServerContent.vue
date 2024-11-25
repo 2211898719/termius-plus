@@ -407,7 +407,7 @@ const handleKeyup = (event) => {
       <template #back>
         <div v-if="sftpEnable" style="height: 100%">
           <div class="sftp-content">
-            <a-card title="sftp" style="min-height: 100%">
+            <a-card class="sftp-card" title="sftp" style="height: 100%">
               <template #extra>
                 <div class="center-name">{{ server.name }}</div>
 
@@ -712,6 +712,10 @@ const handleKeyup = (event) => {
 
   .sftp-content {
     height: 100%;
+    :deep(.sftp-card>.ant-card-body){
+      overflow: scroll;
+      height: 100%;
+    }
 
     .sftp {
       width: 100%;

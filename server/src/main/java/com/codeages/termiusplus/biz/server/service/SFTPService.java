@@ -108,7 +108,9 @@ public interface SFTPService {
 
     void serverUploadServer(SFTPServerUploadServerParams params);
 
-    void asyncServerUploadServer(SFTPServerUploadServerParams params);
+    String asyncServerUploadServer(SFTPServerUploadServerParams params);
+
+    boolean cancelUploadTask(String taskId);
 
     byte[] readFile(String id, String remotePath);
 

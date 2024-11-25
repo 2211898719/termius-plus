@@ -586,7 +586,7 @@ defineExpose({
                         <a-card :id="'serverCardRef'+item.id">
                           <a-skeleton avatar :title="false" :loading="!!item.loading" active>
                             <a-list-item-meta
-                                :description="item.isGroup?'group':'server'"
+                                :description="item.isGroup?('group '+(item.proxy?item.proxy.name:'')):('server '+item.username+'@'+item.ip+':'+item.port)"
                             >
                               <template #title>
                                 <span>{{ item.name }}</span>
@@ -696,7 +696,7 @@ defineExpose({
             <a-form-item label="自动sudo" v-bind="creationValidations.aotoSudo">
               <a-switch v-model:checked="creationState.autoSudo"></a-switch>
             </a-form-item>
-            <a-form-item label="信息检测" v-bind="creationValidations.infoTest">
+            <a-form-item label="加入监控看板" v-bind="creationValidations.infoTest">
               <a-switch v-model:checked="creationState.infoTest"></a-switch>
             </a-form-item>
             <a-form-item label="获取history" v-bind="creationValidations.historyGet">
@@ -708,7 +708,7 @@ defineExpose({
             </a-form-item>
           </template>
           <a-form-item label="代理" v-bind="creationValidations.proxyId">
-            <p-select ref="proxyRef" :api="proxyApi.list" v-model:value="creationState.proxyId"
+            <p-select ref="proxyRef" :api="proxyApi.list" v-model:value="creationState.proxyId" :placeholder="creationState?.proxy?creationState.proxy.name:''"
                       style="width: 90%"></p-select>
             <a-button @click="proxyCreation" style="margin-left: 2%" type="primary" shape="circle">
               <template #icon>

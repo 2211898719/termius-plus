@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SFTPServerUploadServerParams {
+    private String taskId;
     private String sourceId;
     private String sourcePath;
     private String targetId;

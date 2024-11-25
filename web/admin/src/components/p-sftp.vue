@@ -1,7 +1,7 @@
 <script setup>
-import {computed, createVNode, defineExpose, defineProps, nextTick, onMounted, onUnmounted, ref, watch} from "vue";
+import {computed, createVNode, defineExpose, defineProps, h, nextTick, onMounted, onUnmounted, ref, watch} from "vue";
 import {sftpApi} from "@/api/sftp";
-import {message, Modal, notification} from "ant-design-vue";
+import {Button, message, Modal, notification} from "ant-design-vue";
 import fileIcon from "@/assets/file-icon/dir.png";
 import dirIcon from "@/assets/file-icon/file.png";
 import _ from "lodash";
@@ -11,10 +11,7 @@ import {computedFileSize} from "@/components/tinymce/File";
 import {useAutoAnimate} from "@formkit/auto-animate/vue";
 import {useAuthStore} from "@shared/store/useAuthStore";
 import {uploadFileProcess} from "@/components/process.jsx";
-import {oneDark} from "@codemirror/theme-one-dark";
-import CodeMirror from 'vue-codemirror6';
-import {java} from "@codemirror/lang-java";
-import PFileTree from "@/components/p-file-tree.vue";
+
 
 let authStore = useAuthStore()
 
@@ -139,9 +136,7 @@ const ls = async () => {
 
 const changeDir = async (path) => {
   if (path === currentPath.value) {
-    // if (!editPathVisible.value) {
-    //   startEditPath()
-    // }
+
     return
   }
 
@@ -461,6 +456,13 @@ const drop = async (e, sessionId, currentPath) => {
       return
     }
 
+    //取消
+    if (data.progress === -1){
+      notification.close(key)
+      ls()
+      return
+    }
+
     let take = Math.floor((new Date().getTime() - time) / 1000);
     if (take === 0) {
       take = 1
@@ -471,7 +473,7 @@ const drop = async (e, sessionId, currentPath) => {
         key: key,
         duration: 0,
         message: '文件传输',
-        description: `${sourceData.fileName} 传输完成,耗时：${take} 秒`,
+        description: `${sourceData.fileName} 传输完成,耗时：${take} 秒`
       });
       ls()
       return
@@ -483,17 +485,33 @@ const drop = async (e, sessionId, currentPath) => {
 
     let speedStr = computedFileSize(speed) + '/s'
 
-
     notification.open({
       key: key,
       duration: 0,
       message: '文件传输',
       description: uploadFileProcess(sourceData, data, speedStr, take, left),
+      btn: () =>
+          h(
+              Button,
+              {
+                type: 'primary',
+                size: 'small',
+                onClick: function () {
+                  //按钮loading状态
+                  sftpApi.cancelUploadTask({taskId: data.taskId})
+                },
+              },
+              { default: () => '取消' },
+          ),
     });
 
   }
 
-  sftp.onmessage = _.throttle(handleProcessMessage, 1000)
+  sftp.onmessage = _.throttle(handleProcessMessage, 1000,{
+    leading: true,
+    trailing: true,
+    maxWait: 1000,
+  })
 
   try {
     await sftpApi.serverUploadServer({
@@ -541,43 +559,10 @@ const openCode = async (file) => {
   window.open(`/codeEditor?rootPath=${file?(currentPath.value + '/' + file.name):currentPath.value}&sessionId=${sessionId.value}&serverName=${props.serverName}&serverPath=${props.path}&serverId=${props.serverId}`)
 }
 
-let codeData = ref({
-  visible: false,
-  filePath: '',
-  fileName: '',
-  content: '',
-  treeData: []
-})
-
-let CodeMirrorRef = ref(null)
-watch(() => codeData.value.visible, (value) => {
-  if (value) {
-    nextTick(() => {
-      CodeMirrorRef.value.$el.onkeydown = function (e) {
-        e = e || window.event;
-        if ((e.which || e.keyCode) === 83 && (e.metaKey || e.ctrlKey)) {
-          e.preventDefault ? e.preventDefault() : e.returnValue = false;
-          saveFile()
-        }
-      }
-    })
-  }
-})
-
-const openFileContent = async (file) => {
-  console.log('openFileContent', file)
-  codeData.value.content = await sftpApi.readFile({id: sessionId.value, remotePath: file.path})
-  console.log(codeData.value.content)
-}
-const saveFile = () => {
-  console.log('save')
-}
-
-
 </script>
 
 <template>
-  <div ref="sftpRootEl" class="sftp-root">
+  <div ref="sftpRootEl" class="sftp-root" @dragover="ondragover" @drop="drop($event,sessionId,currentPath)">
     <a-spin v-model:spinning="spinning" :tip="spinTip">
       <a-card :bordered="false" :hoverable="false">
         <template v-slot:title>
@@ -614,7 +599,7 @@ const saveFile = () => {
 
           </div>
         </template>
-        <div ref="parent" style="overflow: hidden" @dragover="ondragover" @drop="drop($event,sessionId,currentPath)">
+        <div ref="parent" style="overflow: hidden;height: 100%" >
           <a-card-grid draggable="true" @dragstart="onStart($event,sessionId,currentPath,file,serverName)"
                        :style="{width: width}"
                        :bordered="false"
@@ -653,14 +638,21 @@ const saveFile = () => {
               </div>
               <template #overlay>
                 <a-menu>
-                  <a-menu-item v-if="!file.directory" key="4" @click="handleDownload(file)">
+                  <template v-if="!file.directory">
+                  <a-menu-item  key="4" @click="handleDownload(file)">
                     <cloud-download-outlined/>
                     下载
                   </a-menu-item>
+                    <a-menu-item key="4" @click="handleClickFile(file)">
+                      <info-circle-outlined />
+                      详细信息
+                    </a-menu-item>
+                  </template>
                   <a-menu-item v-else key="2" @click="openCode(file)">
                     <FolderOpenOutlined/>
                     打开编辑器
                   </a-menu-item>
+
                   <a-menu-item key="3" @click="handleRename(file,index)">
                     <edit-outlined/>
                     重命名
@@ -685,37 +677,9 @@ const saveFile = () => {
         </div>
       </a-card>
     </a-spin>
-    <a-drawer
-        :title="codeData.filePath"
-        placement="right"
-        :closable="false"
-        width="90%"
-        :visible="codeData.visible"
-        :get-container="()=>sftpRootEl"
-        :style="{ position: 'absolute' }"
-        @close="codeData.visible=false"
-    >
-      <div class="code-container">
-        <div class="code-tree">
-          <p-file-tree :sftp-id="sessionId" :initial-path="codeData.filePath"
-                       @openFileInCodeEditor="openFileContent"></p-file-tree>
-        </div>
-        <div class="code-content">
-          <code-mirror
-              basic
-              style="height: calc(100vh - 150px);overflow: auto;"
-              ref="CodeMirrorRef"
-              :tab="true"
-              :extensions="[java(),oneDark]"
-              v-model:modelValue="codeData.content">
-          </code-mirror>
-        </div>
-      </div>
-    </a-drawer>
 
-
-    <a-modal v-model:visible="fileViewVisible" :title="fileView.name" ok-text="下载" @ok="handleDownload(fileView)"
-             width="60%" :keyboard="false" :maskClosable="false">
+    <a-modal v-model:visible="fileViewVisible" :title="fileView.name" ok-text="下载" cancel-text="关闭" @ok="handleDownload(fileView)"
+             width="60%"  >
       <a-form>
         <a-form-item title="详细信息">
           <a-descriptions bordered>
@@ -747,6 +711,7 @@ const saveFile = () => {
 
 <style scoped lang="less">
 .sftp-root {
+  min-height: 100%;
   .head {
     display: flex;
     flex-direction: row;

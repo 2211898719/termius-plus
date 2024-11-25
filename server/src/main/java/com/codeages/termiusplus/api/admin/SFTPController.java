@@ -82,8 +82,13 @@ public class SFTPController {
     }
 
     @PostMapping("/serverUploadServer")
-    public void serverUploadServer(@RequestBody SFTPServerUploadServerParams params) {
-        sftpService.asyncServerUploadServer(params);
+    public String serverUploadServer(@RequestBody SFTPServerUploadServerParams params) {
+        return sftpService.asyncServerUploadServer(params);
+    }
+
+    @PostMapping("/cancelUploadTask")
+    public boolean cancelUploadTask(@RequestBody SFTPServerUploadServerParams params) {
+        return sftpService.cancelUploadTask(params.getTaskId());
     }
 
     @SneakyThrows

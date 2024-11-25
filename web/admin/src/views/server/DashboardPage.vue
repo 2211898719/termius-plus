@@ -94,7 +94,10 @@ getServerRunInfo();
 const emit = defineEmits(['openServer','findServer'])
 
 let currentServer = ref(null)
+let detailLoading = ref(false)
 const openDetail = async (item) => {
+  detailLoading.value = true
+  detailVisible.value = true
   if (!item.infoStatus) {
     emit('findServer', item.server)
     return
@@ -107,10 +110,11 @@ const openDetail = async (item) => {
       d.cpuUsage = JSON.parse(d.cpuUsage)
     })
   }
+
   currentServer.value = item
-  detailVisible.value = true
   await nextTick()
   updateChart(item)
+  detailLoading.value = false
 }
 
 let allChart = [];
@@ -399,12 +403,14 @@ const handleDetailClose = () => {
     <a-modal v-model:visible="detailVisible" :title="currentServer?.serverName" @ok="handleDetailOk"
              @close="handleDetailClose" width="100%"
              wrap-class-name="full-modal" ok-text="进入服务器" cancel-text="关闭">
+      <a-spin :spinning="detailLoading">
       <div class="dashboard-page-detail">
         <div class="dashboard-page-detail-chart" ref="chartCpu"></div>
         <div class="dashboard-page-detail-chart" ref="chartDisk"></div>
         <div class="dashboard-page-detail-chart" ref="chartNetworkTransmit"></div>
         <div class="dashboard-page-detail-chart" ref="chartNetworkReceive"></div>
       </div>
+      </a-spin>
     </a-modal>
     <div style="padding: 20px;width: 50%;">
       <div
@@ -450,7 +456,7 @@ const handleDetailClose = () => {
 .dashboard-page-detail {
   padding: 8px;
   width: 100%;
-  height: 100%;
+  height: calc(100vh - 160px);
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;

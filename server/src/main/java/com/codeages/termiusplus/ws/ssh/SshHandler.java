@@ -289,6 +289,7 @@ public class SshHandler {
         private long lastActiveTime = System.currentTimeMillis();
         private final File logFile;
         private final BufferedOutputStream logFileOutputStream;
+        private final RollingString lastCommand;
 
         @SneakyThrows
         HandlerItem(Long userId, String username, Long serverId, Session session, SSHClient sshClient) {
@@ -331,6 +332,8 @@ public class SshHandler {
 
             //日志内存缓冲区
             logFileOutputStream = IoUtil.toBuffered(FileUtil.getOutputStream(logFile), MAX_LOG_BUFFER_SIZE);
+
+            lastCommand = new RollingString();
 
             threadPoolExecutor.submit(this);
         }
@@ -460,6 +463,7 @@ public class SshHandler {
                     MessageDto messageDto = new MessageDto(EventType.COMMAND, originData);
                     String s = JSONUtil.toJsonStr(messageDto);
                     logFileOutputStream.write(originData.getBytes());
+                    lastCommand.append(originData);
                     sessions.forEach(session -> sendBinary(session.getValue(), s));
                 }
             } catch (Exception e) {
@@ -476,6 +480,10 @@ public class SshHandler {
 
         public void active() {
             lastActiveTime = System.currentTimeMillis();
+        }
+
+        public String getLastCommand() {
+            return lastCommand.toString();
         }
 
         public void reqAuthEditSession(Session session) {

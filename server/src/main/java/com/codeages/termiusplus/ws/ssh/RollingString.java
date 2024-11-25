@@ -1,7 +1,7 @@
 package com.codeages.termiusplus.ws.ssh;
 
 public class RollingString {
-    private StringBuilder stringBuilder;
+    private final StringBuilder stringBuilder;
     private int maxLength = 2048;
 
     public RollingString() {

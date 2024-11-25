@@ -4,6 +4,7 @@ import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.lang.UUID;
 import cn.hutool.core.lang.func.VoidFunc1;
+import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.json.JSONUtil;
 import com.codeages.termiusplus.biz.ErrorCode;
 import com.codeages.termiusplus.biz.server.annotation.SftpActive;
@@ -31,10 +32,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
+import java.util.*;
+import java.util.concurrent.*;
 
 
 @Slf4j
@@ -42,6 +41,8 @@ import java.util.concurrent.CompletableFuture;
 public class SFTPServiceImpl implements SFTPService {
 
     private final ServerService serverService;
+
+    private final Map<String, CompletableFuture<Void>> uploadServerFutures = new ConcurrentHashMap<>();
 
 
     public SFTPServiceImpl(ServerService serverService) {
@@ -231,13 +232,50 @@ public class SFTPServiceImpl implements SFTPService {
         ServerContext.SFTP_POOL.remove(id);
     }
 
-    public void asyncServerUploadServer(SFTPServerUploadServerParams params) {
-        CompletableFuture<Void> future = CompletableFuture.runAsync(() -> serverUploadServer(params));
+    @Override
+    public String asyncServerUploadServer(SFTPServerUploadServerParams params) {
+        String target = params.getTargetPath() + File.separator + params.getFileName();
 
+        if (exist(params.getTargetId(), target)) {
+            throw new AppException(ErrorCode.INTERNAL_ERROR, "文件已存在");
+        }
+
+        ExecutorService executor = ThreadUtil.newSingleExecutor();
+
+        String id = UUID.fastUUID()
+                        .toString(true);
+        CompletableFuture<Void> future = CompletableFuture.runAsync(() -> serverUploadServer(params), executor);
+        uploadServerFutures.put(id, future);
+        params.setTaskId(id);
+        log.info("上传任务创建成功：{}", uploadServerFutures.size());
         future.exceptionally(ex -> {
-            //todo 使用websocket通知前端
+            executor.shutdownNow();
+            uploadServerFutures.remove(id);
+            if (ex instanceof CancellationException) {
+                log.info("上传任务取消：{}", id);
+            } else {
+                log.error("上传任务创建失败:{}", ex.getMessage());
+            }
+
             return null; // 返回一个默认值
         });
+
+        future.whenComplete((v, e) -> {
+            executor.shutdownNow();
+            uploadServerFutures.remove(id);
+        });
+
+        return id;
+    }
+
+    @Override
+    public boolean cancelUploadTask(String taskId) {
+        CompletableFuture<Void> future = uploadServerFutures.get(taskId);
+        if (future == null) {
+            return false;
+        }
+
+        return future.cancel(false);
     }
 
     @Override
@@ -273,25 +311,34 @@ public class SFTPServiceImpl implements SFTPService {
 
     }
 
+    private boolean exist(String id, String remotePath) {
+        try {
+            SFTPClient sftp = getSftp(id);
+            sftp.lstat(remotePath);
+            return true;
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
     @Override
     public void serverUploadServer(SFTPServerUploadServerParams params) {
+        SFTPClient sourceSftp = getSftp(params.getSourceId());
+        String source = params.getSourcePath() + File.separator + params.getFileName();
+
+        SFTPClient targetSftp = getSftp(params.getTargetId());
+
+        String target = params.getTargetPath() + File.separator + params.getFileName();
+
+        if (exist(params.getTargetId(), target)) {
+            throw new AppException(ErrorCode.INTERNAL_ERROR, "文件已存在");
+        }
+        File tmpFile = createTmpFile();
+
         try {
-            SFTPClient sourceSftp = getSftp(params.getSourceId());
-            String source = params.getSourcePath() + File.separator + params.getFileName();
             RemoteFile sourceFile = sourceSftp.open(source);
 
-            SFTPClient targetSftp = getSftp(params.getTargetId());
-
-
-            String target = params.getTargetPath() + File.separator + params.getFileName();
-
-            try {
-                targetSftp.lstat(target);
-                throw new AppException(ErrorCode.INTERNAL_ERROR, "文件已存在");
-            } catch (IOException e) {
-                File tmpFile = createTmpFile();
-                targetSftp.put(tmpFile.getPath(), target);
-            }
+            targetSftp.put(tmpFile.getPath(), target);
 
             RemoteFile remoteFile = targetSftp.open(target, EnumSet.of(OpenMode.WRITE));
             RemoteFile.RemoteFileOutputStream remoteFileOutputStream = remoteFile.new RemoteFileOutputStream();
@@ -299,44 +346,72 @@ public class SFTPServiceImpl implements SFTPService {
                     15);
 
             transferWithProgress(readAheadRemoteFileInputStream, remoteFileOutputStream, progress -> {
-                MessageDto messageDto = new MessageDto(
-                        EventType.SFTP_SERVER_UPLOAD_SERVER_PROGRESS,
-                        JSONUtil.toJsonStr(new SftpServerUploadServerProgressDto(
-                                params.getSourceServerName(),
-                                source,
-                                params.getTargetServerName(),
-                                target,
-                                progress,
-                                params.getSourceId(),
-                                params.getTargetId()
-                        ))
-                );
-                AuthKeyBoardHandler.sendMessage(params.getClientSessionId(), JSONUtil.toJsonStr(messageDto));
+                sendProgress(params, progress);
             });
 
             IoUtil.close(readAheadRemoteFileInputStream);
             IoUtil.close(remoteFileOutputStream);
+        } catch (SFTPException e) {
+            //Caused by: java.lang.InterruptedException: null
+            if (e.getCause() instanceof InterruptedException) {
+                log.info("Transfer interrupted,{}", e.getMessage());
+                try {
+                    targetSftp.rm(target);
+                } catch (IOException ex) {
+                    log.error("删除目标文件失败", ex);
+                }
+                log.info("delete tmp file");
+                CompletableFuture.runAsync(() -> {
+                    sendProgress(params, -1L);
+                });
+            }
         } catch (Exception e) {
             log.error("服务器对服务器传递文件错误", e);
             throw new AppException(ErrorCode.INTERNAL_ERROR, e.getMessage());
+        } finally {
+            if (FileUtil.exist(tmpFile.getPath())) {
+                FileUtil.del(tmpFile.getPath());
+            }
         }
     }
 
-    @SneakyThrows
+    private static void sendProgress(SFTPServerUploadServerParams params, Long progress) {
+        MessageDto messageDto = new MessageDto(
+                EventType.SFTP_SERVER_UPLOAD_SERVER_PROGRESS,
+                JSONUtil.toJsonStr(new SftpServerUploadServerProgressDto(
+                        params.getSourceServerName(),
+                        params.getSourcePath() + File.separator + params.getFileName(),
+                        params.getTargetServerName(),
+                        params.getTargetPath() + File.separator + params.getFileName(),
+                        progress,
+                        params.getSourceId(),
+                        params.getTargetId(),
+                        params.getTaskId()
+                ))
+        );
+        AuthKeyBoardHandler.sendMessage(params.getClientSessionId(), JSONUtil.toJsonStr(messageDto));
+    }
+
     public static void transferWithProgress(InputStream inputStream,
                                             OutputStream outputStream,
-                                            VoidFunc1<Long> progressCallback) {
+                                            VoidFunc1<Long> progressCallback) throws Exception {
         Objects.requireNonNull(outputStream, "out");
         long transferred = 0;
         byte[] buffer = new byte[FileSizeFormatter.ONE_MB];
         int read;
         while ((read = inputStream.read(buffer, 0, FileSizeFormatter.ONE_MB)) >= 0) {
+            if (Thread.currentThread()
+                      .isInterrupted()) {
+                log.info("Transfer interrupted");
+                break;
+            }
             outputStream.write(buffer, 0, read);
             transferred += read;
             if (progressCallback != null) {
                 progressCallback.call(transferred);
             }
         }
+
     }
 
 }

@@ -8,6 +8,8 @@ import com.codeages.termiusplus.biz.server.context.ServerContext;
 import com.codeages.termiusplus.biz.server.dto.AIChatParams;
 import com.codeages.termiusplus.biz.server.dto.AiCompletionMetadata;
 import com.codeages.termiusplus.ws.ssh.SshHandler;
+import com.cxytiandi.encrypt.springboot.annotation.DecryptIgnore;
+import com.cxytiandi.encrypt.springboot.annotation.EncryptIgnore;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,7 +17,6 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import reactor.core.publisher.Flux;
-//import reactor.core.publisher.Flux;
 
 import java.util.Map;
 import java.util.Objects;
@@ -32,6 +33,8 @@ public class AIController {
     private AIService aiService;
 
     @PostMapping("/complete")
+    @EncryptIgnore
+    @DecryptIgnore
     public Map<String, Object> complete(@RequestBody AiCompletionMetadata data) {
         HttpRequest request = HttpRequest.post(fittenUrl)
                 .body(JSONUtil.toJsonStr(Map.of(
@@ -49,13 +52,15 @@ public class AIController {
     }
 
     @GetMapping(value = "/chat", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @EncryptIgnore
+    @DecryptIgnore
     public SseEmitter streamChat(AIChatParams params) {
         SseEmitter sseEmitter = new SseEmitter();
 
         String content = params.getPrompt();
         SshHandler.HandlerItem handlerItem = ServerContext.SSH_POOL.get(params.getSessionId());
         String message = params.getMessage();
-        String lastCommandLog = "";
+        String lastCommandLog = handlerItem.getLastCommand();
         message = message.replace("{{commandLog}}", Objects.requireNonNullElse(lastCommandLog, ""));
         content = content.replace("{{commandLog}}", Objects.requireNonNullElse(lastCommandLog, ""));
 

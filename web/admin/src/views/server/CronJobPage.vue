@@ -15,7 +15,7 @@ const creationCronJobState = reactive({
   jobName: "",
   jobGroup: "",
   serverIds: [],
-  serverDtos: [],
+  serverDtoList: [],
   params: [],
   cronExpression: "",
   mvelScript: "",
@@ -138,7 +138,7 @@ const handleSelectServer = (server) => {
     return
   }
   creationCronJobState.serverIds.push(server.id);
-  creationCronJobState.serverDtos.push(server);
+  creationCronJobState.serverDtoList.push(server);
   selectServerVisible.value = false;
 }
 
@@ -154,7 +154,7 @@ const handleCloseServer = (item) => {
 
 const removeServer = (id) => {
   creationCronJobState.serverIds = creationCronJobState.serverIds.filter(item => item !== id);
-  creationCronJobState.serverDtos = creationCronJobState.serverDtos.filter(item => item.id !== id);
+  creationCronJobState.serverDtoList = creationCronJobState.serverDtoList.filter(item => item.id !== id);
 }
 
 const extensions = [java(), oneDark]
@@ -222,7 +222,7 @@ defineExpose({
                     <a-card>
                       <a-skeleton avatar :title="false" :loading="!!item.loading" active>
                         <a-list-item-meta
-                            :description="item.jobGroup+'：'+item.serverDtos[0].name+'，'+item.cronExpression"
+                            :description="item.jobGroup+'：'+item.serverDtoList[0].name+'，'+item.cronExpression"
                         >
                           <template #title>
                             <span>{{ item.jobName }}</span>
@@ -281,7 +281,7 @@ defineExpose({
             <a-form-item label="服务器：" v-bind="cronJobCreationValidations.serverId">
               <div>
               <span v-if="creationCronJobState.serverIds.length">
-                <a-tag v-for="item in creationCronJobState.serverDtos" :key="item.id" closable
+                <a-tag v-for="item in creationCronJobState.serverDtoList" :key="item.id" closable
                        @close="removeServer(item.id)">{{ item.name }}</a-tag>
               </span>
                 <a-button type="link" @click="selectServerVisible = true">添加服务器</a-button>
