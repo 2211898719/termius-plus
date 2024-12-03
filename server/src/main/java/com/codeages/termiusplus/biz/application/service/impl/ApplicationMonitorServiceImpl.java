@@ -194,7 +194,7 @@ public class ApplicationMonitorServiceImpl implements ApplicationMonitorService 
             );
         } catch (Exception e) {
             log.error("请求监控失败", e);
-            return new ApplicationMonitorExecDto(false, null, null, false, e.getMessage(), "请求无响应", -1L);
+            return new ApplicationMonitorExecDto(false, null, null, false, e.getMessage(), "请求无响应", 0L);
         }
     }
 
