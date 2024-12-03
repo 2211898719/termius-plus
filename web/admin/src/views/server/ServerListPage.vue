@@ -248,7 +248,11 @@ getServerList()
 // })
 
 const handleCopyCommandServer = (row) => {
-  let command = `ssh ${row.username}@${row.ip} -p ${row.port} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null`
+  let command = `ssh ${row.username}@${row.ip} -p ${row.port} `
+  if (row.proxy) {
+    command += ` -o ProxyCommand="nc -X 5 -x ${row.proxy.ip}:${row.proxy.port} %h %p"`
+  }
+
   copyToClipboard(command).then(() => {
     message.success("命令已复制到剪贴板")
     Modal.confirm({
@@ -638,7 +642,7 @@ defineExpose({
                           复制
                         </a-menu-item>
                         <a-menu-item key="5" v-if="!item.isGroup" @click="handleCopyCommandServer(item)">
-                          <code-outlined />
+                          <code-outlined/>
                           复制为ssh命令
                         </a-menu-item>
 

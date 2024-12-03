@@ -2,8 +2,9 @@
 import {defineEmits, defineExpose, reactive, ref, watch} from "vue";
 import {useForm} from "ant-design-vue/es/form";
 import {portForwardingApi} from "@/api/port-forwarding";
-import {message} from "ant-design-vue";
+import {message, Modal} from "ant-design-vue";
 import ServerListPage from "@/views/server/ServerListPage.vue";
+import {copyToClipboard} from "@/utils/copyUtil";
 
 let termiusStyleColumn =ref(Math.floor(window.innerWidth / 300));
 
@@ -154,6 +155,25 @@ const handleCloseServer = (item) => {
   })
 }
 
+const handleCopy = (row) => {
+  console.log(row)
+  //ssh -L localhost:10086:192.168.201.90:8888 -o ProxyCommand="nc -X 5 -x 192.168.101.189:1080 %h %p"  root@192.168.201.90 -NT
+  let command = `ssh -L 127.0.0.1:${row.localPort}:${row.remoteHost}:${row.remotePort} ${row.serverDto.username}@${row.serverDto.ip} -p ${row.serverDto.port} -NT`
+  if (row.serverDto.proxy) {
+    command += ` -o ProxyCommand="nc -X 5 -x ${row.serverDto.proxy.ip}:${row.serverDto.proxy.port} %h %p"`
+  }
+
+  copyToClipboard(command).then(() => {
+    Modal.confirm({
+      title: '命令已复制到剪贴板，点击确定复制密码',
+      onOk() {
+        copyToClipboard(row.serverDto.password)
+      },
+    });
+  })
+
+}
+
 defineExpose({
   portForwardingCreation
 })
@@ -208,6 +228,10 @@ defineExpose({
                       <a-menu-item key="close" @click="handleCloseServer(item)">
                         <DeleteOutlined/>
                         关闭
+                      </a-menu-item>
+                      <a-menu-item key="copy" @click="handleCopy(item)">
+                        <code-outlined/>
+                        复制为ssh命令
                       </a-menu-item>
                     </a-menu>
                   </template>
