@@ -512,41 +512,46 @@ public class ServerServiceImpl implements ServerService {
             ssh.auth(
                     server.getUsername(),
                     new AuthPassword(pfinder),
-                    new CurrentAuthKeyboardInteractive(new PasswordResponseProvider(new PasswordFinder() {
-                        @Override
-                        public char[] reqPassword(Resource<?> resource) {
-                            //如果没有sessionId 无从发起获取 keyboard interactive的验证码，所以无法进行登录
-                            if (CharSequenceUtil.isBlank(sessionId)) {
-                                return server.getPassword()
-                                             .toCharArray()
-                                             .clone();
-                            }
+                    new CurrentAuthKeyboardInteractive(new PasswordResponseProvider(
+                            new PasswordFinder() {
+                                @Override
+                                public char[] reqPassword(Resource<?> resource) {
+                                    //如果没有sessionId 无从发起获取 keyboard interactive的验证码，所以无法进行登录
+                                    if (CharSequenceUtil.isBlank(sessionId)) {
+                                        return server.getPassword()
+                                                     .toCharArray()
+                                                     .clone();
+                                    }
 
-                            String resourceKey = server.getName() + "-" + sessionId;
-                            MessageDto messageDto = new MessageDto(EventType.AUTH_KEYBOARD, resourceKey);
-                            log.info("向前端发送获取验证码的消息，message 是资源的验证码, messageDto = {}", messageDto);
-                            //向前端发送获取验证码的消息，message 是资源的验证码
-                            AuthKeyBoardHandler.sendMessage(sessionId, JSONUtil.toJsonStr(messageDto));
-                            BlockingQueue<String> queue = ServerContext.AUTH_KEYBOARD_INTERACTIVE_POOL.getOrDefault(
-                                    resourceKey,
-                                    new LinkedBlockingQueue<>()
-                                                                                                                   );
-                            ServerContext.AUTH_KEYBOARD_INTERACTIVE_POOL.put(resourceKey, queue);
-                            try {
-                                String take = queue.take();
-                                log.info("输入的验证码是：{}", take);
-                                return take.toCharArray();
-                            } catch (InterruptedException e) {
-                                throw new RuntimeException(e);
-                            }
-                        }
+                                    String resourceKey = server.getName() + "-" + sessionId;
+                                    MessageDto messageDto = new MessageDto(EventType.AUTH_KEYBOARD, resourceKey);
+                                    log.info(
+                                            "向前端发送获取验证码的消息，message 是资源的验证码, messageDto = {}",
+                                            messageDto
+                                            );
+                                    //向前端发送获取验证码的消息，message 是资源的验证码
+                                    AuthKeyBoardHandler.sendMessage(sessionId, JSONUtil.toJsonStr(messageDto));
+                                    BlockingQueue<String> queue = ServerContext.AUTH_KEYBOARD_INTERACTIVE_POOL.getOrDefault(
+                                            resourceKey,
+                                            new LinkedBlockingQueue<>()
+                                                                                                                           );
+                                    ServerContext.AUTH_KEYBOARD_INTERACTIVE_POOL.put(resourceKey, queue);
+                                    try {
+                                        String take = queue.take();
+                                        log.info("输入的验证码是：{}", take);
+                                        return take.toCharArray();
+                                    } catch (InterruptedException e) {
+                                        throw new RuntimeException(e);
+                                    }
+                                }
 
-                        @Override
-                        public boolean shouldRetry(Resource<?> resource) {
-                            return true;
-                        }
+                                @Override
+                                public boolean shouldRetry(Resource<?> resource) {
+                                    return true;
+                                }
 
-                    }, Pattern.compile("P.* ", Pattern.DOTALL)))
+                            }, Pattern.compile("P.* ", Pattern.DOTALL)
+                    ))
                     );
 
         }
@@ -611,14 +616,23 @@ public class ServerServiceImpl implements ServerService {
 
     @Override
     public List<String> getHistory(Long serverId) {
-        return new ExecuteCommandSSHClient(serverId).getHistory("bash");
+        if (Boolean.TRUE.equals(findById(serverId).getHistoryGet())) {
+            return new ExecuteCommandSSHClient(serverId).getHistory("bash");
+        }
+
+        return new ArrayList<>();
     }
 
     @Override
     public List<String> getMysqlHistory(Long serverId) {
-        return new ExecuteCommandSSHClient(serverId).getHistory( "mysql").stream()
-                                            .map(s -> s.replace("\\040", " "))
-                                            .collect(Collectors.toList());
+        if (Boolean.TRUE.equals(findById(serverId).getHistoryGet())) {
+            return new ExecuteCommandSSHClient(serverId).getHistory("mysql")
+                                                        .stream()
+                                                        .map(s -> s.replace("\\040", " "))
+                                                        .toList();
+        }
+
+        return new ArrayList<>();
     }
 
 
@@ -629,30 +643,34 @@ public class ServerServiceImpl implements ServerService {
         Date now = new Date();
         CompletableFuture<?>[] futures = servers.stream()
                                                 .map(server ->
-                                                             CompletableFuture.runAsync(() -> {
-                                                                                  log.info(
-                                                                                          "获取服务器运行信息，serverId = {}, serverName = {}, serverIp = {}",
-                                                                                          server.getId(),
-                                                                                          server.getName(),
-                                                                                          server.getIp()
-                                                                                          );
-                                                                                  ExecuteCommandSSHClient sshClient = new ExecuteCommandSSHClient(
-                                                                                          server.getId());
+                                                             CompletableFuture.runAsync(
+                                                                                      () -> {
+                                                                                          log.info(
+                                                                                                  "获取服务器运行信息，serverId = {}, serverName = {}, serverIp = {}",
+                                                                                                  server.getId(),
+                                                                                                  server.getName(),
+                                                                                                  server.getIp()
+                                                                                                  );
+                                                                                          ExecuteCommandSSHClient sshClient = new ExecuteCommandSSHClient(
+                                                                                                  server.getId());
 
-                                                                                  List<NetworkUsage> networkUsages = sshClient.calculateNetworkSpeed(
-                                                                                          1);
-                                                                                  CpuUsage cpuUsage = sshClient.getCpuUsage();
-                                                                                  List<DiskUsage> diskUsage = sshClient.getDiskUsage();
-                                                                                  ServerRunLog serverRunLog = new ServerRunLog();
-                                                                                  serverRunLog.setServerId(server.getId());
+                                                                                          List<NetworkUsage> networkUsages = sshClient.calculateNetworkSpeed(
+                                                                                                  1);
+                                                                                          CpuUsage cpuUsage = sshClient.getCpuUsage();
+                                                                                          List<DiskUsage> diskUsage = sshClient.getDiskUsage();
+                                                                                          ServerRunLog serverRunLog = new ServerRunLog();
+                                                                                          serverRunLog.setServerId(server.getId());
 
-                                                                                  serverRunLog.setCpuUsage(JSONUtil.toJsonStr(cpuUsage));
-                                                                                  serverRunLog.setNetworkUsages(JSONUtil.toJsonStr(
-                                                                                          networkUsages));
-                                                                                  serverRunLog.setDiskUsages(JSONUtil.toJsonStr(diskUsage));
-                                                                                  serverRunLog.setDate(now);
-                                                                                  serverRunInfoDTOS.add(serverRunLog);
-                                                                              }, executor)
+                                                                                          serverRunLog.setCpuUsage(JSONUtil.toJsonStr(
+                                                                                                  cpuUsage));
+                                                                                          serverRunLog.setNetworkUsages(JSONUtil.toJsonStr(
+                                                                                                  networkUsages));
+                                                                                          serverRunLog.setDiskUsages(JSONUtil.toJsonStr(
+                                                                                                  diskUsage));
+                                                                                          serverRunLog.setDate(now);
+                                                                                          serverRunInfoDTOS.add(serverRunLog);
+                                                                                      }, executor
+                                                                                       )
                                                                               .orTimeout(
                                                                                       (int) allTimeout.toMillis(),
                                                                                       TimeUnit.MILLISECONDS

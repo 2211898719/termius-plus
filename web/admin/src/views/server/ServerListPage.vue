@@ -247,6 +247,21 @@ getServerList()
 //   clearInterval(interval)
 // })
 
+const handleCopyCommandServer = (row) => {
+  let command = `ssh ${row.username}@${row.ip} -p ${row.port} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null`
+  copyToClipboard(command).then(() => {
+    message.success("命令已复制到剪贴板")
+    Modal.confirm({
+      title: '命令已复制到剪贴板，点击确定复制密码',
+      onOk() {
+        copyToClipboard(row.password)
+        message.success("密码已复制到剪贴板")
+      },
+    });
+  })
+
+}
+
 const handleCopyServer = async (row) => {
   creationType.value = 'create'
   Object.assign(creationState, row)
@@ -535,7 +550,7 @@ defineExpose({
   <div class="server-root">
     <div class="server-pane">
       <a-space direction="vertical" size="middle" style="width: 100%;">
-        <a-card :bodyStyle="{padding:'12px 12px'}" style="border:none" >
+        <a-card :bodyStyle="{padding:'12px 12px'}" style="border:none">
           <div class="search">
             <a-input v-model:value="searchText" class="search-input" placeholder="搜索服务器"/>
           </div>
@@ -553,7 +568,7 @@ defineExpose({
                 <a-button class="ml10 my-button" @click="handleAddGroup">新增分组</a-button>
               </div>
             </div>
-            <div class="mt30 server"     >
+            <div class="mt30 server">
               <a-list ref="list" :grid="{ gutter: 16, column: termiusStyleColumn }" :data-source="searchData"
 
                       row-key="id">
@@ -621,6 +636,10 @@ defineExpose({
                         <a-menu-item key="3" @click="handleCopyServer(item)">
                           <CopyOutlined/>
                           复制
+                        </a-menu-item>
+                        <a-menu-item key="5" v-if="!item.isGroup" @click="handleCopyCommandServer(item)">
+                          <code-outlined />
+                          复制为ssh命令
                         </a-menu-item>
 
                         <a-menu-item key="1" @click="handleDelServer(item)">
@@ -708,7 +727,8 @@ defineExpose({
             </a-form-item>
           </template>
           <a-form-item label="代理" v-bind="creationValidations.proxyId">
-            <p-select ref="proxyRef" :api="proxyApi.list" v-model:value="creationState.proxyId" :placeholder="creationState?.proxy?creationState.proxy.name:''"
+            <p-select ref="proxyRef" :api="proxyApi.list" v-model:value="creationState.proxyId"
+                      :placeholder="creationState?.proxy?creationState.proxy.name:''"
                       style="width: 90%"></p-select>
             <a-button @click="proxyCreation" style="margin-left: 2%" type="primary" shape="circle">
               <template #icon>
