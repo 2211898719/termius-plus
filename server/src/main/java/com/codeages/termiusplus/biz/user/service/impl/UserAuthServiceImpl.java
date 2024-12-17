@@ -15,6 +15,8 @@ import com.codeages.termiusplus.biz.user.repository.UserRoleRepository;
 import com.codeages.termiusplus.biz.user.service.UserAuthService;
 import com.codeages.termiusplus.config.AppConfig;
 import com.codeages.termiusplus.exception.AppException;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -42,7 +44,7 @@ public class UserAuthServiceImpl implements UserAuthService {
     }
 
     @Override
-    public UserAuthedDto login(LoginParams params) {
+    public UserAuthedDto login(LoginParams params, HttpServletResponse response) {
         var user = cacheManager.getByUsername(params.getUsername())
                 .orElseThrow((() -> new AppException(ErrorCode.NOT_FOUND, "用户名或密码不正确")));
 
@@ -61,13 +63,12 @@ public class UserAuthServiceImpl implements UserAuthService {
             throw new AppException(ErrorCode.NOT_FOUND, "用户不存在");
         }
 
-//        Cookie cookie = new Cookie("token", token);
-//
-//        cookie.setPath("/");
-//        cookie.setHttpOnly(true);
-//        cookie.setMaxAge(60 * 60 * 24 * 90);
-//
-//        response.addCookie(cookie);
+        Cookie cookie = new Cookie("token", token);
+
+        cookie.setPath("/");
+        cookie.setMaxAge(60 * 60 * 24 * 90);
+
+        response.addCookie(cookie);
 
         return makeUserAuthedDto(userOp.get(), token);
     }

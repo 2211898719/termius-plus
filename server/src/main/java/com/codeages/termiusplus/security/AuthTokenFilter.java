@@ -85,6 +85,12 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             response.setStatus(e.getStatus());
             response.getWriter()
                     .write(objectMapper.writeValueAsString(AppError.fromAppException(e, request)));
+            if (e.getStatus() == ErrorCode.UNAUTHORIZED.getStatus()){
+                Cookie cookie = new Cookie("token", "");
+                cookie.setPath("/");
+                cookie.setMaxAge(60 * 60 * 24 * 90);
+                response.addCookie(cookie);
+            }
         } catch (Exception e) {
             response.setCharacterEncoding("UTF-8");
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
@@ -99,7 +105,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         Cookie[] cookies = request.getCookies();
         if (cookies != null) {
             for (Cookie cookie : cookies) {
-                if ("token".equals(cookie.getName())) {
+                if ("token".equals(cookie.getName()) && StrUtil.isNotBlank(cookie.getValue())) {
                     return cookie.getValue();
                 }
             }

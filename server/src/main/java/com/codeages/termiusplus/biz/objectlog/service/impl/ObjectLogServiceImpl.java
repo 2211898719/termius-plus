@@ -4,6 +4,7 @@ import com.codeages.termiusplus.biz.objectlog.entity.ObjectLog;
 import com.codeages.termiusplus.biz.objectlog.repository.ObjectLogRepository;
 import com.codeages.termiusplus.biz.objectlog.service.ObjectLogService;
 import com.codeages.termiusplus.security.SecurityContext;
+import com.google.gson.Gson;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -14,10 +15,12 @@ public class ObjectLogServiceImpl implements ObjectLogService {
     private final ObjectLogRepository repo;
 
     private final SecurityContext context;
+    private final Gson gson;
 
-    public ObjectLogServiceImpl(ObjectLogRepository repo, SecurityContext context) {
+    public ObjectLogServiceImpl(ObjectLogRepository repo, SecurityContext context, Gson gson) {
         this.repo = repo;
         this.context = context;
+        this.gson = gson;
     }
 
     @Override
@@ -72,7 +75,7 @@ public class ObjectLogServiceImpl implements ObjectLogService {
         log.setOid(oid);
         log.setEvent(event);
         log.setMessage(message);
-        log.setContext("");
+        log.setContext(gson.toJson(context));
 
         var user = this.context.getUser();
         if (user != null) {

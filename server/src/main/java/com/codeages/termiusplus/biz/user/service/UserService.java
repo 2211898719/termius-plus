@@ -1,9 +1,6 @@
 package com.codeages.termiusplus.biz.user.service;
 
-import com.codeages.termiusplus.biz.user.dto.UserCreateParams;
-import com.codeages.termiusplus.biz.user.dto.UserDto;
-import com.codeages.termiusplus.biz.user.dto.UserSearchParams;
-import com.codeages.termiusplus.biz.user.dto.UserUpdateParams;
+import com.codeages.termiusplus.biz.user.dto.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -27,4 +24,6 @@ public interface UserService {
     Page<UserDto> search(UserSearchParams params, Pageable pager);
 
     List<UserDto> findAllByIdIn(List<Long> ids);
+
+    void changePassword(ChangePasswordParams params);
 }

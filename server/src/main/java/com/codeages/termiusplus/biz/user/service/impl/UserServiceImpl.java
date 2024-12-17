@@ -4,10 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.codeages.termiusplus.biz.ErrorCode;
 import com.codeages.termiusplus.biz.objectlog.service.ObjectLogService;
-import com.codeages.termiusplus.biz.user.dto.UserCreateParams;
-import com.codeages.termiusplus.biz.user.dto.UserDto;
-import com.codeages.termiusplus.biz.user.dto.UserSearchParams;
-import com.codeages.termiusplus.biz.user.dto.UserUpdateParams;
+import com.codeages.termiusplus.biz.user.dto.*;
 import com.codeages.termiusplus.biz.user.entity.QUser;
 import com.codeages.termiusplus.biz.user.entity.User;
 import com.codeages.termiusplus.biz.user.entity.UserRole;
@@ -203,5 +200,23 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<UserDto> findAllByIdIn(List<Long> ids) {
         return mapper.toDto(repo.findAllByIdIn(ids));
+    }
+
+    @Override
+    @Transactional
+    public void changePassword(ChangePasswordParams params) {
+        var user = repo.findById(params.getUserId())
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "用户不存在"));
+
+        if (!encoder.matches(params.getOldPassword(), user.getPassword())) {
+            throw new AppException(ErrorCode.INVALID_ARGUMENT, "旧密码错误");
+        }
+
+        user.setPassword(encoder.encode(params.getNewPassword()));
+        repo.save(user);
+
+        cacheManager.removeCache(user);
+
+        logService.info("User", user.getId(), "change_password", "管理员修改密码");
     }
 }

@@ -1,15 +1,13 @@
 package com.codeages.termiusplus.api.admin;
 
 import com.codeages.termiusplus.biz.ErrorCode;
-import com.codeages.termiusplus.biz.user.dto.UserCreateParams;
-import com.codeages.termiusplus.biz.user.dto.UserDto;
-import com.codeages.termiusplus.biz.user.dto.UserSearchParams;
-import com.codeages.termiusplus.biz.user.dto.UserUpdateParams;
+import com.codeages.termiusplus.biz.user.dto.*;
 import com.codeages.termiusplus.biz.user.service.UserService;
 import com.codeages.termiusplus.common.IdPayload;
 import com.codeages.termiusplus.common.OkResponse;
 import com.codeages.termiusplus.common.PagerResponse;
 import com.codeages.termiusplus.exception.AppException;
+import com.codeages.termiusplus.security.SecurityContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -24,9 +22,11 @@ import java.util.List;
 public class AdminUserController {
 
     private final UserService userService;
+    private final SecurityContext securityContext;
 
-    public AdminUserController(UserService userService) {
+    public AdminUserController(UserService userService, SecurityContext securityContext) {
         this.userService = userService;
+        this.securityContext = securityContext;
     }
 
 
@@ -74,4 +74,5 @@ public class AdminUserController {
     public List<UserDto> list(UserSearchParams params) {
         return userService.search(params, Pageable.unpaged()).getContent();
     }
+
 }

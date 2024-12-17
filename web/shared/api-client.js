@@ -8,6 +8,7 @@ const client = axios.create({
     timeout: 60000,
 });
 
+console.log(process.env.NODE_ENV)
 client.interceptors.request.use((config) => {
     const store = useAuthStore();
     if (store.isLogin) {

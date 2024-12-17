@@ -15,4 +15,7 @@ export const userApi = {
     list: async (params) => {
         return client.get("/api-admin/user/list", {params: params});
     },
+    changePassword: async (params) => {
+        return client.post("/api-app/user/changePassword", params);
+    },
 }

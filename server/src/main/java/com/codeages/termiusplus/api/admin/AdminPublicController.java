@@ -4,6 +4,8 @@ package com.codeages.termiusplus.api.admin;
 import com.codeages.termiusplus.biz.user.dto.LoginParams;
 import com.codeages.termiusplus.biz.user.dto.UserAuthedDto;
 import com.codeages.termiusplus.biz.user.service.UserAuthService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,8 +27,8 @@ public class AdminPublicController {
     }
 
     @PostMapping("/login")
-    public UserAuthedDto login(@RequestBody LoginParams params) {
-        return authService.login(params);
+    public UserAuthedDto login(@RequestBody LoginParams params, HttpServletResponse response) {
+        return authService.login(params,response);
     }
 
     @GetMapping("/getMapSetting")

@@ -103,7 +103,7 @@ public class MonitorJob {
                                      );
 
         Map<ApplicationMonitorDto, ApplicationMonitorExecDto> execMap = new ConcurrentHashMap<>();
-        CompletableFuture<Void>[] futures = new CompletableFuture[applicationMonitorList.size()];
+        CompletableFuture<?>[] futures = new CompletableFuture[applicationMonitorList.size()];
         for (int i = 0; i < applicationMonitorList.size(); i++) {
             ApplicationMonitorDto applicationMonitor = applicationMonitorList.get(i);
             futures[i] = CompletableFuture.runAsync(() -> {

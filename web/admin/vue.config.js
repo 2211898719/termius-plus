@@ -17,6 +17,10 @@ module.exports = defineConfig({
                 target: process.env.VUE_APP_PROXY_FOR_API,
                 changeOrigin: true,
             },
+            '/api-app': {
+                target: process.env.VUE_APP_PROXY_FOR_API,
+                changeOrigin: true,
+            },
             '/socket': {
                 target: process.env.VUE_APP_PROXY_FOR_API,
                 changeOrigin: true,
