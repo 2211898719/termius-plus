@@ -34,6 +34,10 @@
                             <a @click="showDetail(record)">详情</a>
                             <a-divider type="vertical" />
                           <a @click="handleUpdate(record)">修改</a>
+                          <a-divider type="vertical" />
+                          <a-popconfirm title="确认操作吗？" ok-text="确认" cancel-text="取消" @confirm="handleLock(record)">
+                            <a >{{ record.locked? '解锁' : '锁定' }}</a>
+                          </a-popconfirm>
                         </template>
                         <template v-else-if="column.key === 'registerAt'">
                             <div>{{ $f.datetime(record.registerAt) }}</div>
@@ -60,15 +64,11 @@
                 <a-descriptions bordered :column="2">
                     <a-descriptions-item label="ID">{{ detailUser.id }}</a-descriptions-item>
                     <a-descriptions-item label="用户名">{{ detailUser.username }}</a-descriptions-item>
-                    <a-descriptions-item label="Email"  :span="2">{{ detailUser.email }}</a-descriptions-item>
                     <a-descriptions-item label="注册时间">{{ $f.datetime(detailUser.registerAt) }}</a-descriptions-item>
                     <a-descriptions-item label="注册IP">{{ detailUser.registerIp }}</a-descriptions-item>
                     <a-descriptions-item label="登录时间">{{ $f.datetime(detailUser.loginAt) }}</a-descriptions-item>
                     <a-descriptions-item label="登录IP">{{ detailUser.loginIp }}</a-descriptions-item>
                 </a-descriptions>
-            </a-tab-pane>
-            <a-tab-pane key="logs" tab="登录日志">
-
             </a-tab-pane>
         </a-tabs>
     </a-drawer>
@@ -101,7 +101,7 @@
             </a-form-item>
           <a-form-item label="角色" v-bind="creationValidations.roleIds">
             <p-select :api="roleApi.list" v-model:value="creationState.roleIds" mode="multiple"></p-select>
-            </a-form-item>
+          </a-form-item>
 
         </a-form>
 
@@ -223,6 +223,21 @@ const handleUpdate = (row) => {
   Object.assign(creationState, row);
   tag.value = 'update';
   creationVisible.value = true;
+}
+
+const handleLock = (row) => {
+  if (!row.locked){
+    userApi.lock(row.id).then(() => {
+      message.success("锁定成功");
+      fetchPaginationData();
+    });
+  }else{
+    userApi.unlock(row.id).then(() => {
+      message.success("解锁成功");
+      fetchPaginationData();
+    });
+  }
+
 }
 
 </script>

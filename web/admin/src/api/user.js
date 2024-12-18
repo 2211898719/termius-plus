@@ -18,4 +18,11 @@ export const userApi = {
     changePassword: async (params) => {
         return client.post("/api-app/user/changePassword", params);
     },
+    lock(id) {
+        return client.post("/api-admin/user/lock", {id: id});
+    },
+    unlock(id) {
+        return client.post("/api-admin/user/unlock", {id: id});
+    }
+
 }

@@ -27,8 +27,10 @@ public class AdminPublicController {
     }
 
     @PostMapping("/login")
-    public UserAuthedDto login(@RequestBody LoginParams params, HttpServletResponse response) {
-        return authService.login(params,response);
+    public UserAuthedDto login(@RequestBody LoginParams params,
+                               HttpServletRequest request,
+                               HttpServletResponse response) {
+        return authService.login(params, request, response);
     }
 
     @GetMapping("/getMapSetting")
