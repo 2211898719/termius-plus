@@ -17,7 +17,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.Socket;
@@ -63,24 +66,6 @@ public class AdminUserController {
     @PostMapping("/resetPassword")
     public Map<String, String> resetPassword(@RequestBody IdPayload id) {
         return Map.of("password", userService.resetPassword(id.getId()));
-    }
-
-    public static void main(String[] args) {
-        String proxyHost = "localhost"; // 代理主机
-        int proxyPort = 7890; // 代理端口
-        String targetHost = "36.136.32.72"; // 目标主机
-        int targetPort = 2221; // telnet 默认端口
-        int timeout = 5000; // 超时设置
-
-        Proxy proxy = new Proxy(Proxy.Type.SOCKS, new InetSocketAddress(proxyHost, proxyPort));
-
-        long startTime = System.currentTimeMillis();
-        try (Socket socket = new Socket(proxy)) {
-            socket.connect(new InetSocketAddress(targetHost, targetPort), timeout);
-            System.out.println("通过代理连接成功！" + (System.currentTimeMillis() - startTime) + "ms");
-        } catch (IOException e) {
-            System.out.println("通过代理连接失败：" + e.getMessage());
-        }
     }
 
     @GetMapping("/get")
