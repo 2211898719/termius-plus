@@ -12,12 +12,7 @@ let routes = [
     component: BasicLayout,
     redirect: '/server',
     children: [
-      {
-        path: '/welcome',
-        name: 'welcome',
-        meta: { title: '欢迎' },
-        component: () => import('../views/WelcomePage.vue'),
-      },
+
       {
         path: '/user',
         name: 'user',

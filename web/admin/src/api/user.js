@@ -23,6 +23,8 @@ export const userApi = {
     },
     unlock(id) {
         return client.post("/api-admin/user/unlock", {id: id});
+    },
+    resetPassword(id) {
+        return client.post("/api-admin/user/resetPassword", {id: id});
     }
-
 }

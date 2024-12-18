@@ -26,4 +26,6 @@ public interface UserService {
     List<UserDto> findAllByIdIn(List<Long> ids);
 
     void changePassword(ChangePasswordParams params);
+
+    String resetPassword(Long id);
 }

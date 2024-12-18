@@ -165,7 +165,10 @@ const initSocket = () => {
       handleComplete()
     },
     onError: (e) => {
-
+      emit("update:loading", true)
+    },
+    onDisconnected: () => {
+      emit("update:loading", true)
     },
     onConnected: () => {
       socket = useSocket.ws.value;

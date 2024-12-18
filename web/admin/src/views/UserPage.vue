@@ -38,6 +38,11 @@
                           <a-popconfirm title="确认操作吗？" ok-text="确认" cancel-text="取消" @confirm="handleLock(record)">
                             <a >{{ record.locked? '解锁' : '锁定' }}</a>
                           </a-popconfirm>
+                          <a-divider type="vertical" />
+                          <a-popconfirm title="确认操作吗？" ok-text="确认" cancel-text="取消" @confirm="handleResetPassword(record)">
+                            <a>重置密码</a>
+                          </a-popconfirm>
+
                         </template>
                         <template v-else-if="column.key === 'registerAt'">
                             <div>{{ $f.datetime(record.registerAt) }}</div>
@@ -115,9 +120,10 @@ import {reactive, ref, watch} from "vue";
 import {useRouter} from "vue-router";
 import usePaginationQuery from "@shared/usePaginationQuery";
 import {userApi} from "@/api/user";
-import {Form, message} from 'ant-design-vue';
+import {Form, message, Modal} from 'ant-design-vue';
 import PSelect from "@/components/p-select.vue";
 import {roleApi} from "@/api/role";
+import {copyToClipboard} from "@/utils/copyUtil";
 
 const useForm = Form.useForm;
 const router = useRouter();
@@ -237,7 +243,20 @@ const handleLock = (row) => {
       fetchPaginationData();
     });
   }
+}
 
+const handleResetPassword = (row) => {
+  userApi.resetPassword(row.id).then((res) => {
+    message.success("重置密码成功");
+    Modal.confirm({
+      title: '重置成功，点击确定复制密码',
+      onOk() {
+        copyToClipboard(res.password)
+        message.success("密码已复制到剪贴板")
+      },
+    });
+    fetchPaginationData();
+  });
 }
 
 </script>

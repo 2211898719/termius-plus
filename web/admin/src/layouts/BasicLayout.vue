@@ -215,4 +215,7 @@ const onLogout = () => {
 .ant-pro-basicLayout-content{
   margin: 0!important;
 }
+.ant-pro-top-nav-header-main-left{
+  margin-right: 8px;
+}
 </style>

@@ -1,6 +1,7 @@
 package com.codeages.termiusplus.biz.user.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.lang.UUID;
 import cn.hutool.core.util.StrUtil;
 import com.codeages.termiusplus.biz.ErrorCode;
 import com.codeages.termiusplus.biz.objectlog.service.ObjectLogService;
@@ -218,5 +219,21 @@ public class UserServiceImpl implements UserService {
         cacheManager.removeCache(user);
 
         logService.info("User", user.getId(), "change_password", "管理员修改密码");
+    }
+
+    @Override
+    public String resetPassword(Long id) {
+        var user = repo.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "用户不存在"));
+
+        String newPassword = UUID.randomUUID().toString(true);
+        user.setPassword(encoder.encode(newPassword));
+        repo.save(user);
+
+        cacheManager.removeCache(user);
+
+        logService.info("User", user.getId(), "reset_password", "管理员重置密码");
+
+        return newPassword;
     }
 }

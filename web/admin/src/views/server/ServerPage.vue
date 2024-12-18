@@ -787,11 +787,20 @@ const changeMiniTab = () => {
 
 .tab-bar-group-container{
   background-color: #00152A;
-  overflow-y: scroll;
+
+  //宽度太小就width:120px;
+  //媒体查询
+
 
 .tab-bar-group {
   background-color: #00152A;
-
+  @media only screen and (max-width: 1000px) {
+    width: 67px !important;
+    .tab-close{
+      background: none !important;
+      font-size: 10px !important;
+    }
+  }
   min-height: 100%;
   transition: all 0.5s;
   position: relative;
@@ -805,6 +814,7 @@ const changeMiniTab = () => {
   ::-webkit-scrollbar {
     display: none;
   }
+
 
 
   .sortable {
