@@ -45,7 +45,7 @@ public class PortForWardingServiceImpl implements PortForWardingService {
 
     @Override
     public List<PortForwarderDto> list() {
-        return localPortForwarderMap.values().stream().filter(PortForwarderDto::getRetain).collect(Collectors.toList());
+        return localPortForwarderMap.values().stream().filter(dto ->!dto.getRetain()).collect(Collectors.toList());
     }
 
     @SneakyThrows
@@ -165,7 +165,7 @@ public class PortForWardingServiceImpl implements PortForWardingService {
                 forwardingName,
                 localPortForwarder,
                 localPort,
-                currentIp,
+                localHost,
                 remoteHost,
                 remotePort,
                 serverId,
