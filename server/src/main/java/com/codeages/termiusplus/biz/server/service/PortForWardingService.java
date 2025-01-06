@@ -2,6 +2,7 @@ package com.codeages.termiusplus.biz.server.service;
 
 import com.codeages.termiusplus.biz.server.dto.PortForwarderDto;
 
+import java.util.Collection;
 import java.util.List;
 
 public interface PortForWardingService {

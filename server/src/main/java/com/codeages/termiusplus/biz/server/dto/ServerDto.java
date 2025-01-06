@@ -31,5 +31,6 @@ public class ServerDto {
     private ProxyDto proxy;
     private Boolean keepAlive;
     private Long proxyServerId;
+    private Long useProxyServerId;
 }
 

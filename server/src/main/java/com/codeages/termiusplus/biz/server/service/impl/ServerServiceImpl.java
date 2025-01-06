@@ -132,6 +132,9 @@ public class ServerServiceImpl implements ServerService {
                                         .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
 
         serverMapper.toUpdateEntity(server, params);
+        server.setProxyId(params.getProxyId());
+        server.setProxyServerId(params.getProxyServerId());
+
         serverRepository.save(server);
     }
 
@@ -157,8 +160,9 @@ public class ServerServiceImpl implements ServerService {
                                               ));
 
         Long proxyId = serverDto.getProxyId();
+        Long proxyServerId = serverDto.getProxyServerId();
         ServerDto currentServer = serverDto;
-        while (proxyId == null) {
+        while (proxyId == null && proxyServerId == null) {
             if (currentServer.getParentId() == null || currentServer.getParentId() == 0) {
                 break;
             }
@@ -170,6 +174,14 @@ public class ServerServiceImpl implements ServerService {
                                                     "服务器不存在"
                                             ));
             proxyId = currentServer.getProxyId();
+            proxyServerId = currentServer.getProxyServerId();
+        }
+
+        if (proxyServerId != null) {
+            //自己就不用代理自己了
+            if (!Objects.equals(proxyServerId, serverDto.getId())){
+                serverDto.setUseProxyServerId(proxyServerId);
+            }
         }
 
         if (proxyId != null) {
@@ -418,7 +430,7 @@ public class ServerServiceImpl implements ServerService {
                .setKeepAliveInterval(60);
         }
         //设置sshj代理
-        if (server.getProxy() != null && server.getProxyServerId() == null) {
+        if (server.getProxy() != null && server.getUseProxyServerId() == null) {
             ssh.setSocketFactory(new SocketFactory() {
 
                 public Socket createSocket() {
@@ -467,7 +479,7 @@ public class ServerServiceImpl implements ServerService {
 
         while (errorCount < connectCount) {
             try {
-                Long proxyServerId = server.getProxyServerId();
+                Long proxyServerId = server.getUseProxyServerId();
                 if (proxyServerId != null) {
                     PortForWardingService portForWardingService = SpringUtil.getBean(PortForWardingService.class);
                     PortForwarderDto portForwarderDto = portForWardingService.startRetainPortForwarding(

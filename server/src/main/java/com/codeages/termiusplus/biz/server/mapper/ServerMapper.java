@@ -15,7 +15,7 @@ public interface ServerMapper {
 
     @Mapping(target = "sort", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    Server toUpdateEntity(@MappingTarget Server server, ServerUpdateParams updateParams);
+    Server toUpdateEntity(@MappingTarget Server server, ServerUpdateParams params);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     Server toUpdateAllEntity(@MappingTarget Server server, TreeSortParams serverUpdateParam);

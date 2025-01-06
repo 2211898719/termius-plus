@@ -60,7 +60,7 @@ public class PortForWardingServiceImpl implements PortForWardingService {
 
     @SneakyThrows
     @Override
-    public PortForwarderDto startRetainPortForwarding(Long serverId, String remoteHost, Integer remotePort) {
+    public synchronized PortForwarderDto startRetainPortForwarding(Long serverId, String remoteHost, Integer remotePort) {
         PortForwarderDto portForwarderDto = list().stream()
                                                   .filter(PortForwarderDto::getRetain)
                                                   .filter(dto -> dto.getServerId()
@@ -68,16 +68,21 @@ public class PortForWardingServiceImpl implements PortForWardingService {
                                                                                             .equals(remoteHost) && dto.getRemotePort()
                                                                                                                       .equals(remotePort))
                                                   .findFirst()
-                                                  .orElseGet(() -> startPortForwarding(
-                                                          serverId + "--" + remoteHost + "--" + remotePort,
-                                                          "127.0.0.1",
-                                                          NetUtil.getUsableLocalPort(maxPort),
-                                                          serverId,
-                                                          remoteHost,
-                                                          remotePort,
-                                                          0,
-                                                          true
-                                                  ));
+                                                  .orElseGet(() -> {
+                                                      log.info("start retain port forwarding:{}", serverId + "--" + remoteHost + "--" + remotePort);
+                                                      return startPortForwarding(
+                                                              serverId + "--" + remoteHost + "--" + remotePort,
+                                                              "127.0.0.1",
+                                                              NetUtil.getUsableLocalPort(maxPort),
+                                                              serverId,
+                                                              remoteHost,
+                                                              remotePort,
+                                                              0,
+                                                              true
+                                                      );
+                                                  });
+
+        log.info(" retain port forwarding:{}", portForwarderDto);
 
         return portForwarderDto;
     }
