@@ -8,6 +8,7 @@ import cn.hutool.core.lang.tree.TreeNode;
 import cn.hutool.core.lang.tree.TreeUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONUtil;
 import com.codeages.termiusplus.biz.ErrorCode;
 import com.codeages.termiusplus.biz.server.context.ServerContext;
@@ -20,6 +21,7 @@ import com.codeages.termiusplus.biz.server.mapper.ServerMapper;
 import com.codeages.termiusplus.biz.server.mapper.ServerRunLogMapper;
 import com.codeages.termiusplus.biz.server.repository.ServerRepository;
 import com.codeages.termiusplus.biz.server.repository.ServerRunLogRepository;
+import com.codeages.termiusplus.biz.server.service.PortForWardingService;
 import com.codeages.termiusplus.biz.server.service.ProxyService;
 import com.codeages.termiusplus.biz.server.service.ServerService;
 import com.codeages.termiusplus.biz.util.ExecuteCommandSSHClient;
@@ -31,7 +33,6 @@ import com.codeages.termiusplus.exception.AppException;
 import com.codeages.termiusplus.ws.ssh.AuthKeyBoardHandler;
 import com.codeages.termiusplus.ws.ssh.EventType;
 import com.codeages.termiusplus.ws.ssh.MessageDto;
-import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.querydsl.core.BooleanBuilder;
 import jakarta.validation.ConstraintViolation;
@@ -51,12 +52,8 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.PostConstruct;
 import javax.net.SocketFactory;
 import java.io.IOException;
-import java.lang.reflect.Type;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.net.*;
 import java.time.Duration;
 import java.util.*;
@@ -421,7 +418,7 @@ public class ServerServiceImpl implements ServerService {
                .setKeepAliveInterval(60);
         }
         //设置sshj代理
-        if (server.getProxy() != null) {
+        if (server.getProxy() != null && server.getProxyServerId() == null) {
             ssh.setSocketFactory(new SocketFactory() {
 
                 public Socket createSocket() {
@@ -470,11 +467,26 @@ public class ServerServiceImpl implements ServerService {
 
         while (errorCount < connectCount) {
             try {
-                ssh.connect(
-                        server.getIp(),
-                        server.getPort()
-                              .intValue()
-                           );
+                Long proxyServerId = server.getProxyServerId();
+                if (proxyServerId != null) {
+                    PortForWardingService portForWardingService = SpringUtil.getBean(PortForWardingService.class);
+                    PortForwarderDto portForwarderDto = portForWardingService.startRetainPortForwarding(
+                            proxyServerId,
+                            server.getIp(),
+                            server.getPort().intValue()
+                    );
+                    ssh.connect(
+                            portForwarderDto.getLocalHost(),
+                            portForwarderDto.getLocalPort()
+                    );
+                } else {
+                    ssh.connect(
+                            server.getIp(),
+                            server.getPort()
+                                  .intValue()
+                    );
+                }
+
                 break;
             } catch (ConnectException connectException) {
                 appException = new AppException(ErrorCode.INVALID_ARGUMENT, "连接失败，请检查网络或者服务器是否开启");

@@ -14,8 +14,6 @@ import lombok.extern.slf4j.Slf4j;
 import net.schmizz.sshj.connection.channel.direct.LocalPortForwarder;
 import net.schmizz.sshj.connection.channel.direct.Parameters;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -24,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -36,6 +35,9 @@ public class PortForWardingServiceImpl implements PortForWardingService {
     @Value("${current.ip}")
     private String currentIp;
 
+    @Value("${PortForWarding.maxPort}")
+    private Integer maxPort;
+
     public PortForWardingServiceImpl(ServerService serverService) {
         this.serverService = serverService;
         this.localPortForwarderMap = new ConcurrentHashMap<>();
@@ -43,7 +45,7 @@ public class PortForWardingServiceImpl implements PortForWardingService {
 
     @Override
     public List<PortForwarderDto> list() {
-        return List.copyOf(localPortForwarderMap.values());
+        return localPortForwarderMap.values().stream().filter(PortForwarderDto::getRetain).collect(Collectors.toList());
     }
 
     @SneakyThrows
@@ -53,8 +55,33 @@ public class PortForWardingServiceImpl implements PortForWardingService {
                                                 Long serverId,
                                                 String remoteHost,
                                                 Integer remotePort) {
-        return startPortForwarding(forwardingName, localPort, serverId, remoteHost, remotePort, 0);
+        return startPortForwarding(forwardingName, currentIp, localPort, serverId, remoteHost, remotePort, 0, false);
     }
+
+    @SneakyThrows
+    @Override
+    public PortForwarderDto startRetainPortForwarding(Long serverId, String remoteHost, Integer remotePort) {
+        PortForwarderDto portForwarderDto = list().stream()
+                                                  .filter(PortForwarderDto::getRetain)
+                                                  .filter(dto -> dto.getServerId()
+                                                                    .equals(serverId) && dto.getRemoteHost()
+                                                                                            .equals(remoteHost) && dto.getRemotePort()
+                                                                                                                      .equals(remotePort))
+                                                  .findFirst()
+                                                  .orElseGet(() -> startPortForwarding(
+                                                          serverId + "--" + remoteHost + "--" + remotePort,
+                                                          "127.0.0.1",
+                                                          NetUtil.getUsableLocalPort(maxPort),
+                                                          serverId,
+                                                          remoteHost,
+                                                          remotePort,
+                                                          0,
+                                                          true
+                                                  ));
+
+        return portForwarderDto;
+    }
+
 
     /**
      * 将本地端口转发到远程端口，使用本地host
@@ -65,13 +92,18 @@ public class PortForWardingServiceImpl implements PortForWardingService {
      */
     @SneakyThrows
     public PortForwarderDto startPortForwarding(String forwardingName,
+                                                String localHost,
                                                 Integer localPort,
                                                 Long serverId,
                                                 String remoteHost,
-                                                Integer remotePort, Integer retryCount) {
+                                                Integer remotePort,
+                                                Integer retryCount,
+                                                boolean retain) {
         if (localPortForwarderMap.containsKey(localPort)) {
-            throw new AppException(ErrorCode.INTERNAL_ERROR, "端口已被“" + localPortForwarderMap.get(localPort)
-                    .getForwardingName() + "”映射占用");
+            throw new AppException(
+                    ErrorCode.INTERNAL_ERROR,
+                    "端口已被“" + localPortForwarderMap.get(localPort).getForwardingName() + "”映射占用"
+            );
         }
 
         if (!NetUtil.isUsableLocalPort(localPort)) {
@@ -80,19 +112,23 @@ public class PortForWardingServiceImpl implements PortForWardingService {
 
         ServerDto serverDto = serverService.findById(serverId);
 
-        LocalPortForwarder localPortForwarder = serverService.createSSHClient(serverId)
-                .newLocalPortForwarder(new Parameters(
-                        currentIp,
+        LocalPortForwarder localPortForwarder = serverService.createSSHClient(serverId).newLocalPortForwarder(
+                new Parameters(
+                        localHost,
                         localPort,
                         StrUtil.isEmpty(remoteHost) ? serverDto.getIp() : remoteHost,
                         remotePort
-                ), new ServerSocket(localPort));
+                ),
+                new ServerSocket(localPort)
+        );
 
 
         CompletableFuture.runAsync(() -> {
             try {
-                localPortForwarder.listen(ThreadUtil.newThread(() -> {
-                }, "localPortForwarder-" + localPort));
+                localPortForwarder.listen(ThreadUtil.newThread(
+                        () -> {
+                        }, "localPortForwarder-" + localPort
+                ));
             } catch (IOException e) {
                 log.error("端口转发失败", e);
                 try {
@@ -106,7 +142,16 @@ public class PortForWardingServiceImpl implements PortForWardingService {
                     localPortForwarderMap.remove(localPort);
                 }
 
-                startPortForwarding(forwardingName, localPort, serverId, remoteHost, remotePort, portForwarderDto == null ? 0 : portForwarderDto.getRetryCount() + 1);
+                startPortForwarding(
+                        forwardingName,
+                        localHost,
+                        localPort,
+                        serverId,
+                        remoteHost,
+                        remotePort,
+                        portForwarderDto == null ? 0 : portForwarderDto.getRetryCount() + 1,
+                        false
+                );
             }
         });
 
@@ -120,13 +165,11 @@ public class PortForWardingServiceImpl implements PortForWardingService {
                 remotePort,
                 serverId,
                 serverDto,
-                retryCount
+                retryCount,
+                retain
         );
 
-        localPortForwarderMap.put(
-                localPort,
-                portForwarderDto
-        );
+        localPortForwarderMap.put(localPort, portForwarderDto);
 
         return portForwarderDto;
     }

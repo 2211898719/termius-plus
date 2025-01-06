@@ -56,6 +56,7 @@ public class Server {
     private Boolean infoTest;
     private Boolean historyGet;
     private String dbPort;
+    private Long proxyServerId;
     /**
      * 密钥
      */

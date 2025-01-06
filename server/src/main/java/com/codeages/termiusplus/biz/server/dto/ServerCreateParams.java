@@ -29,5 +29,7 @@ public class ServerCreateParams {
     private String remark;
     private String key;
     private Long proxyId;
+    private Long proxyServerId;
+
 }
 

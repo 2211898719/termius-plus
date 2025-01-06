@@ -29,5 +29,7 @@ public class ServerUpdateParams {
     private String dbPort;
     private String remark;
     private Long proxyId;
+    private Long proxyServerId;
+
 }
 

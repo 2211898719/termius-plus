@@ -27,6 +27,7 @@ import OsEnum from "@/enums/OsEnum";
 import {getSurname} from "@/utils/nameUtil";
 import autoAnimate from "@formkit/auto-animate";
 import {useRoute} from "vue-router";
+import PCascader from "@/components/p-cascader.vue";
 
 let termiusStyleColumn = ref(Math.floor(window.innerWidth / 300));
 
@@ -75,6 +76,7 @@ const creationState = reactive({
   historyGet: true,
   isDb: false,
   keepAlive: true,
+  proxyServerId: null,
   dbPort: []
 });
 
@@ -730,7 +732,7 @@ defineExpose({
               <a-textarea v-model:value="creationState.key"></a-textarea>
             </a-form-item>
           </template>
-          <a-form-item label="代理" v-bind="creationValidations.proxyId">
+          <a-form-item label="代理" v-bind="creationValidations.proxyId" v-if="!creationState.proxyServerId">
             <p-select ref="proxyRef" :api="proxyApi.list" v-model:value="creationState.proxyId"
                       :placeholder="creationState?.proxy?creationState.proxy.name:''"
                       style="width: 90%"></p-select>
@@ -739,6 +741,10 @@ defineExpose({
                 <plus-outlined/>
               </template>
             </a-button>
+          </a-form-item>
+          <a-form-item label="中转服务器" v-bind="creationValidations.proxyServerId">
+            <p-cascader  v-model:value="creationState.proxyServerId" :api="serverApi.list"></p-cascader>
+            <p>使用某个服务器作为代理，访问目标服务器（优先级高于<a>代理</a>）</p>
           </a-form-item>
 
           <a-form-item label="备注" v-bind="creationValidations.remark">
