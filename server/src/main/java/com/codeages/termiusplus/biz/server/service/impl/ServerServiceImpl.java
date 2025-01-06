@@ -40,6 +40,7 @@ import jakarta.validation.Validator;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import net.schmizz.sshj.SSHClient;
+import net.schmizz.sshj.connection.channel.direct.DirectConnection;
 import net.schmizz.sshj.transport.TransportException;
 import net.schmizz.sshj.transport.verification.PromiscuousVerifier;
 import net.schmizz.sshj.userauth.method.AuthPassword;
@@ -481,16 +482,13 @@ public class ServerServiceImpl implements ServerService {
             try {
                 Long proxyServerId = server.getUseProxyServerId();
                 if (proxyServerId != null) {
-                    PortForWardingService portForWardingService = SpringUtil.getBean(PortForWardingService.class);
-                    PortForwarderDto portForwarderDto = portForWardingService.startRetainPortForwarding(
-                            proxyServerId,
+                    SSHClient sshClient = createSSHClient(proxyServerId);
+                    DirectConnection directConnection = sshClient.newDirectConnection(
                             server.getIp(),
                             server.getPort().intValue()
                     );
-                    ssh.connect(
-                            portForwarderDto.getLocalHost(),
-                            portForwarderDto.getLocalPort()
-                    );
+
+                    ssh.connectVia(directConnection);
                 } else {
                     ssh.connect(
                             server.getIp(),
