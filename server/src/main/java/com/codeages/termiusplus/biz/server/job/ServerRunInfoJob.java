@@ -54,7 +54,6 @@ public class ServerRunInfoJob {
         log.info("ServerRunInfoJob execute end");
     }
 
-    @PostConstruct
     @Scheduled(cron = "0 30 10 * * ?")
     @SchedulerLock(name = "ServerRunInfoJob_estimateDiskUsage", lockAtMostFor = "60s")
     //硬盘使用率估算

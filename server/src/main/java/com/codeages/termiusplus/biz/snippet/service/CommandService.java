@@ -16,6 +16,8 @@ public interface CommandService {
     void update(CommandUpdateParams updateParams);
 
     void delete(Long id);
+
+    void execute(Long id);
 }
 
 
