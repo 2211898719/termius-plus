@@ -250,8 +250,15 @@ class termComponent {
       let originTermComponent = goldenLayoutArr[state.server.originOperationId].rootItem.contentItems[0].contentItems[0].component;
       this.rootElement.appendChild(originTermComponent.rootElement.firstChild)
       this.pTerm = originTermComponent.pTerm
+      originTermComponent.pTerm.props.onFocus = () => {
+        goldenLayoutArr[state.server.operationId].rootItem.focus = this.pTerm.component.exposed.focus
+      }
     } else {
-      this.pTerm = h(ServerContent, {...state, onHot: onServerHot})
+      this.pTerm = h(ServerContent, {
+        ...state, onHot: onServerHot, onFocus: () => {
+          goldenLayoutArr[state.server.operationId].rootItem.focus = this.pTerm.component.exposed.focus
+        }
+      })
       this.pTerm.appContext = componentIns.appContext
       this.rootElement.appendChild(this.vNode2dom(this.pTerm));
     }
@@ -439,6 +446,11 @@ function handleChangeActiveKey(val) {
 
 watch(() => tagActiveKey.value, (val) => {
   handleChangeActiveKey(val);
+
+  let focus = goldenLayoutArr[val]?.rootItem?.focus
+  if (focus) {
+    focus()
+  }
 })
 
 let miniTabBar = useStorage('miniTabBar', false)

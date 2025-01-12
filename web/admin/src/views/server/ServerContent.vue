@@ -16,10 +16,14 @@ import 'highlight.js/styles/agate.css'
 import {findLastNonEmptyTextNode, Pipe} from "@/utils/codeUtil";
 import {copyToClipboard} from "@/utils/copyUtil";
 
-const emit = defineEmits(['hot'])
+const emit = defineEmits(['hot', 'focus'])
 
 const onHot = (server) => {
   emit('hot', server)
+}
+
+const onFocus = (server) => {
+  emit('focus', server)
 }
 
 let searchLinuxDoc = ref(JSON.parse(JSON.stringify(linuxDoc)))
@@ -453,6 +457,7 @@ const handleKeyup = (event) => {
                         :master-session-id="server.masterSessionId"
                         ref="PTermRef"
                         @hot="onHot"
+                        @focus="onFocus"
                         v-model:inputTerminal="inputTerm"
                         v-model:sub-session-username="subSessionUsername"></p-term>
                 <div style="position: absolute;right: 16px;top: calc(50% - 1em / 2);color: aliceblue;z-index: 100"

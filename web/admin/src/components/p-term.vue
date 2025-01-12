@@ -12,6 +12,7 @@ import {serverApi} from "@/api/server";
 import {Button, message, notification} from "ant-design-vue";
 import pako from 'pako';
 import {WebglAddon} from '@xterm/addon-webgl';
+import {useAutoAnimate} from "@formkit/auto-animate/vue";
 
 let authStore = useAuthStore();
 
@@ -53,7 +54,7 @@ let props = defineProps({
   }
 });
 
-const emit = defineEmits(['update:loading', 'update:subSessionUsername', 'update:inputTerminal', 'hot'])
+const emit = defineEmits(['update:loading', 'update:subSessionUsername', 'update:inputTerminal', 'hot','focus'])
 
 let frontColor = useStorage('frontColor', "#ffffff")
 let backColor = useStorage('backColor', "#000000")
@@ -411,6 +412,7 @@ const initTerm = () => {
 
           if (searchedHistory.value.length) {
             selectCommand.value = searchedHistory.value[0]
+            searchHistoryChange('center')
           }
         })
       }
@@ -418,7 +420,9 @@ const initTerm = () => {
     }
 
   });
-
+  term._core._onFocus._listeners.push(() => {
+    emit("focus")
+  })
   term.focus();
 
   if (props.server.execCommand && props.masterSessionId === 0) {
@@ -636,13 +640,17 @@ onBeforeUnmount(() => {
   close()
 })
 
+const focus = () => {
+  nextTick(() => {
+    term.focus();
+  })
+}
+
 defineExpose({
   reload: () => {
     initSocket();
   },
-  focus: () => {
-    term.focus();
-  },
+  focus,
   close,
   execCommand,
   setDisableStdin: (value) => {
@@ -661,7 +669,7 @@ let searchVisible = ref(false)
 let searchText = ref('')
 let searchTextInputRef = ref(null)
 let regexEnabled = useStorage('search-regex-' + props.server.id, false)
-watch(searchVisible, (value) => {
+watch(() => searchVisible.value, (value) => {
   if (value) {
     searchTextInputRef.value.focus()
     let select = term.getSelection();
@@ -741,7 +749,12 @@ let searchedHistory = computed(() => {
 
 const searchHistoryChange = (type) => {
   let currentIndex = searchedHistory.value.indexOf(selectCommand.value)
-  currentIndex = currentIndex - (type === 'up' ? 1 : -1)
+  let command = {
+    up: 1,
+    down: -1,
+    center: 0
+  }
+  currentIndex = currentIndex - command[type]
   if (currentIndex < 0) {
     currentIndex = searchedHistory.value.length - 1
   } else if (currentIndex >= searchedHistory.value.length) {
@@ -750,7 +763,7 @@ const searchHistoryChange = (type) => {
 
   selectCommand.value = searchedHistory.value[currentIndex]
 
-  autoCompleteTextItemRefs.value[currentIndex].scrollIntoView({behavior: 'smooth', block: 'center'})
+  autoCompleteTextItemRefs.value[currentIndex].scrollIntoView({block: 'center'})
 }
 
 
@@ -783,6 +796,8 @@ const handleAutoCompleteSelectDown = (event) => {
 
 let autoCompleteTextItemRefs = ref([])
 
+
+const [autoAnimate] = useAutoAnimate()
 </script>
 
 
@@ -799,12 +814,12 @@ let autoCompleteTextItemRefs = ref([])
       <div class="auto-complete-root">
         <a-input ref="autoCompleteTextInputRef" v-model:value="autoCompleteText" placeholder="搜索历史命令"
                  @keydown="handleAutoCompleteSelectDown"></a-input>
-        <div class="auto-complete-list">
+        <div class="auto-complete-list" ref="autoAnimate">
           <div ref="autoCompleteTextItemRefs"
                :class="{'auto-complete-item':true,'auto-complete-item-active':selectCommand===item}"
                @click="handleAutoCompleteSelect(item)"
                @dblclick="writeCommandToTerminal"
-               v-for="(item,index) in searchedHistory" :key="index"> {{
+               v-for="(item,index) in searchedHistory" :key="item"> {{
               item
             }}
           </div>
@@ -948,7 +963,7 @@ let autoCompleteTextItemRefs = ref([])
         text-overflow: ellipsis;
 
         &-active {
-          background-color: #f5f5f5;
+          background-color: #f2f2f2;
         }
       }
     }

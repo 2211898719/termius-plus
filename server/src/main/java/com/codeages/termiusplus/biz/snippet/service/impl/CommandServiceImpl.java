@@ -145,12 +145,6 @@ public class CommandServiceImpl implements CommandService {
         log.info("execute command success, commandId:{}, serverIds:{}", id, serverIds);
     }
 
-//    @PostConstruct
-//    public void execute() {
-//        CompletableFuture.runAsync(()->{
-//            execute(14L);
-//        });
-//    }
 }
 
 
