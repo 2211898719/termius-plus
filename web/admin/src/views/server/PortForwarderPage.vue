@@ -156,12 +156,8 @@ const handleCloseServer = (item) => {
 }
 
 const handleCopy = (row) => {
-  console.log(row)
   //ssh -L localhost:10086:192.168.201.90:8888 -o ProxyCommand="nc -X 5 -x 192.168.101.189:1080 %h %p"  root@192.168.201.90 -NT
-  let command = `ssh -L 127.0.0.1:${row.localPort}:${row.remoteHost}:${row.remotePort} ${row.serverDto.username}@${row.serverDto.ip} -p ${row.serverDto.port} -NT`
-  if (row.serverDto.proxy) {
-    command += ` -o ProxyCommand="nc -X 5 -x ${row.serverDto.proxy.ip}:${row.serverDto.proxy.port} %h %p"`
-  }
+  let command = buildSshCommand(row)
 
   copyToClipboard(command).then(() => {
     Modal.confirm({
@@ -171,7 +167,27 @@ const handleCopy = (row) => {
       },
     });
   })
+}
 
+const copyPassword = (row) => {
+  copyToClipboard(row.password).then(() => {
+
+  })
+}
+
+const copySshCommand = (row) => {
+  let command = buildSshCommand(row)
+  copyToClipboard(command).then(() => {
+  })
+}
+
+const buildSshCommand = (row) => {
+  let command = `ssh -L 127.0.0.1:${row.localPort}:${row.remoteHost}:${row.remotePort} ${row.serverDto.username}@${row.serverDto.ip} -p ${row.serverDto.port} -NT`
+  if (row.serverDto.proxy) {
+    command += ` -o ProxyCommand="nc -X 5 -x ${row.serverDto.proxy.ip}:${row.serverDto.proxy.port} %h %p"`
+  }
+
+  return command
 }
 
 defineExpose({
@@ -280,6 +296,15 @@ defineExpose({
             </a-form-item>
             <a-form-item label="服务器端口：" v-bind="portForwardingCreationValidations.remotePort">
               <a-input-number v-model:value="creationPortForwardingState.remotePort" :min="1" :max="65535"></a-input-number>
+            </a-form-item>
+
+            <a-form-item label="本地命令：" v-if="creationPortForwardingState.serverId && creationPortForwardingState.localPort && creationPortForwardingState.remoteHost && creationPortForwardingState.remotePort">
+              <a-alert :message="buildSshCommand(creationPortForwardingState)" type="success"/>
+              <div style="margin-top: 8px;">
+                <a-button type="primary" @click="copySshCommand(creationPortForwardingState)">复制命令</a-button>
+                <a-button type="primary" @click="copyPassword(creationPortForwardingState.serverDto)" style="margin-left: 16px;">复制密码
+                </a-button>
+              </div>
             </a-form-item>
           </a-form>
           <a-drawer

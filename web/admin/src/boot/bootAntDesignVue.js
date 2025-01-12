@@ -42,7 +42,8 @@ import {
     Slider,
     Tree,
     Empty,
-    Progress
+    Progress,
+    Alert
 } from 'ant-design-vue';
 
 import {Split} from 'view-ui-plus'
@@ -59,6 +60,7 @@ export function bootAntDesignVue(app) {
     app
         .use(Button)
         .use(Tree)
+        .use(Alert)
         .use(Slider)
         .use(InputNumber)
         .use(Card)

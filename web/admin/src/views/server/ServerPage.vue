@@ -251,11 +251,13 @@ class termComponent {
       this.rootElement.appendChild(originTermComponent.rootElement.firstChild)
       this.pTerm = originTermComponent.pTerm
       originTermComponent.pTerm.props.onFocus = () => {
+        //这里保存分屏窗口的最后一个焦点函数，当tab变动时，恢复上一个tab的焦点
         goldenLayoutArr[state.server.operationId].rootItem.focus = this.pTerm.component.exposed.focus
       }
     } else {
       this.pTerm = h(ServerContent, {
         ...state, onHot: onServerHot, onFocus: () => {
+          //只有一个窗口时，focus事件只有一个。
           goldenLayoutArr[state.server.operationId].rootItem.focus = this.pTerm.component.exposed.focus
         }
       })
