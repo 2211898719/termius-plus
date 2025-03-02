@@ -9,10 +9,6 @@ public interface PortForWardingService {
 
     List<PortForwarderDto> list();
 
-    PortForwarderDto startRetainPortForwarding(Long serverId,
-                                               String remoteHost,
-                                               Integer remotePort);
-
     PortForwarderDto startPortForwarding(String forwardingName,
                              Integer localPort,
                              Long serverId,

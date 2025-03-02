@@ -20,5 +20,4 @@ public class PortForwarderDto {
     private Long serverId;
     private ServerDto serverDto;
     private Integer retryCount;
-    private Boolean retain;
 }
