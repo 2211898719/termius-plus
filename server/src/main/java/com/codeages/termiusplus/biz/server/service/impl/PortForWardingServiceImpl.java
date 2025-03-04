@@ -59,12 +59,13 @@ public class PortForWardingServiceImpl implements PortForWardingService {
     }
 
     @SneakyThrows
-    private PortForwarderDto startPortForwarding(Long id, String forwardingName,
-                                                Integer localPort,
-                                                Long serverId,
-                                                String remoteHost,
-                                                Integer remotePort) {
-        return startPortForwarding(id,forwardingName, currentIp, localPort, serverId, remoteHost, remotePort, 0);
+    private PortForwarderDto startPortForwarding(Long id,
+                                                 String forwardingName,
+                                                 Integer localPort,
+                                                 Long serverId,
+                                                 String remoteHost,
+                                                 Integer remotePort) {
+        return startPortForwarding(id, forwardingName, currentIp, localPort, serverId, remoteHost, remotePort, 0);
     }
 
 
@@ -223,7 +224,28 @@ public class PortForWardingServiceImpl implements PortForWardingService {
 
     @Override
     public void start(Long id) {
+        PortForwarding portForwarding = portForWardingRepository.findById(id)
+                                                                .orElseThrow(() -> new AppException(
+                                                                        ErrorCode.NOT_FOUND,
+                                                                        "端口转发不存在"
+                                                                ));
 
+        if (portForwarding.getStatus()
+                          .equals(PortForWardingStatusEnum.START)) {
+            stopPortForwarding(portForwarding.getLocalPort());
+        }
+
+        startPortForwarding(
+                id,
+                portForwarding.getForwardingName(),
+                portForwarding.getLocalPort(),
+                portForwarding.getServerId(),
+                portForwarding.getRemoteHost(),
+                portForwarding.getRemotePort()
+                           );
+
+        portForwarding.setStatus(PortForWardingStatusEnum.START);
+        portForWardingRepository.save(portForwarding);
     }
 
     @Override
@@ -233,6 +255,15 @@ public class PortForWardingServiceImpl implements PortForWardingService {
 
     @Override
     public void stop(Long id) {
+        PortForwarding portForwarding = portForWardingRepository.findById(id)
+                                                                .orElseThrow(() -> new AppException(
+                                                                        ErrorCode.NOT_FOUND,
+                                                                        "端口转发不存在"
+                                                                ));
+        stopPortForwarding(portForwarding.getLocalPort());
 
+        portForwarding.setStatus(PortForWardingStatusEnum.STOP);
+        portForWardingRepository.save(portForwarding);
     }
+
 }
