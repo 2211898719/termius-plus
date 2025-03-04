@@ -1,5 +1,5 @@
 -- 端口转发表
-create table `port_for_warding`
+create table `port_forwarding`
 (
     `id`              bigint unsigned not null auto_increment,
     `server_id`       bigint unsigned not null comment '服务器ID',

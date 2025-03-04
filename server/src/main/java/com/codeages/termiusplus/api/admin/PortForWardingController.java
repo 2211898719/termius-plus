@@ -2,6 +2,7 @@ package com.codeages.termiusplus.api.admin;
 
 import com.codeages.termiusplus.biz.server.dto.PortForwarderDto;
 import com.codeages.termiusplus.biz.server.service.PortForWardingService;
+import com.codeages.termiusplus.common.IdPayload;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,33 +24,28 @@ public class PortForWardingController {
     }
 
     @PostMapping("/start")
-    public void startPortForwarding(@RequestBody PortForwarderDto portForwarderDto) {
-        portForWardingService.startPortForwarding(
-                portForwarderDto.getForwardingName(),
-                portForwarderDto.getLocalPort(),
-                portForwarderDto.getServerId(),
-                portForwarderDto.getRemoteHost(),
-                portForwarderDto.getRemotePort()
-        );
+    public void startPortForwarding(@RequestBody IdPayload idPayload) {
+        portForWardingService.start(idPayload.getId());
+    }
+
+    @PostMapping("/create")
+    public void create(@RequestBody PortForwarderDto portForwarderDto) {
+        portForWardingService.create(portForwarderDto);
     }
 
     @PostMapping("/update")
     public void updatePortForwarding(@RequestBody PortForwarderDto portForwarderDto) {
-        portForWardingService.stopPortForwarding(portForwarderDto.getLocalPort());
-
-        portForWardingService.startPortForwarding(
-                portForwarderDto.getForwardingName(),
-                portForwarderDto.getLocalPort(),
-                portForwarderDto.getServerId(),
-                portForwarderDto.getRemoteHost(),
-                portForwarderDto.getRemotePort()
-        );
+        portForWardingService.update(portForwarderDto);
     }
 
-
     @PostMapping("/stop")
-    public void stopPortForwarding(@RequestBody PortForwarderDto portForwarderDto) {
-        portForWardingService.stopPortForwarding(portForwarderDto.getLocalPort());
+    public void stopPortForwarding(@RequestBody IdPayload idPayload) {
+        portForWardingService.stop(idPayload.getId());
+    }
+
+    @PostMapping("/delete")
+    public void delete(@RequestBody IdPayload idPayload) {
+        portForWardingService.delete(idPayload.getId());
     }
 
     @GetMapping("/isRunning")

@@ -10,6 +10,7 @@ import net.schmizz.sshj.connection.channel.direct.LocalPortForwarder;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PortForwarderDto {
+    private Long id;
     private String forwardingName;
     @JsonIgnore
     private LocalPortForwarder localPortForwarder;
