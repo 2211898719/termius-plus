@@ -147,7 +147,8 @@ defineExpose({
 
               </div>
               <div>
-                <a-button @click="proxyCreation" class="my-button">新增代理</a-button>
+                <a-button @click="getProxyData" class="my-button">刷新</a-button>
+                <a-button @click="proxyCreation" class="my-button" style="margin-left: 8px;">新增代理</a-button>
               </div>
             </div>
             <div class="mt30 server">

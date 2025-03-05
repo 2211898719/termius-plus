@@ -180,7 +180,7 @@ public class ServerServiceImpl implements ServerService {
 
         if (proxyServerId != null) {
             //自己就不用代理自己了
-            if (!Objects.equals(proxyServerId, serverDto.getId())){
+            if (!Objects.equals(proxyServerId, serverDto.getId())) {
                 serverDto.setUseProxyServerId(proxyServerId);
             }
         }
@@ -412,19 +412,18 @@ public class ServerServiceImpl implements ServerService {
      * 如果带有client sessionId 遇到可能需要二次验证的情况，会向前端发送获取验证码的消息
      *
      * @param id
-     * @param sessionId
+     * @param timeout
      * @return
      */
-    @Override
     @SneakyThrows
-    public SSHClient createSSHClient(Long id, String sessionId) {
+    private SSHClient createSSHClient(Long id, String sessionId, int timeout) {
         ServerDto server = findById(id);
         SSHClient ssh = new SSHClient();
         ssh.useCompression();
-        ssh.setTimeout(3600 * 1000);
-        ssh.setConnectTimeout(3600 * 1000);
+        ssh.setTimeout(timeout);
+        ssh.setConnectTimeout(timeout);
         ssh.getTransport()
-           .setTimeoutMs(0);
+           .setTimeoutMs(timeout);
         if (Boolean.TRUE.equals(server.getKeepAlive())) {
             ssh.getConnection()
                .getKeepAlive()
@@ -485,8 +484,9 @@ public class ServerServiceImpl implements ServerService {
                     SSHClient sshClient = createSSHClient(proxyServerId);
                     DirectConnection directConnection = sshClient.newDirectConnection(
                             server.getIp(),
-                            server.getPort().intValue()
-                    );
+                            server.getPort()
+                                  .intValue()
+                                                                                     );
 
                     ssh.connectVia(directConnection);
                 } else {
@@ -494,7 +494,7 @@ public class ServerServiceImpl implements ServerService {
                             server.getIp(),
                             server.getPort()
                                   .intValue()
-                    );
+                               );
                 }
 
                 break;
@@ -579,6 +579,24 @@ public class ServerServiceImpl implements ServerService {
         }
 
         return ssh;
+    }
+
+    /**
+     * 如果带有client sessionId 遇到可能需要二次验证的情况，会向前端发送获取验证码的消息
+     *
+     * @param id
+     * @param sessionId
+     * @return
+     */
+    @Override
+    @SneakyThrows
+    public SSHClient createSSHClient(Long id, String sessionId) {
+        return createSSHClient(id, sessionId, 3600 * 1000);
+    }
+
+    @Override
+    public SSHClient createSSHClient(Long id, int timeout) {
+        return createSSHClient(id, null, timeout);
     }
 
     @SneakyThrows

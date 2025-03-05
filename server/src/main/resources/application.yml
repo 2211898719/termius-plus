@@ -128,6 +128,7 @@ guacamole:
     serverId: ${GUACAMOLE_SERVER_ID:1}
 
 monitor:
+    enable: ${MONITOR_ENABLE:true}
     count: ${MONITOR_COUNT:1}
     timeout: ${MONITOR_TIMEOUT:30s}
     debounce: ${MONITOR_DEBOUNCE:10}

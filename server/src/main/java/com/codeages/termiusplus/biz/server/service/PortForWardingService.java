@@ -2,26 +2,25 @@ package com.codeages.termiusplus.biz.server.service;
 
 import com.codeages.termiusplus.biz.server.dto.PortForwarderDto;
 
-import java.util.Collection;
 import java.util.List;
 
 public interface PortForWardingService {
 
     List<PortForwarderDto> list();
 
-    PortForwarderDto startPortForwarding(String forwardingName,
-                             Integer localPort,
-                             Long serverId,
-                             String remoteHost,
-                             Integer remotePort);
-
-    Integer startPortForwarding(String forwardingName,
-                             Long serverId,
-                             Integer remotePort);
-
-    void stopPortForwarding(Integer localPort);
-
     boolean isRunning(Integer localPort);
 
     void stopAllPortForwarding();
+
+    void delete(Long id);
+
+    void create(PortForwarderDto portForwarderDto);
+
+    void start(Long id);
+
+    void update(PortForwarderDto portForwarderDto);
+
+    void stop(Long id);
+
+    String getLocalIp();
 }

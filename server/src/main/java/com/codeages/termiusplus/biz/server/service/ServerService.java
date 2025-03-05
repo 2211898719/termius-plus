@@ -34,6 +34,8 @@ public interface ServerService {
 
     SSHClient createSSHClient(Long id, String sessionId);
 
+    SSHClient createSSHClient(Long id, int timeout);
+
     Proxy createProxy(ServerDto server);
 
     List<Tree<Long>> groupList();

@@ -65,8 +65,9 @@ public class DbConnectOperationService {
             ServerDto serverDto = serverService.findById(dbId);
             String[] split = serverDto.getDbPort().split(",");
             Integer port = Integer.valueOf(split[0]);
-            Integer localPort = portForWardingService.startPortForwarding("数据库端口转发", dbId, port);
-            DruidDataSource druidDs = getDruidDataSource(currentIp, localPort.toString(), "root", "root");
+//            Integer localPort = portForWardingService.startPortForwarding("数据库端口转发", dbId, port);
+            //todo
+            DruidDataSource druidDs = getDruidDataSource(currentIp, null, "root", "root");
             serverDsContainer.put(dbId, druidDs);
             return druidDs;
         }

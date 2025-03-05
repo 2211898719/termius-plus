@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -40,6 +41,7 @@ import java.util.stream.Collectors;
 
 @Component
 @Slf4j
+@ConditionalOnProperty(name = "monitor.enabled", havingValue = "true")
 public class MonitorJob {
 
     @Autowired

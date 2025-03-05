@@ -1,7 +1,11 @@
 package com.codeages.termiusplus.api.admin;
 
 import com.codeages.termiusplus.biz.server.dto.PortForwarderDto;
+import com.codeages.termiusplus.biz.server.dto.ServerDto;
 import com.codeages.termiusplus.biz.server.service.PortForWardingService;
+import com.codeages.termiusplus.biz.server.service.ServerService;
+import com.codeages.termiusplus.biz.util.QueryUtils;
+import com.codeages.termiusplus.common.IdPayload;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,54 +15,54 @@ import java.util.List;
 @RequestMapping("/api-admin/port-forwarding")
 public class PortForWardingController {
     private final PortForWardingService portForWardingService;
+    private final ServerService serverService;
 
     @Autowired
-    public PortForWardingController(PortForWardingService portForWardingService) {
+    public PortForWardingController(PortForWardingService portForWardingService, ServerService serverService) {
         this.portForWardingService = portForWardingService;
+        this.serverService = serverService;
     }
 
     @GetMapping("/list")
-    List<PortForwarderDto> list() {
-        return portForWardingService.list();
+    public List<PortForwarderDto> list() {
+        List<PortForwarderDto> list = portForWardingService.list();
+        QueryUtils.batchQueryOneToOne(
+                list,
+                PortForwarderDto::getServerId,
+                serverService::findByIdIn,
+                ServerDto::getId,
+                PortForwarderDto::setServerDto
+                                     );
+        return list;
     }
 
     @PostMapping("/start")
-    public void startPortForwarding(@RequestBody PortForwarderDto portForwarderDto) {
-        portForWardingService.startPortForwarding(
-                portForwarderDto.getForwardingName(),
-                portForwarderDto.getLocalPort(),
-                portForwarderDto.getServerId(),
-                portForwarderDto.getRemoteHost(),
-                portForwarderDto.getRemotePort()
-        );
+    public void startPortForwarding(@RequestBody IdPayload idPayload) {
+        portForWardingService.start(idPayload.getId());
+    }
+
+    @PostMapping("/create")
+    public void create(@RequestBody PortForwarderDto portForwarderDto) {
+        portForWardingService.create(portForwarderDto);
     }
 
     @PostMapping("/update")
     public void updatePortForwarding(@RequestBody PortForwarderDto portForwarderDto) {
-        portForWardingService.stopPortForwarding(portForwarderDto.getLocalPort());
-
-        portForWardingService.startPortForwarding(
-                portForwarderDto.getForwardingName(),
-                portForwarderDto.getLocalPort(),
-                portForwarderDto.getServerId(),
-                portForwarderDto.getRemoteHost(),
-                portForwarderDto.getRemotePort()
-        );
+        portForWardingService.update(portForwarderDto);
     }
-
 
     @PostMapping("/stop")
-    public void stopPortForwarding(@RequestBody PortForwarderDto portForwarderDto) {
-        portForWardingService.stopPortForwarding(portForwarderDto.getLocalPort());
+    public void stopPortForwarding(@RequestBody IdPayload idPayload) {
+        portForWardingService.stop(idPayload.getId());
     }
 
-    @GetMapping("/isRunning")
-    public boolean isRunning(@RequestParam Integer localPort) {
-        return portForWardingService.isRunning(localPort);
+    @PostMapping("/delete")
+    public void delete(@RequestBody IdPayload idPayload) {
+        portForWardingService.delete(idPayload.getId());
     }
 
-    @PostMapping("/stopAll")
-    public void stopAllPortForwarding() {
-        portForWardingService.stopAllPortForwarding();
+    @GetMapping("/getLocalIp")
+    public String getLocalIp() {
+        return portForWardingService.getLocalIp();
     }
 }
