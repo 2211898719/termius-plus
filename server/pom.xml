@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.codeages</groupId>
     <artifactId>termius-plus</artifactId>
-    <version>server-v2.0.3</version>
+    <version>server-v2.0.4</version>
     <name>Termius Plus</name>
     <description>Termius Plus</description>
     <properties>

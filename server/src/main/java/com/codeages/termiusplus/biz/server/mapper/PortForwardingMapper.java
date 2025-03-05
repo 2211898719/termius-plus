@@ -10,6 +10,7 @@ import java.util.List;
 public interface PortForwardingMapper {
     PortForwarderDto toDto(PortForwarding portForwarder);
 
+    @Mapping(target = "id", ignore = true)
     PortForwarding toEntity(PortForwarderDto portForwarderDto);
 
     List<PortForwarderDto> toDto(List<PortForwarding> portForwarderList);

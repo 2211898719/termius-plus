@@ -1,6 +1,7 @@
 package com.codeages.termiusplus.biz.server.service.impl;
 
 import cn.hutool.core.net.NetUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.StrUtil;
 import com.codeages.termiusplus.biz.ErrorCode;
@@ -25,6 +26,7 @@ import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -55,7 +57,25 @@ public class PortForWardingServiceImpl implements PortForWardingService {
 
     @Override
     public List<PortForwarderDto> list() {
-        return new ArrayList<>(localPortForwarderMap.values());
+        return portForWardingRepository.findAll()
+                                       .stream()
+                                       .map(portForwardingMapper::toDto)
+                                       .peek(d -> d.setLocalHost(currentIp))
+                                       .toList();
+    }
+
+    @SneakyThrows
+    private PortForwarderDto startPortForwarding(PortForwarding portForwarding) {
+        return startPortForwarding(
+                portForwarding.getId(),
+                portForwarding.getForwardingName(),
+                currentIp,
+                portForwarding.getLocalPort(),
+                portForwarding.getServerId(),
+                portForwarding.getRemoteHost(),
+                portForwarding.getRemotePort(),
+                0
+                                  );
     }
 
     @SneakyThrows
@@ -100,12 +120,12 @@ public class PortForWardingServiceImpl implements PortForWardingService {
 
         ServerDto serverDto = serverService.findById(serverId);
 
-        LocalPortForwarder localPortForwarder = serverService.createSSHClient(serverId)
+        LocalPortForwarder localPortForwarder = serverService.createSSHClient(serverId,  4500)
                                                              .newLocalPortForwarder(
                                                                      new Parameters(
                                                                              localHost,
                                                                              localPort,
-                                                                             StrUtil.isEmpty(remoteHost) ? serverDto.getIp() : remoteHost,
+                                                                             CharSequenceUtil.isEmpty(remoteHost) ? serverDto.getIp() : remoteHost,
                                                                              remotePort
                                                                      ),
                                                                      new ServerSocket(localPort)
@@ -144,7 +164,6 @@ public class PortForWardingServiceImpl implements PortForWardingService {
             }
         });
 
-
         PortForwarderDto portForwarderDto = new PortForwarderDto(
                 id,
                 forwardingName,
@@ -155,7 +174,8 @@ public class PortForWardingServiceImpl implements PortForWardingService {
                 remotePort,
                 serverId,
                 serverDto,
-                retryCount
+                retryCount,
+                null
         );
 
         localPortForwarderMap.put(localPort, portForwarderDto);
@@ -208,18 +228,19 @@ public class PortForWardingServiceImpl implements PortForWardingService {
                                                                         ErrorCode.NOT_FOUND,
                                                                         "端口转发不存在"
                                                                 ));
-        if (portForwarding.getStatus()
-                          .equals(PortForWardingStatusEnum.START)) {
+        if (Objects.equals(PortForWardingStatusEnum.START, portForwarding.getStatus())) {
             stopPortForwarding(portForwarding.getLocalPort());
         }
-
 
         portForWardingRepository.deleteById(id);
     }
 
     @Override
     public void create(PortForwarderDto portForwarderDto) {
-        portForWardingRepository.save(portForwardingMapper.toEntity(portForwarderDto));
+        PortForwarding entity = portForwardingMapper.toEntity(portForwarderDto);
+        entity.setStatus(PortForWardingStatusEnum.STOP);
+
+        portForWardingRepository.save(entity);
     }
 
     @Override
@@ -250,7 +271,24 @@ public class PortForWardingServiceImpl implements PortForWardingService {
 
     @Override
     public void update(PortForwarderDto portForwarderDto) {
+        PortForwarding portForwarding = portForWardingRepository.findById(portForwarderDto.getId())
+                                                                .orElseThrow(() -> new AppException(
+                                                                        ErrorCode.NOT_FOUND,
+                                                                        "端口转发不存在"
+                                                                ));
+        portForwarding.setForwardingName(portForwarderDto.getForwardingName());
+        portForwarding.setServerId(portForwarderDto.getServerId());
+        portForwarding.setLocalPort(portForwarderDto.getLocalPort());
+        portForwarding.setRemoteHost(portForwarderDto.getRemoteHost());
+        portForwarding.setRemotePort(portForwarderDto.getRemotePort());
 
+        if (portForwarding.getStatus()
+                          .equals(PortForWardingStatusEnum.START)) {
+            stopPortForwarding(portForwarding.getLocalPort());
+            portForwarding.setStatus(PortForWardingStatusEnum.STOP);
+        }
+
+        portForWardingRepository.save(portForwarding);
     }
 
     @Override
@@ -264,6 +302,11 @@ public class PortForWardingServiceImpl implements PortForWardingService {
 
         portForwarding.setStatus(PortForWardingStatusEnum.STOP);
         portForWardingRepository.save(portForwarding);
+    }
+
+    @Override
+    public String getLocalIp() {
+        return currentIp;
     }
 
 }

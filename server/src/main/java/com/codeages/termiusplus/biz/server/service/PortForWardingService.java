@@ -21,4 +21,6 @@ public interface PortForWardingService {
     void update(PortForwarderDto portForwarderDto);
 
     void stop(Long id);
+
+    String getLocalIp();
 }

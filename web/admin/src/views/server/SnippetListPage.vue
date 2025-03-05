@@ -230,7 +230,8 @@ defineExpose({
 
             </div>
             <div>
-              <a-button @click="commandCreation" class="my-button">新增命令</a-button>
+              <a-button @click="getCommandData" class="my-button">刷新</a-button>
+              <a-button @click="commandCreation" class="my-button" style="margin-left: 8px;">新增命令</a-button>
             </div>
           </div>
           <div class="mt30 server">

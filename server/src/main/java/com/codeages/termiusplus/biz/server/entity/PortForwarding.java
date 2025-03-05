@@ -26,8 +26,6 @@ public class PortForwarding {
 
     private String forwardingName;
 
-    private String localHost;
-
     private Integer localPort;
 
     private String remoteHost;

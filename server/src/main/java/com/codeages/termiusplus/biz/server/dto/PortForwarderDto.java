@@ -1,5 +1,6 @@
 package com.codeages.termiusplus.biz.server.dto;
 
+import com.codeages.termiusplus.biz.server.enums.PortForWardingStatusEnum;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -21,4 +22,5 @@ public class PortForwarderDto {
     private Long serverId;
     private ServerDto serverDto;
     private Integer retryCount;
+    private PortForWardingStatusEnum status;
 }
