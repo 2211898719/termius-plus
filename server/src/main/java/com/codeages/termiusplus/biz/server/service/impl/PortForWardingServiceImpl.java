@@ -14,11 +14,14 @@ import com.codeages.termiusplus.biz.server.repository.PortForWardingRepository;
 import com.codeages.termiusplus.biz.server.service.PortForWardingService;
 import com.codeages.termiusplus.biz.server.service.ServerService;
 import com.codeages.termiusplus.exception.AppException;
+import jakarta.annotation.PostConstruct;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import net.schmizz.sshj.connection.channel.direct.LocalPortForwarder;
 import net.schmizz.sshj.connection.channel.direct.Parameters;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -39,7 +42,10 @@ public class PortForWardingServiceImpl implements PortForWardingService {
     private final ServerService serverService;
 
     private final Map<Integer, PortForwarderDto> localPortForwarderMap;
+
     private final PortForwardingMapper portForwardingMapper;
+
+    private final ThreadPoolTaskExecutor threadPoolTaskExecutor;
 
     @Value("${current.ip}")
     private String currentIp;
@@ -47,10 +53,21 @@ public class PortForWardingServiceImpl implements PortForWardingService {
     @Value("${PortForWarding.maxPort}")
     private Integer maxPort;
 
+    @PostConstruct
+    public void init() {
+        CompletableFuture.runAsync(
+                () -> portForWardingRepository.findAllByStatus(PortForWardingStatusEnum.START)
+                                              .forEach(this::startPortForwarding),
+                threadPoolTaskExecutor
+                                  );
+    }
+
     public PortForWardingServiceImpl(PortForWardingRepository portForWardingRepository, ServerService serverService,
-                                     PortForwardingMapper portForwardingMapper) {
+                                     PortForwardingMapper portForwardingMapper,
+                                     @Qualifier("portForwardTaskExecutor") ThreadPoolTaskExecutor threadPoolTaskExecutor) {
         this.portForWardingRepository = portForWardingRepository;
         this.serverService = serverService;
+        this.threadPoolTaskExecutor = threadPoolTaskExecutor;
         this.localPortForwarderMap = new ConcurrentHashMap<>();
         this.portForwardingMapper = portForwardingMapper;
     }
@@ -120,7 +137,7 @@ public class PortForWardingServiceImpl implements PortForWardingService {
 
         ServerDto serverDto = serverService.findById(serverId);
 
-        LocalPortForwarder localPortForwarder = serverService.createSSHClient(serverId,  4500)
+        LocalPortForwarder localPortForwarder = serverService.createSSHClient(serverId, 4500)
                                                              .newLocalPortForwarder(
                                                                      new Parameters(
                                                                              localHost,
@@ -132,37 +149,45 @@ public class PortForWardingServiceImpl implements PortForWardingService {
                                                                                    );
 
 
-        CompletableFuture.runAsync(() -> {
-            try {
-                localPortForwarder.listen(ThreadUtil.newThread(
-                        () -> {
-                        }, "localPortForwarder-" + localPort
-                                                              ));
-            } catch (IOException e) {
-                log.error("端口转发失败", e);
-                try {
-                    localPortForwarder.close();
-                } catch (IOException ex) {
-                    throw new RuntimeException(ex);
-                }
+        CompletableFuture.runAsync(
+                () -> {
+                    try {
+                        localPortForwarder.listen(threadPoolTaskExecutor.createThread(()->{}));
+                    } catch (IOException e) {
+                        log.error("端口转发失败", e);
+                        try {
+                            localPortForwarder.close();
+                        } catch (IOException ex) {
+                            throw new RuntimeException(ex);
+                        }
 
-                PortForwarderDto portForwarderDto = localPortForwarderMap.get(localPort);
-                if (portForwarderDto != null) {
-                    localPortForwarderMap.remove(localPort);
-                }
+                        PortForwarderDto portForwarderDto = localPortForwarderMap.get(localPort);
+                        if (portForwarderDto != null) {
+                            localPortForwarderMap.remove(localPort);
+                        }
 
-                startPortForwarding(
-                        id,
-                        forwardingName,
-                        localHost,
-                        localPort,
-                        serverId,
-                        remoteHost,
-                        remotePort,
-                        portForwarderDto == null ? 0 : portForwarderDto.getRetryCount() + 1
-                                   );
-            }
-        });
+                        if (retryCount <= 0){
+                            portForWardingRepository.findById(id).ifPresent(p -> {
+                                p.setStatus(PortForWardingStatusEnum.STOP);
+                                portForWardingRepository.save(p);
+                            });
+                            throw new AppException(ErrorCode.INTERNAL_ERROR, "端口转发失败");
+                        }
+
+                        startPortForwarding(
+                                id,
+                                forwardingName,
+                                localHost,
+                                localPort,
+                                serverId,
+                                remoteHost,
+                                remotePort,
+                                portForwarderDto == null ? 0 : portForwarderDto.getRetryCount() + 1
+                                           );
+                    }
+                },
+                threadPoolTaskExecutor
+                                  );
 
         PortForwarderDto portForwarderDto = new PortForwarderDto(
                 id,
