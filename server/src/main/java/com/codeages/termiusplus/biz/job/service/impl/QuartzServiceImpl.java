@@ -10,6 +10,7 @@ import com.codeages.termiusplus.biz.util.ExecuteCommandSSHClient;
 import com.github.jaemon.dinger.DingerSender;
 import com.github.jaemon.dinger.core.entity.DingerRequest;
 import com.github.jaemon.dinger.core.entity.enums.MessageSubType;
+import lombok.Cleanup;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.mvel2.MVEL;
@@ -64,18 +65,19 @@ public class QuartzServiceImpl implements QuartzService {
                 log.info("服务器id：{}，mvel脚本: {}", serverId, mvelScript);
                 DefaultLocalVariableResolverFactory variableResolverFactory = new DefaultLocalVariableResolverFactory();
 
+                @Cleanup ExecuteCommandSSHClient executeCommandSSHClient = new ExecuteCommandSSHClient(serverId);
                 MVEL.eval(
                         mvelScript,
                         Map.of(
                                 "dingerSender", SpringUtil.getBean(DingerSender.class),
                                 "MessageSubType", MessageSubType.class,
                                 "DingerRequest", DingerRequest.class,
-                                "session", new ExecuteCommandSSHClient(serverId),
+                                "session", executeCommandSSHClient,
                                 "server", serverDto,
                                 "param", param
                         ),
                         variableResolverFactory
-                );
+                         );
             } catch (Exception e) {
                 log.error("执行脚本失败: {}, {}", serverIds.get(i), mvelScript, e);
             }

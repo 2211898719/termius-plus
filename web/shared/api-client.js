@@ -5,7 +5,7 @@ import {reqKey, resKey} from "./encodedKey";
 import pako from 'pako';
 
 const client = axios.create({
-    timeout: 60000,
+    timeout: 120 * 1000,
 });
 
 console.log(process.env.NODE_ENV)

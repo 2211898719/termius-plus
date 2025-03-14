@@ -18,6 +18,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler({AppException.class})
     public final ResponseEntity<AppError> handleAppExceptions(AppException e, HttpServletRequest request) {
+        log.error(e.getMessage(), e);
         return ResponseEntity.status(e.getStatus())
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .body(AppError.fromAppException(e, request));

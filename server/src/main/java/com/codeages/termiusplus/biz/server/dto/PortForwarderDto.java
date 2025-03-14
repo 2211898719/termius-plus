@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.connection.channel.direct.LocalPortForwarder;
 
 @Data
@@ -15,6 +16,7 @@ public class PortForwarderDto {
     private String forwardingName;
     @JsonIgnore
     private LocalPortForwarder localPortForwarder;
+    private SSHClient sshClient;
     private Integer localPort;
     private String localHost;
     private String remoteHost;

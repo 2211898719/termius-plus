@@ -43,6 +43,7 @@ import {
     Tree,
     Empty,
     Progress,
+    Statistic,
     Alert
 } from 'ant-design-vue';
 
@@ -59,6 +60,7 @@ export function bootAntDesignVue(app) {
 
     app
         .use(Button)
+        .use(Statistic)
         .use(Tree)
         .use(Alert)
         .use(Slider)

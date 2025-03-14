@@ -15,8 +15,10 @@ import com.codeages.termiusplus.biz.server.service.PortForWardingService;
 import com.codeages.termiusplus.biz.server.service.ServerService;
 import com.codeages.termiusplus.exception.AppException;
 import jakarta.annotation.PostConstruct;
+import lombok.Cleanup;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.connection.channel.direct.LocalPortForwarder;
 import net.schmizz.sshj.connection.channel.direct.Parameters;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -113,7 +115,6 @@ public class PortForWardingServiceImpl implements PortForWardingService {
      * @param serverId
      * @param remotePort
      */
-    @SneakyThrows
     private PortForwarderDto startPortForwarding(
             Long id,
             String forwardingName,
@@ -137,28 +138,64 @@ public class PortForWardingServiceImpl implements PortForWardingService {
 
         ServerDto serverDto = serverService.findById(serverId);
 
-        LocalPortForwarder localPortForwarder = serverService.createSSHClient(serverId, 4500)
-                                                             .newLocalPortForwarder(
-                                                                     new Parameters(
-                                                                             localHost,
-                                                                             localPort,
-                                                                             CharSequenceUtil.isEmpty(remoteHost) ? serverDto.getIp() : remoteHost,
-                                                                             remotePort
-                                                                     ),
-                                                                     new ServerSocket(localPort)
-                                                                                   );
+        ServerSocket serverSocket = null;
+        try {
+            serverSocket = new ServerSocket(localPort);
+        } catch (IOException e) {
+            throw new AppException(ErrorCode.INTERNAL_ERROR, "端口已被其他应用占用");
+        }
+        LocalPortForwarder localPortForwarder = null;
+        SSHClient sshClient = null;
+        try {
+            sshClient = serverService.createSSHClient(serverId, 30000);
+            localPortForwarder = sshClient
+                    .newLocalPortForwarder(
+                            new Parameters(
+                                    localHost,
+                                    localPort,
+                                    CharSequenceUtil.isEmpty(remoteHost) ? serverDto.getIp() : remoteHost,
+                                    remotePort
+                            ),
+                            serverSocket
+                                          );
+        } catch (Exception e) {
+            log.error("端口转发失败", e);
+            try {
+                serverSocket.close();
+            } catch (IOException ignored) {
+            }
+            throw new AppException(ErrorCode.INTERNAL_ERROR, "端口转发失败");
+        }
 
-
+        ServerSocket finalServerSocket = serverSocket;
+        LocalPortForwarder finalLocalPortForwarder = localPortForwarder;
+        SSHClient finalSshClient = sshClient;
         CompletableFuture.runAsync(
                 () -> {
+                    Thread thread = threadPoolTaskExecutor.createThread(() -> {});
                     try {
-                        localPortForwarder.listen(threadPoolTaskExecutor.createThread(()->{}));
+                        finalLocalPortForwarder.listen(thread);
                     } catch (IOException e) {
                         log.error("端口转发失败", e);
                         try {
-                            localPortForwarder.close();
-                        } catch (IOException ex) {
-                            throw new RuntimeException(ex);
+                            finalLocalPortForwarder.close();
+                        } catch (IOException ignored) {
+
+                        }
+                        try {
+                            thread.interrupt();
+                        } catch (Exception ignored) {
+
+                        }
+                        try {
+                            finalServerSocket.close();
+                        } catch (Exception ignored) {
+
+                        }
+                        try {
+                            finalSshClient.close();
+                        } catch (Exception ignored) {
+
                         }
 
                         PortForwarderDto portForwarderDto = localPortForwarderMap.get(localPort);
@@ -166,11 +203,12 @@ public class PortForWardingServiceImpl implements PortForWardingService {
                             localPortForwarderMap.remove(localPort);
                         }
 
-                        if (retryCount <= 0){
-                            portForWardingRepository.findById(id).ifPresent(p -> {
-                                p.setStatus(PortForWardingStatusEnum.STOP);
-                                portForWardingRepository.save(p);
-                            });
+                        if (retryCount <= 0) {
+                            portForWardingRepository.findById(id)
+                                                    .ifPresent(p -> {
+                                                        p.setStatus(PortForWardingStatusEnum.STOP);
+                                                        portForWardingRepository.save(p);
+                                                    });
                             throw new AppException(ErrorCode.INTERNAL_ERROR, "端口转发失败");
                         }
 
@@ -193,6 +231,7 @@ public class PortForWardingServiceImpl implements PortForWardingService {
                 id,
                 forwardingName,
                 localPortForwarder,
+                sshClient,
                 localPort,
                 localHost,
                 remoteHost,
@@ -217,6 +256,7 @@ public class PortForWardingServiceImpl implements PortForWardingService {
         }
 
         LocalPortForwarder localPortForwarder = portForwarderDto.getLocalPortForwarder();
+        SSHClient sshClient = portForwarderDto.getSshClient();
 
         try {
             localPortForwarder.close();
@@ -224,6 +264,12 @@ public class PortForWardingServiceImpl implements PortForWardingService {
             log.error("关闭端口转发失败", e);
         } finally {
             localPortForwarderMap.remove(localPort);
+        }
+
+        try {
+            sshClient.close();
+        } catch (Exception ignored) {
+
         }
     }
 

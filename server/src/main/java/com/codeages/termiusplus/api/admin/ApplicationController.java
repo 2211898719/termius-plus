@@ -23,6 +23,7 @@ import com.maxmind.geoip2.DatabaseReader;
 import com.maxmind.geoip2.model.CityResponse;
 import com.maxmind.geoip2.record.Location;
 import lombok.AllArgsConstructor;
+import lombok.Cleanup;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import net.schmizz.sshj.SSHClient;
@@ -147,7 +148,7 @@ public class ApplicationController {
         ApplicationServerDto webServers = servers.stream().filter(e -> StrUtil.isNotBlank(e.getNginxLogPath())).findAny()
                                                        .orElseThrow(() -> new AppException(ErrorCode.INTERNAL_ERROR,"没有找到web服务器"));
 
-        ExecuteCommandSSHClient executeCommandSSHClient = new ExecuteCommandSSHClient(webServers.getServerId());
+        @Cleanup ExecuteCommandSSHClient executeCommandSSHClient = new ExecuteCommandSSHClient(webServers.getServerId());
         String localIPAddress = executeCommandSSHClient.getLocalIPAddress();
         DatabaseReader bean = SpringUtil.getBean(DatabaseReader.class);
         InetAddress inetAddress = InetAddress.getByName(localIPAddress);

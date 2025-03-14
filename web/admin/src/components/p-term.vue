@@ -109,7 +109,6 @@ let history = ref({
   mysqlInit: false
 })
 
-
 watch(() => AutoComplete.value, async () => {
   if (AutoComplete.value) {
     await getHistory()
@@ -237,7 +236,6 @@ const initTerm = () => {
   let lastCommand = ""
 
   function preprocessEvent(event) {
-
     let data = JSON.parse(arrayBufferToString(decompressArrayBuffer(event.data)));
     switch (data.event) {
       case "COMMAND":
@@ -335,6 +333,9 @@ const initTerm = () => {
         }
       case "SESSION":
         socketSessionId.value = data.data
+        if (AutoComplete.value) {
+          getHistory();
+        }
         return {
           type: "MASTER_CLOSE",
           data: ""
@@ -440,10 +441,6 @@ const initTerm = () => {
   nextTick(() => {
     resizeTerminal(term);
   });
-
-  if (AutoComplete.value) {
-    getHistory();
-  }
 
 }
 

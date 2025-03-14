@@ -11,6 +11,9 @@ export const serverApi = {
     create: async (params) => {
         return client.post("/api-admin/server/create", params);
     },
+    testServerParams: async (params) => {
+        return client.post("/api-admin/server/testServerParams", params);
+    },
     update: async (params) => {
         return client.post("/api-admin/server/update", params);
     },

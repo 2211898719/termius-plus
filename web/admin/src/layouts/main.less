@@ -30,55 +30,18 @@
   height: @height;
 }
 
-/**
-  新主题，开发中
- */
-//.ant-layout {
-//  background: #1E2033;
-//
-//  .ant-layout-header {
-//    background: #282A3D;
-//  }
-//
-//  .ant-card-bordered {
-//    border: none;
-//  }
-//
-//  .ant-tabs-tab {
-//    background: #292B3B !important;
-//    border: none !important;
-//    color: #ffffff;
-//
-//    .ant-tabs-tab-remove {
-//      color: #8d8d8d;
-//
-//      &:hover {
-//        color: #ffffff;
-//      }
-//    }
-//  }
-//
-//    .ant-tabs-top > .ant-tabs-nav::before, .ant-tabs-top > div > .ant-tabs-nav::before {
-//      border-bottom: 1px solid #292B3B;
-//      height: 4px;
-//  }
-//
-//  .ant-tabs-content-holder {
-//    border: none;
-//  }
-//  .ant-drawer{
-//    background: #1E2033;
-//  }
-//
-//  .ssh-content {
-//    /deep/ .ant-card-body {
-//      background: v-bind(backColor);
-//    }
-//  }
-//}
 .ant-tabs-left>.ant-tabs-content-holder, .ant-tabs-left>div>.ant-tabs-content-holder{
   margin-left: 0;
 }
 ::-webkit-scrollbar{
   display:none;/*隐藏滚动条*/
+}
+
+
+/deep/ .el-radio__original {
+  display: none !important;
+}
+
+/deep/.el-radio:focus:not(.is-focus):not(:active):not(.is-disabled) .el-radio__inner {
+  box-shadow: none !important;
 }

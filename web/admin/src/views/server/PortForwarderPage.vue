@@ -7,6 +7,7 @@ import ServerListPage from "@/views/server/ServerListPage.vue";
 import {copyToClipboard} from "@/utils/copyUtil";
 import PortForWardingStatusEnum from "@/enums/PortForWardingStatusEnum";
 import RelationGraph from "relation-graph/vue3";
+import {serverApi} from "@/api/server";
 
 let termiusStyleColumn = ref(Math.floor(window.innerWidth / 300));
 
@@ -137,10 +138,12 @@ const handlePortForwardingCreate = async () => {
 }
 
 
-const handleEditPortForwarding = (row) => {
+const handleEditPortForwarding = async (row) => {
   portForwardingCreationVisible.value = true;
   creationPortForwardingType.value = 'update'
   Object.assign(creationPortForwardingState, row)
+  console.log(creationPortForwardingState)
+  creationPortForwardingState.serverDto = await serverApi.get(row.serverId)
 }
 
 const portForwardingCreation = () => {
@@ -209,6 +212,7 @@ const handleStartServer = (item) => {
       item.startLoading = false
     }, 500)
   }).catch(e => {
+    interval && clearInterval(interval)
     message.error(e.message)
     item.startPercent = 0
     item.startLoading = false

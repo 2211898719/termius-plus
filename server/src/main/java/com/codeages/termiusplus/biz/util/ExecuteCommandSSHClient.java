@@ -17,8 +17,10 @@ import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.connection.channel.direct.Session;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.ref.Cleaner;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
@@ -27,30 +29,37 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
-public class ExecuteCommandSSHClient {
+public class ExecuteCommandSSHClient implements AutoCloseable {
     private final SSHClient sshClient;
     private final ServerDto serverDto;
     private final ServerService serverService;
+    private static final Cleaner CLEANER = Cleaner.create();
+    private final Cleaner.Cleanable cleanable;
 
     @SneakyThrows
     public ExecuteCommandSSHClient(Long serverId) {
+        this.cleanable = CLEANER.register(this, this::close);
         serverService = SpringUtil.getBean(ServerService.class);
         serverDto = serverService.findById(serverId);
         this.sshClient = serverService.createSSHClient(serverId);
     }
 
+
     @SneakyThrows
     public String executeCommand(String command) {
-        Session.Command cmd = sshClient.startSession().exec(command);
+        Session session = sshClient.startSession();
+        Session.Command cmd = session.exec(command);
 
         InputStream in = cmd.getInputStream();
         BufferedReader reader = new BufferedReader(new InputStreamReader(in));
         StringBuilder output = new StringBuilder();
         String line;
         while ((line = reader.readLine()) != null) {
-            output.append(line).append("\n");
+            output.append(line)
+                  .append("\n");
         }
-        return output.toString().trim();
+        return output.toString()
+                     .trim();
     }
 
     @SneakyThrows
@@ -62,7 +71,8 @@ public class ExecuteCommandSSHClient {
         List<NetworkUsage> networkUsages = new ArrayList<>();
 
         for (String iface : initialData.keySet()) {
-            if (ignoredIface.stream().anyMatch(iface::startsWith)) {
+            if (ignoredIface.stream()
+                            .anyMatch(iface::startsWith)) {
                 continue;
             }
 
@@ -163,7 +173,8 @@ public class ExecuteCommandSSHClient {
             // 检查接收字节行
             if (line.startsWith("RX: bytes")) {
                 if (i + 1 < lines.length) {
-                    String[] parts = lines[i + 1].trim().split("\\s+");
+                    String[] parts = lines[i + 1].trim()
+                                                 .split("\\s+");
                     rxBytes = Long.parseLong(parts[0]); // 获取接收字节数
                 }
             }
@@ -171,7 +182,8 @@ public class ExecuteCommandSSHClient {
             // 检查发送字节行
             if (line.startsWith("TX: bytes")) {
                 if (i + 1 < lines.length) {
-                    String[] parts = lines[i + 1].trim().split("\\s+");
+                    String[] parts = lines[i + 1].trim()
+                                                 .split("\\s+");
                     txBytes = Long.parseLong(parts[0]); // 获取发送字节数
                 }
             }
@@ -192,7 +204,8 @@ public class ExecuteCommandSSHClient {
 
     private static CpuUsage parseCpuUsage(String cpuOutput) {
         // 解析 CPU 使用情况
-        String[] parts = cpuOutput.trim().split(":")[1].split(",");
+        String[] parts = cpuOutput.trim()
+                                  .split(":")[1].split(",");
         CpuUsage cpuUsage = new CpuUsage();
         //正则匹配 空格 +.*+空格us
         for (String part : parts) {
@@ -219,21 +232,33 @@ public class ExecuteCommandSSHClient {
 
     private static List<DiskUsage> parseDiskUsage(String diskOutput) {
         String[] lines = diskOutput.split("\n");
-        Set<String> ignoredFileSystems = Set.of("overlay", "tmpfs", "devtmpfs", "squashfs", "/dev/loop", "udev", "shm", "none");
+        Set<String> ignoredFileSystems = Set.of(
+                "overlay",
+                "tmpfs",
+                "devtmpfs",
+                "squashfs",
+                "/dev/loop",
+                "udev",
+                "shm",
+                "none"
+                                               );
         Set<String> ignoredMountedOns = Set.of("/boot");
         List<DiskUsage> diskUsages = new ArrayList<>();
         // 跳过表头
         for (int i = 1; i < lines.length; i++) {
-            String[] parts = lines[i].trim().split("\\s+");
+            String[] parts = lines[i].trim()
+                                     .split("\\s+");
             if (parts.length >= 6) { // 确保有足够的列
                 String fileSystem = parts[0];
                 String mountPoint = parts[5];
                 // 只处理根目录或挂载在根目录下的文件系统，并且不在忽略列表中
-                if (ignoredFileSystems.stream().anyMatch(fileSystem::startsWith)) {
+                if (ignoredFileSystems.stream()
+                                      .anyMatch(fileSystem::startsWith)) {
                     continue;
                 }
 
-                if (ignoredMountedOns.stream().anyMatch(mountPoint::startsWith)) {
+                if (ignoredMountedOns.stream()
+                                     .anyMatch(mountPoint::startsWith)) {
                     continue;
                 }
 
@@ -274,17 +299,21 @@ public class ExecuteCommandSSHClient {
         Socket socket = new Socket();
 
         Proxy proxy = serverService.createProxy(serverDto);
-        socket.connect(new InetSocketAddress(
-                serverDto.getIp(),
-                serverDto.getPort()
-                         .intValue()
-        ), 5000);
+        socket.connect(
+                new InetSocketAddress(
+                        serverDto.getIp(),
+                        serverDto.getPort()
+                                 .intValue()
+                ), 5000
+                      );
         socket = new Socket(proxy);
-        socket.connect(new InetSocketAddress(
-                serverDto.getIp(),
-                serverDto.getPort()
-                         .intValue()
-        ), 5000);
+        socket.connect(
+                new InetSocketAddress(
+                        serverDto.getIp(),
+                        serverDto.getPort()
+                                 .intValue()
+                ), 5000
+                      );
         return (int) (System.currentTimeMillis() - socket.getSoTimeout());
     }
 
@@ -303,5 +332,12 @@ public class ExecuteCommandSSHClient {
         return -1;
     }
 
-
+    @Override
+    public void close() {
+        try {
+            sshClient.close();
+        } catch (IOException e) {
+            log.error("关闭SSH客户端失败", e);
+        }
+    }
 }

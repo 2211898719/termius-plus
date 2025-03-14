@@ -38,6 +38,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -58,9 +60,9 @@ public class SshHandler {
 
     private static final String NONE_MASTER_SESSION_ID = "0";
 
-//    private static final ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor();、
+    private static final ExecutorService threadPoolExecutor = Executors.newVirtualThreadPerTaskExecutor();
 
-    private static final ThreadPoolExecutor threadPoolExecutor = ThreadUtil.newExecutorByBlockingCoefficient(0.99f);
+//    private static final ThreadPoolExecutor threadPoolExecutor = ThreadUtil.newExecutorByBlockingCoefficient(0.99f);
 
 
     private final ServerService serverService;
@@ -283,6 +285,7 @@ public class SshHandler {
         private final List<Pair<String, Session>> sessions = new CopyOnWriteArrayList<>();
         private final InputStream inputStream;
         private final OutputStream outputStream;
+        private final SSHClient sshClient;
         private final net.schmizz.sshj.connection.channel.direct.Session openSession;
         private final net.schmizz.sshj.connection.channel.direct.Session.Shell shell;
         @Getter
@@ -296,6 +299,7 @@ public class SshHandler {
             this.sessions.add(Pair.of(username, session));
             this.userId = userId;
             this.serverId = serverId;
+            this.sshClient = sshClient;
 
             this.masterSessionId = session.getId();
             this.masterSession = session;
@@ -334,7 +338,6 @@ public class SshHandler {
             logFileOutputStream = IoUtil.toBuffered(FileUtil.getOutputStream(logFile), MAX_LOG_BUFFER_SIZE);
 
             lastCommand = new RollingString();
-
             threadPoolExecutor.submit(this);
         }
 
@@ -361,6 +364,12 @@ public class SshHandler {
 
             try {
                 IoUtil.close(this.logFileOutputStream);
+            } catch (Exception ignored) {
+
+            }
+
+            try {
+                IoUtil.close(sshClient);
             } catch (Exception ignored) {
 
             }

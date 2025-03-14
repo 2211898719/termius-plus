@@ -37,6 +37,7 @@ import com.google.gson.Gson;
 import com.querydsl.core.BooleanBuilder;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
+import lombok.Cleanup;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import net.schmizz.sshj.SSHClient;
@@ -47,6 +48,9 @@ import net.schmizz.sshj.userauth.method.AuthPassword;
 import net.schmizz.sshj.userauth.method.PasswordResponseProvider;
 import net.schmizz.sshj.userauth.password.PasswordFinder;
 import net.schmizz.sshj.userauth.password.Resource;
+import org.apache.commons.net.DefaultSocketFactory;
+import org.apache.commons.net.telnet.TelnetClient;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -149,6 +153,41 @@ public class ServerServiceImpl implements ServerService {
         }
 
         serverRepository.saveAll(toUpdateAllEntity(treeSortParams));
+    }
+
+    private Proxy findProxy(Long serverId) {
+        Server server = serverRepository.findById(serverId)
+                                        .orElseThrow(() -> new AppException(
+                                                ErrorCode.INVALID_ARGUMENT,
+                                                "服务器不存在"
+                                        ));
+
+        Long proxyId = server.getProxyId();
+        Server currentServer = server;
+        while (proxyId == null) {
+            if (currentServer.getParentId() == 0) {
+                return null;
+            }
+
+            Server parent = serverRepository.findById(currentServer.getParentId())
+                                            .orElseThrow(() -> new AppException(
+                                                    ErrorCode.INVALID_ARGUMENT,
+                                                    "服务器不存在"
+                                            ));
+
+            proxyId = parent.getProxyId();
+            currentServer = parent;
+        }
+
+        if (proxyId == null) {
+            return null;
+        }
+
+        return getProxy(proxyService.findById(proxyId)
+                                    .orElseThrow(() -> new AppException(
+                                            ErrorCode.INVALID_ARGUMENT,
+                                            "代理不存在"
+                                    )));
     }
 
     @Override
@@ -591,12 +630,47 @@ public class ServerServiceImpl implements ServerService {
     @Override
     @SneakyThrows
     public SSHClient createSSHClient(Long id, String sessionId) {
-        return createSSHClient(id, sessionId, 3600 * 1000);
+        return createSSHClient(id, sessionId, 60 * 1000);
+    }
+
+    @Override
+    public long testServerParams(ServerCreateParams serverCreateParams) {
+        if (serverCreateParams.getProxyServerId() != null) {
+            return 0;
+        }
+
+        Proxy proxy = findProxy(serverCreateParams.getParentId());
+        long start = System.currentTimeMillis();
+
+        TelnetClient telnet = new TelnetClient();
+        if (proxy != null) {
+            telnet.setProxy(proxy);
+        }
+        telnet.setDefaultTimeout(10000);
+        telnet.setConnectTimeout(10000);
+        try {
+            telnet.connect(serverCreateParams.getIp(),
+                           serverCreateParams.getPort()
+                                             .intValue()
+                          );
+        } catch (IOException e) {
+            return -1;
+        }
+
+        try {
+            if (telnet.sendAYT(Duration.ofSeconds(1))) {
+                return (System.currentTimeMillis() - start);
+            } else {
+                return -2;
+            }
+        } catch (InterruptedException | IOException e) {
+            return -2;
+        }
     }
 
     @Override
     public SSHClient createSSHClient(Long id, int timeout) {
-        return createSSHClient(id, null, timeout);
+        return createSSHClient(id, null, timeout / connectCount);
     }
 
     @SneakyThrows
@@ -608,6 +682,10 @@ public class ServerServiceImpl implements ServerService {
     @SneakyThrows
     public Proxy createProxy(ServerDto server) {
         ProxyDto proxyDto = server.getProxy();
+        return getProxy(proxyDto);
+    }
+
+    private @NotNull Proxy getProxy(ProxyDto proxyDto) {
         return new Proxy(
                 proxyDto.getType()
                         .getType(),
@@ -653,11 +731,11 @@ public class ServerServiceImpl implements ServerService {
     /**
      * 获取某个服务器root用户的 history
      */
-
     @Override
     public List<String> getHistory(Long serverId) {
         if (Boolean.TRUE.equals(findById(serverId).getHistoryGet())) {
-            return new ExecuteCommandSSHClient(serverId).getHistory("bash");
+            @Cleanup ExecuteCommandSSHClient executeCommandSSHClient = new ExecuteCommandSSHClient(serverId);
+            return executeCommandSSHClient.getHistory("bash");
         }
 
         return new ArrayList<>();
@@ -666,10 +744,11 @@ public class ServerServiceImpl implements ServerService {
     @Override
     public List<String> getMysqlHistory(Long serverId) {
         if (Boolean.TRUE.equals(findById(serverId).getHistoryGet())) {
-            return new ExecuteCommandSSHClient(serverId).getHistory("mysql")
-                                                        .stream()
-                                                        .map(s -> s.replace("\\040", " "))
-                                                        .toList();
+            @Cleanup ExecuteCommandSSHClient executeCommandSSHClient = new ExecuteCommandSSHClient(serverId);
+            return executeCommandSSHClient.getHistory("mysql")
+                                          .stream()
+                                          .map(s -> s.replace("\\040", " "))
+                                          .toList();
         }
 
         return new ArrayList<>();
@@ -700,6 +779,7 @@ public class ServerServiceImpl implements ServerService {
                                                                                           List<DiskUsage> diskUsage = sshClient.getDiskUsage();
                                                                                           ServerRunLog serverRunLog = new ServerRunLog();
                                                                                           serverRunLog.setServerId(server.getId());
+                                                                                          sshClient.close();
 
                                                                                           serverRunLog.setCpuUsage(JSONUtil.toJsonStr(
                                                                                                   cpuUsage));

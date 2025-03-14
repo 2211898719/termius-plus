@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.codeages</groupId>
     <artifactId>termius-plus</artifactId>
-    <version>server-v2.0.4</version>
+    <version>server-v2.0.5</version>
     <name>Termius Plus</name>
     <description>Termius Plus</description>
     <properties>
@@ -243,6 +243,11 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-math3</artifactId>
             <version>3.6.1</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-net</groupId>
+            <artifactId>commons-net</artifactId>
+            <version>3.11.1</version>
         </dependency>
     </dependencies>
 

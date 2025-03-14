@@ -82,7 +82,6 @@ public class ServerController {
                                                                                           SshHandler.HandlerItem::getServerId));
 
 
-
         treeList.forEach(tree -> tree.walk(node -> {
             List<SshHandler.HandlerItem> handlerItems = serverIdMap.get(node.getId());
             if (handlerItems != null) {
@@ -148,6 +147,11 @@ public class ServerController {
         serverService.create(serverCreateParams);
 
         return OkResponse.TRUE;
+    }
+
+    @PostMapping("/testServerParams")
+    public long testServerParams(@RequestBody ServerCreateParams serverCreateParams) {
+        return serverService.testServerParams(serverCreateParams);
     }
 
     @PostMapping("/update")

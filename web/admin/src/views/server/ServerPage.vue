@@ -455,6 +455,14 @@ watch(() => tagActiveKey.value, (val) => {
   }
 })
 
+const handleMiddleClick = (event, server) => {
+  if (event.button !== 1) {
+    return
+  }
+
+  onCloseServer(server.operationId)
+}
+
 let miniTabBar = useStorage('miniTabBar', false)
 
 const changeMiniTab = () => {
@@ -641,6 +649,7 @@ const changeMiniTab = () => {
                     </template>
                     <div ref="tabBarRef" :operationId="server.operationId" class="tab-bar"
                          :class="{'tab-active':tagActiveKey===server.operationId}"
+                         @mousedown="e=>handleMiddleClick(e,server)"
                          @click="changeTab(server.operationId)">
                       <div class="left sortable-handle">
                         <a-badge :dot="server.hot" :offset="[-9,-2]">

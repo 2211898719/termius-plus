@@ -21,7 +21,7 @@ import PEditor from "@/components/tinymce/p-editor.vue";
 import GroupCascader from "@/components/group-cascader.vue";
 import {useForm} from "ant-design-vue/es/form";
 import Sortable from "sortablejs";
-import _ from "lodash";
+import _, {isNumber} from "lodash";
 import PEnumSelect from "@/components/p-enum-select.vue";
 import OsEnum from "@/enums/OsEnum";
 import {getSurname} from "@/utils/nameUtil";
@@ -193,6 +193,8 @@ let {
 watch(creationVisible, (visible) => {
   if (!visible) {
     resetCreationFields();
+    netTestResult.value = null
+    testNetLoading.value = false
   }
 });
 
@@ -295,6 +297,19 @@ const handleDelServer = (item) => {
     onCancel() {
     },
   });
+}
+
+let netTestResult = ref(null)
+let testNetLoading = ref(false)
+
+const testNet = async () => {
+  testNetLoading.value = true
+  let submitData = {...creationState}
+  submitData.dbPort = new Set(submitData.dbPort)
+  submitData.dbPort = [...submitData.dbPort].join(',')
+
+  netTestResult.value = await serverApi.testServerParams(submitData)
+  testNetLoading.value = false
 }
 
 const submitCreate = async () => {
@@ -670,6 +685,16 @@ defineExpose({
       >
         <template #extra>
           <a-space>
+            <span v-if="isNumber(netTestResult) ">
+              <span v-if="netTestResult>0">
+                延迟{{netTestResult}}ms
+              </span>
+              <span v-else>
+                连接服务器失败
+              </span>
+            </span>
+
+            <a-button type="primary" @click="testNet" :loading="testNetLoading">测试网络连接</a-button>
             <a-button @click="creationVisible = false">取消</a-button>
             <a-button type="primary" @click="submitCreate">提交</a-button>
           </a-space>
@@ -743,7 +768,7 @@ defineExpose({
             </a-button>
           </a-form-item>
           <a-form-item label="中转服务器" v-bind="creationValidations.proxyServerId">
-            <p-cascader  v-model:value="creationState.proxyServerId" :api="serverApi.list"></p-cascader>
+            <p-cascader v-model:value="creationState.proxyServerId" :api="serverApi.list"></p-cascader>
             <p>使用某个服务器作为代理，访问目标服务器（优先级高于<a>代理</a>）</p>
           </a-form-item>
 
