@@ -1,6 +1,31 @@
 # 介绍
 高效美观易用的服务器运维工具。
 
+# 部署安装
+## docker
+参考文件：[docker-compose.yml](docker-compose.yml)
+### 部署需要依赖mysql，redis。推荐采用docker compose部署。
+
+#### 先克隆项目
+```shell
+git clone https://gitee.com/zimehjl/termius-plus.git
+```
+
+#### 修改docker-compose.yml中的版本号 可以查看.version文件获取最新
+
+```shell
+cd termius-plus
+```
+#### 根据需要修改application.env文件中的配置（默认不修改也能使用，缺少一些进阶功能的配置）
+```shell
+vim docker-compose.yml
+```
+```shell
+docker compose up -d
+```
+#### 根据docker-compose.yml中的端口映射，访问 http://ip:8989
+
+
 # 功能列表
 ## 服务器组列表
 ![img.png](docs/doc/images/img.png)
@@ -90,18 +115,6 @@ ps:多浏览器标签页也可以
 ##### 日志采用缓存区+文件的方式，避免频繁写入磁盘，提高性能
 ![img_27.png](docs/doc/images/img_27.png)
 ![img_28.png](docs/doc/images/img_28.png)
-
-# 部署安装
-## docker
-
-```shell
-git clone https://gitee.com/zimehjl/termius-plus.git
-cd termius-plus/scripts/docker
-#修改server.env文件中的配置
-#修改.env中的版本号当前最新为v1.6.4。查看server/pom.xml中的version可得知最新版本
-docker-compose up -d
-#根据docker-compose.yml中的front配置，访问http://ip:9999
-```
 
 # 开发
 ## 普通 Spring Boot + Vue + Mysql + Redis 的结构

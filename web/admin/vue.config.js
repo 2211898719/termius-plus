@@ -48,8 +48,8 @@ module.exports = defineConfig({
             })
         );
 
-        config.plugin('webpack-bundle-analyzer')
-            .use(BundleAnalyzerPlugin)
+        // config.plugin('webpack-bundle-analyzer')
+        //     .use(BundleAnalyzerPlugin)
 
         config.module
             .rule('jsx')

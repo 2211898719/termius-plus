@@ -1,0 +1,29 @@
+version: "3"
+
+services:
+  server:
+    image: registry.cn-hangzhou.aliyuncs.com/kuozhi/termius-plus:v2.0.8
+    restart: unless-stopped
+    environment:
+      - TZ=Asia/Shanghai
+    env_file:
+      - application.env
+    ports:
+      - "8989:80"
+    volumes:
+      - ./data:/var/www/data
+  redis:
+    image: registry.cn-hangzhou.aliyuncs.com/education-portal/termius-plus:redis5.0
+    restart: always
+    command: redis-server --appendonly yes
+  mysql:
+    image: registry.cn-hangzhou.aliyuncs.com/education-portal/termius-plus:mysql8
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    restart: always
+    environment:
+      MYSQL_ALLOW_EMPTY_ROOT_PASSWORD: "yes"
+      MYSQL_ROOT_PASSWORD: mysql.test123!@#
+      MYSQL_DATABASE: termius_plus
+    volumes:
+      - ./mysql8/data:/var/lib/mysql
+      - ./mysql8/log:/var/log/mysql

@@ -1,38 +1,35 @@
-FROM registry.cn-hangzhou.aliyuncs.com/kuozhi/termius-plus:build as builder
-#ENV NVM_INC=/root/.nvm/versions/node/v14.17.1/include/node
-ENV NVM_INC=/root/.nvm/versions/node/v16.20.2/include/node
+# 第一阶段：构建 Vue.js 前端（优化缓存）
+FROM registry.cn-hangzhou.aliyuncs.com/education-portal/termius-plus:node-18 AS frontend-build
 
-ENV JAVA_HOME=/root/.sdkman/candidates/java/11.0.24-amzn
-#ENV JAVA_HOME=/root/.sdkman/candidates/java/17.0.12-amzn
-#ENV JAVA_HOME=/root/.sdkman/candidates/java/21.0.2-open
+# 1. 先单独复制依赖描述文件（利用缓存层）
+WORKDIR /app/admin
+COPY web/admin/package.json web/admin/yarn.lock* ./
+RUN npm config set registry https://registry.npmmirror.com/ && \
+    yarn install --frozen-lockfile --network-timeout 1000000
 
-ENV GRADLE_HOME=/root/.sdkman/candidates/gradle/current
-ENV SDKMAN_CANDIDATES_DIR=/root/.sdkman/candidates
-ENV NVM_DIR=/root/.nvm
-ENV TERM=xterm
-#ENV MAVEN_HOME=/root/.sdkman/candidates/maven/3.9.9
-ENV MAVEN_HOME=/root/.sdkman/candidates/maven/3.8.4
-ENV SDKMAN_DIR=/root/.sdkman
-ENV SHLVL=1
-ENV SDKMAN_CANDIDATES_API=https://api.sdkman.io/2
-ENV NVM_NODEJS_ORG_MIRROR=http://npmmirror.com/mirrors/node/
-ENV PATH=/root/.sdkman/candidates/maven/3.8.4/bin:/root/.sdkman/candidates/java/11.0.24-amzn/bin:/root/.sdkman/candidates/gradle/current/bin:/root/.nvm/versions/node/v16.20.2/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-ENV NVM_BIN=/root/.nvm/versions/node/v16.20.2/bin
+# 2. 再复制源码并构建（源码变动时才重新构建）
+COPY web /app
+RUN yarn run build --no-analyze
 
-WORKDIR /opt/code/
-COPY ./ /opt/code/
+# 第二阶段：构建 Java 后端（优化缓存）
+FROM registry.cn-hangzhou.aliyuncs.com/education-portal/termius-plus:maven-jdk21 AS backend-build
 
-WORKDIR /opt/code/server
+# 1. 预先复制 Maven 配置和 POM 文件（利用缓存层）
+COPY settings.xml /root/.m2/settings.xml
+WORKDIR /app
+COPY server/pom.xml .
+RUN mvn dependency:go-offline -B
 
-RUN mvn compile jib:build  -Djib.to.auth.username=${USERNAME} -Djib.to.auth.password=${password}
+# 2. 再复制完整代码并编译（代码变动时才重新构建）
+COPY server .
+RUN mvn package -DskipTests
 
-WORKDIR /opt/code/web/admin
-
-RUN yarn && yarn build
-
-# 第二阶段，用于运行应用程序
-FROM nginx:alpine-slim as admin
-WORKDIR /front
-COPY --from=builder /opt/code/web/admin/dist /front
-COPY --from=builder /opt/code/web/admin/docker/nginx.conf /etc/nginx/nginx.conf
-EXPOSE 8082
+# 第三阶段：最终镜像（保持不变）
+FROM registry.cn-hangzhou.aliyuncs.com/education-portal/termius-plus:jdk21-nginx-arthas
+WORKDIR /app
+COPY --from=backend-build /app/target/*.jar ./app.jar
+COPY --from=frontend-build /app/admin/dist /app/front
+COPY ./web/admin/docker/nginx.conf /etc/nginx/nginx.conf
+ENV LANGUAGE en_US:en LANG=C.UTF-8 LC_ALL=C.UTF-8
+EXPOSE 80 8080
+CMD service nginx restart && java -jar -Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8 /app/app.jar
