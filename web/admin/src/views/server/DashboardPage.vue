@@ -1,14 +1,12 @@
 <script setup>
 
 import {formatSecondsMax} from "@/components/process";
-import {defineEmits, nextTick, onBeforeUnmount, onMounted, ref} from "vue";
+import {defineEmits, nextTick, onMounted, ref} from "vue";
 import {applicationApi} from "@/api/application";
 import {serverApi} from "@/api/server";
 import autoAnimate from "@formkit/auto-animate";
-import * as echarts from 'echarts';
+import echarts from '@/boot/bootEcharts'
 import {computedFileSize} from "@/utils/File";
-import {getFirstDayOfMonth} from "view-ui-plus/src/components/date-picker/util";
-import dayjs from "dayjs";
 import {useStorage} from "@vueuse/core";
 
 let applicationErrorRankData = ref([])

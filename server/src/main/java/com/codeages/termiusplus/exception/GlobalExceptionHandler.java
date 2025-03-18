@@ -26,6 +26,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(ConstraintViolationException.class)
     public final ResponseEntity<AppError> handleValidationFailedException(ConstraintViolationException e, HttpServletRequest request) {
+        log.error(e.getMessage(), e);
         return handleAppExceptions(new AppException(ErrorCode.INVALID_ARGUMENT, e.getMessage()), request);
     }
 }

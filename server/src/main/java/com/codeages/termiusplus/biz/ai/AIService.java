@@ -16,7 +16,7 @@ import java.util.Map;
 @Service
 public class AIService {
 
-    @Value("${spark.httpKey}")
+    @Value("${deepseek.api-key}")
     private String httpKey;
 
     private final WebClient webClient;

@@ -10,6 +10,15 @@ import com.codeages.termiusplus.biz.server.dto.AiCompletionMetadata;
 import com.codeages.termiusplus.ws.ssh.SshHandler;
 import com.cxytiandi.encrypt.springboot.annotation.DecryptIgnore;
 import com.cxytiandi.encrypt.springboot.annotation.EncryptIgnore;
+import io.github.pigmesh.ai.deepseek.core.DeepSeekClient;
+import io.github.pigmesh.ai.deepseek.core.OpenAiClient;
+import io.github.pigmesh.ai.deepseek.core.SyncOrAsyncOrStreaming;
+import io.github.pigmesh.ai.deepseek.core.chat.ChatCompletionModel;
+import io.github.pigmesh.ai.deepseek.core.chat.ChatCompletionRequest;
+import io.github.pigmesh.ai.deepseek.core.chat.ChatCompletionResponse;
+import io.github.pigmesh.ai.deepseek.core.chat.ResponseFormatType;
+import io.github.pigmesh.ai.deepseek.core.search.FreshnessEnums;
+import io.github.pigmesh.ai.deepseek.core.search.SearchRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,49 +46,58 @@ public class AIController {
     @DecryptIgnore
     public Map<String, Object> complete(@RequestBody AiCompletionMetadata data) {
         HttpRequest request = HttpRequest.post(fittenUrl)
-                .body(JSONUtil.toJsonStr(Map.of(
-                        "inputs", "!FCPREFIX!" + data.getCompletionMetadata().getTextBeforeCursor() + "!FCSUFFIX!" + data.getCompletionMetadata().getTextAfterCursor() + "!FCMIDDLE!",
-                        "meta_datas", Map.of(
-                                "filename", data.getCompletionMetadata().getFilename()
-                        )
-                )));
+                                         .body(JSONUtil.toJsonStr(Map.of(
+                                                 "inputs",
+                                                 "!FCPREFIX!" + data.getCompletionMetadata()
+                                                                    .getTextBeforeCursor() + "!FCSUFFIX!" + data.getCompletionMetadata()
+                                                                                                                .getTextAfterCursor() + "!FCMIDDLE!",
+                                                 "meta_datas",
+                                                 Map.of(
+                                                         "filename",
+                                                         data.getCompletionMetadata()
+                                                             .getFilename()
+                                                       )
+                                                                        )));
 
         HttpResponse response = request.execute();
         log.info("response: {}", response.body());
         Map<String, String> map = JSONUtil.toBean(response.body(), Map.class);
 
-        return Map.of("completion", map.get("generated_text").replace("<|endoftext|>", ""));
+        return Map.of(
+                "completion",
+                map.get("generated_text")
+                   .replace("<|endoftext|>", "")
+                     );
     }
 
+
+    @Autowired
+    private DeepSeekClient deepSeekClient;
+
+    // sse 流式返回
     @GetMapping(value = "/chat", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     @EncryptIgnore
     @DecryptIgnore
-    public SseEmitter streamChat(AIChatParams params) {
-        SseEmitter sseEmitter = new SseEmitter();
-
+    public Flux chat(AIChatParams params) {
         String content = params.getPrompt();
-        SshHandler.HandlerItem handlerItem = ServerContext.SSH_POOL.get(params.getSessionId());
         String message = params.getMessage();
+        SshHandler.HandlerItem handlerItem = ServerContext.SSH_POOL.get(params.getSessionId());
         String lastCommandLog = handlerItem.getLastCommand();
         message = message.replace("{{commandLog}}", Objects.requireNonNullElse(lastCommandLog, ""));
         content = content.replace("{{commandLog}}", Objects.requireNonNullElse(lastCommandLog, ""));
 
-        Flux<String> chat = aiService.chat(content, message);
-        chat.map(s->Map.of("message",s)).subscribe(data -> {
-            try {
-                sseEmitter.send(data);
-            } catch (Exception e) {
-                sseEmitter.completeWithError(e);
-            }
-        }, error -> {
-            try {
-                sseEmitter.completeWithError(error);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }, sseEmitter::complete);
+        ChatCompletionRequest request = ChatCompletionRequest.builder()
 
-        return sseEmitter;
+                                                             // 模型选择，支持 DEEPSEEK_CHAT、DEEPSEEK_REASONER 等
+                                                             .model(ChatCompletionModel.DEEPSEEK_REASONER)
+
+                .addSystemMessage(content)
+                                                             // 添加用户消息
+                                                             .addUserMessage(message)
+
+                                                             .build();
+
+        return deepSeekClient.chatFluxCompletion(request).map(response -> response);
     }
 
 

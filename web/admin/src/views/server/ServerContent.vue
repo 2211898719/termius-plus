@@ -5,7 +5,6 @@ import {message, notification} from "ant-design-vue";
 import {computed, defineExpose, defineProps, nextTick, onMounted, ref} from "vue";
 import {commandApi} from "@/api/command";
 import PTerm from "@/components/p-term.vue";
-import linuxDoc from "@/assets/linux-doc.json";
 import {useStorage} from "@vueuse/core";
 import {useShepherd} from 'vue-shepherd'
 import OsEnum from "@/enums/OsEnum";
@@ -26,7 +25,14 @@ const onFocus = (server) => {
   emit('focus', server)
 }
 
-let searchLinuxDoc = ref(JSON.parse(JSON.stringify(linuxDoc)))
+let searchLinuxDoc = ref("")
+
+const getLinuxDoc = async () => {
+  let res = await fetch("/static/linux-doc.json")
+  searchLinuxDoc.value = await res.json()
+}
+
+getLinuxDoc()
 
 let currentServer = computed(() => {
   if (props.server.os === OsEnum.WINDOWS.value) {
@@ -303,6 +309,8 @@ const chat = async () => {
     //刷新
     const refresh = e => {
       originRes = originRes + e
+      originRes = originRes.replace(/(^|[^\n])(```)/g, '$1\n$2');
+
       let root = document.createElement('div');
       root.innerHTML = md.render(originRes);
       //找到所有的pre节点下的code节点
@@ -363,7 +371,7 @@ const chat = async () => {
     pipe.start(refresh)
     eventSource.onmessage = function (event) {
       let data = JSON.parse(event.data)
-      if (data.message === "DONE") {
+      if (data.choices[0].finish_reason === "stop") {
         blinkClass = ''
         refresh('')
         eventSource.close(); // 关闭连接
@@ -372,7 +380,13 @@ const chat = async () => {
         return
       }
 
-      pipe.write(data.message)
+      if (data.choices[0].delta.content) {
+        pipe.write(data.choices[0].delta.content)
+      }
+
+      if (data.choices[0].delta.reasoning_content) {
+        pipe.write(data.choices[0].delta.reasoning_content)
+      }
     };
 
     eventSource.onerror = function (event) {
@@ -717,7 +731,8 @@ const handleKeyup = (event) => {
 
   .sftp-content {
     height: 100%;
-    :deep(.sftp-card>.ant-card-body){
+
+    :deep(.sftp-card>.ant-card-body) {
       overflow: scroll;
       height: 100%;
     }

@@ -2,7 +2,6 @@ package com.codeages.termiusplus.biz.snippet.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.codeages.termiusplus.biz.ErrorCode;
-import com.codeages.termiusplus.biz.server.service.ServerService;
 import com.codeages.termiusplus.biz.snippet.dto.CommandCreateParams;
 import com.codeages.termiusplus.biz.snippet.dto.CommandDto;
 import com.codeages.termiusplus.biz.snippet.dto.CommandSearchParams;
@@ -28,14 +27,11 @@ public class CommandServiceImpl implements CommandService {
     private final CommandMapper commandMapper;
 
     private final Validator validator;
-    private final ServerService serverService;
 
-    public CommandServiceImpl(CommandRepository commandRepository, CommandMapper commandMapper, Validator validator,
-                              ServerService serverService) {
+    public CommandServiceImpl(CommandRepository commandRepository, CommandMapper commandMapper, Validator validator) {
         this.commandRepository = commandRepository;
         this.commandMapper = commandMapper;
         this.validator = validator;
-        this.serverService = serverService;
     }
 
     @Override

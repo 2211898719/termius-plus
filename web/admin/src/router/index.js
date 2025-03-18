@@ -40,12 +40,6 @@ let routes = [
         meta: { title: '服务器', icon: 'DesktopOutlined' },
         component:  () => import('../views/server/ServerPage.vue'),
       },
-      // {
-      //   path: '/db',
-      //   name: 'db',
-      //   meta: { title: '数据库', icon: 'DatabaseOutlined' },
-      //   component:  () => import('../views/db/DbPage.vue'),
-      // },
       {
         path: '/system',
         name: 'system',
@@ -62,12 +56,6 @@ let routes = [
         ]
       }
     ]
-  },
-  {
-    path: '/requestMap',
-    name: 'requestMap',
-    meta: {title: '请求地图'},
-    component: () => import('../views/dashboard/RequestMapPage.vue'),
   },
   {
     path: '/codeEditor',

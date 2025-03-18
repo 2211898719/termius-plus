@@ -135,8 +135,8 @@ const ls = async () => {
 }
 
 const changeDir = async (path) => {
+  console.log(path)
   if (path === currentPath.value) {
-
     return
   }
 
@@ -168,12 +168,6 @@ defineExpose({
 })
 
 const handleDownload = (file) => {
-  // const ele = document.createElement('a'); //新建一个a标签
-  // ele.style.display = 'none';
-  // ele.setAttribute('href', sftpApi.download({id: sessionId.value, remotePath: currentPath.value + '/' + file.name}));
-  // ele.setAttribute('target', '_blank');
-  // ele.click();
-
   window.open(sftpApi.download({id: sessionId.value, remotePath: currentPath.value + '/' + file.name}))
 }
 
@@ -280,7 +274,11 @@ const handleClickFile = async (file) => {
     return
   }
 
-  await changeDir(currentPath.value + '/' + file.name)
+  if (currentPath.value === '/') {
+
+  }
+
+  await changeDir(currentPath.value + (currentPath.value !== '/' ?? '/') + file.name)
 }
 
 watch(currentFiles, (files) => {
@@ -457,7 +455,7 @@ const drop = async (e, sessionId, currentPath) => {
     }
 
     //取消
-    if (data.progress === -1){
+    if (data.progress === -1) {
       notification.close(key)
       ls()
       return
@@ -501,13 +499,13 @@ const drop = async (e, sessionId, currentPath) => {
                   sftpApi.cancelUploadTask({taskId: data.taskId})
                 },
               },
-              { default: () => '取消' },
+              {default: () => '取消'},
           ),
     });
 
   }
 
-  sftp.onmessage = _.throttle(handleProcessMessage, 1000,{
+  sftp.onmessage = _.throttle(handleProcessMessage, 1000, {
     leading: true,
     trailing: true,
     maxWait: 1000,
@@ -556,7 +554,7 @@ const sortFileByName = (files) => {
   })
 }
 const openCode = async (file) => {
-  window.open(`/codeEditor?rootPath=${file?(currentPath.value + '/' + file.name):currentPath.value}&sessionId=${sessionId.value}&serverName=${props.serverName}&serverPath=${props.path}&serverId=${props.serverId}`)
+  window.open(`/codeEditor?rootPath=${file ? (currentPath.value + '/' + file.name) : currentPath.value}&sessionId=${sessionId.value}&serverName=${props.serverName}&serverPath=${props.path}&serverId=${props.serverId}`)
 }
 
 </script>
@@ -599,7 +597,7 @@ const openCode = async (file) => {
 
           </div>
         </template>
-        <div ref="parent" style="overflow: hidden;height: 100%" >
+        <div ref="parent" style="overflow: hidden;height: 100%">
           <a-card-grid draggable="true" @dragstart="onStart($event,sessionId,currentPath,file,serverName)"
                        :style="{width: width}"
                        :bordered="false"
@@ -639,12 +637,12 @@ const openCode = async (file) => {
               <template #overlay>
                 <a-menu>
                   <template v-if="!file.directory">
-                  <a-menu-item  key="4" @click="handleDownload(file)">
-                    <cloud-download-outlined/>
-                    下载
-                  </a-menu-item>
+                    <a-menu-item key="4" @click="handleDownload(file)">
+                      <cloud-download-outlined/>
+                      下载
+                    </a-menu-item>
                     <a-menu-item key="4" @click="handleClickFile(file)">
-                      <info-circle-outlined />
+                      <info-circle-outlined/>
                       详细信息
                     </a-menu-item>
                   </template>
@@ -678,8 +676,9 @@ const openCode = async (file) => {
       </a-card>
     </a-spin>
 
-    <a-modal v-model:visible="fileViewVisible" :title="fileView.name" ok-text="下载" cancel-text="关闭" @ok="handleDownload(fileView)"
-             width="60%"  >
+    <a-modal v-model:visible="fileViewVisible" :title="fileView.name" ok-text="下载" cancel-text="关闭"
+             @ok="handleDownload(fileView)"
+             width="60%">
       <a-form>
         <a-form-item title="详细信息">
           <a-descriptions bordered>
@@ -712,6 +711,7 @@ const openCode = async (file) => {
 <style scoped lang="less">
 .sftp-root {
   min-height: 100%;
+
   .head {
     display: flex;
     flex-direction: row;

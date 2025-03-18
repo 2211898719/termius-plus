@@ -7,7 +7,6 @@ import {
   defineEmits,
   defineExpose,
   nextTick,
-  onBeforeUnmount,
   onMounted,
   reactive,
   ref,
@@ -29,11 +28,8 @@ import GroupCascader from "@/components/group-cascader.vue";
 import RelationGraph from 'relation-graph/vue3'
 import {proxyApi} from "@/api/proxy";
 import PSelect from "@/components/p-select.vue";
-import {Codemirror} from "vue-codemirror";
-import {oneDark} from "@codemirror/theme-one-dark";
-import {javascript} from "@codemirror/lang-javascript";
 import ApplicationMonitorCheckTypeEnum from "@/enums/ApplicationMonitorCheckTypeEnum";
-import {lazyAMapApiLoaderInstance, useCitySearch} from "@vuemap/vue-amap";
+import MonacoEditor from "@/components/MonacoEditor.vue";
 
 let termiusStyleColumn = ref(Math.floor(window.innerWidth / 300));
 
@@ -516,10 +512,6 @@ let relationOptions = ref({
   ]
 })
 
-const handleOpenRequestMap = (item) => {
-  window.open("/requestMap?id=" + item.id, '_blank')
-}
-
 const handleOpenApplicationContact = (item) => {
   contactVisible.value = true
   contactData.value = item
@@ -557,16 +549,6 @@ const handleOpenApplicationContact = (item) => {
   })
 }
 
-const extensions = [javascript(), oneDark]
-
-let editorOptions = ref({
-  mode: 'text/x-javascript',
-  theme: 'default',
-  lineNumbers: true,
-  tabSize: 4,
-  autoCloseBrackets: true,
-});
-
 
 const handleMonitorCheckTypeChange = (value) => {
   if (value === ApplicationMonitorCheckTypeEnum.JAVASCRIPT.value) {
@@ -585,69 +567,6 @@ defineExpose({
   getProxyData,
   setProxyId
 })
-
-
-const center = ref(null);
-let zoom = ref(18);
-let map = null;
-let formRef = ref(null);
-watch(
-    () => creationVisible.value,
-    (v) => {
-      if (v) {
-        lazyAMapApiLoaderInstance.then(() => {
-          if (creationState.latitude && creationState.longitude) {
-            center.value = [creationState.longitude, creationState.latitude];
-          } else {
-            useCitySearch().then((res) => {
-              const { getLocalCity } = res;
-              getLocalCity().then((cityResult) => {
-                center.value = cityResult.bounds.getCenter().toArray();
-              });
-            });
-          }
-        });
-      } else {
-
-        selectedPoi.value = null;
-      }
-    },
-);
-
-let selectedPoi = ref(null);
-const selectPoi = (e) => {
-  center.value = [e.poi.location.lng, e.poi.location.lat];
-  creationState.address = e.poi.district + e.poi.address + e.poi.name;
-  creationState.latitude = e.poi.location.lat;
-  creationState.longitude = e.poi.location.lng;
-};
-const choosePoi = (e) => {};
-
-const handleMapClick = (e) => {
-  let poi = [e.lnglat.lng, e.lnglat.lat];
-  selectedPoi.value = {
-    position: poi,
-  };
-
-  geocoder.getAddress(new AMap.LngLat(...poi));
-  creationState.latitude = e.lnglat.lat;
-  creationState.longitude = e.lnglat.lng;
-};
-
-let geocoder = null;
-const init = (mapObj) => {
-  mapObj.plugin(['AMap.Geocoder'], function () {
-    //加载地理编码插件
-    geocoder = new AMap.Geocoder({
-      radius: 1000, //以已知坐标为中心点，radius为半径，返回范围内兴趣点和道路信息
-      extensions: 'all', //返回地址描述以及附近兴趣点和道路信息，默认“base”
-    });
-    //返回地理编码结果
-    geocoder.on('complete', (e) => {
-      creationState.address = e.regeocode.formattedAddress;
-    });
-  });
-};
 
 </script>
 
@@ -728,10 +647,6 @@ const init = (mapObj) => {
                           <a-menu-item key="5" @click="handleOpenApplicationContact(item)">
                             <read-outlined/>
                             关系图
-                          </a-menu-item>
-                          <a-menu-item key="6" @click="handleOpenRequestMap(item)">
-                            <fund-outlined/>
-                            请求路径图
                           </a-menu-item>
                           <a-menu-item key="3" @click="handleCopyApplication(item)">
                             <CopyOutlined/>
@@ -828,24 +743,6 @@ const init = (mapObj) => {
             <a-form-item label="代理" v-bind="creationValidations.proxyId">
               <p-select ref="proxyRef" :api="proxyApi.list" v-model:value="creationState.proxyId"
                         style="width: 90%"></p-select>
-            </a-form-item>
-            <a-form-item
-                label="位置"
-                name="latitude"
-                :rules="[{ required: true, message: '选择位置！' }]"
-            >
-              <div style="height: 300px">
-                <el-amap
-                    v-if="center"
-                    v-model:center="center"
-                    v-model:zoom="zoom"
-                    @click="handleMapClick"
-                    @init="init"
-                >
-                  <el-amap-search-box :debounce="1000" @select="selectPoi" @choose="choosePoi" />
-                  <el-amap-marker v-if="selectedPoi" :position="selectedPoi.position" />
-                </el-amap>
-              </div>
             </a-form-item>
             <a-divider>身份</a-divider>
             <a-form autocomplete="off" layout="inline" v-for="(item, index) in creationState.identityArray"
@@ -950,9 +847,8 @@ const init = (mapObj) => {
                 <a-form-item label="校验">
                   <template
                       v-if="creationState.monitorConfig.checkType === ApplicationMonitorCheckTypeEnum.JAVASCRIPT.value">
-                    <codemirror v-model:model-value="creationState.monitorConfig.responseRegex"
-                                :extensions="extensions"
-                                :options="editorOptions"></codemirror>
+                    <MonacoEditor style="height: 240px"
+                                  v-model:value="creationState.monitorConfig.responseRegex" language="javascript" theme="vs-dark"  />
                     <p>javascript代码，实现校验方法check</p>
                     <p>入参为body，字符串类型</p>
                     <p>返回值类型字符串，若为success则校验成功，否则校验失败。校验失败时返回值为失败原因</p>
@@ -1006,14 +902,6 @@ const init = (mapObj) => {
                     <a-input></a-input>
                   </a-auto-complete>
                 </a-form-item>
-                <a-form-item label="nginx access_log路径">
-                  <a-auto-complete
-                      v-model:value="creationState.serverList[index].nginxLogPath"
-                      :options="[]"
-                  >
-                    <a-input></a-input>
-                  </a-auto-complete>
-                </a-form-item>
                 <a-form-item>
                   <a-button @click="creationState.serverList.splice(index, 1)">
                     <template #icon>
@@ -1024,7 +912,7 @@ const init = (mapObj) => {
               </a-form>
             </template>
             <div style="text-align: center">
-              <a-button @click="creationState.serverList.push({serverId: '', tag: '',nginxLogPath:''})">
+              <a-button @click="creationState.serverList.push({serverId: '', tag: ''})">
                 <template #icon>
                   <plus-outlined/>
                 </template>

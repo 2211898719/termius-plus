@@ -1,14 +1,11 @@
 <script setup>
-import {oneDark} from "@codemirror/theme-one-dark";
 import PFileTree from "@/components/p-file-tree.vue";
 import {computed, nextTick, onMounted, ref} from "vue";
 import {sftpApi} from "@/api/sftp";
 import {useRoute, useRouter} from "vue-router";
-import {Split} from "view-ui-plus";
 import {message} from "ant-design-vue";
 import {serverApi} from "@/api/server";
 import PTerm from "@/components/p-term.vue";
-import {useBase64} from "@vueuse/core";
 import MonacoEditor from "@/components/MonacoEditor.vue";
 
 let route = useRoute()
@@ -245,17 +242,6 @@ const downloadFile = () => {
                 <div class="code-content">
                   <a-spin :spinning="saveContentSpinner">
                     <a-spin :spinning="loadContentSpinner">
-                      <!--                      <code-mirror-->
-                      <!--                          basic-->
-                      <!--                          ref="CodeMirrorRef"-->
-                      <!--                          :tab="true"-->
-                      <!--                          v-if="!loadContentSpinner"-->
-                      <!--                          :lang="lang"-->
-                      <!--                          :extensions="extensions"-->
-                      <!--                          v-model:modelValue="content">-->
-                      <!--                      </code-mirror>-->
-                      <!--                      <div class="code-loading" v-else>-->
-                      <!--                      </div>-->
                       <div class="monaco-editor">
                         <MonacoEditor v-if="!loadContentSpinner" ref="CodeMirrorRef"
                                       v-model:value="content" :language="lang" theme="vs-dark" :file-names="currentFile?.name" />

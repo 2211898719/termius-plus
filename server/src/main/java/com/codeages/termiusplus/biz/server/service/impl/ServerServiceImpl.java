@@ -8,7 +8,6 @@ import cn.hutool.core.lang.tree.TreeNode;
 import cn.hutool.core.lang.tree.TreeUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONUtil;
 import com.codeages.termiusplus.biz.ErrorCode;
 import com.codeages.termiusplus.biz.server.context.ServerContext;
@@ -21,9 +20,9 @@ import com.codeages.termiusplus.biz.server.mapper.ServerMapper;
 import com.codeages.termiusplus.biz.server.mapper.ServerRunLogMapper;
 import com.codeages.termiusplus.biz.server.repository.ServerRepository;
 import com.codeages.termiusplus.biz.server.repository.ServerRunLogRepository;
-import com.codeages.termiusplus.biz.server.service.PortForWardingService;
 import com.codeages.termiusplus.biz.server.service.ProxyService;
 import com.codeages.termiusplus.biz.server.service.ServerService;
+import com.codeages.termiusplus.biz.server.sshj.TermiusPlusSSHClient;
 import com.codeages.termiusplus.biz.util.ExecuteCommandSSHClient;
 import com.codeages.termiusplus.biz.util.TreeUtils;
 import com.codeages.termiusplus.biz.util.command.CpuUsage;
@@ -41,14 +40,12 @@ import lombok.Cleanup;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import net.schmizz.sshj.SSHClient;
-import net.schmizz.sshj.connection.channel.direct.DirectConnection;
 import net.schmizz.sshj.transport.TransportException;
 import net.schmizz.sshj.transport.verification.PromiscuousVerifier;
 import net.schmizz.sshj.userauth.method.AuthPassword;
 import net.schmizz.sshj.userauth.method.PasswordResponseProvider;
 import net.schmizz.sshj.userauth.password.PasswordFinder;
 import net.schmizz.sshj.userauth.password.Resource;
-import org.apache.commons.net.DefaultSocketFactory;
 import org.apache.commons.net.telnet.TelnetClient;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
@@ -457,7 +454,7 @@ public class ServerServiceImpl implements ServerService {
     @SneakyThrows
     private SSHClient createSSHClient(Long id, String sessionId, int timeout) {
         ServerDto server = findById(id);
-        SSHClient ssh = new SSHClient();
+        TermiusPlusSSHClient ssh = new TermiusPlusSSHClient();
         ssh.useCompression();
         ssh.setTimeout(timeout);
         ssh.setConnectTimeout(timeout);
@@ -520,14 +517,11 @@ public class ServerServiceImpl implements ServerService {
             try {
                 Long proxyServerId = server.getUseProxyServerId();
                 if (proxyServerId != null) {
-                    SSHClient sshClient = createSSHClient(proxyServerId);
-                    DirectConnection directConnection = sshClient.newDirectConnection(
-                            server.getIp(),
+                    ssh.connectVia(
+                            createSSHClient(proxyServerId), server.getIp(),
                             server.getPort()
                                   .intValue()
-                                                                                     );
-
-                    ssh.connectVia(directConnection);
+                                  );
                 } else {
                     ssh.connect(
                             server.getIp(),
@@ -617,6 +611,7 @@ public class ServerServiceImpl implements ServerService {
 
         }
 
+
         return ssh;
     }
 
@@ -649,9 +644,10 @@ public class ServerServiceImpl implements ServerService {
         telnet.setDefaultTimeout(10000);
         telnet.setConnectTimeout(10000);
         try {
-            telnet.connect(serverCreateParams.getIp(),
-                           serverCreateParams.getPort()
-                                             .intValue()
+            telnet.connect(
+                    serverCreateParams.getIp(),
+                    serverCreateParams.getPort()
+                                      .intValue()
                           );
         } catch (IOException e) {
             return -1;

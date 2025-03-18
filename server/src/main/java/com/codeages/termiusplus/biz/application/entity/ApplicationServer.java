@@ -37,7 +37,6 @@ public class ApplicationServer {
      */
     private String remark;
 
-    private String nginxLogPath;
     /**
      * 创建时间
      */

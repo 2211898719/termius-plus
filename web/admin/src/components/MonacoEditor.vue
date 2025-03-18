@@ -29,7 +29,6 @@ let registerCopilots = [];
 loader.config({ 'vs/nls': { availableLanguages: { '*': 'zh-cn' } } });
 onMounted(() => {
   loader.init().then((monaco) => {
-    console.log(props.fileNames)
     editorInstance = monaco.editor.create(editorContainer.value, {
       value: props.value || "",
       language: props.language,
@@ -91,6 +90,14 @@ onMounted(() => {
     editorInstance.onDidChangeModelContent(() => {
       emits("update:value", editorInstance.getValue());
     });
+
+    if (props.value){
+      initValue(props.value);
+    }
+
+    if (props.language){
+      initLanguage(props.language);
+    }
   });
 });
 
@@ -103,25 +110,35 @@ onBeforeUnmount(() => {
   }
 });
 
+function initLanguage(newLanguage) {
+  if (editorInstance) {
+    loader.init().then((monaco) => {
+      monaco.editor.setModelLanguage(editorInstance.getModel(), newLanguage);
+    });
+  }
+}
+
 watch(
     () => props.language,
     (newLanguage) => {
-      if (editorInstance) {
-        loader.init().then((monaco) => {
-          monaco.editor.setModelLanguage(editorInstance.getModel(), newLanguage);
-        });
-      }
+      initLanguage(newLanguage);
     }
-);
+,{immediate: true});
+
+function initValue(newValue) {
+  if (editorInstance && editorInstance.getValue() !== newValue) {
+    editorInstance.setValue(newValue);
+  }
+}
 
 watch(
     () => props.value,
     (newValue) => {
-      if (editorInstance && editorInstance.getValue() !== newValue) {
-        editorInstance.setValue(newValue);
-      }
+      initValue(newValue);
     }
-);
+,{immediate: true});
+
+
 </script>
 
 <template>

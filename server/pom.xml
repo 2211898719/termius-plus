@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.codeages</groupId>
     <artifactId>termius-plus</artifactId>
-    <version>server-v2.0.5</version>
+    <version>server-v2.0.7</version>
     <name>Termius Plus</name>
     <description>Termius Plus</description>
     <properties>
@@ -248,6 +248,11 @@
             <groupId>commons-net</groupId>
             <artifactId>commons-net</artifactId>
             <version>3.11.1</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.pig-mesh.ai</groupId>
+            <artifactId>deepseek-spring-boot-starter</artifactId>
+            <version>1.4.3</version>
         </dependency>
     </dependencies>
 

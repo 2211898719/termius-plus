@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
 
 @Component
 @Slf4j
-@ConditionalOnProperty(name = "monitor.enabled", havingValue = "true")
+@ConditionalOnProperty(prefix = "monitor", name = "enable", havingValue = "true")
 public class MonitorJob {
 
     @Autowired

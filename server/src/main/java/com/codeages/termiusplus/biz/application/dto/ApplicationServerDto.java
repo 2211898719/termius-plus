@@ -24,8 +24,6 @@ public class ApplicationServerDto {
 
     private String remark;
 
-    private String nginxLogPath;
-
     private ServerDto server;
 }
 

@@ -4,11 +4,7 @@ import {useForm} from "ant-design-vue/es/form";
 import {quartzApi} from "@/api/quartz";
 import {message} from "ant-design-vue";
 import ServerListPage from "@/views/server/ServerListPage.vue";
-import {Codemirror} from "vue-codemirror";
-import {oneDark} from '@codemirror/theme-one-dark'
-import {java} from "@codemirror/lang-java";
-import {json} from "@codemirror/lang-json";
-import CodeMirror from "vue-codemirror6";
+import MonacoEditor from "@/components/MonacoEditor.vue";
 
 const creationCronJobType = ref('create');
 const creationCronJobState = reactive({
@@ -157,27 +153,6 @@ const removeServer = (id) => {
   creationCronJobState.serverDtoList = creationCronJobState.serverDtoList.filter(item => item.id !== id);
 }
 
-const extensions = [java(), oneDark]
-
-let editorOptions = ref({
-  mode: 'text/x-java',
-  theme: 'default',
-  lineNumbers: true,
-  tabSize: 4,
-  autoCloseBrackets: true,
-});
-
-const extensionsJson = [json(), oneDark]
-
-let editorOptionsJson = ref({
-  mode: 'text/x-json',
-  theme: 'default',
-  lineNumbers: true,
-  tabSize: 4,
-  autoCloseBrackets: true,
-});
-
-
 let example = ref(`String script = "df -h | awk '$NF==\\"/\\"{printf \\"%s\\\\n\\", $5}' | cut -d'%' -f1";
 res = Integer.parseInt(session.executeCommand(script));
 if (res > 50) {
@@ -289,25 +264,21 @@ defineExpose({
             </a-form-item>
             <a-form-item label="参数集：" v-bind="cronJobCreationValidations.params">
               <div style="margin: 5px 0">填写json从脚本中可以param获取</div>
-              <a-form-item :label="item.name" v-for="(item,index) in creationCronJobState.serverDtos" :key="item.id">
-              <codemirror
-                          v-model:model-value="creationCronJobState.params[index]" :extensions="extensionsJson"
-                          :options="editorOptionsJson"></codemirror>
-                <code-mirror
-                    basic
-                    :lang="lang"
-                    :extensions="[oneDark]"
-                    v-model="creationCronJobState.params[index]">
-                </code-mirror>
+              <a-form-item :label="item.name" v-for="(item,index) in creationCronJobState.serverIds" :key="item.id">
+                <MonacoEditor
+                    style="height: 240px"
+                    v-model:value="creationCronJobState.params[index]" language="json" theme="vs-dark"  />
               </a-form-item>
             </a-form-item>
             <a-form-item label="脚本：" v-bind="cronJobCreationValidations.mvelScript">
-              <codemirror v-model:model-value="creationCronJobState.mvelScript" :extensions="extensions"
-                          :options="editorOptions"></codemirror>
+              <MonacoEditor
+                  style="height: 240px"
+                  v-model:value="creationCronJobState.mvelScript" language="java" theme="vs-dark"  />
               <div style="margin-top: 16px">
                 <p>示例:
-                  <codemirror v-model:model-value="example" :extensions="extensions"
-                              :options="editorOptions"></codemirror>
+                  <MonacoEditor
+                      style="height: 240px"
+                      v-model:value="example" language="java" theme="vs-dark"  />
                 </p>
 
               </div>

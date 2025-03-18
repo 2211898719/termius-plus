@@ -687,14 +687,14 @@ defineExpose({
           <a-space>
             <span v-if="isNumber(netTestResult) ">
               <span v-if="netTestResult>0">
-                延迟{{netTestResult}}ms
+                连接成功延迟{{netTestResult}}ms
               </span>
               <span v-else>
                 连接服务器失败
               </span>
             </span>
 
-            <a-button type="primary" @click="testNet" :loading="testNetLoading">测试网络连接</a-button>
+            <a-button type="primary" @click="testNet" :loading="testNetLoading">测试连接</a-button>
             <a-button @click="creationVisible = false">取消</a-button>
             <a-button type="primary" @click="submitCreate">提交</a-button>
           </a-space>

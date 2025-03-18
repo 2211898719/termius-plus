@@ -1,8 +1,9 @@
 const {defineConfig} = require('@vue/cli-service');
 const path = require('path');
 const appConfig = require('./src/config');
-const CopyWebpackPlugin = require('copy-webpack-plugin')
 const { codeInspectorPlugin } = require('code-inspector-plugin');
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+
 
 module.exports = defineConfig({
     transpileDependencies: true,
@@ -46,6 +47,9 @@ module.exports = defineConfig({
                 bundler: 'webpack',
             })
         );
+
+        config.plugin('webpack-bundle-analyzer')
+            .use(BundleAnalyzerPlugin)
 
         config.module
             .rule('jsx')
