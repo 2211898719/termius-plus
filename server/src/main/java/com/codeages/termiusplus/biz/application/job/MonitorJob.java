@@ -62,6 +62,9 @@ public class MonitorJob {
     @Value("${monitor.debounce:5}")
     private int monitorDebounce;
 
+    @Value("${monitor.certExpiryDays:90}")
+    private int certExpiryDays;
+
 
     static {
         executor = new ThreadPoolTaskExecutor();
@@ -201,7 +204,7 @@ public class MonitorJob {
             long lastDay = DateUtil.between(date, expiryDate, DateUnit.DAY, false);
             log.info("应用{}:,{}证书到期时间还有{}天", app.getName(), url, lastDay);
 
-            if (lastDay < 90) {
+            if (lastDay < certExpiryDays) {
                 pairList.add(Pair.of(app, lastDay));
             }
 

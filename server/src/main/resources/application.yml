@@ -132,6 +132,7 @@ monitor:
     count: ${MONITOR_COUNT:1}
     timeout: ${MONITOR_TIMEOUT:30s}
     debounce: ${MONITOR_DEBOUNCE:10}
+    certExpiryDays: ${MONITOR_CERT_EXPIRY_DAYS:90}
 
 fitten:
     url: ${FITTEN_URL:www.fitten.com}
