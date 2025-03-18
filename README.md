@@ -24,6 +24,7 @@ vim docker-compose.yml
 docker compose up -d
 ```
 #### 根据docker-compose.yml中的端口映射，访问 http://ip:8989
+#### 默认的账号密码为 admin / admin
 
 
 # 功能列表
