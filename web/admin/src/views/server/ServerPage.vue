@@ -1,5 +1,6 @@
 <script setup>
-import {createVNode, getCurrentInstance, h, nextTick, onMounted, ref, render, watch} from "vue";
+import 'dockview-vue/dist/styles/dockview.css';
+import {createVNode, nextTick, onMounted, ref, watch} from "vue";
 import Sortable from 'sortablejs';
 import _ from "lodash";
 import {Input, Modal} from "ant-design-vue";
@@ -8,15 +9,14 @@ import {v4} from 'uuid'
 import ServerListPage from "@/views/server/ServerListPage.vue";
 import ProxyListPage from "@/views/server/ProxyListPage.vue";
 import SettingPage from "@/views/server/SettingPage.vue";
-import ServerContent from "@/views/server/ServerContent.vue";
 import SnippetListPage from "@/views/server/SnippetListPage.vue";
 import PortForwarderPage from "@/views/server/PortForwarderPage.vue";
 import CronJobPage from "@/views/server/CronJobPage.vue";
 import OsEnum from "@/enums/OsEnum";
 import {useStorage} from "@vueuse/core";
-import {ComponentItem, GoldenLayout, Stack} from "golden-layout";
 import ApplicationListPage from "@/views/server/ApplicationListPage.vue";
 import DashboardPage from "@/views/server/DashboardPage.vue";
+import {DockviewVue, positionToDirection} from "dockview-vue";
 
 let spinning = ref(false)
 
@@ -51,9 +51,9 @@ const handleOpenServer = (item, masterSessionId = 0) => {
   serverList.value.push(copyItem)
   tagActiveKey.value = copyItem.operationId
 
-  nextTick(() => {
-    renderLayout(copyItem)
-  })
+  // nextTick(() => {
+  //   renderLayout(copyItem)
+  // })
 }
 
 let sortableEl = ref()
@@ -69,7 +69,6 @@ onMounted(() => {
     dataIdAttr: 'id',
     sortElement: '.sortEl',
     dragClass: "sortable-drag",
-    handle: ".sortable-handle",
     animation: 500,
     onEnd: (e) => {
       if (e.oldIndex === e.newIndex) {
@@ -94,6 +93,11 @@ onMounted(() => {
       tabBarRef.value[e.newIndex] = oldTab
       tabBarRef.value[e.oldIndex] = newTab
 
+      let oldDockviewRef = dockviewRef.value[e.oldIndex]
+      let newDockviewRef = dockviewRef.value[e.newIndex]
+      dockviewRef.value[e.newIndex] = oldDockviewRef
+      dockviewRef.value[e.oldIndex] = newDockviewRef
+
       nextTick(() => {
         handleChangeActiveKey(tagActiveKey.value)
       })
@@ -107,15 +111,18 @@ const onCloseServer = (item) => {
     return
   }
 
-  nextTick(() => {
-    goldenLayoutArr[item].destroy()
-    delete goldenLayoutArr[item]
-  })
 
-  _.remove(serverList.value, i => i.operationId === item)
-  if (item === tagActiveKey.value) {
-    tagActiveKey.value = 'server'
-  }
+  let api = serverIdDockviewMap.get(item);
+  api.closeAllGroups();
+  dockviewIdServerMap.delete(api.id)
+  serverIdDockviewMap.delete(item)
+
+  nextTick(() => {
+    _.remove(serverList.value, i => i.operationId === item)
+    if (item === tagActiveKey.value) {
+      tagActiveKey.value = 'server'
+    }
+  })
 }
 
 const handleCopy = (server) => {
@@ -238,222 +245,24 @@ let frontColor = useStorage('frontColor', "#ffffff")
 let layoutContainer = ref([])
 let tabBarRef = ref([])
 
-const componentIns = getCurrentInstance();
-
-class termComponent {
-  rootElement;
-  pTerm;
-
-  constructor(container, state) {
-    this.rootElement = container.element;
-    if (state.server.originOperationId) {
-      let originTermComponent = goldenLayoutArr[state.server.originOperationId].rootItem.contentItems[0].contentItems[0].component;
-      this.rootElement.appendChild(originTermComponent.rootElement.firstChild)
-      this.pTerm = originTermComponent.pTerm
-      originTermComponent.pTerm.props.onFocus = () => {
-        //这里保存分屏窗口的最后一个焦点函数，当tab变动时，恢复上一个tab的焦点
-        goldenLayoutArr[state.server.operationId].rootItem.focus = this.pTerm.component.exposed.focus
-      }
-    } else {
-      this.pTerm = h(ServerContent, {
-        ...state, onHot: onServerHot, onFocus: () => {
-          //只有一个窗口时，focus事件只有一个。
-          goldenLayoutArr[state.server.operationId].rootItem.focus = this.pTerm.component.exposed.focus
-        }
-      })
-      this.pTerm.appContext = componentIns.appContext
-      this.rootElement.appendChild(this.vNode2dom(this.pTerm));
-    }
-  }
-
-  close() {
-    this.pTerm.component.exposed.close()
-  }
-
-  term() {
-    return this.pTerm.component.exposed.term()
-  }
-
-  vNode2dom(vNode) {
-    let domEl = document.createElement("div");
-    render(vNode, domEl);
-    return domEl.firstElementChild;
-  }
-}
-
-
 let tabBarGroupEl = ref()
-
-onMounted(()=>{
-  const resizeObserver = new ResizeObserver(() => {
-    Object.keys(goldenLayoutArr).map(e => goldenLayoutArr[e]).forEach(e => {
-      e.updateRootSize()
-    });
-  });
-
-  resizeObserver.observe(tabBarGroupEl.value);
-  resizeObserver.observe(document.body);
-})
-
-
-let goldenLayoutArr = {}
-
-
-
-const renderLayout = (server) => {
-  let el = layoutContainer.value[layoutContainer.value.length - 1]
-  const goldenLayout = new GoldenLayout(el);
-
-  goldenLayout.registerComponentConstructor('termComponent', termComponent);
-  goldenLayout.loadLayout({
-    header: {
-      show: true,
-      popout: false,
-      maximise: false,
-      close: "关闭",
-    },
-    root: {
-      type: 'row',
-      content: [
-        {
-          title: server.name,
-          type: 'component',
-          componentType: 'termComponent',
-          id: 'no-drop-target',
-          componentState: {
-            server: server
-          }
-        },
-      ]
-    }
-  });
-
-  goldenLayout.on("itemDestroyed", (item) => {
-    //是我自己的组件,需要调用组件的close方法
-    if (item.target instanceof ComponentItem) {
-      item.target.component.close()
-      //contentItems=1
-    }
-    nextTick(() => {
-      //只剩一个了 需要坍缩回去
-      if (goldenLayout.rootItem instanceof Stack && goldenLayout.rootItem.contentItems.length === 1) {
-        serverList.value.filter(s => s.operationId === server.operationId).forEach(s => {
-          s.name = s.originName
-          s.isSplitView = false
-        })
-      }
-    })
-
-    nextTick(() => {
-      //没有rootItem就关闭标签
-      if (!goldenLayout.rootItem) {
-        onCloseServer(server.operationId)
-      }
-    })
-  })
-
-
-  //fixme 处理dragSource
-  //获取不到dragEnd事件，只能通过itemCreated事件来处理
-  goldenLayout.on("itemCreated", () => {
-    let index = serverList.value.findIndex(e => e.operationId === server.operationId)
-    if (!serverList.value[index].isSplitView) {
-      serverList.value[index].originName = serverList.value[index].name
-      serverList.value[index].name = "Split view"
-      serverList.value[index].isSplitView = true
-    }
-
-    handleChangeActiveKey(server.operationId)
-  })
-
-  goldenLayout.on("tabCreated", () => {
-    let index = serverList.value.findIndex(e => e.operationId === server.operationId)
-    if (!serverList.value[index].isSplitView) {
-      serverList.value[index].originName = serverList.value[index].name
-      serverList.value[index].name = "Split view"
-      serverList.value[index].isSplitView = true
-    }
-  })
-
-  goldenLayoutArr[server.operationId] = goldenLayout
-}
-
 
 function handleChangeActiveKey(val) {
   let index = serverList.value.findIndex(e => e.operationId === val)
 
+  if (index === -1) {
+    return
+  }
+  let dockviewApi = serverIdDockviewMap.get(val)
+  if (dockviewApi?.customFocus) {
+    dockviewApi.customFocus()
+  }
 
   nextTick(() => {
-    let current = goldenLayoutArr[tagActiveKey.value];
-
-    //清除掉其他面板的拖拽源
-    Object.keys(goldenLayoutArr).forEach(key => {
-      let e = goldenLayoutArr[key];
-      if (Array.isArray(e.dragSources)) {
-        e.dragSources.forEach(dragSource => {
-          e.removeDragSource(dragSource)
-        })
-      }
-
-      e.dragSources = []
-    })
-
-    if (index === -1) {
-      return
-    }
-
-    let tabBarRefIndex = tabBarRef.value.findIndex(e => e.getAttribute('operationId') === val)
-    for (let i = 0; i < tabBarRef.value.length; i++) {
-      if (i === tabBarRefIndex) {
-        continue;
-      }
-
-      let serverI = serverList.value.findIndex(e => e.operationId === tabBarRef.value[i].getAttribute('operationId'))
-      if (serverList.value[serverI].isSplitView) {
-        continue
-      }
-
-      let newDrag = current.newDragSource(tabBarRef.value[i], () => {
-            let newWindowOptions = {
-              title: serverList.value[serverI].name,
-              type: 'component',
-              componentType: 'termComponent',
-              componentState: {
-                server: {
-                  ...serverList.value[serverI],
-                  operationId: val,
-                  originOperationId: serverList.value[serverI].operationId,
-                },
-              }
-            }
-
-            //删除serverList.value[i]
-            serverList.value.splice(serverI, 1)
-            //维护layoutContainer tabBarRef
-            layoutContainer.value.splice(serverI, 1)
-            tabBarRef.value.splice(serverI, 1)
-
-            return newWindowOptions
-          }
-      )
-
-      current.dragSources.push(newDrag);
-    }
-
-    current.updateRootSize()
-
     serverList.value[index].hot = false
   })
 }
 
-watch(() => tagActiveKey.value, (val) => {
-  handleChangeActiveKey(val);
-
-  let focus = goldenLayoutArr[val]?.rootItem?.focus
-  if (focus) {
-    focus()
-  }
-})
 
 const handleMiddleClick = (event, server) => {
   if (event.button !== 1) {
@@ -468,6 +277,105 @@ let miniTabBar = useStorage('miniTabBar', false)
 const changeMiniTab = () => {
   miniTabBar.value = !miniTabBar.value
 }
+
+
+let dockviewIdServerMap = new Map()
+let serverIdDockviewMap = new Map()
+const onReady = (event, server) => {
+  event.api.onUnhandledDragOverEvent(onDidDrop)
+  event.api.onDidDrop(handleDidDropStop)
+  event.api.customFocus = () => {}
+  event.api.addPanel({
+    id: server.operationId,
+    component: 'DockviewPanel',
+    title: server.name,
+    params: {
+      server: server,
+      onHot: onServerHot,
+      onFocus: function () {
+        let serverContentEl = event.api.component.element.querySelector(`[operationId='${server.operationId}']`)
+        event.api.customFocus = () => {
+          serverContentEl.customFocus()
+        }
+      }
+    },
+  });
+  event.api.onDidRemovePanel((e) => {
+    let serverContentEl = e.view.content.element.querySelector(`[operationId='${e.id}']`)
+    if (serverContentEl) {
+      serverContentEl.customClose()
+    }
+
+    if (e.accessor.api.totalPanels === 1) {
+      server.isSplitView = false
+      server.name = e.accessor.api.panels[0].title
+    }
+  })
+
+  event.api.onDidRemoveGroup((e) => {
+    if (event.api.totalPanels === 0 && event.api.size === 0) {
+      onCloseServer(server.operationId)
+    }
+  })
+
+  dockviewIdServerMap.set(event.api.id, server)
+  serverIdDockviewMap.set(server.operationId, event.api)
+}
+
+watch(() => tagActiveKey.value, (val) => {
+  handleChangeActiveKey(val);
+})
+
+
+let dockviewRef = ref(null)
+const handleDidDropStop = (event) => {
+  event.api.addPanel({
+    id: dragStartServer.operationId,
+    component: 'DockviewPanel',
+    title: dragStartServer.name,
+    position: {
+      direction: positionToDirection(event.options.position),
+      referenceGroup: event.options.group,
+    },
+    params: {
+      el: dockviewRef.value[dragStartIndex].$el.querySelector(`[operationId='${dragStartServer.operationId}']`),
+      server: dragStartServer,
+    }
+  });
+
+  let currentServer = dockviewIdServerMap.get(event.api.id)
+  currentServer.isSplitView = true
+  currentServer.name = "Split view"
+  currentServer.isSplitView = true
+
+  nextTick(() => {
+    onCloseServer(dragStartServer.operationId)
+  })
+}
+
+let dragStartFlag = false
+let dragStartServer = null
+let dragStartIndex = null
+const handleDragStart = (index, server) => {
+  dragStartFlag = !server.isSplitView && server.operationId !== tagActiveKey.value
+  dragStartServer = server
+  dragStartIndex = index
+}
+
+const handleDragEnd = () => {
+  dragStartFlag = false
+  dragStartServer = null
+  dragStartIndex = null
+}
+
+const onDidDrop = (event) => {
+  if (!dragStartFlag) {
+    return
+  }
+
+  event.accept();
+}
+
 
 </script>
 
@@ -496,7 +404,8 @@ const changeMiniTab = () => {
           <cron-job-page></cron-job-page>
         </a-tab-pane>
         <a-tab-pane tab="命令片段" key="snippet" :closable="false" :forceRender="true">
-          <snippet-list-page ref="snippetListRef" @createSuccess="handleProxyCreateSuccess" @openServer="handleOpenServer"></snippet-list-page>
+          <snippet-list-page ref="snippetListRef" @createSuccess="handleProxyCreateSuccess"
+                             @openServer="handleOpenServer"></snippet-list-page>
         </a-tab-pane>
         <a-tab-pane tab="应用" key="application" :closable="false" :forceRender="true">
           <ApplicationListPage @openServer="handleOpenServer" ref="applicationListRef"></ApplicationListPage>
@@ -509,215 +418,220 @@ const changeMiniTab = () => {
         </a-tab-pane>
 
         <template v-slot:renderTabBar>
-          <div  class="tab-bar-group-container" >
-          <div ref="tabBarGroupEl" :class="{'tab-bar-group':true,'tab-bar-group-mini':miniTabBar}">
-            <div class="tab-bar" :class="{'tab-active-normal':tagActiveKey==='server'}" @click="changeTab('server')">
-              <div class="left">
-                <div class="tab-icon">
-                  <cloud-server-outlined/>
+          <div class="tab-bar-group-container">
+            <div ref="tabBarGroupEl" :class="{'tab-bar-group':true,'tab-bar-group-mini':miniTabBar}">
+              <div class="tab-bar" :class="{'tab-active-normal':tagActiveKey==='server'}" @click="changeTab('server')">
+                <div class="left">
+                  <div class="tab-icon">
+                    <cloud-server-outlined/>
+                  </div>
+                  <div class="tab-title">
+                    服务器
+                  </div>
                 </div>
-                <div class="tab-title">
-                  服务器
-                </div>
+                <div class="right"></div>
               </div>
-              <div class="right"></div>
-            </div>
-            <div class="tab-bar" :class="{'tab-active-normal':tagActiveKey==='proxy'}" @click="changeTab('proxy')">
-              <div class="left">
-                <div class="tab-icon">
-                  <svg class="icon"
-                       style="vertical-align: middle;fill: currentColor;overflow: hidden;"
-                       viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1877">
-                    <path
-                        d="M894.424364 729.008452c-53.43705-151.726633-194.117093-258.544451-354.425171-269.737374v-64.9912c87.777159-13.472849 155.219177-89.505523 155.219177-180.992167 0-100.968599-82.144882-183.113481-183.113481-183.113481s-183.113481 82.144882-183.113481 183.113481c0 91.487667 67.442018 167.518295 155.219177 180.992167v64.9912c-160.309102 11.1919-300.993239 118.007671-354.429265 269.728165-71.986521 2.539846-129.764436 61.880349-129.764435 134.475737 0 74.204026 60.365856 134.569882 134.569881 134.569882s134.569882-60.365856 134.569882-134.569882c0-56.175417-34.600029-104.409978-83.604117-124.537388 47.802726-125.075647 165.031661-212.908064 298.657031-223.73362v216.59299c-60.916395 12.8384-106.784048 66.997903-106.784048 131.679041 0 74.204026 60.365856 134.569882 134.569881 134.569882s134.569882-60.365856 134.569882-134.569882c0-64.603367-45.759183-118.709659-106.567108-131.630946v-216.640062c133.584438 10.82351 250.799046 98.622158 298.622238 223.657896-49.101301 20.082384-83.787288 68.36811-83.787288 124.613112 0 74.204026 60.365856 134.569882 134.569882 134.569882s134.569882-60.365856 134.569881-134.569882c0.001023-72.523757-57.662281-131.818211-129.548518-134.467551z m-681.057347 134.466528c0 43.435255-35.344996 78.780251-78.780251 78.780251s-78.780251-35.344996-78.780251-78.780251 35.344996-78.780251 78.780251-78.780251c3.151783 0 6.255471 0.206708 9.312087 0.569982 1.287319 0.277316 2.577708 0.459464 3.859911 0.553608 37.184901 6.288217 65.608254 38.71065 65.608253 77.656661z m171.412998-650.186246c0-70.214155 57.110719-127.32385 127.323851-127.32385s127.32385 57.110719 127.32385 127.32385c0 70.214155-57.110719 127.32385-127.32385 127.323851s-127.32385-57.109696-127.323851-127.323851z m205.996654 650.186246c0 43.435255-35.344996 78.780251-78.780251 78.780251-43.435255 0-78.780251-35.344996-78.780251-78.780251s35.344996-78.780251 78.780251-78.780251c43.434232 0 78.780251 35.343973 78.780251 78.780251z m298.627355 78.781274c-43.435255 0-78.780251-35.344996-78.780251-78.780251 0-39.041178 28.561499-71.529103 65.880453-77.706803a28.15627 28.15627 0 0 0 3.627621-0.510629 79.109756 79.109756 0 0 1 9.272177-0.563842c43.435255 0 78.780251 35.344996 78.780251 78.780251 0.002047 43.435255-35.343973 78.781274-78.780251 78.781274z"
-                        fill="" p-id="1878"></path>
-                  </svg>
+              <div class="tab-bar" :class="{'tab-active-normal':tagActiveKey==='proxy'}" @click="changeTab('proxy')">
+                <div class="left">
+                  <div class="tab-icon">
+                    <svg class="icon"
+                         style="vertical-align: middle;fill: currentColor;overflow: hidden;"
+                         viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1877">
+                      <path
+                          d="M894.424364 729.008452c-53.43705-151.726633-194.117093-258.544451-354.425171-269.737374v-64.9912c87.777159-13.472849 155.219177-89.505523 155.219177-180.992167 0-100.968599-82.144882-183.113481-183.113481-183.113481s-183.113481 82.144882-183.113481 183.113481c0 91.487667 67.442018 167.518295 155.219177 180.992167v64.9912c-160.309102 11.1919-300.993239 118.007671-354.429265 269.728165-71.986521 2.539846-129.764436 61.880349-129.764435 134.475737 0 74.204026 60.365856 134.569882 134.569881 134.569882s134.569882-60.365856 134.569882-134.569882c0-56.175417-34.600029-104.409978-83.604117-124.537388 47.802726-125.075647 165.031661-212.908064 298.657031-223.73362v216.59299c-60.916395 12.8384-106.784048 66.997903-106.784048 131.679041 0 74.204026 60.365856 134.569882 134.569881 134.569882s134.569882-60.365856 134.569882-134.569882c0-64.603367-45.759183-118.709659-106.567108-131.630946v-216.640062c133.584438 10.82351 250.799046 98.622158 298.622238 223.657896-49.101301 20.082384-83.787288 68.36811-83.787288 124.613112 0 74.204026 60.365856 134.569882 134.569882 134.569882s134.569882-60.365856 134.569881-134.569882c0.001023-72.523757-57.662281-131.818211-129.548518-134.467551z m-681.057347 134.466528c0 43.435255-35.344996 78.780251-78.780251 78.780251s-78.780251-35.344996-78.780251-78.780251 35.344996-78.780251 78.780251-78.780251c3.151783 0 6.255471 0.206708 9.312087 0.569982 1.287319 0.277316 2.577708 0.459464 3.859911 0.553608 37.184901 6.288217 65.608254 38.71065 65.608253 77.656661z m171.412998-650.186246c0-70.214155 57.110719-127.32385 127.323851-127.32385s127.32385 57.110719 127.32385 127.32385c0 70.214155-57.110719 127.32385-127.32385 127.323851s-127.32385-57.109696-127.323851-127.323851z m205.996654 650.186246c0 43.435255-35.344996 78.780251-78.780251 78.780251-43.435255 0-78.780251-35.344996-78.780251-78.780251s35.344996-78.780251 78.780251-78.780251c43.434232 0 78.780251 35.343973 78.780251 78.780251z m298.627355 78.781274c-43.435255 0-78.780251-35.344996-78.780251-78.780251 0-39.041178 28.561499-71.529103 65.880453-77.706803a28.15627 28.15627 0 0 0 3.627621-0.510629 79.109756 79.109756 0 0 1 9.272177-0.563842c43.435255 0 78.780251 35.344996 78.780251 78.780251 0.002047 43.435255-35.343973 78.781274-78.780251 78.781274z"
+                          fill="" p-id="1878"></path>
+                    </svg>
+                  </div>
+                  <div class="tab-title">
+                    代理
+                  </div>
                 </div>
-                <div class="tab-title">
-                  代理
-                </div>
+                <div class="right"></div>
               </div>
-              <div class="right"></div>
-            </div>
-            <div class="tab-bar" :class="{'tab-active-normal':tagActiveKey==='portForwarder'}"
-                 @click="changeTab('portForwarder')">
-              <div class="left">
-                <div class="tab-icon">
-                  <svg class="icon" style=";vertical-align: middle;fill: currentColor;overflow: hidden;"
-                       viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="2316">
-                    <path
-                        d="M865.922728 583.211878c-16.276708 0-29.580712 13.246699-29.667693 29.727045l0 215.125569c0 17.992793-14.58723 32.637328-32.520671 32.637328L181.762717 860.70182c-17.935488 0-32.520671-14.645558-32.520671-32.637328L149.242046 292.155966c0-17.992793 14.586207-32.637328 32.520671-32.637328l291.230897 0c16.304338-0.029676 29.580712-13.363356 29.580712-29.724998 0-16.392342-13.276375-29.727045-29.610388-29.727045l-295.336402 0c-48.358381 0-87.721901 39.450501-87.721901 87.925538l0 544.205493c0 48.475038 39.36352 87.925538 87.721901 87.925538l630.239961 0c48.358381 0 87.720877-39.450501 87.720877-87.925538L895.588375 612.762915C895.501394 596.458577 882.19739 583.211878 865.922728 583.211878z"
-                        fill="" p-id="2317"></path>
-                    <path
-                        d="M930.818761 338.183256l0-0.318248L727.07645 133.511783l-6.435573-6.259564-0.814552 0.844228c-4.511757-2.532683-9.606799-3.873214-14.876826-3.873214-16.974603 0-30.774911 13.829983-30.774911 30.832216 0 5.298679 1.338485 10.393721 3.873214 14.907525l-0.903579 0.931209 141.845589 142.224212-145.573493 0.057305C436.396091 342.726735 378.197598 489.375723 361.049033 717.050096c0 17.004279 13.800307 30.832216 30.772864 30.832216 13.858636 0 25.620517-9.229199 29.464055-21.893636l1.397836-8.181333c18.022469-215.329207 60.470233-321.567833 251.839749-342.937536l144.466276 0L683.433464 510.804778l-5.502317 7.744381c-1.951445 4.104481-2.969635 9.112542-2.969635 13.654998 0 17.002232 13.799284 30.832216 30.772864 30.832216 4.832052 0 10.160407-1.164522 14.439874-3.37691L929.954067 350.740246c1.860371-1.305739 4.140297-4.52506 4.140297-6.970762C934.093341 341.323782 932.679132 339.488994 930.818761 338.183256z"
-                        fill="" p-id="2318"></path>
-                  </svg>
+              <div class="tab-bar" :class="{'tab-active-normal':tagActiveKey==='portForwarder'}"
+                   @click="changeTab('portForwarder')">
+                <div class="left">
+                  <div class="tab-icon">
+                    <svg class="icon" style=";vertical-align: middle;fill: currentColor;overflow: hidden;"
+                         viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="2316">
+                      <path
+                          d="M865.922728 583.211878c-16.276708 0-29.580712 13.246699-29.667693 29.727045l0 215.125569c0 17.992793-14.58723 32.637328-32.520671 32.637328L181.762717 860.70182c-17.935488 0-32.520671-14.645558-32.520671-32.637328L149.242046 292.155966c0-17.992793 14.586207-32.637328 32.520671-32.637328l291.230897 0c16.304338-0.029676 29.580712-13.363356 29.580712-29.724998 0-16.392342-13.276375-29.727045-29.610388-29.727045l-295.336402 0c-48.358381 0-87.721901 39.450501-87.721901 87.925538l0 544.205493c0 48.475038 39.36352 87.925538 87.721901 87.925538l630.239961 0c48.358381 0 87.720877-39.450501 87.720877-87.925538L895.588375 612.762915C895.501394 596.458577 882.19739 583.211878 865.922728 583.211878z"
+                          fill="" p-id="2317"></path>
+                      <path
+                          d="M930.818761 338.183256l0-0.318248L727.07645 133.511783l-6.435573-6.259564-0.814552 0.844228c-4.511757-2.532683-9.606799-3.873214-14.876826-3.873214-16.974603 0-30.774911 13.829983-30.774911 30.832216 0 5.298679 1.338485 10.393721 3.873214 14.907525l-0.903579 0.931209 141.845589 142.224212-145.573493 0.057305C436.396091 342.726735 378.197598 489.375723 361.049033 717.050096c0 17.004279 13.800307 30.832216 30.772864 30.832216 13.858636 0 25.620517-9.229199 29.464055-21.893636l1.397836-8.181333c18.022469-215.329207 60.470233-321.567833 251.839749-342.937536l144.466276 0L683.433464 510.804778l-5.502317 7.744381c-1.951445 4.104481-2.969635 9.112542-2.969635 13.654998 0 17.002232 13.799284 30.832216 30.772864 30.832216 4.832052 0 10.160407-1.164522 14.439874-3.37691L929.954067 350.740246c1.860371-1.305739 4.140297-4.52506 4.140297-6.970762C934.093341 341.323782 932.679132 339.488994 930.818761 338.183256z"
+                          fill="" p-id="2318"></path>
+                    </svg>
+                  </div>
+                  <div class="tab-title">
+                    端口转发
+                  </div>
                 </div>
-                <div class="tab-title">
-                  端口转发
-                </div>
+                <div class="right"></div>
               </div>
-              <div class="right"></div>
-            </div>
-            <div class="tab-bar" :class="{'tab-active-normal':tagActiveKey==='cronJob'}" @click="changeTab('cronJob')">
-              <div class="left">
-                <div class="tab-icon">
-                  <svg class="icon"
-                       style="vertical-align: middle;fill: currentColor;overflow: hidden;"
-                       viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="3172">
-                    <path
-                        d="M553 186.4v-84h204.8c22.5 0 41-18.4 41-41 0-22.5-18.4-41-41-41H266.2c-22.5 0-41 18.4-41 41 0 22.5 18.4 41 41 41H471v84C264 207 102.4 381.5 102.4 593.9c0 226.2 183.4 409.6 409.6 409.6s409.6-183.4 409.6-409.6c0-212.4-161.7-387-368.6-407.5z m-41 735.2c-180.7 0-327.7-147-327.7-327.7s147-327.7 327.7-327.7 327.7 147 327.7 327.7-147 327.7-327.7 327.7zM532.5 556.5V368.6c0-22.5-18.4-41-41-41s-41 18.4-41 41v204.8c0 0.3 0.1 0.5 0.1 0.7 0 2.4 0.3 4.9 0.7 7.3 0.2 0.9 0.5 1.7 0.8 2.6 0.5 1.7 0.9 3.5 1.6 5.2 0.2 0.5 0.5 1 0.8 1.5 2 4.2 4.5 8.2 8 11.6l173.8 173.8c15.9 15.9 42 15.9 57.9 0 15.9-15.9 15.9-42 0-57.9L532.5 556.5z"
-                        p-id="3173"></path>
-                  </svg>
+              <div class="tab-bar" :class="{'tab-active-normal':tagActiveKey==='cronJob'}"
+                   @click="changeTab('cronJob')">
+                <div class="left">
+                  <div class="tab-icon">
+                    <svg class="icon"
+                         style="vertical-align: middle;fill: currentColor;overflow: hidden;"
+                         viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="3172">
+                      <path
+                          d="M553 186.4v-84h204.8c22.5 0 41-18.4 41-41 0-22.5-18.4-41-41-41H266.2c-22.5 0-41 18.4-41 41 0 22.5 18.4 41 41 41H471v84C264 207 102.4 381.5 102.4 593.9c0 226.2 183.4 409.6 409.6 409.6s409.6-183.4 409.6-409.6c0-212.4-161.7-387-368.6-407.5z m-41 735.2c-180.7 0-327.7-147-327.7-327.7s147-327.7 327.7-327.7 327.7 147 327.7 327.7-147 327.7-327.7 327.7zM532.5 556.5V368.6c0-22.5-18.4-41-41-41s-41 18.4-41 41v204.8c0 0.3 0.1 0.5 0.1 0.7 0 2.4 0.3 4.9 0.7 7.3 0.2 0.9 0.5 1.7 0.8 2.6 0.5 1.7 0.9 3.5 1.6 5.2 0.2 0.5 0.5 1 0.8 1.5 2 4.2 4.5 8.2 8 11.6l173.8 173.8c15.9 15.9 42 15.9 57.9 0 15.9-15.9 15.9-42 0-57.9L532.5 556.5z"
+                          p-id="3173"></path>
+                    </svg>
+                  </div>
+                  <div class="tab-title">
+                    定时任务
+                  </div>
                 </div>
-                <div class="tab-title">
-                  定时任务
-                </div>
+                <div class="right"></div>
               </div>
-              <div class="right"></div>
-            </div>
-            <div class="tab-bar" :class="{'tab-active-normal':tagActiveKey==='snippet'}" @click="changeTab('snippet')">
-              <div class="left">
-                <div class="tab-icon">
-                  <svg class="icon"
-                       style="vertical-align: middle;fill: currentColor;overflow: hidden;"
-                       viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="4057">
-                    <path
-                        d="M896 346.8c-0.1 0 0 0 0 0 0-0.9-0.1-1.7-0.2-2.5 0-0.1 0-0.3-0.1-0.4-0.2-1.7-0.5-3.3-1-4.9-0.5-1.7-1-3.3-1.7-4.9v-0.1c-0.3-0.8-0.7-1.5-1.1-2.3v-0.1c-0.4-0.7-0.8-1.5-1.2-2.2-0.1-0.1-0.1-0.2-0.2-0.3-0.4-0.6-0.8-1.2-1.3-1.9-0.1-0.1-0.1-0.2-0.2-0.2-0.5-0.6-1-1.3-1.5-1.9-0.1-0.1-0.2-0.3-0.4-0.4-0.5-0.6-1-1.2-1.6-1.7l-0.1-0.1L637.3 74.5c-0.6-0.6-1.2-1.1-1.8-1.6-0.1-0.1-0.3-0.2-0.4-0.4-0.6-0.5-1.2-1-1.9-1.5-0.1 0-0.1-0.1-0.2-0.1-0.6-0.5-1.3-0.9-1.9-1.3-0.1-0.1-0.2-0.1-0.3-0.2-0.7-0.4-1.4-0.9-2.2-1.3-0.8-0.4-1.5-0.8-2.3-1.1h-0.1c-1.6-0.7-3.2-1.3-4.9-1.7-1.6-0.4-3.2-0.8-4.9-1-0.1 0-0.3 0-0.4-0.1-1.4-0.2-2.8-0.3-4.3-0.3H164c-19.9 0-36 16.1-36 36v823.3c0 19.9 16.1 36 36 36h696c19.9 0 36-16.1 36-36V348.6v-1.8zM647.8 186.9l125.4 125.6H647.8V186.9zM200 887.2V135.9h375.8v212.7c0 19.9 16.1 36 36 36H824v502.7H200z"
-                        fill="" p-id="4058"></path>
-                    <path
-                        d="M378.8 603.9l59.7-65.8c13.4-14.7 12.2-37.5-2.5-50.9-14.7-13.4-37.5-12.2-50.9 2.5l-80.8 89.1c-12.1 13.3-12.5 33.5-0.9 47.3l80.9 96.5c7.1 8.5 17.3 12.9 27.6 12.9 8.2 0 16.4-2.8 23.1-8.4 15.2-12.8 17.2-35.5 4.5-50.7l-60.7-72.5zM639 489.7c-13.4-14.7-36.1-15.8-50.9-2.5-14.7 13.4-15.8 36.1-2.5 50.9l59.7 65.8-60.7 72.4c-12.8 15.2-10.8 37.9 4.5 50.7 6.7 5.7 14.9 8.4 23.1 8.4 10.3 0 20.5-4.4 27.6-12.9l80.9-96.5c11.6-13.8 11.2-34-0.9-47.3l-80.8-89z"
-                        fill="" p-id="4059"></path>
-                  </svg>
+              <div class="tab-bar" :class="{'tab-active-normal':tagActiveKey==='snippet'}"
+                   @click="changeTab('snippet')">
+                <div class="left">
+                  <div class="tab-icon">
+                    <svg class="icon"
+                         style="vertical-align: middle;fill: currentColor;overflow: hidden;"
+                         viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="4057">
+                      <path
+                          d="M896 346.8c-0.1 0 0 0 0 0 0-0.9-0.1-1.7-0.2-2.5 0-0.1 0-0.3-0.1-0.4-0.2-1.7-0.5-3.3-1-4.9-0.5-1.7-1-3.3-1.7-4.9v-0.1c-0.3-0.8-0.7-1.5-1.1-2.3v-0.1c-0.4-0.7-0.8-1.5-1.2-2.2-0.1-0.1-0.1-0.2-0.2-0.3-0.4-0.6-0.8-1.2-1.3-1.9-0.1-0.1-0.1-0.2-0.2-0.2-0.5-0.6-1-1.3-1.5-1.9-0.1-0.1-0.2-0.3-0.4-0.4-0.5-0.6-1-1.2-1.6-1.7l-0.1-0.1L637.3 74.5c-0.6-0.6-1.2-1.1-1.8-1.6-0.1-0.1-0.3-0.2-0.4-0.4-0.6-0.5-1.2-1-1.9-1.5-0.1 0-0.1-0.1-0.2-0.1-0.6-0.5-1.3-0.9-1.9-1.3-0.1-0.1-0.2-0.1-0.3-0.2-0.7-0.4-1.4-0.9-2.2-1.3-0.8-0.4-1.5-0.8-2.3-1.1h-0.1c-1.6-0.7-3.2-1.3-4.9-1.7-1.6-0.4-3.2-0.8-4.9-1-0.1 0-0.3 0-0.4-0.1-1.4-0.2-2.8-0.3-4.3-0.3H164c-19.9 0-36 16.1-36 36v823.3c0 19.9 16.1 36 36 36h696c19.9 0 36-16.1 36-36V348.6v-1.8zM647.8 186.9l125.4 125.6H647.8V186.9zM200 887.2V135.9h375.8v212.7c0 19.9 16.1 36 36 36H824v502.7H200z"
+                          fill="" p-id="4058"></path>
+                      <path
+                          d="M378.8 603.9l59.7-65.8c13.4-14.7 12.2-37.5-2.5-50.9-14.7-13.4-37.5-12.2-50.9 2.5l-80.8 89.1c-12.1 13.3-12.5 33.5-0.9 47.3l80.9 96.5c7.1 8.5 17.3 12.9 27.6 12.9 8.2 0 16.4-2.8 23.1-8.4 15.2-12.8 17.2-35.5 4.5-50.7l-60.7-72.5zM639 489.7c-13.4-14.7-36.1-15.8-50.9-2.5-14.7 13.4-15.8 36.1-2.5 50.9l59.7 65.8-60.7 72.4c-12.8 15.2-10.8 37.9 4.5 50.7 6.7 5.7 14.9 8.4 23.1 8.4 10.3 0 20.5-4.4 27.6-12.9l80.9-96.5c11.6-13.8 11.2-34-0.9-47.3l-80.8-89z"
+                          fill="" p-id="4059"></path>
+                    </svg>
+                  </div>
+                  <div class="tab-title">
+                    命令片段
+                  </div>
                 </div>
-                <div class="tab-title">
-                  命令片段
-                </div>
-              </div>
 
-              <div class="right"></div>
-            </div>
-            <div class="tab-bar" :class="{'tab-active-normal':tagActiveKey==='application'}" @click="changeTab('application')">
-              <div class="left">
-                <div class="tab-icon">
-                    <appstore-outlined />
-                </div>
-                <div class="tab-title">
-                  应用
-                </div>
+                <div class="right"></div>
               </div>
+              <div class="tab-bar" :class="{'tab-active-normal':tagActiveKey==='application'}"
+                   @click="changeTab('application')">
+                <div class="left">
+                  <div class="tab-icon">
+                    <appstore-outlined/>
+                  </div>
+                  <div class="tab-title">
+                    应用
+                  </div>
+                </div>
 
-              <div class="right"></div>
-            </div>
-            <div class="tab-bar" :class="{'tab-active-normal':tagActiveKey==='dashboard'}" @click="changeTab('dashboard')">
-              <div class="left">
-                <div class="tab-icon">
-                  <pie-chart-outlined />
-                </div>
-                <div class="tab-title">
-                  监控看板
-                </div>
+                <div class="right"></div>
               </div>
+              <div class="tab-bar" :class="{'tab-active-normal':tagActiveKey==='dashboard'}"
+                   @click="changeTab('dashboard')">
+                <div class="left">
+                  <div class="tab-icon">
+                    <pie-chart-outlined/>
+                  </div>
+                  <div class="tab-title">
+                    监控看板
+                  </div>
+                </div>
 
-              <div class="right"></div>
-            </div>
-            <div class="tab-bar" :class="{'tab-active-normal':tagActiveKey==='setting'}" @click="changeTab('setting')">
-              <div class="left">
-                <div class="tab-icon">
-                  <setting-outlined/>
-                </div>
-                <div class="tab-title">
-                  设置
-                </div>
+                <div class="right"></div>
               </div>
+              <div class="tab-bar" :class="{'tab-active-normal':tagActiveKey==='setting'}"
+                   @click="changeTab('setting')">
+                <div class="left">
+                  <div class="tab-icon">
+                    <setting-outlined/>
+                  </div>
+                  <div class="tab-title">
+                    设置
+                  </div>
+                </div>
 
-              <div class="right"></div>
-            </div>
-            <div class="sortable" ref="sortableEl">
-              <div v-for="server in serverList" :key="server.operationId">
-                <a-dropdown :trigger="['contextmenu']"
-                            class="dropdown" :class="server.operationId">
+                <div class="right"></div>
+              </div>
+              <div class="sortable" ref="sortableEl">
+                <div v-for="(server,index) in serverList" :key="server.operationId"
+                     @dragstart="handleDragStart(index,server)"
+                     @dragend="handleDragEnd(server)">
+                  <a-dropdown :trigger="['contextmenu']"
+                              class="dropdown" :class="server.operationId">
 
-                  <a-tooltip placement="right" color="green">
-                    <template #title>
-                      <template v-if="server.isSplitView">Split view</template>
-                      <template v-else>
-                        <span v-if="server.path">{{ server.path }}/</span>
-                        <span>{{ server.name }}</span>
+                    <a-tooltip placement="right" color="green">
+                      <template #title>
+                        <template v-if="server.isSplitView">Split view</template>
+                        <template v-else>
+                          <span v-if="server.path">{{ server.path }}/</span>
+                          <span>{{ server.name }}</span>
+                        </template>
+
                       </template>
+                      <div ref="tabBarRef" :operationId="server.operationId" class="tab-bar"
+                           :class="{'tab-active':tagActiveKey===server.operationId}"
+                           @mousedown="e=>handleMiddleClick(e,server)"
+                           @click="changeTab(server.operationId)">
+                        <div class="left sortable-handle">
+                          <a-badge :dot="server.hot" :offset="[-9,-2]">
+                            <div class="tab-icon">
+                              <template v-if="server.tag">
+                                <div v-html="server.tag">
 
-                    </template>
-                    <div ref="tabBarRef" :operationId="server.operationId" class="tab-bar"
-                         :class="{'tab-active':tagActiveKey===server.operationId}"
-                         @mousedown="e=>handleMiddleClick(e,server)"
-                         @click="changeTab(server.operationId)">
-                      <div class="left sortable-handle">
-                        <a-badge :dot="server.hot" :offset="[-9,-2]">
-                          <div class="tab-icon">
-                            <template v-if="server.tag">
-                              <div v-html="server.tag">
+                                </div>
+                              </template>
+                              <template v-else>
+                                <ApartmentOutlined v-if="server.isGroup" class="icon-server"/>
+                                <hdd-outlined v-else-if="server.os===OsEnum.LINUX.value" class="icon-server"
+                                              style="color: #E45F2B;"/>
+                                <windows-outlined v-else-if="server.os===OsEnum.WINDOWS.value" class="icon-server"
+                                                  style="color: #E45F2B;"/>
+                              </template>
 
-                              </div>
-                            </template>
-                            <template v-else>
-                              <ApartmentOutlined v-if="server.isGroup" class="icon-server"/>
-                              <hdd-outlined v-else-if="server.os===OsEnum.LINUX.value" class="icon-server"
-                                            style="color: #E45F2B;"/>
-                              <windows-outlined v-else-if="server.os===OsEnum.WINDOWS.value" class="icon-server"
-                                                style="color: #E45F2B;"/>
-                            </template>
-
+                            </div>
+                          </a-badge>
+                          <div class="tab-title">
+                            {{ server.name }}
                           </div>
-                        </a-badge>
-                        <div class="tab-title">
-                          {{ server.name }}
+                        </div>
+                        <div class="right tab-close" @click.stop="onCloseServer(server.operationId)">
+                          <close-outlined/>
                         </div>
                       </div>
-                      <div class="right tab-close" @click.stop="onCloseServer(server.operationId)">
-                        <close-outlined />
-                      </div>
-                    </div>
-                  </a-tooltip>
+                    </a-tooltip>
 
-                  <template #overlay>
-                    <a-menu>
-                      <a-menu-item v-if="!server.isSplitView" key="4" @click="handleCopy(server)">
-                        <template #icon>
-                          <CopyOutlined/>
-                        </template>
-                        复制
-                      </a-menu-item>
-                      <a-menu-item key="5">
-                        <a-sub-menu key="7">
+                    <template #overlay>
+                      <a-menu>
+                        <a-menu-item v-if="!server.isSplitView" key="4" @click="handleCopy(server)">
                           <template #icon>
-                            <tag-outlined/>
+                            <CopyOutlined/>
                           </template>
-                          <template #title>标签</template>
-                          <a-menu-item @click="handleAddTags(server,item)" v-for="item in tags" :key="item.length">
+                          复制
+                        </a-menu-item>
+                        <a-menu-item key="5">
+                          <a-sub-menu key="7">
                             <template #icon>
-                              <div v-html="item"></div>
+                              <tag-outlined/>
                             </template>
-                          </a-menu-item>
+                            <template #title>标签</template>
+                            <a-menu-item @click="handleAddTags(server,item)" v-for="item in tags" :key="item.length">
+                              <template #icon>
+                                <div v-html="item"></div>
+                              </template>
+                            </a-menu-item>
 
-                        </a-sub-menu>
-                      </a-menu-item>
-                      <a-menu-item key="3" @click="handleRename(server)">
-                        <template #icon>
-                          <edit-outlined/>
-                        </template>
-                        重命名
-                      </a-menu-item>
-                    </a-menu>
-                  </template>
-                </a-dropdown>
+                          </a-sub-menu>
+                        </a-menu-item>
+                        <a-menu-item key="3" @click="handleRename(server)">
+                          <template #icon>
+                            <edit-outlined/>
+                          </template>
+                          重命名
+                        </a-menu-item>
+                      </a-menu>
+                    </template>
+                  </a-dropdown>
+                </div>
               </div>
-
-
+              <div class="bottom" @click="changeMiniTab">
+                <left-outlined :class="{'button-action':miniTabBar,'transition':true}"/>
+              </div>
             </div>
-            <div class="bottom" @click="changeMiniTab">
-              <left-outlined :class="{'button-action':miniTabBar,'transition':true}"/>
-            </div>
-          </div>
           </div>
         </template>
 
@@ -727,7 +641,13 @@ const changeMiniTab = () => {
               <close-outlined @click="onCloseServer(server.operationId)"/>
             </template>
             <div ref="layoutContainer" class="layoutContainer">
-
+              <dockview-vue
+                  @ready="e=>onReady(e,server)"
+                  style="width:100%; height:100%"
+                  class="dockview-theme-abyss"
+                  ref="dockviewRef"
+              >
+              </dockview-vue>
             </div>
           </a-tab-pane>
         </template>
@@ -738,10 +658,6 @@ const changeMiniTab = () => {
 </template>
 
 <style lang="less">
-//@import '@/components/less/goldenlayout-base.less';
-//@import '@/components/less/themes/goldenlayout-dark-theme.less';
-@import 'golden-layout/dist/less/goldenlayout-base.less';
-@import 'golden-layout/dist/less/themes/goldenlayout-dark-theme.less';
 
 .ant-tooltip {
   max-width: 1000px
@@ -800,200 +716,179 @@ const changeMiniTab = () => {
   }
 }
 
-.tab-bar-group-mini{
+.tab-bar-group-mini {
   width: 67px !important;
-  .tab-close{
+
+  .tab-close {
     background: none !important;
     font-size: 10px !important;
   }
 }
 
-.tab-bar-group-container{
+.tab-bar-group-container {
   background-color: #00152A;
 
   //宽度太小就width:120px;
   //媒体查询
 
 
-.tab-bar-group {
-  background-color: #00152A;
-  @media only screen and (max-width: 1000px) {
-    width: 67px !important;
-    .tab-close{
-      background: none !important;
-      font-size: 10px !important;
+  .tab-bar-group {
+    background-color: #00152A;
+    @media only screen and (max-width: 1000px) {
+      width: 67px !important;
+      .tab-close {
+        background: none !important;
+        font-size: 10px !important;
+      }
     }
-  }
-  min-height: 100%;
-  transition: all 0.5s;
-  position: relative;
-  padding: 8px;
-  width: 180px;
-  overflow-x: unset;
-  overflow-y: scroll;
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE 10+ */
-  //设置滚动条隐藏
-  ::-webkit-scrollbar {
-    display: none;
-  }
-
-
-
-  .sortable {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 24px;
-  }
-
-  .bottom {
-    color: #fff;
-    position: absolute;
-    left: 50%;
-    bottom: 8px;
-    transform: translateX(-50%);
-    cursor: pointer;
-
-
-    .button-action {
-      transform: rotateY(180deg);
+    min-height: 100%;
+    transition: all 0.5s;
+    position: relative;
+    padding: 8px;
+    width: 180px;
+    overflow-x: unset;
+    overflow-y: scroll;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE 10+ */
+    //设置滚动条隐藏
+    ::-webkit-scrollbar {
+      display: none;
     }
-    .transition{
-      transition: all 0.9s;
-    }
-  }
 
-  .tab-bar {
-    margin: 4px 0;
-    padding: 8px 16px;
-    cursor: pointer;
-    color: #fff;
-    text-align: left;
 
-    display: flex;
-    border-radius: 8px;
-    justify-content: space-between;
-    //不允许框选
-
-    user-select: none;
-
-    .left {
-      width: 83%;
+    .sortable {
       display: flex;
+      flex-direction: column;
+      margin-bottom: 24px;
+    }
 
-      .sortable-handle{
-        cursor: move;
+    .bottom {
+      color: #fff;
+      position: absolute;
+      left: 50%;
+      bottom: 8px;
+      transform: translateX(-50%);
+      cursor: pointer;
+
+
+      .button-action {
+        transform: rotateY(180deg);
       }
 
-      .tab-icon {
-        margin-right: 8px;
-        font-size: 18px;
+      .transition {
+        transition: all 0.9s;
+      }
+    }
+
+    .tab-bar {
+      margin: 4px 0;
+      padding: 8px 16px;
+      cursor: pointer;
+      color: #fff;
+      text-align: left;
+
+      display: flex;
+      border-radius: 8px;
+      justify-content: space-between;
+      //不允许框选
+
+      user-select: none;
+
+      .left {
+        width: 83%;
         display: flex;
+
+        .sortable-handle {
+          cursor: move;
+        }
+
+        .tab-icon {
+          margin-right: 8px;
+          font-size: 18px;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          color: #fff;
+          fill: #fff;
+          width: 20px;
+          height: 100%;
+
+          svg {
+            width: 18px;
+            height: 18px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+          }
+
+          .tags {
+            width: 18px;
+            height: 18px;
+            font-size: 17px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+          }
+        }
+
+        .tab-title {
+          //单行省略
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+
+        }
+      }
+
+      .right {
+
+      }
+
+
+      //悬停时出现关闭按钮
+      &:hover .tab-close {
+        display: flex !important;
+      }
+
+      .tab-close {
+        font-size: 12px;
+        display: none;
         justify-content: center;
         align-items: center;
-        color: #fff;
-        fill: #fff;
-        width: 20px;
-        height: 100%;
+        padding: 0 4px;
+        border-radius: 4px;
+        z-index: 1000;
 
-        svg {
-          width: 18px;
-          height: 18px;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-        }
-
-        .tags {
-          width: 18px;
-          height: 18px;
-          font-size: 17px;
-          display: flex;
-          justify-content: center;
-          align-items: center;
+        &:hover {
+          background-color: #404460;
         }
       }
-
-      .tab-title {
-        //单行省略
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-
-      }
-    }
-
-    .right {
-
-    }
-
-
-    //悬停时出现关闭按钮
-    &:hover .tab-close {
-      display: flex !important;
-    }
-
-    .tab-close {
-      font-size: 12px;
-      display: none;
-      justify-content: center;
-      align-items: center;
-      padding: 0 4px;
-      border-radius: 4px;
-      z-index: 1000;
 
       &:hover {
-        background-color: #404460;
+        color: #1890ff;
+        background-color: #32364A;
+        border-radius: 8px;
       }
     }
 
-    &:hover {
+    //普通的
+    .tab-active-normal {
       color: #1890ff;
       background-color: #32364A;
-      border-radius: 8px;
+      position: relative;
+      z-index: 100;
     }
+
+    .tab-active {
+      color: v-bind(frontColor) !important;
+      background-color: v-bind(backColor) !important;
+      position: relative;
+      z-index: 100;
+    }
+
   }
-
-  //普通的
-  .tab-active-normal {
-    color: #1890ff;
-    background-color: #32364A;
-    position: relative;
-    z-index: 100;
-  }
-
-  .tab-active {
-    color: v-bind(frontColor) !important;
-    background-color: v-bind(backColor) !important;
-    position: relative;
-    z-index: 100;
-  }
-
-  //.tab-active:after {
-  //  content: "";
-  //  display: block;
-  //  height: 103%;
-  //  width: 30px;
-  //  position: absolute;
-  //  right: -24px;
-  //  top: -15px;
-  //  background: v-bind(backColorRadialGradient);
-  //}
-  //
-  //.tab-active:before {
-  //  content: "";
-  //  display: block;
-  //  height: 103%;
-  //  width: 30px;
-  //  position: absolute;
-  //  right: -24px;
-  //  top: 14px;
-  //  background: v-bind(backColorRadialGradient);
-  //  transform: rotateX(180deg);
-  //}
-
 }
-}
+
 :deep(.ant-tabs-tab-with-remove) {
   display: flex;
   justify-content: space-between;
@@ -1007,7 +902,6 @@ const changeMiniTab = () => {
   white-space: nowrap;
   max-width: 100px;
 }
-
 
 
 </style>

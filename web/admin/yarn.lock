@@ -3771,6 +3771,18 @@ dns-packet@^5.2.2:
   dependencies:
     "@leichtgewicht/ip-codec" "^2.0.1"
 
+dockview-core@^3.2.0:
+  version "3.2.0"
+  resolved "https://registry.npmmirror.com/dockview-core/-/dockview-core-3.2.0.tgz#f57772411a9e81bf0288f23e5a43ef2d5c68f8cb"
+  integrity sha512-SmLbj1WkqOoSU8SQAqG6RLeZc+VqBAi0Uch80NvCbF3QyeVe2QIuy9SwEbjoGfesskWC+HUeYEoV/edARFjYOg==
+
+dockview-vue@3.2.0:
+  version "3.2.0"
+  resolved "https://registry.npmmirror.com/dockview-vue/-/dockview-vue-3.2.0.tgz#c8f4ab9ccede641e3c49d0833b7fc26228660dd9"
+  integrity sha512-BQjFnW/+Q5MHLI/RAra9Lukx4PkwUi6bf/rW+fDMDySWpI0f0cFnwGLbFN4D1U3RRlFD0TIyD/u4VccolroKrA==
+  dependencies:
+    dockview-core "^3.2.0"
+
 doctrine@^3.0.0:
   version "3.0.0"
   resolved "https://registry.npmmirror.com/doctrine/-/doctrine-3.0.0.tgz#addebead72a6574db783639dc87a121773973961"
@@ -4586,11 +4598,6 @@ globe.gl@^2.33.1:
     three ">=0.154 <1"
     three-globe "^2.33"
     three-render-objects "^1.30"
-
-golden-layout@^2.6.0:
-  version "2.6.0"
-  resolved "https://registry.npmmirror.com/golden-layout/-/golden-layout-2.6.0.tgz#aff90f77262c7fd6b6d8fbe2a2d222e24999b9a9"
-  integrity sha512-sIVQCiRWOymHbVD1Aw/T9/ijbPYAVGBlgGYd1N9MRKfcyBNSpjr87Vg9nSHm+RCT8ELrvK8IJYJV0QRJuVUkCQ==
 
 good-listener@^1.2.2:
   version "1.2.2"

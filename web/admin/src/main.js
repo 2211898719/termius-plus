@@ -9,6 +9,8 @@ import {bootFilters} from "@/boot/bootFilters";
 import '@wangeditor/editor/dist/css/style.css'
 import 'shepherd.js/dist/css/shepherd.css';
 import { autoAnimatePlugin } from '@formkit/auto-animate/vue'
+import {Panel} from "@/views/server/Panel";
+import DockviewPanel from "@/views/server/DockviewPanel";
 
 const modulesFiles = require.context('@/assets/webfonts', true, /\.woff2$|\.woff$|\.ttf$|\.eot$|\.otf$/);
 let allFonts = modulesFiles.keys().map(r=>r.slice(2));
@@ -25,6 +27,9 @@ allFonts.forEach(async fontName=>{
 const app = createApp(App);
 app.use(router);
 app.use(autoAnimatePlugin);
+// eslint-disable-next-line vue/multi-word-component-names
+app.component("Panel",Panel)
+app.component("DockviewPanel",DockviewPanel)
 bootAntDesignVue(app);
 bootAxios(app);
 bootPinia(app);

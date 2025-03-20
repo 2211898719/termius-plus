@@ -7,6 +7,7 @@ import {message} from "ant-design-vue";
 import {serverApi} from "@/api/server";
 import PTerm from "@/components/p-term.vue";
 import MonacoEditor from "@/components/MonacoEditor.vue";
+import Split from "@/views/editor/components/split.vue";
 
 let route = useRoute()
 
@@ -257,7 +258,7 @@ const downloadFile = () => {
           <div class="bottom-bar-container">
             <a-spin :spinning="termLoading" style="height: 100%;">
               <div class="bottom-bar" v-if="!isFirst" v-show="showTerminal">
-                <p-term ref="termRef" v-if="currentServer" master-session-id="0" :server="currentServer"
+                <p-term ref="termRef" v-if="currentServer" :master-session-id="0" :server="currentServer"
                         :execCommand="`cd ${rootPath}`" v-model:loading="termLoading"></p-term>
                 <reload-outlined @click="reloadServer" class="icon"/>
               </div>
