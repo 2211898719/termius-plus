@@ -168,7 +168,7 @@ const initSocket = () => {
       emit("update:loading", false)
     },
     onDisconnected: () => {
-      emit("update:loading", false)
+      term.write("\r\n连接已断开\r\n")
     },
     onConnected: () => {
       socket = useSocket.ws.value;

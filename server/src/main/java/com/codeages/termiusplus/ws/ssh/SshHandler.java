@@ -24,6 +24,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.userauth.UserAuthException;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 
 import jakarta.websocket.*;
@@ -288,9 +289,11 @@ public class SshHandler {
         private final net.schmizz.sshj.connection.channel.direct.Session.Shell shell;
         @Getter
         private long lastActiveTime = System.currentTimeMillis();
+        private long initTime = System.currentTimeMillis();
         private final File logFile;
         private final BufferedOutputStream logFileOutputStream;
         private final RollingString lastCommand;
+        private final ServerDto serverDto;
 
         @SneakyThrows
         HandlerItem(Long userId, String username, Long serverId, Session session, SSHClient sshClient) {
@@ -311,9 +314,9 @@ public class SshHandler {
             this.outputStream = shell.getOutputStream();
 
             //auto sudo
-            ServerDto serverDto = serverService.findById(serverId);
+            serverDto = serverService.findById(serverId);
             if (Boolean.TRUE.equals(serverDto.getAutoSudo()) && ObjectUtil.notEqual(serverDto.getUsername(), "root")) {
-                outputStream.write(("echo '" + serverDto.getPassword() + "' | sudo -S ls && sudo -i\n").getBytes());
+                outputStream.write((buildSudoCommand() + "\n").getBytes());
                 outputStream.flush();
             }
 
@@ -337,6 +340,10 @@ public class SshHandler {
 
             lastCommand = new RollingString();
             threadPoolExecutor.submit(this);
+        }
+
+        private @NotNull String buildSudoCommand() {
+            return " echo '" + serverDto.getPassword() + "' | sudo -S echo '' && sudo -i";
         }
 
 
@@ -467,6 +474,13 @@ public class SshHandler {
                 //如果没有数据来，线程会一直阻塞在这个地方等待数据。
                 while ((i = inputStream.read(buffer)) != -1) {
                     String originData = new String(Arrays.copyOfRange(buffer, 0, i), openSession.getRemoteCharset());
+                    if (System.currentTimeMillis() - initTime < 6000 && Boolean.TRUE.equals(serverDto.getAutoSudo()) && ObjectUtil.notEqual(
+                            serverDto.getUsername(),
+                            "root"
+                                                                                                                                            ) && originData.contains(buildSudoCommand())) {
+                        originData = originData.replace(buildSudoCommand(), "");
+                    }
+
                     MessageDto messageDto = new MessageDto(EventType.COMMAND, originData);
                     String s = JSONUtil.toJsonStr(messageDto);
                     logFileOutputStream.write(originData.getBytes());

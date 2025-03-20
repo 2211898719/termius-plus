@@ -625,7 +625,7 @@ public class ServerServiceImpl implements ServerService {
     @Override
     @SneakyThrows
     public SSHClient createSSHClient(Long id, String sessionId) {
-        return createSSHClient(id, sessionId, 60 * 1000);
+        return createSSHClient(id, sessionId, 60 * 1000 / connectCount);
     }
 
     @Override

@@ -100,6 +100,7 @@ let aiSystem = useStorage("aiSystem", "你是一个专业的linux命令生成器
 
 let aiMessagePrefix = useStorage("aiMessagePrefix", "{{commandLog}} \n写一条linux命令，")
 
+
 let aiSettingChannel = new BroadcastChannel("aiSetting")
 
 const saveAI = () => {
@@ -111,6 +112,30 @@ aiSettingChannel.onmessage = (e) => {
   aiSystem.value = e.data.aiSystem
   aiMessagePrefix.value = e.data.aiMessagePrefix
 }
+
+let layoutTheme = useStorage("layoutTheme", "themeAbyssSpaced")
+let changeLayoutThemeChannel = new BroadcastChannel("changeLayoutTheme")
+changeLayoutThemeChannel.onmessage = (e) => {
+  layoutTheme.value = e.data
+}
+
+let layoutThemes = ref([
+  "themeDark",
+  "themeLight",
+  "themeVisualStudio",
+  "themeAbyss",
+  "themeDracula",
+  "themeReplit",
+  "themeAbyssSpaced",
+  "themeLightSpaced"
+])
+
+const changeLayoutTheme = () => {
+  changeLayoutThemeChannel.postMessage(layoutTheme.value)
+  message.success("修改成功");
+}
+
+
 
 </script>
 
@@ -139,13 +164,10 @@ aiSettingChannel.onmessage = (e) => {
           <a-button type="primary" @click.prevent="saveStyle">保存</a-button>
         </a-form-item>
       </a-form>
-      <a-card title="字体" class="font-card">
-        <a-card-grid @click="selectFont(item)"
-                     :style="`font-family: '${item.name}', Arial, sans-serif`"
-                     :class="{'font-item':true, 'font-selected': item.name === currentFont}"
-                     v-for="item in fonts" :key="item.name" :title="item.name">
-          {{ item.name }}
-        </a-card-grid>
+      <a-card title="布局主题" class="font-card">
+        <a-select v-model:value="layoutTheme" @change="changeLayoutTheme">
+          <a-select-option v-for="item in layoutThemes" :key="item" :value="item"></a-select-option>
+        </a-select>
       </a-card>
       <a-card title="AI提示词" class="font-card">
         <a-form :label-col="{ span: 4 }"
@@ -169,6 +191,16 @@ aiSettingChannel.onmessage = (e) => {
           </a-form-item>
         </a-form>
       </a-card>
+      <a-card title="字体" class="font-card">
+        <a-card-grid @click="selectFont(item)"
+                     :style="`font-family: '${item.name}', Arial, sans-serif`"
+                     :class="{'font-item':true, 'font-selected': item.name === currentFont}"
+                     v-for="item in fonts" :key="item.name" :title="item.name">
+          {{ item.name }}
+        </a-card-grid>
+      </a-card>
+
+
     </a-card>
     <a-drawer title="字体预览" width="80%" v-model:visible="frontFamilyView" placement="right">
       <p-term-log v-if="frontFamilyView" :command-data="viewData.log" :font-family="frontFamilyViewFront"></p-term-log>

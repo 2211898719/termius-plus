@@ -1,6 +1,6 @@
 <script setup>
-import 'dockview-vue/dist/styles/dockview.css';
-import {createVNode, nextTick, onMounted, ref, watch} from "vue";
+import '@/views/css/dockview.css';
+import {computed, createVNode, nextTick, onMounted, ref, watch} from "vue";
 import Sortable from 'sortablejs';
 import _ from "lodash";
 import {Input, Modal} from "ant-design-vue";
@@ -17,6 +17,13 @@ import {useStorage} from "@vueuse/core";
 import ApplicationListPage from "@/views/server/ApplicationListPage.vue";
 import DashboardPage from "@/views/server/DashboardPage.vue";
 import {DockviewVue, positionToDirection} from "dockview-vue";
+import {
+  themeAbyss,
+  themeAbyssSpaced,
+  themeDark, themeDracula,
+  themeLight, themeLightSpaced, themeReplit,
+  themeVisualStudio
+} from "dockview-core/dist/cjs/dockview/theme";
 
 let spinning = ref(false)
 
@@ -281,10 +288,36 @@ const changeMiniTab = () => {
 
 let dockviewIdServerMap = new Map()
 let serverIdDockviewMap = new Map()
+
+let layoutTheme = useStorage("layoutTheme", "themeAbyssSpaced")
+let changeLayoutThemeChannel = new BroadcastChannel("changeLayoutTheme")
+changeLayoutThemeChannel.onmessage = (e) => {
+  layoutTheme.value = e.data
+}
+
+let themeMap = ref({
+  themeDark: themeDark,
+  themeLight: themeLight,
+  themeVisualStudio: themeVisualStudio,
+  themeAbyss: themeAbyss,
+  themeDracula: themeDracula,
+  themeReplit: themeReplit,
+  themeAbyssSpaced: themeAbyssSpaced,
+  themeLightSpaced: themeLightSpaced
+})
+
+let themeClass = computed(() => {
+  return `dockview-${_.kebabCase(layoutTheme.value)}`
+})
+
 const onReady = (event, server) => {
   event.api.onUnhandledDragOverEvent(onDidDrop)
   event.api.onDidDrop(handleDidDropStop)
-  event.api.customFocus = () => {}
+  event.api.customFocus = () => {
+  }
+  event.api.updateOptions({
+    theme: themeMap.value[layoutTheme.value]
+  })
   event.api.addPanel({
     id: server.operationId,
     component: 'DockviewPanel',
@@ -293,8 +326,9 @@ const onReady = (event, server) => {
       server: server,
       onHot: onServerHot,
       onFocus: function () {
-        let serverContentEl = event.api.component.element.querySelector(`[operationId='${server.operationId}']`)
-        event.api.customFocus = () => {
+        let api = serverIdDockviewMap.get(tagActiveKey.value);
+        let serverContentEl = api.component.element.querySelector(`[operationId='${server.operationId}']`)
+        api.customFocus = () => {
           serverContentEl.customFocus()
         }
       }
@@ -644,7 +678,7 @@ const onDidDrop = (event) => {
               <dockview-vue
                   @ready="e=>onReady(e,server)"
                   style="width:100%; height:100%"
-                  class="dockview-theme-abyss"
+                  :class="themeClass"
                   ref="dockviewRef"
               >
               </dockview-vue>

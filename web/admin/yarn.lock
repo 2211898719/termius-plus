@@ -3771,17 +3771,17 @@ dns-packet@^5.2.2:
   dependencies:
     "@leichtgewicht/ip-codec" "^2.0.1"
 
-dockview-core@^3.2.0:
-  version "3.2.0"
-  resolved "https://registry.npmmirror.com/dockview-core/-/dockview-core-3.2.0.tgz#f57772411a9e81bf0288f23e5a43ef2d5c68f8cb"
-  integrity sha512-SmLbj1WkqOoSU8SQAqG6RLeZc+VqBAi0Uch80NvCbF3QyeVe2QIuy9SwEbjoGfesskWC+HUeYEoV/edARFjYOg==
+dockview-core@^4.2.1:
+  version "4.2.1"
+  resolved "https://registry.npmmirror.com/dockview-core/-/dockview-core-4.2.1.tgz#d92653b1a36588809c4d3533312301301c2564a6"
+  integrity sha512-KaEOMzMdQvWB9e3iRQf9BqerB1sX43wAIhla5uGzkA+irag9wz0F5bkVZyJ5mVqJgqrQdWh+W8j94+L2wY0AmA==
 
-dockview-vue@3.2.0:
-  version "3.2.0"
-  resolved "https://registry.npmmirror.com/dockview-vue/-/dockview-vue-3.2.0.tgz#c8f4ab9ccede641e3c49d0833b7fc26228660dd9"
-  integrity sha512-BQjFnW/+Q5MHLI/RAra9Lukx4PkwUi6bf/rW+fDMDySWpI0f0cFnwGLbFN4D1U3RRlFD0TIyD/u4VccolroKrA==
+dockview-vue@4.2.1:
+  version "4.2.1"
+  resolved "https://registry.npmmirror.com/dockview-vue/-/dockview-vue-4.2.1.tgz#7dc36d5eb0425ddc993e11c917bf2c4a94aa450e"
+  integrity sha512-3VaHIb+3ZDSXjpvC+RO/lr6W7gkcVBLClFvSw1e1NpxQwI8Rr60Asj8yT47BtzuKZ7o0TBLmqzmzUxils6wlRw==
   dependencies:
-    dockview-core "^3.2.0"
+    dockview-core "^4.2.1"
 
 doctrine@^3.0.0:
   version "3.0.0"

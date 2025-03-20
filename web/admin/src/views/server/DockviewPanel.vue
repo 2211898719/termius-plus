@@ -1,7 +1,6 @@
 <script setup>
-import {defineExpose, getCurrentInstance, h, onMounted, ref, render, watch} from "vue";
+import {getCurrentInstance, h, onMounted, ref, render} from "vue";
 import ServerContent from "@/views/server/ServerContent.vue";
-import OsEnum from "@/enums/OsEnum";
 
 let props = defineProps({
   params: {

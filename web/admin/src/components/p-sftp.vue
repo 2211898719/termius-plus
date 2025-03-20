@@ -135,7 +135,6 @@ const ls = async () => {
 }
 
 const changeDir = async (path) => {
-  console.log(path)
   if (path === currentPath.value) {
     return
   }
@@ -274,11 +273,7 @@ const handleClickFile = async (file) => {
     return
   }
 
-  if (currentPath.value === '/') {
-
-  }
-
-  await changeDir(currentPath.value + (currentPath.value !== '/' ?? '/') + file.name)
+  await changeDir(currentPath.value + (currentPath.value !== '/' ? '/' : '') + file.name)
 }
 
 watch(currentFiles, (files) => {
