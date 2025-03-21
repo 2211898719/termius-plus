@@ -1,6 +1,6 @@
 <script setup>
 import '@/views/css/dockview.css';
-import {computed, createVNode, nextTick, onMounted, ref, watch} from "vue";
+import {createVNode, nextTick, onMounted, ref, watch} from "vue";
 import Sortable from 'sortablejs';
 import _ from "lodash";
 import {Input, Modal} from "ant-design-vue";
@@ -20,8 +20,11 @@ import {DockviewVue, positionToDirection} from "dockview-vue";
 import {
   themeAbyss,
   themeAbyssSpaced,
-  themeDark, themeDracula,
-  themeLight, themeLightSpaced, themeReplit,
+  themeDark,
+  themeDracula,
+  themeLight,
+  themeLightSpaced,
+  themeReplit,
   themeVisualStudio
 } from "dockview-core/dist/cjs/dockview/theme";
 
@@ -306,10 +309,6 @@ let themeMap = ref({
   themeLightSpaced: themeLightSpaced
 })
 
-let themeClass = computed(() => {
-  return `dockview-${_.kebabCase(layoutTheme.value)}`
-})
-
 const onReady = (event, server) => {
   event.api.onUnhandledDragOverEvent(onDidDrop)
   event.api.onDidDrop(handleDidDropStop)
@@ -363,6 +362,9 @@ watch(() => tagActiveKey.value, (val) => {
 
 let dockviewRef = ref(null)
 const handleDidDropStop = (event) => {
+  if (!dragStartServer){
+    return
+  }
   event.api.addPanel({
     id: dragStartServer.operationId,
     component: 'DockviewPanel',
@@ -396,17 +398,21 @@ const handleDragStart = (index, server) => {
   dragStartIndex = index
 }
 
-const handleDragEnd = () => {
+const handleDragEnd = (e, server) => {
   dragStartFlag = false
   dragStartServer = null
   dragStartIndex = null
+  //拖拽没成功, 清楚一下蒙层
+  if (e.srcElement) {
+    let api = serverIdDockviewMap.get(tagActiveKey.value)
+    api.component.rootDropTargetContainer.model.clear()
+  }
 }
 
 const onDidDrop = (event) => {
   if (!dragStartFlag) {
     return
   }
-
   event.accept();
 }
 
@@ -421,10 +427,11 @@ const onDidDrop = (event) => {
               type="editable-card"
               :tabBarGutter="8"
               :hideAdd="true"
+              aria-hidden="false"
               v-model:activeKey="tagActiveKey"
               :tab-position="'left'">
 
-        <a-tab-pane tab="服务器" class="server-pane" key="server" :closable="false">
+        <a-tab-pane tab="服务器" class="server-pane" aria-hidden="false" key="server" :closable="false">
           <ServerListPage ref="serverListRef" @openServer="handleOpenServer"
                           @proxyCreation="proxyCreation"></ServerListPage>
         </a-tab-pane>
@@ -584,7 +591,7 @@ const onDidDrop = (event) => {
               <div class="sortable" ref="sortableEl">
                 <div v-for="(server,index) in serverList" :key="server.operationId"
                      @dragstart="handleDragStart(index,server)"
-                     @dragend="handleDragEnd(server)">
+                     @dragend="e=>handleDragEnd(e,server)">
                   <a-dropdown :trigger="['contextmenu']"
                               class="dropdown" :class="server.operationId">
 
@@ -678,7 +685,6 @@ const onDidDrop = (event) => {
               <dockview-vue
                   @ready="e=>onReady(e,server)"
                   style="width:100%; height:100%"
-                  :class="themeClass"
                   ref="dockviewRef"
               >
               </dockview-vue>
@@ -700,6 +706,9 @@ const onDidDrop = (event) => {
 
 <style scoped lang="less">
 
+:deep(.dockview-theme-abyss-spaced){
+  border-radius: 30px 30px 0px 30px;
+}
 
 :deep(.ant-card-extra) {
   display: flex;
@@ -761,9 +770,13 @@ const onDidDrop = (event) => {
 
 .tab-bar-group-container {
   background-color: #00152A;
-
-  //宽度太小就width:120px;
-  //媒体查询
+  overflow: scroll;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 10+ */
+  //设置滚动条隐藏
+  ::-webkit-scrollbar {
+    display: none;
+  }
 
 
   .tab-bar-group {
@@ -930,6 +943,7 @@ const onDidDrop = (event) => {
 
 .layoutContainer {
   height: @height;
+  background-color: #00152A;
 }
 
 :deep(.lm_header .lm_tab .lm_title) {

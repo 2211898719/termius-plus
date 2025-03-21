@@ -11,6 +11,7 @@ import 'shepherd.js/dist/css/shepherd.css';
 import { autoAnimatePlugin } from '@formkit/auto-animate/vue'
 import {Panel} from "@/views/server/Panel";
 import DockviewPanel from "@/views/server/DockviewPanel";
+// import 'default-passive-events'
 
 const modulesFiles = require.context('@/assets/webfonts', true, /\.woff2$|\.woff$|\.ttf$|\.eot$|\.otf$/);
 let allFonts = modulesFiles.keys().map(r=>r.slice(2));

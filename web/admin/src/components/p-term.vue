@@ -538,8 +538,6 @@ let completeCommand = ref('')
 let autoEL = document.createElement("div")
 
 const writeCompletionToCursorPosition = (autoComp) => {
-  log.value.getElementsByClassName("xterm-helper-textarea")
-  //xterm-helper-textarea
   let xtermTextarea = log.value.getElementsByClassName("xterm-helper-textarea");
   let console = log.value.getElementsByClassName("console")[0];
   if (!xtermTextarea.length) {
@@ -563,8 +561,8 @@ const writeCompletionToCursorPosition = (autoComp) => {
   }
 
   autoEL.innerText = autoComp
-  autoEL.style.left = parseFloat(el.style.left.substring(0, el.style.left.length - 2)) + spaceCount * 8.5 + "px"
-  autoEL.style.top = parseFloat(el.style.top.substring(0, el.style.top.length - 2)) + 2 + "px"
+  autoEL.style.left = parseFloat(el.style.left.substring(0, el.style.left.length - 2)) + spaceCount * 8.5+15.5 + "px"
+  autoEL.style.top = parseFloat(el.style.top.substring(0, el.style.top.length - 2)) + 6.5 + "px"
   autoEL.style.position = 'fixed'
   autoEL.id = "auto"
   autoEL.style.lineHeight = "1"
@@ -912,17 +910,20 @@ const [autoAnimate] = useAutoAnimate()
 .log {
   width: 100%;
   height: 100%;
-  background-color: #fff;
+  padding: 8px 0 0 8px ;
+  background-color: v-bind(backColor);
 }
 
 .console {
   width: 100%;
   height: 100%;
-  background-color: #fff;
+  //border-radius: 20px;
+  //overflow: hidden;
+  background-color: v-bind(backColor);
+
 
   .terminal {
     height: 100%;
-
   }
 }
 

@@ -137,7 +137,7 @@ monitor:
 fitten:
     url: ${FITTEN_URL:www.fitten.com}
 deepseek:
-    api-key: ${DEEPSEEK_API_KEY:}
+    api-key: ${DEEPSEEK_API_KEY:test_deepseek_api_key}
 
 serverInfo:
     timeout: ${SERVER_INFO_TIMEOUT:180s}
