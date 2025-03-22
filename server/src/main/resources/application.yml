@@ -47,13 +47,6 @@ spring:
                 secret: ${DINGTALK_SECRET}
                 token-id: ${DINGTALK_TOKEN_ID}
         project-id: ${spring.application.name}
-    dingtalk:
-        enabled: ${DINGTALK_ENABLED:false}
-        agent-id: ${DINGTALK_AGENT_ID:}
-        client-id: ${DINGTALK_CLIENT_ID:}
-        client-secret: ${DINGTALK_CLIENT_SECRET:}
-        robot-code: ${DINGTALK_ROBOT_CODE:}
-        cool-app-code: ${DINGTALK_COOL_APP_CODE:}
     flyway:
         out-of-order: true
     jpa:
@@ -116,9 +109,11 @@ spring:
             private:
                 key: ${ENCRYPT_RES_PRI_KEY}
 PortForWarding:
+    # 端口转发配置因为用docker部署，所以划定一些端口批量映射
     minPort: ${PORT_FOR_WARDING_MIN:8200}
     maxPort: ${PORT_FOR_WARDING_MAX:8500}
 
+#guacamole服务配置，用于windows服务器远程桌面连接
 guacamole:
     host: ${GUACAMOLE_HOST:127.0.0.1}
     port: ${GUACAMOLE_PORT:4822}
@@ -127,28 +122,33 @@ guacamole:
 #    用于向windows上传文件使用
     serverId: ${GUACAMOLE_SERVER_ID:1}
 
+# 监控配置，用于检测服务器状态。与监测应用状态
 monitor:
     enable: ${MONITOR_ENABLE:true}
+    #提醒次数
     count: ${MONITOR_COUNT:1}
+    #请求超时时间
     timeout: ${MONITOR_TIMEOUT:30s}
+    #失败多少次后提醒
     debounce: ${MONITOR_DEBOUNCE:10}
+    #证书有效期监测到期触发时间
     certExpiryDays: ${MONITOR_CERT_EXPIRY_DAYS:90}
 
 fitten:
+    #fitten的文件补全api地址，要抓包获取，链接类似于：
+    #https://fc.fittenlab.cn/codeapi/completion/generate_one_stage/xxxxxx?ide=vscode&v=0.2.1
+    #用于sftp文件编辑器的AI自动补全
     url: ${FITTEN_URL:www.fitten.com}
+
 deepseek:
+    #deepseek的api key
     api-key: ${DEEPSEEK_API_KEY:test_deepseek_api_key}
 
 serverInfo:
+    #服务器信息采集的单服务器超时时间
     timeout: ${SERVER_INFO_TIMEOUT:180s}
+    #服务器信息采集任务总超时时间
     allTimeout: ${SERVER_INFO_ALL_TIMEOUT:300s}
 
 public:
     uri: [/api-admin/public/login]
-
-geo:
-    path: ${GEO_PATH:/var/www/GeoLite2-City.mmdb}
-
-map:
-    key: ${MAP_KEY:test}
-    secret: ${MAP_SECRET:test}

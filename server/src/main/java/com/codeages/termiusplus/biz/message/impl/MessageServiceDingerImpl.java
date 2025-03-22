@@ -9,7 +9,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 
 @Service
-@ConditionalOnExpression("!${spring.dingtalk.enabled:false}")
 public class MessageServiceDingerImpl implements MessageService {
 
     @Autowired

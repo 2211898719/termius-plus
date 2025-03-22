@@ -9,16 +9,10 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api-admin/public")
 public class AdminPublicController {
-
-    @Value("${map.key}")
-    private String mapKey;
-    @Value("${map.secret}")
-    private String mapSecret;
 
     private final UserAuthService authService;
 
@@ -31,11 +25,6 @@ public class AdminPublicController {
                                HttpServletRequest request,
                                HttpServletResponse response) {
         return authService.login(params, request, response);
-    }
-
-    @GetMapping("/getMapSetting")
-    public Map<String, String> getMapSetting() {
-        return Map.of("key", mapKey, "secret", mapSecret);
     }
 
 }
