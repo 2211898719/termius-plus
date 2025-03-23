@@ -4,6 +4,7 @@ import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.lang.Pair;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.thread.ExecutorBuilder;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.extra.spring.SpringUtil;
@@ -18,6 +19,9 @@ import com.codeages.termiusplus.biz.user.dto.UserDto;
 import com.codeages.termiusplus.biz.user.service.UserService;
 import com.codeages.termiusplus.exception.AppException;
 import com.codeages.termiusplus.security.AuthTokenFilter;
+import jakarta.websocket.*;
+import jakarta.websocket.server.PathParam;
+import jakarta.websocket.server.ServerEndpoint;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
@@ -27,10 +31,6 @@ import net.schmizz.sshj.userauth.UserAuthException;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 
-import jakarta.websocket.*;
-import jakarta.websocket.server.PathParam;
-import jakarta.websocket.server.ServerEndpoint;
-
 import java.io.*;
 import java.net.ConnectException;
 import java.nio.ByteBuffer;
@@ -39,8 +39,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -61,7 +59,11 @@ public class SshHandler {
 
     private static final String NONE_MASTER_SESSION_ID = "0";
 
-    private static final ThreadPoolExecutor threadPoolExecutor = ThreadUtil.newExecutorByBlockingCoefficient(0.99f);
+    private static final ThreadPoolExecutor threadPoolExecutor = ExecutorBuilder.create()
+                                                                                .setThreadFactory(ThreadUtil.createThreadFactory("ssh-handler-thread-"))
+                                                                                .setAllowCoreThreadTimeOut(false)
+                                                                                .useSynchronousQueue()
+                                                                                .build();
 
 
     private final ServerService serverService;
@@ -412,6 +414,9 @@ public class SshHandler {
             } catch (Exception ignored) {
 
             }
+
+            //停掉当前线程
+            threadPoolExecutor.remove(this);
         }
 
         @SneakyThrows

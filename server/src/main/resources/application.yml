@@ -80,8 +80,8 @@ spring:
                     # 线程池配置
                     threadPool:
                         threadNamePrefix: Message_Job_Pool
-                        threadPriority: 30
-                        threadCount: 50
+                        threadPriority: 1
+                        threadCount: 1
                         class: org.quartz.simpl.SimpleThreadPool
                         threadsInheritContextClassLoaderOfInitializingThread: true
     data:
