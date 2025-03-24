@@ -54,7 +54,7 @@ let props = defineProps({
   }
 });
 
-const emit = defineEmits(['update:loading', 'update:subSessionUsername', 'update:inputTerminal', 'hot','focus'])
+const emit = defineEmits(['update:loading', 'update:subSessionUsername', 'update:inputTerminal', 'hot', 'focus'])
 
 let frontColor = useStorage('frontColor', "#ffffff")
 let backColor = useStorage('backColor', "#000000")
@@ -561,8 +561,8 @@ const writeCompletionToCursorPosition = (autoComp) => {
   }
 
   autoEL.innerText = autoComp
-  autoEL.style.left = parseFloat(el.style.left.substring(0, el.style.left.length - 2)) + spaceCount * 8.5+15.5 + "px"
-  autoEL.style.top = parseFloat(el.style.top.substring(0, el.style.top.length - 2)) + 6.5 + "px"
+  autoEL.style.left = parseFloat(el.style.left.substring(0, el.style.left.length - 2)) + spaceCount * 8.5 + 8.5 + "px"
+  autoEL.style.top = parseFloat(el.style.top.substring(0, el.style.top.length - 2)) + 10.5 + "px"
   autoEL.style.position = 'fixed'
   autoEL.id = "auto"
   autoEL.style.lineHeight = "1"
@@ -910,7 +910,7 @@ const [autoAnimate] = useAutoAnimate()
 .log {
   width: 100%;
   height: 100%;
-  padding: 8px 0 0 8px ;
+  padding: 8px 0 0 8px;
   background-color: v-bind(backColor);
 }
 

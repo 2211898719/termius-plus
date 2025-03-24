@@ -8,14 +8,13 @@ import {bootStore} from "@/boot/bootStore";
 import {bootFilters} from "@/boot/bootFilters";
 import '@wangeditor/editor/dist/css/style.css'
 import 'shepherd.js/dist/css/shepherd.css';
-import { autoAnimatePlugin } from '@formkit/auto-animate/vue'
-import {Panel} from "@/views/server/Panel";
+import {autoAnimatePlugin} from '@formkit/auto-animate/vue'
 import DockviewPanel from "@/views/server/DockviewPanel";
 // import 'default-passive-events'
 
 const modulesFiles = require.context('@/assets/webfonts', true, /\.woff2$|\.woff$|\.ttf$|\.eot$|\.otf$/);
-let allFonts = modulesFiles.keys().map(r=>r.slice(2));
-allFonts.forEach(async fontName=>{
+let allFonts = modulesFiles.keys().map(r => r.slice(2));
+allFonts.forEach(async fontName => {
     let font = await new FontFace(
         fontName.split('.')[0],
         `url("${require(`@/assets/webfonts/${fontName}`)}")`,
@@ -28,9 +27,7 @@ allFonts.forEach(async fontName=>{
 const app = createApp(App);
 app.use(router);
 app.use(autoAnimatePlugin);
-// eslint-disable-next-line vue/multi-word-component-names
-app.component("Panel",Panel)
-app.component("DockviewPanel",DockviewPanel)
+app.component("DockviewPanel", DockviewPanel)
 bootAntDesignVue(app);
 bootAxios(app);
 bootPinia(app);
@@ -38,4 +35,4 @@ bootStore(app);
 bootFilters(app);
 
 app.mount('#app')
-app.config.globalProperties.$allFonts = allFonts.map((fontName)=>({name:fontName.split('.')[0]}));
+app.config.globalProperties.$allFonts = allFonts.map((fontName) => ({name: fontName.split('.')[0]}));

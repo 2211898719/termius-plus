@@ -1,6 +1,6 @@
 <script setup>
 import '@/views/css/dockview.css';
-import {createVNode, nextTick, onMounted, ref, watch} from "vue";
+import {createVNode, getCurrentInstance, h, nextTick, onMounted, ref, render, watch} from "vue";
 import Sortable from 'sortablejs';
 import _ from "lodash";
 import {Input, Modal} from "ant-design-vue";
@@ -27,6 +27,7 @@ import {
   themeReplit,
   themeVisualStudio
 } from "dockview-core/dist/cjs/dockview/theme";
+import ServerContent from "@/views/server/ServerContent.vue";
 
 let spinning = ref(false)
 
@@ -42,14 +43,16 @@ const handleFindServer = (server) => {
   serverListRef.value.findServer(server)
 }
 
-const handleOpenServer = (item, masterSessionId = 0) => {
+const handleOpenServer = (item, masterSessionId = 0, randomId = true) => {
   let uuid = v4();
   while (serverList.value.findIndex(e => e.operationId === uuid) !== -1) {
     uuid = v4();
   }
 
   let copyItem = JSON.parse(JSON.stringify(item));
-  copyItem.operationId = uuid;
+  if (randomId) {
+    copyItem.operationId = uuid;
+  }
   copyItem.masterSessionId = masterSessionId;
   if (Array.isArray(copyItem.onlyConnect)) {
     let connect = copyItem.onlyConnect.find(e => e.masterSessionId === masterSessionId);
@@ -60,10 +63,6 @@ const handleOpenServer = (item, masterSessionId = 0) => {
 
   serverList.value.push(copyItem)
   tagActiveKey.value = copyItem.operationId
-
-  // nextTick(() => {
-  //   renderLayout(copyItem)
-  // })
 }
 
 let sortableEl = ref()
@@ -312,46 +311,63 @@ let themeMap = ref({
 const onReady = (event, server) => {
   event.api.onUnhandledDragOverEvent(onDidDrop)
   event.api.onDidDrop(handleDidDropStop)
+  event.api.onWillDragPanel(handleWillDragPanel)
   event.api.customFocus = () => {
   }
   event.api.updateOptions({
     theme: themeMap.value[layoutTheme.value]
   })
+
+  let el = startDragPanelParams == null ? buildServerContent({
+    server: server,
+    onHot: onServerHot,
+    onFocus: () => {
+      let api = serverIdDockviewMap.get(tagActiveKey.value);
+      let serverContentEl = api.component.element.querySelector(`[operationId='${server.operationId}']`)
+      api.customFocus = serverContentEl.customFocus
+    }
+  }) : startDragPanelParams.el
+
+  el.setAttribute("operationId", server.operationId)
+
+  let currentServer = startDragPanelParams == null ? server : startDragPanelParams.server
+
+  startDragPanelParams = null;
+
   event.api.addPanel({
     id: server.operationId,
     component: 'DockviewPanel',
     title: server.name,
     params: {
-      server: server,
-      onHot: onServerHot,
-      onFocus: function () {
-        let api = serverIdDockviewMap.get(tagActiveKey.value);
-        let serverContentEl = api.component.element.querySelector(`[operationId='${server.operationId}']`)
-        api.customFocus = () => {
-          serverContentEl.customFocus()
-        }
-      }
+      server: currentServer,
+      el: el,
     },
   });
+
   event.api.onDidRemovePanel((e) => {
     let serverContentEl = e.view.content.element.querySelector(`[operationId='${e.id}']`)
-    if (serverContentEl) {
+    if (serverContentEl && !startDragPanelParams) {
       serverContentEl.customClose()
     }
 
+    //退化为非分屏模式
     if (e.accessor.api.totalPanels === 1) {
-      server.isSplitView = false
-      server.name = e.accessor.api.panels[0].title
+      let panelServer = e.accessor.api.panels[0].params.server
+      panelServer.operationId = currentServer.operationId
+      panelServer.isSplitView = false
+      panelServer.name = e.accessor.api.panels[0].title
+
+      Object.assign(currentServer, panelServer)
     }
   })
 
-  event.api.onDidRemoveGroup((e) => {
+  event.api.onDidRemoveGroup(() => {
     if (event.api.totalPanels === 0 && event.api.size === 0) {
-      onCloseServer(server.operationId)
+      onCloseServer(currentServer.operationId)
     }
   })
 
-  dockviewIdServerMap.set(event.api.id, server)
+  dockviewIdServerMap.set(event.api.id, currentServer)
   serverIdDockviewMap.set(server.operationId, event.api)
 }
 
@@ -362,7 +378,7 @@ watch(() => tagActiveKey.value, (val) => {
 
 let dockviewRef = ref(null)
 const handleDidDropStop = (event) => {
-  if (!dragStartServer){
+  if (!dragStartServer) {
     return
   }
   event.api.addPanel({
@@ -379,8 +395,10 @@ const handleDidDropStop = (event) => {
     }
   });
 
+
   let currentServer = dockviewIdServerMap.get(event.api.id)
   currentServer.isSplitView = true
+  currentServer.originalName = currentServer.name
   currentServer.name = "Split view"
   currentServer.isSplitView = true
 
@@ -398,14 +416,13 @@ const handleDragStart = (index, server) => {
   dragStartIndex = index
 }
 
-const handleDragEnd = (e, server) => {
+const handleDragEnd = (e) => {
   dragStartFlag = false
   dragStartServer = null
   dragStartIndex = null
   //拖拽没成功, 清楚一下蒙层
   if (e.srcElement) {
-    let api = serverIdDockviewMap.get(tagActiveKey.value)
-    api.component.rootDropTargetContainer.model.clear()
+    serverIdDockviewMap.get(tagActiveKey.value).component.rootDropTargetContainer.model.clear()
   }
 }
 
@@ -414,6 +431,81 @@ const onDidDrop = (event) => {
     return
   }
   event.accept();
+}
+
+let startDragPanel = null
+let startDragPanelParams = null
+const handleWillDragPanel = (event) => {
+  //检查是否有dragend事件
+  event.nativeEvent.srcElement.removeEventListener("dragend", handleDockviewHeaderDropEnd)
+  event.nativeEvent.srcElement.addEventListener("dragend", handleDockviewHeaderDropEnd)
+  startDragPanel = event.panel
+}
+
+const handleDropTabBarGroup = () => {
+  if (!startDragPanel) {
+    return
+  }
+
+  startDragPanelParams = startDragPanel.params;
+
+  handleOpenServer(startDragPanel.params.server, 0, true)
+
+  tabBarDropTargetFlag.value = false
+  dragCounter = 0
+  startDragPanel.api.close()
+  startDragPanel.accessor.api.component.rootDropTargetContainer.model.clear()
+  startDragPanel = null
+}
+
+let vNode2Dom = (vNode) => {
+  let domEl = document.createElement("div");
+  render(vNode, domEl);
+  return domEl.firstElementChild;
+}
+
+const componentIns = getCurrentInstance();
+
+let buildServerContent = (params) => {
+  let pTerm = h(ServerContent, {
+    ...params,
+    operationId: params.server.operationId
+  })
+
+  pTerm.appContext = componentIns.appContext
+  let node = vNode2Dom(pTerm);
+  node.customClose = () => {
+    pTerm.component.exposed.close()
+  }
+  node.customFocus = () => {
+    pTerm.component.exposed.focus()
+  }
+  return node;
+}
+
+const handleDockviewHeaderDropEnd = () => {
+  startDragPanel = null
+}
+
+let dragCounter = 0
+let tabBarDropTargetFlag = ref(false)
+const handleDragEnterTabBarGroup = () => {
+  if (!startDragPanel) {
+    return
+  }
+  tabBarDropTargetFlag.value = true
+  dragCounter++
+  startDragPanel.accessor.api.component.rootDropTargetContainer.model.clear()
+}
+
+const handleDragLeaveTabBarGroup = () => {
+  if (!startDragPanel) {
+    return
+  }
+  dragCounter--
+  if (dragCounter === 0) {
+    tabBarDropTargetFlag.value = false
+  }
 }
 
 
@@ -460,7 +552,11 @@ const onDidDrop = (event) => {
 
         <template v-slot:renderTabBar>
           <div class="tab-bar-group-container">
-            <div ref="tabBarGroupEl" :class="{'tab-bar-group':true,'tab-bar-group-mini':miniTabBar}">
+            <div ref="tabBarGroupEl"
+                 :class="{'tab-bar-group':true,'tab-bar-group-mini':miniTabBar,'tab-bar-drop-target':tabBarDropTargetFlag}"
+                 @dragover.prevent
+                 @drop="handleDropTabBarGroup" @dragenter.stop="handleDragEnterTabBarGroup"
+                 @dragleave.stop="handleDragLeaveTabBarGroup">
               <div class="tab-bar" :class="{'tab-active-normal':tagActiveKey==='server'}" @click="changeTab('server')">
                 <div class="left">
                   <div class="tab-icon">
@@ -591,7 +687,7 @@ const onDidDrop = (event) => {
               <div class="sortable" ref="sortableEl">
                 <div v-for="(server,index) in serverList" :key="server.operationId"
                      @dragstart="handleDragStart(index,server)"
-                     @dragend="e=>handleDragEnd(e,server)">
+                     @dragend="e=>handleDragEnd(e)">
                   <a-dropdown :trigger="['contextmenu']"
                               class="dropdown" :class="server.operationId">
 
@@ -706,7 +802,7 @@ const onDidDrop = (event) => {
 
 <style scoped lang="less">
 
-:deep(.dockview-theme-abyss-spaced){
+:deep(.dockview-theme-abyss-spaced) {
   border-radius: 30px 30px 0px 30px;
 }
 
@@ -779,6 +875,10 @@ const onDidDrop = (event) => {
   }
 
 
+  .tab-bar-drop-target {
+    border: 1px dashed #1FB568 !important;
+  }
+
   .tab-bar-group {
     background-color: #00152A;
     @media only screen and (max-width: 1000px) {
@@ -788,8 +888,9 @@ const onDidDrop = (event) => {
         font-size: 10px !important;
       }
     }
+    border: 1px solid #00152A;
     min-height: 100%;
-    transition: all 0.5s;
+    transition: width 0.5s;
     position: relative;
     padding: 8px;
     width: 180px;
