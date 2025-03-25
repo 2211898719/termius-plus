@@ -247,7 +247,6 @@ const changeTab = (item) => {
 
 const onServerHot = (operationId) => {
   let hotTabId = findTabIdByServerPanelId(operationId)
-  console.log("hotTabId",hotTabId)
   if (hotTabId === tagActiveKey.value) {
     return
   }
@@ -340,7 +339,6 @@ const onReady = (event, server) => {
     server: copyServer,
     onHot: onServerHot,
     onFocus: (content) => {
-      console.log(content)
       let api = serverIdDockviewMap.get(tagActiveKey.value);
       api.customFocus = content.customFocus
     }
@@ -493,8 +491,6 @@ const handleDropTabBarGroup = () => {
   startDragPanel.api.close()
   startDragPanel.accessor.api.component.rootDropTargetContainer.model.clear()
   startDragPanel = null
-
-  console.log(tabIdServerListMap)
 }
 
 let vNode2Dom = (vNode) => {
