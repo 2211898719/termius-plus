@@ -34,6 +34,12 @@ let spinning = ref(false)
 let tagActiveKey = ref('server')
 
 let serverList = ref([])
+let tabIdServerListMap = new Map()
+
+const findTabIdByServerPanelId = (serverPanelId) => {
+  return tabIdServerListMap.entries()
+      .find(([, value]) => value.some(e => e.operationId === serverPanelId))?.[0]
+}
 
 let serverListRef = ref()
 let proxyListRef = ref()
@@ -63,6 +69,9 @@ const handleOpenServer = (item, masterSessionId = 0, randomId = true) => {
 
   serverList.value.push(copyItem)
   tagActiveKey.value = copyItem.operationId
+
+  tabIdServerListMap.set(copyItem.operationId, [copyItem])
+  return copyItem
 }
 
 let sortableEl = ref()
@@ -120,14 +129,15 @@ const onCloseServer = (item) => {
     return
   }
 
-
   let api = serverIdDockviewMap.get(item);
-  api.closeAllGroups();
-  dockviewIdServerMap.delete(api.id)
-  serverIdDockviewMap.delete(item)
+  if (api) {
+    api.closeAllGroups();
+    serverIdDockviewMap.delete(item);
+  }
 
   nextTick(() => {
     _.remove(serverList.value, i => i.operationId === item)
+    tabIdServerListMap.delete(item)
     if (item === tagActiveKey.value) {
       tagActiveKey.value = 'server'
     }
@@ -235,12 +245,14 @@ const changeTab = (item) => {
   tagActiveKey.value = item
 }
 
-const onServerHot = (server) => {
-  if (server.operationId === tagActiveKey.value) {
+const onServerHot = (operationId) => {
+  let hotTabId = findTabIdByServerPanelId(operationId)
+  console.log("hotTabId",hotTabId)
+  if (hotTabId === tagActiveKey.value) {
     return
   }
 
-  let index = serverList.value.findIndex(e => e.operationId === server.operationId)
+  let index = serverList.value.findIndex(e => e.operationId === hotTabId)
   if (index === -1) {
     return
   }
@@ -287,9 +299,11 @@ const changeMiniTab = () => {
   miniTabBar.value = !miniTabBar.value
 }
 
-
-let dockviewIdServerMap = new Map()
 let serverIdDockviewMap = new Map()
+
+const getServerIdByDockviewApi = (api) => {
+  return serverIdDockviewMap.entries().find(([, value]) => value.id === api.id)[0]
+}
 
 let layoutTheme = useStorage("layoutTheme", "themeAbyssSpaced")
 let changeLayoutThemeChannel = new BroadcastChannel("changeLayoutTheme")
@@ -309,6 +323,8 @@ let themeMap = ref({
 })
 
 const onReady = (event, server) => {
+  serverIdDockviewMap.set(server.operationId, event.api)
+
   event.api.onUnhandledDragOverEvent(onDidDrop)
   event.api.onDidDrop(handleDidDropStop)
   event.api.onWillDragPanel(handleWillDragPanel)
@@ -318,19 +334,21 @@ const onReady = (event, server) => {
     theme: themeMap.value[layoutTheme.value]
   })
 
+  let copyServer = JSON.parse(JSON.stringify(server))
+
   let el = startDragPanelParams == null ? buildServerContent({
-    server: server,
+    server: copyServer,
     onHot: onServerHot,
-    onFocus: () => {
+    onFocus: (content) => {
+      console.log(content)
       let api = serverIdDockviewMap.get(tagActiveKey.value);
-      let serverContentEl = api.component.element.querySelector(`[operationId='${server.operationId}']`)
-      api.customFocus = serverContentEl.customFocus
+      api.customFocus = content.customFocus
     }
   }) : startDragPanelParams.el
 
   el.setAttribute("operationId", server.operationId)
 
-  let currentServer = startDragPanelParams == null ? server : startDragPanelParams.server
+  let currentServer = startDragPanelParams == null ? copyServer : JSON.parse(JSON.stringify(startDragPanelParams.server))
 
   startDragPanelParams = null;
 
@@ -345,7 +363,10 @@ const onReady = (event, server) => {
   });
 
   event.api.onDidRemovePanel((e) => {
-    let serverContentEl = e.view.content.element.querySelector(`[operationId='${e.id}']`)
+    let tabId = getServerIdByDockviewApi(e.accessor.api)
+    _.remove(tabIdServerListMap.get(tabId), s => s.operationId === e.params.server.operationId)
+
+    let serverContentEl = e.view.content.element.querySelector(`.split-box`)
     if (serverContentEl && !startDragPanelParams) {
       serverContentEl.customClose()
     }
@@ -353,11 +374,15 @@ const onReady = (event, server) => {
     //退化为非分屏模式
     if (e.accessor.api.totalPanels === 1) {
       let panelServer = e.accessor.api.panels[0].params.server
-      panelServer.operationId = currentServer.operationId
-      panelServer.isSplitView = false
-      panelServer.name = e.accessor.api.panels[0].title
 
-      Object.assign(currentServer, panelServer)
+      let tabServer = serverList.value.find(s => s.operationId === tabId);
+
+      let tabServerOperationId = tabServer.operationId
+      panelServer.name = e.accessor.api.panels[0].title;
+      panelServer.operationId = tabServerOperationId
+      panelServer.isSplitView = false
+
+      Object.assign(tabServer, panelServer)
     }
   })
 
@@ -367,8 +392,6 @@ const onReady = (event, server) => {
     }
   })
 
-  dockviewIdServerMap.set(event.api.id, currentServer)
-  serverIdDockviewMap.set(server.operationId, event.api)
 }
 
 watch(() => tagActiveKey.value, (val) => {
@@ -377,30 +400,36 @@ watch(() => tagActiveKey.value, (val) => {
 
 
 let dockviewRef = ref(null)
+
+/**
+ * 从tab拖拽到dockview的回调
+ * @param event
+ */
 const handleDidDropStop = (event) => {
   if (!dragStartServer) {
     return
   }
+  let dropServer = serverIdDockviewMap.get(dragStartServer.operationId).panels[0].params.server
   event.api.addPanel({
-    id: dragStartServer.operationId,
+    id: dropServer.operationId,
     component: 'DockviewPanel',
-    title: dragStartServer.name,
+    title: dropServer.name,
     position: {
       direction: positionToDirection(event.options.position),
       referenceGroup: event.options.group,
     },
     params: {
-      el: dockviewRef.value[dragStartIndex].$el.querySelector(`[operationId='${dragStartServer.operationId}']`),
-      server: dragStartServer,
+      el: dockviewRef.value[dragStartIndex].$el.querySelector(`.split-box`),
+      server: dropServer,
     }
   });
 
+  tabIdServerListMap.get(tagActiveKey.value).push(dropServer)
 
-  let currentServer = dockviewIdServerMap.get(event.api.id)
+  let currentServer = serverList.value.find(server => server.operationId === tagActiveKey.value)
   currentServer.isSplitView = true
   currentServer.originalName = currentServer.name
   currentServer.name = "Split view"
-  currentServer.isSplitView = true
 
   nextTick(() => {
     onCloseServer(dragStartServer.operationId)
@@ -421,9 +450,11 @@ const handleDragEnd = (e) => {
   dragStartServer = null
   dragStartIndex = null
   //拖拽没成功, 清楚一下蒙层
-  if (e.srcElement) {
-    serverIdDockviewMap.get(tagActiveKey.value).component.rootDropTargetContainer.model.clear()
-  }
+  nextTick(() => {
+    if (e.srcElement && serverIdDockviewMap.get(tagActiveKey.value)) {
+      serverIdDockviewMap.get(tagActiveKey.value).component.rootDropTargetContainer.model.clear()
+    }
+  })
 }
 
 const onDidDrop = (event) => {
@@ -442,6 +473,9 @@ const handleWillDragPanel = (event) => {
   startDragPanel = event.panel
 }
 
+/**
+ * 从dockview拖拽到tab的回调
+ */
 const handleDropTabBarGroup = () => {
   if (!startDragPanel) {
     return
@@ -449,13 +483,18 @@ const handleDropTabBarGroup = () => {
 
   startDragPanelParams = startDragPanel.params;
 
-  handleOpenServer(startDragPanel.params.server, 0, true)
+  _.remove(tabIdServerListMap.get(tagActiveKey.value), e => e.operationId === startDragPanel.params.server.operationId)
+
+  startDragPanel.params.server = handleOpenServer(startDragPanel.params.server, 0, true)
+  startDragPanel.params.el.setAttribute("operationId", startDragPanel.params.server.operationId)
 
   tabBarDropTargetFlag.value = false
   dragCounter = 0
   startDragPanel.api.close()
   startDragPanel.accessor.api.component.rootDropTargetContainer.model.clear()
   startDragPanel = null
+
+  console.log(tabIdServerListMap)
 }
 
 let vNode2Dom = (vNode) => {
@@ -507,7 +546,6 @@ const handleDragLeaveTabBarGroup = () => {
     tabBarDropTargetFlag.value = false
   }
 }
-
 
 </script>
 

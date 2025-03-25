@@ -422,7 +422,7 @@ const initTerm = () => {
 
   });
   term._core._onFocus._listeners.push(() => {
-    emit("focus")
+    emit("focus", props.server)
   })
   term.focus();
 

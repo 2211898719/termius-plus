@@ -18,11 +18,13 @@ import {copyToClipboard} from "@/utils/copyUtil";
 const emit = defineEmits(['hot', 'focus'])
 
 const onHot = (server) => {
-  emit('hot', server)
+  console.log(root.value.getAttribute("operationId"))
+  emit('hot', root.value.getAttribute("operationId"))
 }
 
+let root =ref()
 const onFocus = (server) => {
-  emit('focus', server)
+  emit('focus', root.value)
 }
 
 let searchLinuxDoc = ref("")
@@ -420,7 +422,7 @@ const handleKeyup = (event) => {
 </script>
 
 <template>
-  <div class="split-box">
+  <div class="split-box" ref="root">
     <p-flip ref="flip" :operation-id="server.operationId">
       <template #back>
         <div v-if="sftpEnable" style="height: 100%">
