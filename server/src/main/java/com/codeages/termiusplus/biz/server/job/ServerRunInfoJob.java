@@ -9,10 +9,12 @@ import com.codeages.termiusplus.biz.message.MessageService;
 import com.codeages.termiusplus.biz.server.dto.ServerDto;
 import com.codeages.termiusplus.biz.server.dto.ServerRunLogDTO;
 import com.codeages.termiusplus.biz.server.service.ServerService;
+import com.codeages.termiusplus.biz.util.ExecuteCommandSSHClient;
 import com.codeages.termiusplus.biz.util.command.DiskUsage;
 import com.github.jaemon.dinger.core.entity.enums.MessageSubType;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.apache.commons.math3.stat.regression.SimpleRegression;
@@ -21,7 +23,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -44,6 +45,12 @@ public class ServerRunInfoJob {
     @Value("${server.estimateDiskUsageLogDays:365}")
     private int estimateDiskUsageLogDays;
 
+
+    @PostConstruct
+    public void init() {
+        ExecuteCommandSSHClient executeCommandSSHClient = new ExecuteCommandSSHClient(288L);
+        System.out.println("~~~~~~~~~~"+DateUtil.format(executeCommandSSHClient.getDate(), "yyyy-MM-dd HH:mm:ss"));
+    }
 
 
     @Scheduled(cron = "0 0 0/4 *  * ?")

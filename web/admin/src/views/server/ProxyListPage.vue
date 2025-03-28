@@ -138,7 +138,6 @@ defineExpose({
 <template>
   <div class="server-root">
     <div class="server-pane">
-
       <a-space direction="vertical" size="middle" style="width: 100%;">
         <a-card :bodyStyle="{padding:'12px 12px'}" style="border:none">
           <div class="body-root">

@@ -10,6 +10,7 @@ import com.codeages.termiusplus.biz.server.service.ServerService;
 import com.codeages.termiusplus.biz.util.command.CpuUsage;
 import com.codeages.termiusplus.biz.util.command.DiskUsage;
 import com.codeages.termiusplus.biz.util.command.NetworkUsage;
+import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +21,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.lang.ref.Cleaner;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
@@ -33,17 +33,13 @@ public class ExecuteCommandSSHClient implements AutoCloseable {
     private final SSHClient sshClient;
     private final ServerDto serverDto;
     private final ServerService serverService;
-    private static final Cleaner CLEANER = Cleaner.create();
-    private final Cleaner.Cleanable cleanable;
 
     @SneakyThrows
     public ExecuteCommandSSHClient(Long serverId) {
-        this.cleanable = CLEANER.register(this, this::close);
         serverService = SpringUtil.getBean(ServerService.class);
         serverDto = serverService.findById(serverId);
         this.sshClient = serverService.createSSHClient(serverId);
     }
-
 
     @SneakyThrows
     public String executeCommand(String command) {
@@ -95,6 +91,10 @@ public class ExecuteCommandSSHClient implements AutoCloseable {
         }
 
         return networkUsages;
+    }
+
+    public Date getDate() {
+        return new Date(Long.parseLong(executeCommand("date +%s"))*1000);
     }
 
     public CpuUsage getCpuUsage() {
@@ -200,7 +200,6 @@ public class ExecuteCommandSSHClient implements AutoCloseable {
     public String getLocalIPAddress() {
         return executeCommand("curl icanhazip.com");
     }
-
 
     private static CpuUsage parseCpuUsage(String cpuOutput) {
         // 解析 CPU 使用情况
@@ -314,6 +313,7 @@ public class ExecuteCommandSSHClient implements AutoCloseable {
                                  .intValue()
                 ), 5000
                       );
+
         return (int) (System.currentTimeMillis() - socket.getSoTimeout());
     }
 
