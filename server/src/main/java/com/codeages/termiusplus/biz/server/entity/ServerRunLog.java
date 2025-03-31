@@ -46,6 +46,9 @@ public class ServerRunLog {
      * 网络使用率
      */
     private String networkUsages;
+    private Long dateDiff;
+    private String timeZone;
+    private Boolean ntp;
     /**
      * 创建时间
      */

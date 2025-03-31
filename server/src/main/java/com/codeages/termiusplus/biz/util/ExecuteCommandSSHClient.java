@@ -10,7 +10,6 @@ import com.codeages.termiusplus.biz.server.service.ServerService;
 import com.codeages.termiusplus.biz.util.command.CpuUsage;
 import com.codeages.termiusplus.biz.util.command.DiskUsage;
 import com.codeages.termiusplus.biz.util.command.NetworkUsage;
-import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -85,7 +84,7 @@ public class ExecuteCommandSSHClient implements AutoCloseable {
 
             String rxReadable = FileUtil.readableFileSize((long) rxSpeed);
             String txReadable = FileUtil.readableFileSize((long) txSpeed);
-            System.out.println(iface + ": rx: " + rxReadable + "/s, tx: " + txReadable + "/s");
+            log.info("{}: rx: {}/s, tx: {}/s", iface, rxReadable, txReadable);
 
             networkUsages.add(new NetworkUsage(iface, rxSpeed, txSpeed));
         }
@@ -95,6 +94,10 @@ public class ExecuteCommandSSHClient implements AutoCloseable {
 
     public Date getDate() {
         return new Date(Long.parseLong(executeCommand("date +%s"))*1000);
+    }
+
+    public String getTimeZone() {
+        return executeCommand("cat /etc/timezone");
     }
 
     public CpuUsage getCpuUsage() {

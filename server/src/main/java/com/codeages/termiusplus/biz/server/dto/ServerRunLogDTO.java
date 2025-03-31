@@ -21,6 +21,9 @@ public class ServerRunLogDTO {
     private String diskUsages;
     private String networkUsages;
     private ServerDto server;
+    private Long dateDiff;
+    private String timeZone;
+    private Boolean ntp;
 
     private Boolean infoStatus;
     private String serverName;

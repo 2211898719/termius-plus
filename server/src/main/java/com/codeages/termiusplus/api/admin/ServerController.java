@@ -198,7 +198,6 @@ public class ServerController {
                 -3
                                                                                                                    ));
 
-
         Map<Long, ServerRunLogDTO> infoMap = serverRunLogDTOList.stream()
                                                                 .collect(Collectors.toMap(
                                                                         ServerRunLogDTO::getServerId,
@@ -238,7 +237,6 @@ public class ServerController {
     public List<ServerRunLogDTO> syncAllServerRunInfo() {
         return serverService.syncAllServerRunInfo();
     }
-
 }
 
 

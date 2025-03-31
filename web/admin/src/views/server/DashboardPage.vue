@@ -75,7 +75,7 @@ const getServerRunInfo = async () => {
     }
     let aMax = Math.max(...a.diskUsages.map(d => d.useNum))
     let bMax = Math.max(...b.diskUsages.map(d => d.useNum))
-    return  bMax - aMax
+    return bMax - aMax
   })
 }
 
@@ -89,7 +89,7 @@ getServerRunInfo();
 //   clearInterval(interval)
 // })
 
-const emit = defineEmits(['openServer','findServer'])
+const emit = defineEmits(['openServer', 'findServer'])
 
 let currentServer = ref(null)
 let detailLoading = ref(false)
@@ -380,7 +380,7 @@ const handleDetailClose = () => {
         <div class="front">
           <div class="server-name">{{ item.serverName }}</div>
           <div>
-            <span v-if="item.infoStatus">     <a-badge status="success" text="运行中"/></span>
+            <span v-if="item.infoStatus">     <a-badge status="success" text="运行中"/> <span v-if="item.dateDiff!=null&&item.dateDiff>2" style="color: red">有时差：{{ item.dateDiff }}s </span></span>
             <span v-else>   <a-badge status="error" text="离线"/></span>
           </div>
           <div>{{ item.serverIp }}:{{ item.serverPort }}</div>
@@ -402,12 +402,12 @@ const handleDetailClose = () => {
              @close="handleDetailClose" width="100%"
              wrap-class-name="full-modal" ok-text="进入服务器" cancel-text="关闭">
       <a-spin :spinning="detailLoading">
-      <div class="dashboard-page-detail">
-        <div class="dashboard-page-detail-chart" ref="chartCpu"></div>
-        <div class="dashboard-page-detail-chart" ref="chartDisk"></div>
-        <div class="dashboard-page-detail-chart" ref="chartNetworkTransmit"></div>
-        <div class="dashboard-page-detail-chart" ref="chartNetworkReceive"></div>
-      </div>
+        <div class="dashboard-page-detail">
+          <div class="dashboard-page-detail-chart" ref="chartCpu"></div>
+          <div class="dashboard-page-detail-chart" ref="chartDisk"></div>
+          <div class="dashboard-page-detail-chart" ref="chartNetworkTransmit"></div>
+          <div class="dashboard-page-detail-chart" ref="chartNetworkReceive"></div>
+        </div>
       </a-spin>
     </a-modal>
     <div style="padding: 20px;width: 50%;">

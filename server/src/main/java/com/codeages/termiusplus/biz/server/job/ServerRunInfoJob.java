@@ -15,6 +15,7 @@ import com.github.jaemon.dinger.core.entity.enums.MessageSubType;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import jakarta.annotation.PostConstruct;
+import lombok.Cleanup;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.apache.commons.math3.stat.regression.SimpleRegression;
@@ -46,18 +47,11 @@ public class ServerRunInfoJob {
     private int estimateDiskUsageLogDays;
 
 
-    @PostConstruct
-    public void init() {
-        ExecuteCommandSSHClient executeCommandSSHClient = new ExecuteCommandSSHClient(288L);
-        System.out.println("~~~~~~~~~~"+DateUtil.format(executeCommandSSHClient.getDate(), "yyyy-MM-dd HH:mm:ss"));
-    }
-
-
     @Scheduled(cron = "0 0 0/4 *  * ?")
-    @SchedulerLock(name = "ServerRunInfoJob_execute", lockAtMostFor = "10m")
+    @SchedulerLock(name = "ServerRunInfoJob_execute", lockAtMostFor = "3m")
     public void execute() {
         log.info("ServerRunInfoJob execute");
-        serverService.syncAllServerRunInfo();
+        List<ServerRunLogDTO> serverRunLogDTOS = serverService.syncAllServerRunInfo();
         log.info("ServerRunInfoJob execute end");
     }
 
@@ -104,8 +98,10 @@ public class ServerRunInfoJob {
 
             Map<String, BigDecimal> allDiskUsageMap = new HashMap<>();
             serverDiskUsageMap.forEach((filesystem, diskUsageList) -> {
-                if (isWithin2Days(diskUsageList.getLast()
-                                               .getKey(), now)) {
+                if (isWithin2Days(
+                        diskUsageList.getLast()
+                                     .getKey(), now
+                                 )) {
                     try {
                         BigDecimal day = estimateDiskExhaustion(diskUsageList);
                         allDiskUsageMap.put(filesystem, day);

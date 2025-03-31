@@ -3,6 +3,8 @@ package com.codeages.termiusplus.biz.server.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.date.DateUnit;
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.lang.tree.Tree;
 import cn.hutool.core.lang.tree.TreeNode;
 import cn.hutool.core.lang.tree.TreeUtil;
@@ -773,8 +775,16 @@ public class ServerServiceImpl implements ServerService {
                                                                                                   1);
                                                                                           CpuUsage cpuUsage = sshClient.getCpuUsage();
                                                                                           List<DiskUsage> diskUsage = sshClient.getDiskUsage();
+                                                                                          Date date = sshClient.getDate();
+                                                                                          Date currentDate = DateUtil.date();
+                                                                                          String timeZone = sshClient.getTimeZone();
+
                                                                                           ServerRunLog serverRunLog = new ServerRunLog();
                                                                                           serverRunLog.setServerId(server.getId());
+                                                                                          serverRunLog.setDateDiff(DateUtil.between(date, currentDate,
+                                                                                                                                    DateUnit.SECOND
+                                                                                                                                   ));
+                                                                                          serverRunLog.setTimeZone(timeZone);
                                                                                           sshClient.close();
 
                                                                                           serverRunLog.setCpuUsage(JSONUtil.toJsonStr(
@@ -785,12 +795,12 @@ public class ServerServiceImpl implements ServerService {
                                                                                                   diskUsage));
                                                                                           serverRunLog.setDate(now);
                                                                                           serverRunInfoDTOS.add(serverRunLog);
+                                                                                          log.info(
+                                                                                                  "获取服务器运行信息成功，serverId = {}, serverName = {}, serverIp = {}",
+                                                                                                  server.getId(),
+                                                                                                  server.getName(), server.getIp());
                                                                                       }, executor
                                                                                        )
-                                                                              .orTimeout(
-                                                                                      (int) allTimeout.toMillis(),
-                                                                                      TimeUnit.MILLISECONDS
-                                                                                        )
                                                                               .exceptionally(e -> {
                                                                                   log.error(
                                                                                           "获取服务器运行信息失败:{}:{}",
