@@ -147,6 +147,10 @@ const onCloseServer = (item) => {
 const handleCopy = (server) => {
   handleOpenServer(server)
 }
+const handleSaveWorkBench = (server) => {
+  let workBench = serverIdDockviewMap.get(server.operationId).toJSON()
+  localStorage.setItem("test_workbench", JSON.stringify(workBench))
+}
 
 const handleRename = (server) => {
   server.rename = server.name
@@ -240,6 +244,7 @@ const proxyCreation = () => {
   proxyListRef.value.proxyCreation()
 }
 
+let dashboardRef = ref()
 
 const changeTab = (item) => {
   tagActiveKey.value = item
@@ -266,8 +271,44 @@ let layoutContainer = ref([])
 let tabBarRef = ref([])
 
 let tabBarGroupEl = ref()
+let snippetListRef = ref()
+let settingRef = ref()
+let applicationListRef = ref()
+let cronJobRef = ref()
+let portForwarderRef = ref()
 
-function handleChangeActiveKey(val) {
+let activeKeyRefMap = {
+  dashboard: dashboardRef,
+  proxy: proxyListRef,
+  server: serverListRef,
+  snippet: snippetListRef,
+  setting: settingRef,
+  application: applicationListRef,
+  cronJob: cronJobRef,
+  portForwarder: portForwarderRef
+}
+
+let refreshLoading = ref({
+  dashboard: false,
+  proxy: false,
+  server: false,
+  snippet: false,
+  setting: false,
+  application: false,
+  cronJob: false,
+  portForwarder: false,
+})
+
+const handleChangeActiveKey = async (val) => {
+  if (activeKeyRefMap[val] && activeKeyRefMap[val].value.refresh) {
+    refreshLoading.value[val] = true
+    try {
+      await activeKeyRefMap[val].value.refresh()
+    } finally {
+      refreshLoading.value[val] = false
+    }
+  }
+
   let index = serverList.value.findIndex(e => e.operationId === val)
 
   if (index === -1) {
@@ -565,23 +606,24 @@ const handleDragLeaveTabBarGroup = () => {
           <proxy-list-page ref="proxyListRef" @createSuccess="handleProxyCreateSuccess"></proxy-list-page>
         </a-tab-pane>
         <a-tab-pane tab="端口转发" key="portForwarder" :closable="false" :forceRender="true">
-          <port-forwarder-page></port-forwarder-page>
+          <port-forwarder-page ref="portForwarderRef"></port-forwarder-page>
         </a-tab-pane>
         <a-tab-pane tab="定时任务" key="cronJob" :closable="false" :forceRender="true">
-          <cron-job-page></cron-job-page>
+          <cron-job-page ref="cronJobRef"></cron-job-page>
         </a-tab-pane>
         <a-tab-pane tab="命令片段" key="snippet" :closable="false" :forceRender="true">
           <snippet-list-page ref="snippetListRef" @createSuccess="handleProxyCreateSuccess"
                              @openServer="handleOpenServer"></snippet-list-page>
         </a-tab-pane>
         <a-tab-pane tab="应用" key="application" :closable="false" :forceRender="true">
-          <ApplicationListPage @openServer="handleOpenServer" ref="applicationListRef"></ApplicationListPage>
+          <ApplicationListPage ref="applicationListRef" @openServer="handleOpenServer"></ApplicationListPage>
         </a-tab-pane>
-        <a-tab-pane tab="数据大屏" key="dashboard" :closable="false" :forceRender="true">
-          <DashboardPage @openServer="handleOpenServer" @findServer="handleFindServer"></DashboardPage>
+        <a-tab-pane tab="监控看板" key="dashboard" :closable="false" :forceRender="true">
+          <DashboardPage ref="dashboardRef" @openServer="handleOpenServer"
+                         @findServer="handleFindServer"></DashboardPage>
         </a-tab-pane>
         <a-tab-pane class="setting-pane" tab="设置" key="setting" :closable="false" :forceRender="true">
-          <setting-page></setting-page>
+          <setting-page ref="settingRef"></setting-page>
         </a-tab-pane>
 
         <template v-slot:renderTabBar>
@@ -600,7 +642,9 @@ const handleDragLeaveTabBarGroup = () => {
                     服务器
                   </div>
                 </div>
-                <div class="right"></div>
+                <div class="right">
+                  <loading-outlined class="tab-loading" v-if="refreshLoading.server"/>
+                </div>
               </div>
               <div class="tab-bar" :class="{'tab-active-normal':tagActiveKey==='proxy'}" @click="changeTab('proxy')">
                 <div class="left">
@@ -617,7 +661,9 @@ const handleDragLeaveTabBarGroup = () => {
                     代理
                   </div>
                 </div>
-                <div class="right"></div>
+                <div class="right">
+                  <loading-outlined class="tab-loading" v-if="refreshLoading.proxy"/>
+                </div>
               </div>
               <div class="tab-bar" :class="{'tab-active-normal':tagActiveKey==='portForwarder'}"
                    @click="changeTab('portForwarder')">
@@ -637,7 +683,9 @@ const handleDragLeaveTabBarGroup = () => {
                     端口转发
                   </div>
                 </div>
-                <div class="right"></div>
+                <div class="right">
+                  <loading-outlined class="tab-loading" v-if="refreshLoading.portForwarder"/>
+                </div>
               </div>
               <div class="tab-bar" :class="{'tab-active-normal':tagActiveKey==='cronJob'}"
                    @click="changeTab('cronJob')">
@@ -655,7 +703,9 @@ const handleDragLeaveTabBarGroup = () => {
                     定时任务
                   </div>
                 </div>
-                <div class="right"></div>
+                <div class="right">
+                  <loading-outlined class="tab-loading" v-if="refreshLoading.cronJob"/>
+                </div>
               </div>
               <div class="tab-bar" :class="{'tab-active-normal':tagActiveKey==='snippet'}"
                    @click="changeTab('snippet')">
@@ -677,7 +727,9 @@ const handleDragLeaveTabBarGroup = () => {
                   </div>
                 </div>
 
-                <div class="right"></div>
+                <div class="right">
+                  <loading-outlined class="tab-loading" v-if="refreshLoading.snippet"/>
+                </div>
               </div>
               <div class="tab-bar" :class="{'tab-active-normal':tagActiveKey==='application'}"
                    @click="changeTab('application')">
@@ -690,7 +742,9 @@ const handleDragLeaveTabBarGroup = () => {
                   </div>
                 </div>
 
-                <div class="right"></div>
+                <div class="right">
+                  <loading-outlined class="tab-loading" v-if="refreshLoading.application"/>
+                </div>
               </div>
               <div class="tab-bar" :class="{'tab-active-normal':tagActiveKey==='dashboard'}"
                    @click="changeTab('dashboard')">
@@ -703,7 +757,9 @@ const handleDragLeaveTabBarGroup = () => {
                   </div>
                 </div>
 
-                <div class="right"></div>
+                <div class="right">
+                  <loading-outlined class="tab-loading" v-if="refreshLoading.dashboard"/>
+                </div>
               </div>
               <div class="tab-bar" :class="{'tab-active-normal':tagActiveKey==='setting'}"
                    @click="changeTab('setting')">
@@ -794,14 +850,21 @@ const handleDragLeaveTabBarGroup = () => {
                           </template>
                           重命名
                         </a-menu-item>
+<!--                        <a-menu-item key="4" v-if="server.isSplitView" @click="handleSaveWorkBench(server)">-->
+<!--                          <template #icon>-->
+<!--                            <save-outlined/>-->
+<!--                          </template>-->
+<!--                          保存为工作台-->
+<!--                        </a-menu-item>-->
                       </a-menu>
                     </template>
                   </a-dropdown>
                 </div>
               </div>
-              <div class="bottom" @click="changeMiniTab">
-                <left-outlined :class="{'button-action':miniTabBar,'transition':true}"/>
-              </div>
+
+            </div>
+            <div class="bottom" @click="changeMiniTab">
+              <left-outlined :class="{'button-action':miniTabBar,'transition':true}"/>
             </div>
           </div>
         </template>
@@ -900,9 +963,9 @@ const handleDragLeaveTabBarGroup = () => {
 
 .tab-bar-group-container {
   background-color: #00152A;
-  overflow: scroll;
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE 10+ */
+  position: relative;
   //设置滚动条隐藏
   ::-webkit-scrollbar {
     display: none;
@@ -911,6 +974,24 @@ const handleDragLeaveTabBarGroup = () => {
 
   .tab-bar-drop-target {
     border: 1px dashed #1FB568 !important;
+  }
+
+  .bottom {
+    color: #fff;
+    position: absolute;
+    left: 50%;
+    bottom: 8px;
+    transform: translateX(-50%);
+    cursor: pointer;
+
+
+    .button-action {
+      transform: rotateY(180deg);
+    }
+
+    .transition {
+      transition: all 0.9s;
+    }
   }
 
   .tab-bar-group {
@@ -927,6 +1008,7 @@ const handleDragLeaveTabBarGroup = () => {
     transition: width 0.5s;
     position: relative;
     padding: 8px;
+    height: 100%;
     width: 180px;
     overflow-x: unset;
     overflow-y: scroll;
@@ -944,23 +1026,6 @@ const handleDragLeaveTabBarGroup = () => {
       margin-bottom: 24px;
     }
 
-    .bottom {
-      color: #fff;
-      position: absolute;
-      left: 50%;
-      bottom: 8px;
-      transform: translateX(-50%);
-      cursor: pointer;
-
-
-      .button-action {
-        transform: rotateY(180deg);
-      }
-
-      .transition {
-        transition: all 0.9s;
-      }
-    }
 
     .tab-bar {
       margin: 4px 0;
@@ -1023,7 +1088,14 @@ const handleDragLeaveTabBarGroup = () => {
       }
 
       .right {
+        margin-left: 7px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
 
+        .tab-loading {
+          font-size: 10px;
+        }
       }
 
 

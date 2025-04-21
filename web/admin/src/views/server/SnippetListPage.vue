@@ -212,7 +212,8 @@ const handleExec = () => {
 
 
 defineExpose({
-  commandCreation
+  commandCreation,
+  refresh: getCommandData,
 })
 
 

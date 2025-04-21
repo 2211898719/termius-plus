@@ -565,7 +565,8 @@ const handleMonitorCheckTypeChange = (value) => {
 
 defineExpose({
   getProxyData,
-  setProxyId
+  setProxyId,
+  refresh: getApplicationList,
 })
 
 </script>

@@ -1,7 +1,7 @@
 <script setup>
 
 import {formatSecondsMax} from "@/components/process";
-import {defineEmits, nextTick, onMounted, ref} from "vue";
+import {defineEmits, defineExpose, nextTick, onMounted, ref} from "vue";
 import {applicationApi} from "@/api/application";
 import {serverApi} from "@/api/server";
 import autoAnimate from "@formkit/auto-animate";
@@ -365,6 +365,15 @@ let miniTabBar = useStorage('miniTabBar', false)
 const handleDetailClose = () => {
   detailVisible.value = false
 }
+
+const refresh = async () => {
+  await getServerRunInfo()
+  await getApplicationErrorRank()
+}
+
+defineExpose({
+  refresh
+});
 
 </script>
 

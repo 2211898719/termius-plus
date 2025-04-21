@@ -32,6 +32,7 @@ public class ConnectTimeoutJob {
             if (System.currentTimeMillis() - v.getTime() > 24 * 60 * 60 * 1000 && !v.isActive()) {
                 try {
                     v.getSftp().close();
+                    v.getSshClient().close();
                 } catch (IOException e) {
                     log.error("关闭sftp连接失败", e);
                 }
@@ -42,7 +43,7 @@ public class ConnectTimeoutJob {
     }
 
 
-    @Scheduled(cron = "0 */7 * * * ?")
+    @Scheduled(cron = "0 */30 * * * ?")
     @SchedulerLock(name = "ConnectTimeoutJob_clearTimeOutSsh")
     public void clearTimeOutSsh() {
         log.info("开始清理超时的SSH连接");

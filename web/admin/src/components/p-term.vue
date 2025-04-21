@@ -163,6 +163,7 @@ const initSocket = () => {
     onMessage: (w, e) => {
       emit("update:loading", false)
       handleComplete()
+      updateCurrentPath()
     },
     onError: (e) => {
       emit("update:loading", false)
@@ -524,6 +525,33 @@ const getCompleteCommand = () => {
   return ""
 }
 
+const getCurrentPath = () => {
+  return currentPath.value
+}
+
+let currentPath = ref('~')
+
+const updateCurrentPath = _.debounce(() => {
+  let terminalLastNotBlackCommand = getTerminalLastNotBlackCommand();
+  if (!terminalLastNotBlackCommand) {
+    return
+  }
+  // 匹配冒号后的路径部分，直到遇到#或$，并处理可能的空格
+  const regex = /:\s*([^#$]+?)\s*[#$]/;
+  const match = terminalLastNotBlackCommand.match(regex);
+  let path = match ? match[1].trim() : null;
+  if (path) {
+    currentPath.value = path
+    if (path === "~") {
+      if (props.server.username === "root") {
+        currentPath.value = "/root"
+      } else {
+        currentPath.value = "/home/" + props.server.username
+      }
+    }
+  }
+}, 100, {leading: false, trailing: true})
+
 const getTerminalLastNotBlackCommand = () => {
   for (let i = term.buffer.active.length - 1; i >= 0; i--) {
     let line = term.buffer.active.getLine(i).translateToString();
@@ -648,6 +676,8 @@ defineExpose({
   focus,
   close,
   execCommand,
+  getTerminalLastNotBlackCommand,
+  getCurrentPath,
   setDisableStdin: (value) => {
     term.setOption("disableStdin", value)
   },

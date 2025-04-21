@@ -142,7 +142,6 @@ const handleEditPortForwarding = async (row) => {
   portForwardingCreationVisible.value = true;
   creationPortForwardingType.value = 'update'
   Object.assign(creationPortForwardingState, row)
-  console.log(creationPortForwardingState)
   creationPortForwardingState.serverDto = await serverApi.get(row.serverId)
 }
 
@@ -387,7 +386,8 @@ const handleDblclick = (item) => {
 }
 
 defineExpose({
-  portForwardingCreation
+  portForwardingCreation,
+  refresh: getPortForwardingData,
 })
 
 

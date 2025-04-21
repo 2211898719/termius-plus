@@ -3,6 +3,7 @@ package com.codeages.termiusplus.biz.server.dto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.sftp.StatefulSFTPClient;
 
 @Data
@@ -11,5 +12,6 @@ import net.schmizz.sshj.sftp.StatefulSFTPClient;
 public class SFTPBean {
     private StatefulSFTPClient sftp;
     private Long time;
+    private SSHClient sshClient;
     private boolean active;
 }

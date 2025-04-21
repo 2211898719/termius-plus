@@ -5,7 +5,7 @@ import {Button, message, Modal, notification} from "ant-design-vue";
 import fileIcon from "@/assets/file-icon/dir.png";
 import dirIcon from "@/assets/file-icon/file.png";
 import _ from "lodash";
-import {uploadFile} from "@/utils/File";
+import {upload, uploadFile} from "@/utils/File";
 import {ExclamationCircleOutlined} from "@ant-design/icons-vue";
 import {computedFileSize} from "@/components/tinymce/File";
 import {useAutoAnimate} from "@formkit/auto-animate/vue";
@@ -158,12 +158,19 @@ const handleUpload = () => {
   }, {remotePath: currentPath.value});
 }
 
+const uploadFileToCurrentPath = async (file) => {
+  return await upload(sftpApi.upload({
+    id: sessionId.value,
+    remotePath: currentPath.value
+  }), file, {remotePath: currentPath.value})
+}
 
 defineExpose({
   changeDir,
   init,
   serverId: props.serverId,
   operationId: props.operationId,
+  sessionId: sessionId,
 })
 
 const handleDownload = (file) => {
@@ -414,11 +421,20 @@ let width = ref("16.6%")
 
 let sftpRootEl = ref(null)
 
+let buttonType = ref('big')
+
 onMounted(() => {
   //监测sftpRootEl的大小变化
-  const observer = new ResizeObserver(() => {
+  const observer = new ResizeObserver(_.debounce(() => {
     width.value = `${100 / Math.floor(sftpRootEl.value.clientWidth / 100)}%`
-  })
+    if (sftpRootEl.value.clientWidth < 720) {
+      buttonType.value = 'small'
+    } else if (sftpRootEl.value.clientWidth < 1000) {
+      buttonType.value = 'normal'
+    } else {
+      buttonType.value = 'big'
+    }
+  },200))
 
   observer.observe(sftpRootEl.value)
 })
@@ -430,6 +446,21 @@ const ondragover = (e) => {
 
 
 const drop = async (e, sessionId, currentPath) => {
+  if (!(e.dataTransfer.types?.some(t => t === 'Files') || e.dataTransfer.types.length === 0)) {
+    return
+  }
+
+  const isFileTransfer = e.dataTransfer.types?.some(t => t === 'Files');
+
+  if (isFileTransfer) {
+    Promise.all([...e.dataTransfer.files].map(file => uploadFileToCurrentPath(file)))
+        .then(() => {
+          message.success("全部上传成功")
+          ls()
+        })
+    return
+  }
+
   let sourceData = JSON.parse(localStorage.getItem('dragData'));
 
   if (sourceData.sessionId === sessionId) {
@@ -537,17 +568,6 @@ const onStart = (e, sessionId, currentPath, file, serverName) => {
   localStorage.setItem('dragData', JSON.stringify(dragData))
 }
 
-const sortFileByName = (files) => {
-  return _.sortBy(files, (file) => {
-    if (file.attributes.type === 'DIRECTORY') {
-      return '0' + file.name
-    } else if (file.attributes.type === 'REGULAR') {
-      return '1' + file.name
-    } else {
-      return '2' + file.name
-    }
-  })
-}
 const openCode = async (file) => {
   window.open(`/codeEditor?rootPath=${file ? (currentPath.value + '/' + file.name) : currentPath.value}&sessionId=${sessionId.value}&serverName=${props.serverName}&serverPath=${props.path}&serverId=${props.serverId}`)
 }
@@ -577,17 +597,100 @@ const openCode = async (file) => {
             <div>
               <a-input-search class="ml10" style="width: 200px" @input="search"
                               v-model:value="searchValue"></a-input-search>
-              <a-button class="ml10" @click="ls">刷新</a-button>
+              <template v-if="buttonType === 'big'">
+                <a-button class="ml10" @click="ls">刷新</a-button>
 
-              <a-button class="ml10" @click="handleMkdir">新建目录</a-button>
-              <a-button class="ml10" @click="handleUpload">上传</a-button>
+                <a-button class="ml10" @click="handleMkdir">新建目录</a-button>
+                <a-button class="ml10" @click="handleUpload">上传</a-button>
+                <a-select class="ml10" v-model:value="sortTypeValue" @change="handleChangeSort">
+                  <a-select-option value="normal">默认排序</a-select-option>
+                  <a-select-option value="date">按时间排序</a-select-option>
+                  <a-select-option value="type">按类型排序</a-select-option>
+                  <a-select-option value="size">按大小排序</a-select-option>
+                </a-select>
+                <a-button class="ml10" @click="openCode(null)">编辑器</a-button>
+              </template>
+              <template v-else-if="buttonType === 'normal'">
+                <a-button class="ml10" @click="ls">
+                  <reload-outlined/>
+                </a-button>
+                <a-button class="ml10" @click="handleMkdir">
+                  <folder-add-outlined/>
+                </a-button>
+                <a-button class="ml10" @click="handleUpload">
+                  <upload-outlined/>
+                </a-button>
+                <a-button class="ml10" @click="openCode(null)">
+                  <form-outlined/>
+                </a-button>
+              </template>
+              <template v-else>
+                <a-dropdown>
+                  <a class="ant-dropdown-link" style="font-size: 14px;" @click.prevent>
+                    更多
+                    <DownOutlined/>
+                  </a>
+                  <template #overlay>
+                    <a-menu>
+                      <a-menu-item key="0">
+                        <a @click="ls">
+                          <reload-outlined/>
+                        </a>
+                      </a-menu-item>
+                      <a-menu-item key="1">
+                        <a @click="handleMkdir">
+                          <folder-add-outlined/>
+                        </a>
+                      </a-menu-item>
+                      <a-menu-item key="2">
+                        <a @click="handleUpload">
+                          <upload-outlined/>
+                        </a>
+                      </a-menu-item>
+                      <a-menu-item key="3">
+                        <a @click="openCode(null)">
+                          <form-outlined/>
+                        </a>
+                      </a-menu-item>
+                    </a-menu>
+                  </template>
+                </a-dropdown>
+              </template>
+
               <a-select class="ml10" v-model:value="sortTypeValue" @change="handleChangeSort">
-                <a-select-option value="normal">默认排序</a-select-option>
-                <a-select-option value="date">按时间排序</a-select-option>
-                <a-select-option value="type">按类型排序</a-select-option>
-                <a-select-option value="size">按大小排序</a-select-option>
+                <a-select-option value="normal">
+                  <unordered-list-outlined/>
+                </a-select-option>
+                <a-select-option value="date">
+                  <svg t="1745219112489" class="icon" viewBox="0 0 1024 1024" version="1.1"
+                       xmlns="http://www.w3.org/2000/svg" p-id="11970" width="14" height="14">
+                    <path
+                        d="M806.4 209.92H56.32c-20.992 0-38.4-17.408-38.4-38.4S35.328 133.12 56.32 133.12h750.08c20.992 0 38.4 17.408 38.4 38.4s-17.408 38.4-38.4 38.4zM391.68 532.48H56.32c-20.992 0-38.4-17.408-38.4-38.4S35.328 455.68 56.32 455.68h335.36c20.992 0 38.4 17.408 38.4 38.4s-17.408 38.4-38.4 38.4zM391.68 849.92l-335.36-1.024c-20.992 0-38.4-17.408-38.4-38.4s17.408-38.4 38.4-38.4l335.36 1.024c20.992 0 38.4 17.408 38.4 38.4 0 21.504-17.408 38.4-38.4 38.4z"
+                        fill="#B2B2B2" p-id="11971"></path>
+                    <path
+                        d="M752.64 409.6c-141.312 0-256 114.688-256 256s114.688 256 256 256 256-114.688 256-256-114.688-256-256-256z m137.216 377.856c-7.68 9.216-18.432 13.824-29.696 13.824-8.704 0-17.408-3.072-24.576-8.704l-121.344-100.352V496.64c0-20.992 17.408-38.4 38.4-38.4s38.4 17.408 38.4 38.4v159.232l93.696 77.312c16.384 13.824 18.432 37.888 5.12 54.272z"
+                        fill="#B2B2B2" p-id="11972"></path>
+                  </svg>
+                </a-select-option>
+                <a-select-option value="type">
+                  <svg t="1745219068738" class="icon" viewBox="0 0 1024 1024" version="1.1"
+                       xmlns="http://www.w3.org/2000/svg" p-id="10970" width="14" height="14">
+                    <path
+                        d="M370.368 562.368v54.592h-114.56v278.656h-62.208V616.96h-106.88v-54.592h283.648zM627.072 819.2a32 32 0 0 1 32 32v10.88a32 32 0 0 1-32 32H510.272a32 32 0 0 1-32-32v-10.88a32 32 0 0 1 32-32h116.8z m60.288-217.216a32 32 0 0 1 32 32v10.88a32 32 0 0 1-32 32H510.272a32 32 0 0 1-32-32v-10.88a32 32 0 0 1 32-32h177.088zM250.88 140.48l-15.872 57.92h102.656l14.912-57.92h52.928l-13.952 57.92h56.768v43.584h-63.744l-26.88 109.888h76.672v46.08H351.68l-15.936 68.288H282.88l15.936-68.224H192.192l-17.92 68.224h-54.784l17.92-68.224h-50.624v-46.08h57.6l29.888-109.952H103.68V198.4h76.544l15.936-57.92h54.784z m556.992 244.416a32 32 0 0 1 32 32v10.88a32 32 0 0 1-32 32h-297.6a32 32 0 0 1-32-32v-10.88a32 32 0 0 1 32-32h297.6zM332.672 241.92H230.016l-30.848 109.888h105.6l27.904-109.888z m595.712-74.24a32 32 0 0 1 32 32v10.88a32 32 0 0 1-32 32H510.272a32 32 0 0 1-32-32v-10.88a32 32 0 0 1 32-32h418.112z"
+                        fill="#647185" p-id="10971"></path>
+                  </svg>
+                </a-select-option>
+                <a-select-option value="size">
+                  <svg t="1745219034945" class="icon" viewBox="0 0 1024 1024" version="1.1"
+                       xmlns="http://www.w3.org/2000/svg" p-id="9968" width="14" height="14">
+                    <path
+                        d="M597.333333 149.333333H128v85.333334h469.333333z m-469.333333 298.666667h384v-85.333333H128z m0 213.333333h298.666667v-85.333333H128z m0 213.333334h213.333333v-85.333334H128zM910.506667 682.666667L810.666667 781.226667V85.333333h-85.333334v693.76L626.773333 682.666667 554.666667 752.64l213.333333 207.36 213.333333-207.36z"
+                        p-id="9969"></path>
+                  </svg>
+                </a-select-option>
               </a-select>
-              <a-button class="ml10" @click="openCode(null)">编辑器</a-button>
+
+
             </div>
 
           </div>
@@ -697,7 +800,7 @@ const openCode = async (file) => {
         </a-form-item>
       </a-form>
     </a-modal>
-    <a-modal v-model:visible="mkdirVisible" title="新建目录" @ok="mkdir">
+    <a-modal v-model:visible="mkdirVisible" title="新建目录" @ok="mkdir" ok-text="创建" cancel-text="关闭">
       <a-input v-model:value="mkdirName" placeholder="请输入目录名"/>
     </a-modal>
   </div>
@@ -719,6 +822,7 @@ const openCode = async (file) => {
   :deep(.ant-card-body) {
     margin-top: 24px;
     //height: calc(@height - 180px);
+    padding: 12px;
 
   }
 

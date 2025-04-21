@@ -1,5 +1,5 @@
 <script setup>
-import {defineEmits, reactive, ref, watch} from "vue";
+import {defineEmits, defineExpose, reactive, ref, watch} from "vue";
 import {useForm} from "ant-design-vue/es/form";
 import {quartzApi} from "@/api/quartz";
 import {message} from "ant-design-vue";
@@ -163,7 +163,8 @@ if (res > 50) {
 }`)
 
 defineExpose({
-  cronJobCreation
+  cronJobCreation,
+  refresh: getCronJobData,
 })
 
 

@@ -14,11 +14,13 @@ import markdownItHighlight from 'markdown-it-highlightjs';
 import 'highlight.js/styles/agate.css'
 import {findLastNonEmptyTextNode, Pipe} from "@/utils/codeUtil";
 import {copyToClipboard} from "@/utils/copyUtil";
+import {upload} from "@/utils/File";
+import {sftpApi} from "@/api/sftp";
+import {useAuthStore} from "@shared/store/useAuthStore";
 
 const emit = defineEmits(['hot', 'focus'])
 
 const onHot = (server) => {
-  console.log(root.value.getAttribute("operationId"))
   emit('hot', root.value.getAttribute("operationId"))
 }
 
@@ -419,6 +421,54 @@ const handleKeyup = (event) => {
   chat()
 }
 
+let authStore = useAuthStore()
+
+let sftpSessionId = ref(null)
+
+let uploadFileVisible = ref(false)
+let confirmLoading = ref(false)
+let uploadFileData = ref({})
+
+const handleOk = async () => {
+  try {
+    if (!sftpSessionId.value) {
+      confirmLoading.value = true
+      sftpSessionId.value = await sftpApi.init({serverId: props.server.id, sessionId: authStore.session})
+      confirmLoading.value = false
+    }
+
+    if (uploadFileData.value.isFileTransfer) {
+      uploadFileData.value.e.preventDefault();
+      uploadFileData.value.files.forEach(file => {
+        upload(sftpApi.upload({id: sftpSessionId.value}), file, {remotePath: uploadFileData.value.path})
+      })
+    }
+  } finally {
+    confirmLoading.value = false
+    uploadFileVisible.value = false
+  }
+}
+
+const onFileDrop = async (e) => {
+  const isFileTransfer = e.dataTransfer.types?.some(t => t === 'Files');
+  if (!isFileTransfer) {
+    return
+  }
+  let files = [...e.dataTransfer.files]
+  let currentPath = PTermRef.value.getCurrentPath();
+  let path = (props.server.username === 'root' ? (currentPath ? currentPath : '/tmp') : '/tmp')
+  uploadFileVisible.value = true
+  let set = new Set(['/tmp', path])
+  uploadFileData.value = {
+    isFileTransfer,
+    files,
+    path,
+    e,
+    options: [...set].map(p => ({value: p}))
+  }
+
+}
+
 </script>
 
 <template>
@@ -463,7 +513,7 @@ const handleKeyup = (event) => {
       <template #front>
         <a-spin :spinning="pTermLoading" style="height: 100%">
           <div :class="{'ssh-content':true}">
-            <div class="p-term-root">
+            <div class="p-term-root" @drop="onFileDrop">
               <div style="width: 100%;position: relative;overflow: hidden">
                 <div v-if="server.os===OsEnum.WINDOWS.value">
                   <p-rdp ref="pRdpEl" :server="server"></p-rdp>
@@ -612,11 +662,37 @@ const handleKeyup = (event) => {
                 </a-tabs>
               </div>
             </div>
-            <!--            </a-card>-->
           </div>
         </a-spin>
       </template>
     </p-flip>
+    <a-modal
+        v-model:visible="uploadFileVisible"
+        title="提示"
+        :confirm-loading="confirmLoading"
+        @ok="handleOk"
+    >
+      <div class="upload-file-content">
+        <div class="left">
+          <file-outlined class="icon"/>
+          <span v-if="uploadFileData.files.length>1" class="title"> {{ uploadFileData.files.length }}个文件</span>
+          <span v-else class="title">{{ uploadFileData.files[0].name }}</span>
+        </div>
+        <div class="center">
+          <arrow-right-outlined class="icon"/>
+        </div>
+        <div class="right">
+          <cloud-server-outlined class="icon"/>
+          <span class="title">{{ props.server.name }}</span>
+          <a-select v-model:value="uploadFileData.path">
+            <a-select-option placeholder="请输入路径" v-for="item in uploadFileData.options" :value="item.value" :key="item.value">{{
+                item.value
+              }}
+            </a-select-option>
+          </a-select>
+        </div>
+      </div>
+    </a-modal>
   </div>
 </template>
 
@@ -650,7 +726,54 @@ const handleKeyup = (event) => {
 
 </style>
 <style scoped lang="less">
+.upload-file-content {
+  display: flex;
+  justify-content: center;
+  align-content: center;
 
+  .icon {
+    font-size: 66px;
+  }
+
+  .left {
+    width: 40%;
+    display: flex;
+    justify-content: center;
+    align-content: center;
+    flex-direction: column;
+
+    .title {
+      text-align: center;
+    }
+  }
+
+  .center {
+    width: 20%;
+    display: flex;
+    justify-content: center;
+
+    .icon {
+      font-size: 36px;
+    }
+  }
+
+  .right {
+    width: 40%;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    align-content: center;
+
+    .title {
+      text-align: center;
+    }
+  }
+}
+
+:deep(.ant-upload) {
+  padding: 0 !important;
+  border: none !important;
+}
 .split-box {
   height: 100%;
   min-height: auto;
@@ -737,6 +860,7 @@ const handleKeyup = (event) => {
     :deep(.sftp-card>.ant-card-body) {
       overflow: scroll;
       height: 100%;
+      padding: 0px;
     }
 
     .sftp {

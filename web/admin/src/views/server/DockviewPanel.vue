@@ -10,7 +10,8 @@ let props = defineProps({
 let container = ref(null);
 
 onMounted(() => {
-  if (props.params.params.el) {
+  console.log(props.params)
+  if (props.params.params.el&&Object.keys(props.params.params.el).length) {
     container.value.appendChild(props.params.params.el)
   }
 })

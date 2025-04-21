@@ -129,7 +129,8 @@ const handleDel = async (row) => {
 }
 
 defineExpose({
-  proxyCreation
+  proxyCreation,
+  refresh: getProxyData,
 })
 
 

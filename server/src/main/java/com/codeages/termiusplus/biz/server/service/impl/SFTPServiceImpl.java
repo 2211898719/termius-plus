@@ -2,6 +2,7 @@ package com.codeages.termiusplus.biz.server.service.impl;
 
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.IoUtil;
+import cn.hutool.core.lang.Pair;
 import cn.hutool.core.lang.UUID;
 import cn.hutool.core.lang.func.VoidFunc1;
 import cn.hutool.core.thread.ThreadUtil;
@@ -32,8 +33,14 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 
 
 @Slf4j
@@ -52,19 +59,20 @@ public class SFTPServiceImpl implements SFTPService {
     @SneakyThrows
     @Override
     public String init(String sessionId, Long serverId) {
-        StatefulSFTPClient sftp = createSftp(sessionId, serverId);
+        Pair<SSHClient, StatefulSFTPClient> pair = createSftp(sessionId, serverId);
+        StatefulSFTPClient sftp = pair.getValue();
         String id = UUID.fastUUID() + "-" + serverId + "-" + sessionId;
-        ServerContext.SFTP_POOL.put(id, new SFTPBean(sftp, System.currentTimeMillis(), false));
+        ServerContext.SFTP_POOL.put(id, new SFTPBean(sftp, System.currentTimeMillis(),pair.getKey(), false));
 
         return id;
     }
 
     @SneakyThrows
-    private StatefulSFTPClient createSftp(String sessionId, Long serverId) {
+    private Pair<SSHClient, StatefulSFTPClient> createSftp(String sessionId, Long serverId) {
         SSHClient sshClient = serverService.createSSHClient(serverId, sessionId);
 
         sshClient.useCompression();
-        return sshClient.newStatefulSFTPClient();
+        return Pair.of(sshClient, sshClient.newStatefulSFTPClient());
     }
 
     @Override
@@ -73,9 +81,14 @@ public class SFTPServiceImpl implements SFTPService {
         if (sftp == null) {
             log.info("SFTP连接已失效：{}", id);
             String[] split = id.split("-");
+            Pair<SSHClient, StatefulSFTPClient> pair = createSftp(
+                    split[split.length - 1],
+                    Long.valueOf(split[split.length - 2])
+                                                                  );
             sftp = new SFTPBean(
-                    createSftp(split[split.length - 1], Long.valueOf(split[split.length - 2])),
+                    pair.getValue(),
                     System.currentTimeMillis(),
+                    pair.getKey(),
                     false
             );
 
@@ -167,10 +180,16 @@ public class SFTPServiceImpl implements SFTPService {
         try {
             readFile = sftp.open(remotePath);
         } catch (ConnectionException e) {
+            log.error("连接出现错误,尝试重新连接", e);
             String[] split = id.split("-");
+            Pair<SSHClient, StatefulSFTPClient> pair = createSftp(
+                    split[split.length - 1],
+                    Long.valueOf(split[split.length - 2])
+                                                                 );
             SFTPBean s = new SFTPBean(
-                    createSftp(split[split.length - 1], Long.valueOf(split[split.length - 2])),
+                    pair.getValue(),
                     System.currentTimeMillis(),
+                    pair.getKey(),
                     false
             );
 
@@ -298,9 +317,14 @@ public class SFTPServiceImpl implements SFTPService {
             remoteFile.write(0, bytes, 0, bytes.length);
         } catch (ConnectionException e) {
             String[] split = id.split("-");
+            Pair<SSHClient, StatefulSFTPClient> pair = createSftp(
+                    split[split.length - 1],
+                    Long.valueOf(split[split.length - 2])
+                                                                 );
             SFTPBean s = new SFTPBean(
-                    createSftp(split[split.length - 1], Long.valueOf(split[split.length - 2])),
+                    pair.getValue(),
                     System.currentTimeMillis(),
+                    pair.getKey(),
                     false
             );
 

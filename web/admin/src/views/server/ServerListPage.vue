@@ -562,7 +562,8 @@ const changeSortEnable = (enable) => {
 defineExpose({
   getProxyData,
   setProxyId,
-  findServer
+  findServer,
+  refresh: getServerList,
 })
 
 </script>

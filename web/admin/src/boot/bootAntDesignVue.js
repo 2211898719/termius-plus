@@ -43,6 +43,7 @@ import {
     Empty,
     Progress,
     Statistic,
+    Upload,
     Alert
 } from 'ant-design-vue';
 
@@ -76,6 +77,7 @@ export function bootAntDesignVue(app) {
         .use(DatePicker)
         .use(Drawer)
         .use(Tabs)
+        .use(Upload)
         .use(Descriptions)
         .use(List)
         .use(Breadcrumb)

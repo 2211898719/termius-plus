@@ -2,6 +2,7 @@ import {client} from "@shared/api-client";
 import {message, notification} from "ant-design-vue";
 import axios from "axios";
 import {useAuthStore} from "@shared/store/useAuthStore";
+import {v4} from "uuid";
 
 export const fileTypeEnum = {
     image: "image",
@@ -43,7 +44,7 @@ export const uploadFile = (url, callback = defaultCallback, otherParams = {}, be
     input.click();
 }
 
-export const upload = (url, file, otherParams) => {
+export const upload = async (url, file, otherParams) => {
     const data = new FormData();
     data.append("file", file);
     Object.keys(otherParams).forEach(key => {
@@ -51,8 +52,8 @@ export const upload = (url, file, otherParams) => {
     })
 
     let uploadProgress = 0;
-    let key = 'uploadFileProgress' + new Date().getTime()
-    notification.info({key, message: `上传中...${uploadProgress}%`, duration: 0});
+    let key = 'uploadFileProgress' + v4();
+    notification.info({key, message: `${file.name} 上传中...${uploadProgress}%`, duration: 0});
 
     return client.post(url, data, {
         headers: {
@@ -63,18 +64,18 @@ export const upload = (url, file, otherParams) => {
             if (progressEvent.lengthComputable) {
                 uploadProgress = progressEvent.loaded / progressEvent.total * 100
                 if (uploadProgress > 99.9) {
-                    notification.info({key, message: `上传至服务器中...`, duration: 0});
+                    notification.info({key, message: `${file.name} 上传至服务器中...`, duration: 0});
                 } else {
-                    notification.info({key, message: `上传中...${uploadProgress.toFixed(2)}%`, duration: 0});
+                    notification.info({key, message: `${file.name} 上传中...${uploadProgress.toFixed(2)}%`, duration: 0});
                 }
             }
         }
     }).then(res => {
-        notification.success({key, message: '上传成功', duration: 5});
+        notification.success({key, message: `${file.name} 上传成功`, duration: 5});
             return res;
         }
     ).catch(err => {
-        notification.error({key, message: '上传失败',description:err.message, duration: 5});
+        notification.error({key, message: `${file.name} 上传失败`,description:err.message, duration: 5});
         return Promise.reject(err);
     })
 }
