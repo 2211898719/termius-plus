@@ -4,6 +4,7 @@ import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpResponse;
 import cn.hutool.json.JSONUtil;
 import com.codeages.termiusplus.biz.ai.AIService;
+import com.codeages.termiusplus.biz.autocomplete.service.AutoCompleteService;
 import com.codeages.termiusplus.biz.server.context.ServerContext;
 import com.codeages.termiusplus.biz.server.dto.AIChatParams;
 import com.codeages.termiusplus.biz.server.dto.AiCompletionMetadata;
@@ -11,20 +12,13 @@ import com.codeages.termiusplus.ws.ssh.SshHandler;
 import com.cxytiandi.encrypt.springboot.annotation.DecryptIgnore;
 import com.cxytiandi.encrypt.springboot.annotation.EncryptIgnore;
 import io.github.pigmesh.ai.deepseek.core.DeepSeekClient;
-import io.github.pigmesh.ai.deepseek.core.OpenAiClient;
-import io.github.pigmesh.ai.deepseek.core.SyncOrAsyncOrStreaming;
 import io.github.pigmesh.ai.deepseek.core.chat.ChatCompletionModel;
 import io.github.pigmesh.ai.deepseek.core.chat.ChatCompletionRequest;
-import io.github.pigmesh.ai.deepseek.core.chat.ChatCompletionResponse;
-import io.github.pigmesh.ai.deepseek.core.chat.ResponseFormatType;
-import io.github.pigmesh.ai.deepseek.core.search.FreshnessEnums;
-import io.github.pigmesh.ai.deepseek.core.search.SearchRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import reactor.core.publisher.Flux;
 
 import java.util.Map;
@@ -40,6 +34,8 @@ public class AIController {
 
     @Autowired
     private AIService aiService;
+    @Autowired
+    private AutoCompleteService autoCompleteService;
 
     @PostMapping("/complete")
     @EncryptIgnore
@@ -98,6 +94,12 @@ public class AIController {
                                                              .build();
 
         return deepSeekClient.chatFluxCompletion(request).map(response -> response);
+    }
+
+    @GetMapping("/chat2Command")
+    public Map<String, String> chat2Command(AIChatParams params) {
+        String chat = autoCompleteService.chat(params.getMessage());
+        return Map.of("command", "无法提供建议".equals(chat) ? "" : chat);
     }
 
 

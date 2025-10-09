@@ -13,6 +13,8 @@ import {Button, message, notification} from "ant-design-vue";
 import pako from 'pako';
 import {WebglAddon} from '@xterm/addon-webgl';
 import {useAutoAnimate} from "@formkit/auto-animate/vue";
+import {useAutoComplete} from '@/hooks/useAutoComplete';
+import AutoCompleteModal from './AutoCompleteModal.vue';
 
 let authStore = useAuthStore();
 
@@ -58,7 +60,6 @@ const emit = defineEmits(['update:loading', 'update:subSessionUsername', 'update
 
 let frontColor = useStorage('frontColor', "#ffffff")
 let backColor = useStorage('backColor', "#000000")
-let AutoComplete = useStorage('autoComp-' + props.server.id, true)
 let currentFont = useStorage('currentFont', 'JetBrainsMono-ExtraBold')
 let socketSessionId = ref(null)
 
@@ -102,22 +103,49 @@ let socketSend = null;
 let terminal = ref()
 let log = ref()
 let useSocket = null
-let history = ref({
-  bash: [],
-  mysql: [],
-  currentType: "bash",
-  mysqlInit: false
+
+let currentServer = computed(() => {
+  if (typeof props.server === "string") {
+    return JSON.parse(props.server)
+  }
+
+  return props.server
 })
 
-watch(() => AutoComplete.value, async () => {
-  if (AutoComplete.value) {
-    await getHistory()
-    completeCommand.value = getCompleteCommand();
-    writeCompletionToCursorPosition(completeCommand.value)
-  } else {
-    displayNoneCompletion()
-  }
-})
+// 初始化自动补全 hook
+const {
+  AutoComplete,
+  history,
+  commonCommands,
+  aiCommands,
+  completeCommand,
+  getHistory,
+  getMysqlHistory,
+  getCompleteCommand,
+  writeCompletionToCursorPosition,
+  displayNoneCompletion,
+  handleComplete,
+  findFirstCompleteCommand,
+  getUnExecutedCommand,
+  getTerminalLastNotBlackCommand,
+  generateAiCommand,
+  createPlaceholderAiCommand,
+  generateAiCommandForMessage,
+  saveAiCommandToHistory,
+  clearAiCommandsCache,
+  getAiCommandsStats
+} = useAutoComplete(
+  currentServer,
+  () => term,
+  log
+)
+
+const execCommand = (command) => {
+  sendEvent(JSON.stringify({
+    event: "COMMAND",
+    data: command
+  }))
+}
 
 onMounted(() => {
   initSocket();
@@ -126,15 +154,6 @@ onMounted(() => {
 
 watch(() => authStore.session, () => {
   initSocket();
-})
-
-
-let currentServer = computed(() => {
-  if (typeof props.server === "string") {
-    return JSON.parse(props.server)
-  }
-
-  return props.server
 })
 
 const initSocket = () => {
@@ -178,33 +197,6 @@ const initSocket = () => {
     },
   });
 
-}
-
-/**
- * 获取终端中未执行的命令 例如：root@localhost:~# 则去掉
- */
-const getUnExecutedCommand = (command, trim = true) => {
-  if (!command) {
-    return ""
-  }
-
-  /**
-   * 如果进入了mysql模式，则获取mysql的历史命令
-   */
-  if (command.startsWith("mysql> ")) {
-    getMysqlHistory()
-    history.value.currentType = "mysql"
-    return trim ? command.substring("mysql> ".length).trim() : command.substring("mysql> ".length)
-  }
-
-  history.value.currentType = "bash"
-  const regex = /^.*?@.*?:.*?[#$]/
-
-  if (regex.test(command)) {
-    return trim ? command.replace(regex, "").trim() : command.replace(regex, "")
-  }
-
-  return ""
 }
 
 const arrayBufferToString = (arrayBuffer) => {
@@ -408,15 +400,6 @@ const initTerm = () => {
       if (nowTime - lastCtrlTime < 500) {
         autoCompleteText.value = getUnExecutedCommand(getTerminalLastNotBlackCommand())
         autoCompleteVisible.value = true
-
-        nextTick(() => {
-          autoCompleteTextInputRef.value.focus()
-
-          if (searchedHistory.value.length) {
-            selectCommand.value = searchedHistory.value[0]
-            searchHistoryChange('center')
-          }
-        })
       }
       lastCtrlTime = nowTime;
     }
@@ -445,50 +428,9 @@ const initTerm = () => {
 
 }
 
-const handleComplete = _.debounce(() => {
-  nextTick(() => {
-    completeCommand.value = getCompleteCommand();
-    writeCompletionToCursorPosition(completeCommand.value)
-  })
-}, 100, {leading: false, trailing: true})
-
-function uniqueArray(arr) {
-  const uniqueSet = new Set();
-  const uniqueArray = [];
-
-  for (const item of arr) {
-    if (!uniqueSet.has(item)) {
-      uniqueSet.add(item);
-      uniqueArray.push(item);
-    } else {
-      uniqueArray.splice(uniqueArray.indexOf(item), 1)
-      uniqueArray.push(item);
-    }
-  }
-
-  return uniqueArray;
-}
-
-const getHistory = async () => {
-  try {
-    history.value.bash = uniqueArray(await serverApi.getHistory(props.server.id));
-  } catch (e) {
-    message.error(e.message)
-  }
-}
-
-const getMysqlHistory = async () => {
-  if (history.value.mysqlInit) {
-    return
-  }
-
-  history.value.mysqlInit = true
-  try {
-    history.value.mysql = uniqueArray(await serverApi.getMysqlHistory(currentServer.value.id));
-  } catch (e) {
-    message.error(e.message)
-  }
-}
+// 双 ctrl 弹窗相关状态
+let autoCompleteVisible = ref(false)
+let autoCompleteText = ref('')
 
 const requestAuthEditSession = () => {
   message.info("正在申请操作" + currentServer.value.name)
@@ -497,36 +439,6 @@ const requestAuthEditSession = () => {
   }));
 }
 
-const findFirstCompleteCommand = () => {
-  let last = getTerminalLastNotBlackCommand();
-  let command = getUnExecutedCommand(last)
-  //去掉头部的空格，不能去掉尾部的空格
-  command = command.replace(/^\s+/, "")
-  if (command) {
-    let find = history.value[history.value.currentType].findLast(item => item.startsWith(command))
-    if (find) {
-      return find
-    }
-
-    return ""
-  }
-
-  return ""
-}
-
-/**
- * 根据 history 和 getUnExecutedCommand 获取可能的补全命令
- */
-const getCompleteCommand = () => {
-  let find = findFirstCompleteCommand()
-  if (find) {
-    let last = getTerminalLastNotBlackCommand();
-    let command = getUnExecutedCommand(last)
-    return find.substring(command.length)
-  }
-
-  return ""
-}
 
 const getCurrentPath = () => {
   return currentPath.value
@@ -554,57 +466,6 @@ const updateCurrentPath = _.debounce(() => {
     }
   }
 }, 100, {leading: false, trailing: true})
-
-const getTerminalLastNotBlackCommand = () => {
-  for (let i = term.buffer.active.length - 1; i >= 0; i--) {
-    let line = term.buffer.active.getLine(i).translateToString();
-    if (line.trim()) {
-      return line
-    }
-  }
-}
-
-let completeCommand = ref('')
-
-let autoEL = document.createElement("div")
-
-const writeCompletionToCursorPosition = (autoComp) => {
-  let xtermTextarea = log.value.getElementsByClassName("xterm-helper-textarea");
-  let console = log.value.getElementsByClassName("console")[0];
-  if (!xtermTextarea.length) {
-    return
-  }
-  let el = xtermTextarea[0]
-
-  if (!autoComp) {
-    autoEL.innerText = ""
-    return;
-  }
-
-  //计算autoComp前有多少个空格
-  let spaceCount = 0;
-  for (let i = 0; i < autoComp.length; i++) {
-    if (autoComp[i] === " ") {
-      spaceCount++
-    } else {
-      break;
-    }
-  }
-
-  autoEL.innerText = autoComp
-  autoEL.style.left = parseFloat(el.style.left.substring(0, el.style.left.length - 2)) + spaceCount * 8.5 + 8.5 + "px"
-  autoEL.style.top = parseFloat(el.style.top.substring(0, el.style.top.length - 2)) + 10.5 + "px"
-  autoEL.style.position = 'fixed'
-  autoEL.id = "auto"
-  autoEL.style.lineHeight = "1"
-  autoEL.className = "auto-complete"
-  console.append(autoEL)
-
-}
-
-const displayNoneCompletion = () => {
-  autoEL.innerText = ""
-}
 
 const resizeTerminal = () => {
   let content = log.value;
@@ -637,13 +498,6 @@ const resizeTerminal = () => {
       }
     }));
   });
-}
-
-const execCommand = (command) => {
-  sendEvent(JSON.stringify({
-    event: "COMMAND",
-    data: command
-  }))
 }
 
 const sendEvent = (event) => {
@@ -690,7 +544,10 @@ defineExpose({
   },
   getSessionId: () => {
     return socketSessionId.value
-  }
+  },
+  // AI 命令缓存管理
+  clearAiCommandsCache,
+  getAiCommandsStats
 })
 
 let searchVisible = ref(false)
@@ -752,84 +609,23 @@ const changeRegexEnabled = () => {
   regexEnabled.value = !regexEnabled.value
 }
 
-let autoCompleteVisible = ref(false)
-let autoCompleteText = ref('')
-let selectCommand = ref('')
-
-let autoCompleteTextInputRef = ref(null)
-
-const onCloseAutoComplete = () => {
-  term.focus()
-}
-
-const handleAutoCompleteSelect = (item) => {
-  selectCommand.value = item
-  autoCompleteTextInputRef.value.focus()
-}
-
-let searchedHistory = computed(() => {
-  let result = history.value[history.value.currentType]
-  if (autoCompleteText.value) {
-    result = history.value[history.value.currentType].filter(item => item.startsWith(autoCompleteText.value))
-  }
-
-  if (result.length) {
-    selectCommand.value = result[0]
-  }else{
-    selectCommand.value = ''
-  }
-
-  return result
-})
-
-const searchHistoryChange = (type) => {
-  let currentIndex = searchedHistory.value.indexOf(selectCommand.value)
-  let command = {
-    up: 1,
-    down: -1,
-    center: 0
-  }
-  currentIndex = currentIndex - command[type]
-  if (currentIndex < 0) {
-    currentIndex = searchedHistory.value.length - 1
-  } else if (currentIndex >= searchedHistory.value.length) {
-    currentIndex = 0
-  }
-
-  selectCommand.value = searchedHistory.value[currentIndex]
-
-  autoCompleteTextItemRefs.value[currentIndex].scrollIntoView({block: 'center'});
-}
-
-
-function writeCommandToTerminal(event) {
+// 处理双 ctrl 弹窗确认
+const handleAutoCompleteConfirm = (command) => {
   let last = getTerminalLastNotBlackCommand();
-  let command = getUnExecutedCommand(last, false)
-  //去除command = 输入command的长度的退格键
-  execCommand("\b".repeat(command.length))
-  execCommand(selectCommand.value)
-  selectCommand.value = ''
+  let currentCommand = getUnExecutedCommand(last, false)
+  // 去除当前命令长度的退格键
+  execCommand("\b".repeat(currentCommand.length))
+  execCommand(command)
   autoCompleteVisible.value = false
-  event.preventDefault()
   nextTick(() => {
     displayNoneCompletion()
   })
 }
 
-const handleAutoCompleteSelectDown = (event) => {
-  if (event.key === 'ArrowUp') {
-    searchHistoryChange('up')
-    event.preventDefault()
-  } else if (event.key === 'ArrowDown') {
-    searchHistoryChange('down')
-    event.preventDefault()
-  } else if (event.key === 'Enter') {
-    writeCommandToTerminal(event);
-  }
+// 处理双 ctrl 弹窗关闭
+const handleAutoCompleteClose = () => {
+  term.focus()
 }
-
-
-let autoCompleteTextItemRefs = ref([])
 
 
 const [autoAnimate] = useAutoAnimate()
@@ -841,29 +637,19 @@ const [autoAnimate] = useAutoAnimate()
     <div class="log" ref="log">
       <div class="console" ref="terminal"></div>
     </div>
-    <a-modal class="auto-complete-modal" v-model:visible="autoCompleteVisible" :closable="false" :mask="false"
-             :after-close="onCloseAutoComplete"
-             width="35%">
-
-      <template #header></template>
-      <div class="auto-complete-root">
-        <a-input ref="autoCompleteTextInputRef" v-model:value="autoCompleteText" placeholder="搜索历史命令"
-                 @keydown="handleAutoCompleteSelectDown"></a-input>
-        <div class="auto-complete-list" ref="autoAnimate">
-          <div :ref="el => autoCompleteTextItemRefs[index] = el"
-               :class="{'auto-complete-item':true,'auto-complete-item-active':selectCommand===item}"
-               @click="handleAutoCompleteSelect(item)"
-               @dblclick="writeCommandToTerminal"
-               v-for="(item,index) in searchedHistory" :key="item"> {{
-              item
-            }}
-          </div>
-        </div>
-      </div>
-      <template #footer>
-        <div style="text-align: left">{{ selectCommand }}</div>
-      </template>
-    </a-modal>
+    <AutoCompleteModal
+      v-model:visible="autoCompleteVisible"
+      :history="history"
+      :common-commands="commonCommands"
+      :ai-commands="aiCommands"
+      :generate-ai-command="generateAiCommand"
+      :create-placeholder-ai-command="createPlaceholderAiCommand"
+      :generate-ai-command-for-message="generateAiCommandForMessage"
+      :save-ai-command-to-history="saveAiCommandToHistory"
+      :initial-text="autoCompleteText"
+      @confirm="handleAutoCompleteConfirm"
+      @close="handleAutoCompleteClose"
+    />
     <div :class="{'search-drawer':true, 'is-visible':!searchVisible}" @keydown="searchKeyListener">
       <a-input ref="searchTextInputRef" v-model:value="searchText" placeholder="搜索"
                @keydown.enter="handleKeyup"></a-input>
@@ -980,32 +766,5 @@ const [autoAnimate] = useAutoAnimate()
   height: 100%;
 }
 
-.auto-complete-modal {
-  .ant-modal-body {
-    padding: 12px;
-  }
-
-  .auto-complete-root {
-
-    .auto-complete-list {
-      margin-top: 12px;
-      height: 50vh;
-      overflow-y: auto;
-
-      .auto-complete-item {
-        padding: 2px 6px;
-        border-radius: 4px;
-        width: 100%;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-
-        &-active {
-          background-color: #f2f2f2;
-        }
-      }
-    }
-  }
-}
 
 </style>

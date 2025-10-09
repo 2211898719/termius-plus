@@ -152,3 +152,11 @@ serverInfo:
 
 public:
     uri: [/api-admin/public/login]
+
+langchain4j:
+    open-ai:
+        chat-model:
+            api-key: ${LANGCHAIN4J_OPEN_AI_CHAT_MODEL_API_KEY:sk-9dxxxxxx}
+            model-name: ${LANGCHAIN4J_OPEN_AI_CHAT_MODEL_MODEL_NAME:deepseek-chat}
+            base-url: ${LANGCHAIN4J_OPEN_AI_CHAT_MODEL_BASE_URL:https://api.deepseek.com/v1}
+            max-tokens: ${LANGCHAIN4J_OPEN_AI_CHAT_MODEL_MAX_TOKENS:4096}
