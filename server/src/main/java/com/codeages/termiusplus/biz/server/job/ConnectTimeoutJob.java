@@ -42,8 +42,7 @@ public class ConnectTimeoutJob {
         }
     }
 
-
-    @Scheduled(cron = "0 */30 * * * ?")
+    @Scheduled(cron = "0 */1 * * * ?")
     @SchedulerLock(name = "ConnectTimeoutJob_clearTimeOutSsh")
     public void clearTimeOutSsh() {
         log.info("开始清理超时的SSH连接");
@@ -55,10 +54,21 @@ public class ConnectTimeoutJob {
         for (Map.Entry<String, SshHandler.HandlerItem> entry : ServerContext.SSH_POOL.entrySet()) {
             long diffTime = System.currentTimeMillis() - entry.getValue().getLastActiveTime();
 
-            if (!entry.getValue().isOpen() || diffTime > DateUnit.DAY.getMillis() || force) {
+            boolean notOpen = !entry.getValue()
+                                    .isOpen();
+            boolean timeout = diffTime > DateUnit.DAY.getMillis();
+
+
+            if (notOpen || timeout || force) {
                 entry.getValue().close();
                 key.add(entry.getKey());
-                log.info("SSH连接已失效：{}", entry.getValue().getServerId());
+                log.info("SSH连接已失效：{},原因：断开:{},超时:{},强制:{}",
+                         entry.getValue()
+                              .getServerId(),
+                         notOpen,
+                         timeout,
+                         force
+                        );
             }
         }
 

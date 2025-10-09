@@ -160,12 +160,12 @@ const initSocket = () => {
 
   const host = window.location.host;
   useSocket = useWebSocket(wsProtocol + '://' + host + '/socket/ssh/' + authStore.session + '/' + currentServer.value.id + '/' + props.masterSessionId, {
-    onMessage: (w, e) => {
+    onMessage: () => {
       emit("update:loading", false)
       handleComplete()
       updateCurrentPath()
     },
-    onError: (e) => {
+    onError: () => {
       emit("update:loading", false)
     },
     onDisconnected: () => {
@@ -459,6 +459,9 @@ function uniqueArray(arr) {
   for (const item of arr) {
     if (!uniqueSet.has(item)) {
       uniqueSet.add(item);
+      uniqueArray.push(item);
+    } else {
+      uniqueArray.splice(uniqueArray.indexOf(item), 1)
       uniqueArray.push(item);
     }
   }
@@ -767,8 +770,15 @@ const handleAutoCompleteSelect = (item) => {
 let searchedHistory = computed(() => {
   let result = history.value[history.value.currentType]
   if (autoCompleteText.value) {
-    result = history.value[history.value.currentType].filter(item => item.includes(autoCompleteText.value))
+    result = history.value[history.value.currentType].filter(item => item.startsWith(autoCompleteText.value))
   }
+
+  if (result.length) {
+    selectCommand.value = result[0]
+  }else{
+    selectCommand.value = ''
+  }
+
   return result
 })
 
@@ -788,7 +798,7 @@ const searchHistoryChange = (type) => {
 
   selectCommand.value = searchedHistory.value[currentIndex]
 
-  autoCompleteTextItemRefs.value[currentIndex].scrollIntoView({block: 'center'})
+  autoCompleteTextItemRefs.value[currentIndex].scrollIntoView({block: 'center'});
 }
 
 
@@ -840,7 +850,7 @@ const [autoAnimate] = useAutoAnimate()
         <a-input ref="autoCompleteTextInputRef" v-model:value="autoCompleteText" placeholder="搜索历史命令"
                  @keydown="handleAutoCompleteSelectDown"></a-input>
         <div class="auto-complete-list" ref="autoAnimate">
-          <div ref="autoCompleteTextItemRefs"
+          <div :ref="el => autoCompleteTextItemRefs[index] = el"
                :class="{'auto-complete-item':true,'auto-complete-item-active':selectCommand===item}"
                @click="handleAutoCompleteSelect(item)"
                @dblclick="writeCommandToTerminal"

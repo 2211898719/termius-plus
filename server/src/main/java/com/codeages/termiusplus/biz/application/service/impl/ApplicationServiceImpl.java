@@ -52,6 +52,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     public List<Tree<Long>> findAll() {
         List<Application> applications = applicationRepository.findAll();
 
+
         List<TreeNode<Long>> servers = applications
                 .stream()
                 .map(e -> {

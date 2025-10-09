@@ -531,7 +531,7 @@ public class SshHandler {
         }
 
         public boolean isOpen() {
-            return openSession.isOpen() && shell.isOpen() && masterSession.isOpen();
+            return openSession.isOpen() && shell.isOpen() && masterSession.isOpen() && !shell.isEOF() && shell.getAutoExpand();
         }
 
         public void handleResAuthEditSession(Session session, MessageDto messageDto) {
