@@ -1,4 +1,4 @@
-import request from '@/utils/request'
+import {client} from "@shared/api-client";
 
 /**
  * AI 命令生成
@@ -6,11 +6,7 @@ import request from '@/utils/request'
  * @returns {Promise} 返回 AI 生成的命令
  */
 export function chat2Command(message) {
-  return request({
-    url: '/api-admin/ai/chat2Command',
-    method: 'get',
-    params: {
-      message
-    }
-  })
+  return client.get("/api-admin/ai/chat2Command", {params: {message}})
+
+
 }

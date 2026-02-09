@@ -92,12 +92,12 @@ public class AuthTokenFilter extends OncePerRequestFilter {
                 response.addCookie(cookie);
             }
         } catch (Exception e) {
+            log.error("服务器内部错误", e);
             response.setCharacterEncoding("UTF-8");
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
             response.setStatus(500);
             response.getWriter()
                     .write(objectMapper.writeValueAsString(AppError.fromAppException(new AppException(ErrorCode.INTERNAL_ERROR, "服务器内部错误"), request)));
-            log.error("服务器内部错误", e);
         }
     }
 

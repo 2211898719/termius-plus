@@ -1,4 +1,4 @@
-import { ref, computed, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { useStorage } from '@vueuse/core'
 import { serverApi } from '@/api/server'
 import { chat2Command } from '@/api/ai'
