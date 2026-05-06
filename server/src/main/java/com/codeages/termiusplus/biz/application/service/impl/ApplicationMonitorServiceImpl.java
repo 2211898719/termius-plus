@@ -150,7 +150,7 @@ public class ApplicationMonitorServiceImpl implements ApplicationMonitorService 
 
             HttpRequest request = HttpRequest.of(config.getUrl())
                                              .method(config.getMethod())
-                                             .header(config.getHeaders())
+                                             .header(config.getHeaders(), true)
                                              .body(config.getBody());
             request.setMaxRedirectCount(5);
             request.timeout((int) timeout.toMillis());
