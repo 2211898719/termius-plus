@@ -14,13 +14,16 @@ RUN yarn run build --no-analyze
 # 第二阶段：构建 Java 后端（优化缓存）
 FROM registry.cn-hangzhou.aliyuncs.com/education-portal/termius-plus:maven-jdk21 AS backend-build
 
-# 1. 预先复制 Maven 配置和 POM 文件（利用缓存层）
+# 1. 先复制 Maven 配置（不改动的文件）
 COPY settings.xml /root/.m2/settings.xml
+
+# 2. 单独创建 .m2 目录并下载依赖（利用 Docker 缓存）
 WORKDIR /app
 COPY server/pom.xml .
-RUN mvn dependency:go-offline -B
+RUN mkdir -p /root/.m2 && \
+    mvn dependency:go-offline -B
 
-# 2. 再复制完整代码并编译（代码变动时才重新构建）
+# 3. 再复制完整代码并编译（代码变动时才重新构建）
 COPY server .
 RUN mvn package -DskipTests
 

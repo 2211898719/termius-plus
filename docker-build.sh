@@ -9,5 +9,10 @@ fi
 
 echo 开始编译，版本号：$version
 
-docker buildx build --push -t registry.cn-hangzhou.aliyuncs.com/kuozhi/termius-plus:$version --platform linux/amd64,linux/arm64  .
+docker buildx build --push \
+  -t registry.cn-hangzhou.aliyuncs.com/kuozhi/termius-plus:$version \
+  --platform linux/amd64,linux/arm64 \
+  --cache-from type=registry,ref=registry.cn-hangzhou.aliyuncs.com/kuozhi/termius-plus:cache \
+  --cache-to type=registry,ref=registry.cn-hangzhou.aliyuncs.com/kuozhi/termius-plus:cache \
+  .
 
