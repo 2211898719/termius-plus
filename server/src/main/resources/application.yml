@@ -160,3 +160,48 @@ langchain4j:
             model-name: ${LANGCHAIN4J_OPEN_AI_CHAT_MODEL_MODEL_NAME:deepseek-chat}
             base-url: ${LANGCHAIN4J_OPEN_AI_CHAT_MODEL_BASE_URL:https://api.deepseek.com/v1}
             max-tokens: ${LANGCHAIN4J_OPEN_AI_CHAT_MODEL_MAX_TOKENS:4096}
+
+patrol:
+    schedule:
+        cron: ${PATROL_SCHEDULE_CRON:0 0 2,14 * * ?}
+    whitelist:
+        - pattern: "df *"
+          autoExecute: true
+        - pattern: "free *"
+          autoExecute: true
+        - pattern: "cat /etc/nginx/*"
+          autoExecute: true
+        - pattern: "cat /etc/*"
+          autoExecute: true
+        - pattern: "openssl *"
+          autoExecute: true
+        - pattern: "systemctl status *"
+          autoExecute: true
+        - pattern: "systemctl list-units *"
+          autoExecute: true
+        - pattern: "du -sh *"
+          autoExecute: true
+        - pattern: "ls *"
+          autoExecute: true
+        - pattern: "top -b *"
+          autoExecute: true
+        - pattern: "ps *"
+          autoExecute: true
+        - pattern: "ip *"
+          autoExecute: true
+        - pattern: "netstat *"
+          autoExecute: true
+        - pattern: "ss *"
+          autoExecute: true
+        - pattern: "nginx -t"
+          autoExecute: true
+        - pattern: "curl *"
+          autoExecute: true
+        - pattern: "systemctl restart *"
+          autoExecute: false
+        - pattern: "rm *"
+          autoExecute: false
+        - pattern: "reboot"
+          autoExecute: false
+        - pattern: "shutdown *"
+          autoExecute: false
