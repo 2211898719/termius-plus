@@ -5,7 +5,6 @@ import dev.langchain4j.service.SystemMessage;
 import dev.langchain4j.service.UserMessage;
 import dev.langchain4j.service.spring.AiService;
 
-@AiService(tools = {ExecuteCommandTool.class, NginxTool.class, DiskTool.class, ServiceTool.class, CleanupTool.class})
 public interface PatrolAgentService {
 
     @SystemMessage("你是一个 Linux 服务器运维 AI 助手。你可以帮助用户检查和解决服务器问题。" +

@@ -8,13 +8,12 @@ import cn.hutool.json.JSONUtil;
 import com.codeages.termiusplus.biz.ErrorCode;
 import com.codeages.termiusplus.biz.server.dto.*;
 import com.codeages.termiusplus.biz.server.entity.Proxy;
-import com.codeages.termiusplus.biz.server.entity.QProxy;
 import com.codeages.termiusplus.biz.server.event.DeleteProxyEvent;
 import com.codeages.termiusplus.biz.server.mapper.ProxyMapper;
 import com.codeages.termiusplus.biz.server.repository.ProxyRepository;
 import com.codeages.termiusplus.biz.server.service.ProxyService;
 import com.codeages.termiusplus.exception.AppException;
-import com.querydsl.core.BooleanBuilder;
+import jakarta.persistence.criteria.Predicate;
 import jakarta.validation.Validator;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +21,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -60,23 +60,25 @@ public class ProxyServiceImpl implements ProxyService {
 
     @Override
     public Page<ProxyDto> search(ProxySearchParams searchParams, Pageable pageable) {
-        QProxy q = QProxy.proxy;
-        BooleanBuilder builder = new BooleanBuilder();
-        if (StrUtil.isNotEmpty(searchParams.getIp())) {
-            builder.and(q.ip.eq(searchParams.getIp()));
-        }
-        if (searchParams.getIp() != null) {
-            builder.and(q.ip.eq(searchParams.getIp()));
-        }
+        Specification<Proxy> specification = (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (StrUtil.isNotEmpty(searchParams.getIp())) {
+                predicates.add(criteriaBuilder.equal(root.get("ip"), searchParams.getIp()));
+            }
+            if (searchParams.getIp() != null) {
+                predicates.add(criteriaBuilder.equal(root.get("ip"), searchParams.getIp()));
+            }
 
-        if (StrUtil.isNotEmpty(searchParams.getPassword())) {
-            builder.and(q.password.eq(searchParams.getPassword()));
-        }
-        if (searchParams.getPassword() != null) {
-            builder.and(q.password.eq(searchParams.getPassword()));
-        }
+            if (StrUtil.isNotEmpty(searchParams.getPassword())) {
+                predicates.add(criteriaBuilder.equal(root.get("password"), searchParams.getPassword()));
+            }
+            if (searchParams.getPassword() != null) {
+                predicates.add(criteriaBuilder.equal(root.get("password"), searchParams.getPassword()));
+            }
 
-        return proxyRepository.findAll(builder, pageable)
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+        return proxyRepository.findAll(specification, pageable)
                               .map(proxyMapper::toDto);
     }
 

@@ -14,7 +14,6 @@ import cn.hutool.json.JSONUtil;
 import com.codeages.termiusplus.biz.ErrorCode;
 import com.codeages.termiusplus.biz.server.context.ServerContext;
 import com.codeages.termiusplus.biz.server.dto.*;
-import com.codeages.termiusplus.biz.server.entity.QServer;
 import com.codeages.termiusplus.biz.server.entity.Server;
 import com.codeages.termiusplus.biz.server.entity.ServerRunLog;
 import com.codeages.termiusplus.biz.server.enums.OSEnum;
@@ -35,7 +34,7 @@ import com.codeages.termiusplus.ws.ssh.AuthKeyBoardHandler;
 import com.codeages.termiusplus.ws.ssh.EventType;
 import com.codeages.termiusplus.ws.ssh.MessageDto;
 import com.google.gson.Gson;
-import com.querydsl.core.BooleanBuilder;
+import jakarta.persistence.criteria.Predicate;
 import jakarta.annotation.PostConstruct;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
@@ -53,6 +52,7 @@ import org.apache.commons.net.telnet.TelnetClient;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -355,13 +355,10 @@ public class ServerServiceImpl implements ServerService {
     }
 
     public List<Tree<Long>> findAllDb() {
-        QServer q = QServer.server;
-        BooleanBuilder builder = new BooleanBuilder();
+        Specification<Server> specification = (root, query, criteriaBuilder) ->
+                criteriaBuilder.equal(root.get("isDb"), true);
 
-        builder.and(q.isDb.eq(true));
-
-
-        List<TreeNode<Long>> servers = findAllParent(serverRepository.findAll(builder, Pageable.unpaged())
+        List<TreeNode<Long>> servers = findAllParent(serverRepository.findAll(specification, Pageable.unpaged())
                                                                      .getContent()).stream()
                                                                                    .map(e -> {
                                                                                        TreeNode<Long> longTreeNode = new TreeNode<>(

@@ -6,22 +6,24 @@ import cn.hutool.core.util.StrUtil;
 import com.codeages.termiusplus.biz.ErrorCode;
 import com.codeages.termiusplus.biz.log.dto.*;
 import com.codeages.termiusplus.biz.log.entity.CommandLog;
-import com.codeages.termiusplus.biz.log.entity.QCommandLog;
 import com.codeages.termiusplus.biz.log.mapper.CommandLogMapper;
 import com.codeages.termiusplus.biz.log.repository.CommandLogRepository;
 import com.codeages.termiusplus.biz.log.service.CommandLogService;
 import com.codeages.termiusplus.biz.server.dto.ServerDto;
 import com.codeages.termiusplus.biz.server.service.ServerService;
 import com.codeages.termiusplus.exception.AppException;
-import com.querydsl.core.BooleanBuilder;
+import jakarta.persistence.criteria.Predicate;
 import jakarta.validation.Validator;
 import org.apache.commons.text.StringSubstitutor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -53,18 +55,20 @@ public class CommandLogServiceImpl implements CommandLogService {
 
     @Override
     public Page<CommandLogSimpleDto> search(CommandLogSearchParams searchParams, Pageable pageable) {
-        QCommandLog q = QCommandLog.commandLog;
-        BooleanBuilder builder = new BooleanBuilder();
-        if (StrUtil.isNotEmpty(searchParams.getSessionId())) {
-            builder.and(q.sessionId.eq(searchParams.getSessionId()));
-        }
-        if (searchParams.getServerId() != null) {
-            builder.and(q.serverId.eq(searchParams.getServerId()));
-        }
-        if (searchParams.getUserId() != null) {
-            builder.and(q.userId.eq(searchParams.getUserId()));
-        }
-        return commandLogRepository.findAll(builder, pageable).map(commandLogMapper::toSimpleDto);
+        Specification<CommandLog> specification = (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (StrUtil.isNotEmpty(searchParams.getSessionId())) {
+                predicates.add(criteriaBuilder.equal(root.get("sessionId"), searchParams.getSessionId()));
+            }
+            if (searchParams.getServerId() != null) {
+                predicates.add(criteriaBuilder.equal(root.get("serverId"), searchParams.getServerId()));
+            }
+            if (searchParams.getUserId() != null) {
+                predicates.add(criteriaBuilder.equal(root.get("userId"), searchParams.getUserId()));
+            }
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+        return commandLogRepository.findAll(specification, pageable).map(commandLogMapper::toSimpleDto);
     }
 
     @Override

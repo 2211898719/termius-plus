@@ -5,12 +5,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.querydsl.QuerydslPredicateExecutor;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.repository.query.Param;
 
 import java.util.Date;
 
-public interface ApplicationMonitorLogRepository extends JpaRepository<ApplicationMonitorLog, Long>, QuerydslPredicateExecutor<ApplicationMonitorLog> {
+public interface ApplicationMonitorLogRepository extends JpaRepository<ApplicationMonitorLog, Long>, JpaSpecificationExecutor<ApplicationMonitorLog> {
 
 
     @Query(value = "SELECT e.applicationId, COUNT(e) * 60 AS totalCount " +

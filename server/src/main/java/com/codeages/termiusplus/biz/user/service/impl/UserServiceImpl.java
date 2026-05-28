@@ -6,7 +6,6 @@ import cn.hutool.core.util.StrUtil;
 import com.codeages.termiusplus.biz.ErrorCode;
 import com.codeages.termiusplus.biz.objectlog.service.ObjectLogService;
 import com.codeages.termiusplus.biz.user.dto.*;
-import com.codeages.termiusplus.biz.user.entity.QUser;
 import com.codeages.termiusplus.biz.user.entity.User;
 import com.codeages.termiusplus.biz.user.entity.UserRole;
 import com.codeages.termiusplus.biz.user.manager.UserCacheManager;
@@ -17,14 +16,16 @@ import com.codeages.termiusplus.biz.user.service.UserService;
 import com.codeages.termiusplus.biz.util.QueryUtils;
 import com.codeages.termiusplus.exception.AppException;
 import com.codeages.termiusplus.security.SecurityContext;
-import com.querydsl.core.BooleanBuilder;
+import jakarta.persistence.criteria.Predicate;
 import jakarta.validation.Validator;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -171,17 +172,19 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Page<UserDto> search(UserSearchParams params, Pageable pager) {
-        var q = QUser.user;
-        var builder = new BooleanBuilder();
+        Specification<User> specification = (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
 
-        if (StrUtil.isNotEmpty(params.getUsername())) {
-            builder.and(q.username.eq(params.getUsername()));
-        }
+            if (StrUtil.isNotEmpty(params.getUsername())) {
+                predicates.add(criteriaBuilder.equal(root.get("username"), params.getUsername()));
+            }
 
-        if (StrUtil.isNotEmpty(params.getEmail())) {
-            builder.and(q.username.eq(params.getEmail()));
-        }
-        Page<UserDto> page = repo.findAll(builder, pager).map(mapper::toDto);
+            if (StrUtil.isNotEmpty(params.getEmail())) {
+                predicates.add(criteriaBuilder.equal(root.get("username"), params.getEmail()));
+            }
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+        Page<UserDto> page = repo.findAll(specification, pager).map(mapper::toDto);
 
         QueryUtils.batchQueryOneToMany(
                 page.getContent(),

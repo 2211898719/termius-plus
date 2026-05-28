@@ -12,12 +12,6 @@ java {
     targetCompatibility = JavaVersion.VERSION_21
 }
 
-configurations {
-    compileOnly {
-        extendsFrom(annotationProcessor.get())
-    }
-}
-
 repositories {
     mavenCentral()
 }
@@ -38,21 +32,16 @@ dependencies {
     implementation("org.flywaydb:flyway-mysql")
 
     // MySQL
-    runtimeOnly("com.mysql:mysql-connector-j:9.0.0")
+    runtimeOnly("com.mysql:mysql-connector-j")
 
     // RocketMQ
     implementation("org.apache.rocketmq:rocketmq-spring-boot-starter:2.3.1")
 
-    // QueryDSL - 修复版
-    implementation("com.querydsl:querydsl-jpa:5.1.0:jakarta")
-    annotationProcessor("com.querydsl:querydsl-apt:5.1.0:jakarta")
-    // 这两个依赖是 querydsl-apt 必需的
-    annotationProcessor("jakarta.persistence:jakarta.persistence-api")
-    annotationProcessor("jakarta.annotation:jakarta.annotation-api")
 
     // Lombok
-    compileOnly("org.projectlombok:lombok")
-    annotationProcessor("org.projectlombok:lombok")
+    compileOnly("org.projectlombok:lombok:1.18.42")
+    annotationProcessor("org.projectlombok:lombok:1.18.42")
+    testAnnotationProcessor("org.projectlombok:lombok:1.18.42")
 
     // MapStruct
     implementation("org.mapstruct:mapstruct:1.4.2.Final")
@@ -135,4 +124,3 @@ dependencies {
 tasks.withType<Test> {
     useJUnitPlatform()
 }
-

@@ -10,8 +10,8 @@ import cn.hutool.script.ScriptUtil;
 import com.codeages.termiusplus.biz.ErrorCode;
 import com.codeages.termiusplus.biz.application.config.ApplicationMonitorRequestConfig;
 import com.codeages.termiusplus.biz.application.dto.*;
+import com.codeages.termiusplus.biz.application.entity.ApplicationMonitor;
 import com.codeages.termiusplus.biz.application.entity.ApplicationMonitorLog;
-import com.codeages.termiusplus.biz.application.entity.QApplicationMonitor;
 import com.codeages.termiusplus.biz.application.enums.ApplicationMonitorCheckTypeEnum;
 import com.codeages.termiusplus.biz.application.enums.ApplicationMonitorTypeEnum;
 import com.codeages.termiusplus.biz.application.mapper.ApplicationMonitorMapper;
@@ -19,17 +19,19 @@ import com.codeages.termiusplus.biz.application.repository.ApplicationMonitorLog
 import com.codeages.termiusplus.biz.application.repository.ApplicationMonitorRepository;
 import com.codeages.termiusplus.biz.application.service.ApplicationMonitorService;
 import com.codeages.termiusplus.exception.AppException;
-import com.querydsl.core.BooleanBuilder;
+import jakarta.persistence.criteria.Predicate;
 import jakarta.validation.Validator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -64,18 +66,20 @@ public class ApplicationMonitorServiceImpl implements ApplicationMonitorService 
 
     @Override
     public Page<ApplicationMonitorDto> search(ApplicationMonitorSearchParams searchParams, Pageable pageable) {
-        QApplicationMonitor q = QApplicationMonitor.applicationMonitor;
-        BooleanBuilder builder = new BooleanBuilder();
-        if (searchParams.getApplicationId() != null) {
-            builder.and(q.applicationId.eq(searchParams.getApplicationId()));
-        }
-        if (StrUtil.isNotEmpty(searchParams.getConfig())) {
-            builder.and(q.config.eq(searchParams.getConfig()));
-        }
-        if (StrUtil.isNotEmpty(searchParams.getRemark())) {
-            builder.and(q.remark.eq(searchParams.getRemark()));
-        }
-        return applicationMonitorRepository.findAll(builder, pageable)
+        Specification<ApplicationMonitor> specification = (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (searchParams.getApplicationId() != null) {
+                predicates.add(criteriaBuilder.equal(root.get("applicationId"), searchParams.getApplicationId()));
+            }
+            if (StrUtil.isNotEmpty(searchParams.getConfig())) {
+                predicates.add(criteriaBuilder.equal(root.get("config"), searchParams.getConfig()));
+            }
+            if (StrUtil.isNotEmpty(searchParams.getRemark())) {
+                predicates.add(criteriaBuilder.equal(root.get("remark"), searchParams.getRemark()));
+            }
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+        return applicationMonitorRepository.findAll(specification, pageable)
                                            .map(applicationMonitorMapper::toDto);
     }
 

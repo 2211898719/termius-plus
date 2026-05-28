@@ -6,16 +6,20 @@ import com.codeages.termiusplus.biz.server.dto.ServerServiceMonitorCreateParams;
 import com.codeages.termiusplus.biz.server.dto.ServerServiceMonitorDto;
 import com.codeages.termiusplus.biz.server.dto.ServerServiceMonitorSearchParams;
 import com.codeages.termiusplus.biz.server.dto.ServerServiceMonitorUpdateParams;
-import com.codeages.termiusplus.biz.server.entity.QServerServiceMonitor;
+import com.codeages.termiusplus.biz.server.entity.ServerServiceMonitor;
 import com.codeages.termiusplus.biz.server.mapper.ServerServiceMonitorMapper;
 import com.codeages.termiusplus.biz.server.repository.ServerServiceMonitorRepository;
 import com.codeages.termiusplus.biz.server.service.ServerServiceMonitorService;
 import com.codeages.termiusplus.exception.AppException;
-import com.querydsl.core.BooleanBuilder;
+import jakarta.persistence.criteria.Predicate;
 import jakarta.validation.Validator;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class ServerServiceMonitorServiceImpl implements ServerServiceMonitorService {
@@ -36,15 +40,17 @@ public class ServerServiceMonitorServiceImpl implements ServerServiceMonitorServ
 
     @Override
     public Page<ServerServiceMonitorDto> search(ServerServiceMonitorSearchParams searchParams, Pageable pageable) {
-        QServerServiceMonitor q = QServerServiceMonitor.serverServiceMonitor;
-        BooleanBuilder builder = new BooleanBuilder();
-        if (StrUtil.isNotEmpty(searchParams.getName())) {
-            builder.and(q.name.eq(searchParams.getName()));
-        }
-        if (searchParams.getName() != null) {
-            builder.and(q.name.eq(searchParams.getName()));
-        }
-        return serverServiceMonitorRepository.findAll(builder, pageable).map(serverServiceMonitorMapper::toDto);
+        Specification<ServerServiceMonitor> specification = (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (StrUtil.isNotEmpty(searchParams.getName())) {
+                predicates.add(criteriaBuilder.equal(root.get("name"), searchParams.getName()));
+            }
+            if (searchParams.getName() != null) {
+                predicates.add(criteriaBuilder.equal(root.get("name"), searchParams.getName()));
+            }
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+        return serverServiceMonitorRepository.findAll(specification, pageable).map(serverServiceMonitorMapper::toDto);
     }
 
     @Override
