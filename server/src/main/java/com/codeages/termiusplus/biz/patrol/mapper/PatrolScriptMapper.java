@@ -7,7 +7,7 @@ import com.codeages.termiusplus.biz.patrol.entity.PatrolScript;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;
 
-@Mapper
+@Mapper(componentModel = "spring")
 public interface PatrolScriptMapper {
     PatrolScriptDto toDto(PatrolScript entity);
     PatrolScript toCreateEntity(PatrolScriptCreateParams params);

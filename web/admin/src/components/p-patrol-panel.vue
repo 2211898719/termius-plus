@@ -43,6 +43,7 @@ const messages = ref([]);
 const inputText = ref('');
 const loading = ref(false);
 const messagesRef = ref(null);
+const conversationId = ref(null);
 
 const renderMarkdown = (content) => md.render(content || '');
 
@@ -64,7 +65,8 @@ const sendMessage = async () => {
 
   loading.value = true;
   try {
-    const response = await patrolApi.chat(userMessage, props.serverId);
+    const response = await patrolApi.chat(userMessage, props.serverId, conversationId.value);
+    conversationId.value = response.conversationId;
     messages.value.push({
       role: 'assistant',
       content: response.reply,
@@ -82,7 +84,8 @@ const confirmCommand = async (msg, index) => {
   msg.needsConfirmation = false;
   loading.value = true;
   try {
-    const response = await patrolApi.chat('确认执行: ' + msg.pendingCommand, props.serverId);
+    const response = await patrolApi.chat('确认执行: ' + msg.pendingCommand, props.serverId, conversationId.value);
+    conversationId.value = response.conversationId;
     messages.value.push({role: 'assistant', content: response.reply});
   } catch (e) {
     messages.value.push({role: 'assistant', content: '执行失败: ' + e.message});
@@ -97,7 +100,11 @@ const rejectCommand = (msg) => {
   scrollToBottom();
 };
 
-const close = () => emit('update:visible', false);
+const close = () => {
+  conversationId.value = null;
+  messages.value = [];
+  emit('update:visible', false);
+};
 </script>
 
 <style scoped>

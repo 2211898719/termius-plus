@@ -53,6 +53,9 @@ spring:
         open-in-view: false
     profiles:
         active: dev
+    ai:
+        deepseek:
+            api-key: ${DEEPSEEK_API_KEY:test_deepseek_api_key}
     quartz:
         # 使用数据库存储
         job-store-type: jdbc
@@ -143,6 +146,11 @@ fitten:
 deepseek:
     #deepseek的api key
     api-key: ${DEEPSEEK_API_KEY:test_deepseek_api_key}
+
+minimax:
+    api-key: ${MINIMAX_API_KEY:test_minimax_api_key}
+    base-url: ${MINIMAX_BASE_URL:https://api.minimaxi.com}
+    model: ${MINIMAX_MODEL:MiniMax-M2.7-highspeed}
 
 serverInfo:
     #服务器信息采集的单服务器超时时间

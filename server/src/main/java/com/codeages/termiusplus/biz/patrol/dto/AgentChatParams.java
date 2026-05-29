@@ -8,4 +8,5 @@ public class AgentChatParams {
     @NotBlank
     private String message;
     private Long serverId;
+    private String conversationId;
 }

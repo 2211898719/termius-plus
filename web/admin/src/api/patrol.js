@@ -15,5 +15,12 @@ export const patrolApi = {
     executeAll: () => client.post("/api-admin/patrol/execute/all"),
 
     // Agent 对话
-    chat: (message, serverId) => client.post("/api-admin/patrol/agent/chat", {message, serverId}),
+    chat: (message, serverId, conversationId) => client.post("/api-admin/patrol/agent/chat", {message, serverId, conversationId}),
+
+    // Agent 流式对话 - 返回 EventSource URL
+    chatStreamUrl: (message, conversationId) => {
+        const params = new URLSearchParams({message});
+        if (conversationId) params.append('conversationId', conversationId);
+        return `/api-admin/patrol/agent/chat/stream?${params.toString()}`;
+    },
 }

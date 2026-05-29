@@ -7,11 +7,11 @@ import com.codeages.termiusplus.biz.patrol.dto.PatrolScriptUpdateParams;
 import com.codeages.termiusplus.biz.patrol.entity.PatrolScript;
 import com.codeages.termiusplus.biz.patrol.mapper.PatrolScriptMapper;
 import com.codeages.termiusplus.biz.patrol.repository.PatrolScriptRepository;
+import com.codeages.termiusplus.biz.patrol.service.AgentLlmClientFactory;
 import com.codeages.termiusplus.biz.patrol.service.PatrolScriptService;
 import com.codeages.termiusplus.exception.AppException;
-import dev.langchain4j.service.SystemMessage;
-import dev.langchain4j.service.spring.AiService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,9 +22,30 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PatrolScriptServiceImpl implements PatrolScriptService {
 
+    private static final String SCRIPT_GENERATOR_SYSTEM_PROMPT = """
+            你是一个 Linux 服务器运维专家。根据用户描述的巡查需求，生成一个 shell 脚本。
+            要求：
+            1. 脚本必须输出 JSON 格式结果到 stdout
+            2. JSON 必须包含字段：status(ok/warning/error), message(简要描述), details(详细数据)
+            3. 脚本应该是可独立执行的 bash 脚本
+            4. 不要使用交互式命令
+            5. 按以下格式返回，每个部分用 --- 标记分隔：
+            ---NAME---
+            脚本名称
+            ---DESCRIPTION---
+            脚本描述
+            ---SCRIPT---
+            #!/bin/bash
+            ...
+            ---SCHEMA---
+            JSON Schema 描述输出格式
+            ---CATEGORY---
+            disk/nginx/security/service/custom
+            """;
+
     private final PatrolScriptRepository repository;
     private final PatrolScriptMapper mapper;
-    private final ScriptGeneratorAiService scriptGeneratorAiService;
+    private final AgentLlmClientFactory factory;
 
     @Override
     public PatrolScriptDto create(PatrolScriptCreateParams params) {
@@ -69,7 +90,13 @@ public class PatrolScriptServiceImpl implements PatrolScriptService {
 
     @Override
     public PatrolScriptDto generateScript(String description) {
-        String result = scriptGeneratorAiService.generate(description);
+        ChatClient chatClient = factory.createChatClient();
+
+        String result = chatClient.prompt()
+                .system(SCRIPT_GENERATOR_SYSTEM_PROMPT)
+                .user(description)
+                .call()
+                .content();
         PatrolScriptCreateParams params = parseAiResult(result, description);
 
         PatrolScriptDto dto = new PatrolScriptDto();
@@ -109,22 +136,5 @@ public class PatrolScriptServiceImpl implements PatrolScriptService {
         }
         if (params.getCategory() == null) params.setCategory("custom");
         return params;
-    }
-
-    @AiService
-    interface ScriptGeneratorAiService {
-        @SystemMessage("你是一个 Linux 服务器运维专家。根据用户描述的巡查需求，生成一个 shell 脚本。" +
-                "要求：\n" +
-                "1. 脚本必须输出 JSON 格式结果到 stdout\n" +
-                "2. JSON 必须包含字段：status(ok/warning/error), message(简要描述), details(详细数据)\n" +
-                "3. 脚本应该是可独立执行的 bash 脚本\n" +
-                "4. 不要使用交互式命令\n" +
-                "5. 按以下格式返回，每个部分用 --- 标记分隔：\n" +
-                "---NAME---\n脚本名称\n" +
-                "---DESCRIPTION---\n脚本描述\n" +
-                "---SCRIPT---\n#!/bin/bash\n...\n" +
-                "---SCHEMA---\nJSON Schema 描述输出格式\n" +
-                "---CATEGORY---\ndisk/nginx/security/service/custom")
-        String generate(String userMessage);
     }
 }

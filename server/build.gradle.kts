@@ -8,7 +8,7 @@ group = "com.codeages"
 version = "server"
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_21  // 改为 25 匹配你的 JDK
+    sourceCompatibility = JavaVersion.VERSION_21
     targetCompatibility = JavaVersion.VERSION_21
 }
 
@@ -29,14 +29,14 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-actuator")
 
     // Flyway
+    implementation("org.springframework.boot:spring-boot-starter-flyway")
     implementation("org.flywaydb:flyway-mysql")
 
     // MySQL
     runtimeOnly("com.mysql:mysql-connector-j")
 
     // RocketMQ
-    implementation("org.apache.rocketmq:rocketmq-spring-boot-starter:2.3.1")
-
+//    implementation("org.apache.rocketmq:rocketmq-spring-boot-starter:2.3.1")
 
     // Lombok
     compileOnly("org.projectlombok:lombok:1.18.42")
@@ -51,10 +51,10 @@ dependencies {
     // annotationProcessor("org.projectlombok:lombok-mapstruct-binding:0.2.0")
 
     // Hibernate Types - 更新版本以兼容 Hibernate 6
-    implementation("com.vladmihalcea:hibernate-types-60:2.21.1")
+//    implementation("com.vladmihalcea:hibernate-types-60:2.21.1")
 
     // Hutool
-    implementation("cn.hutool:hutool-all:5.8.32")
+    implementation("cn.hutool:hutool-all:5.8.42")
 
     // Apache Commons
     implementation("org.apache.commons:commons-lang3:3.12.0")
@@ -95,11 +95,12 @@ dependencies {
     implementation("com.google.code.gson:gson:2.11.0")
 
     // JAXB - 移除 javax，使用 jakarta
-    implementation("jakarta.xml.bind:jakarta.xml.bind-api:4.0.2")
+    implementation("jakarta.xml.bind:jakarta.xml.bind-api")
+    implementation("org.glassfish.jaxb:jaxb-runtime")  // 让 Spring Boot 管理版本
 
     // Nashorn - JDK 15+ 已移除，需要独立依赖
     implementation("org.openjdk.nashorn:nashorn-core:15.4")
-
+    implementation("javax.annotation:javax.annotation-api:1.3.2")
     // API Encrypt
     implementation("com.cxytiandi:monkey-api-encrypt-core:1.2.2.RELEASE")
 
@@ -110,10 +111,12 @@ dependencies {
     implementation("net.javacrumbs.shedlock:shedlock-spring:5.16.0")
     implementation("net.javacrumbs.shedlock:shedlock-provider-redis-spring:5.16.0")
 
-    // AI
-    implementation("io.github.pig-mesh.ai:deepseek-spring-boot-starter:1.4.3")
-    implementation("dev.langchain4j:langchain4j-open-ai-spring-boot-starter:1.6.0-beta12")
-    implementation("dev.langchain4j:langchain4j-spring-boot-starter:1.7.1-beta14")
+    // AI - langchain4j
+    implementation(platform("org.springframework.ai:spring-ai-bom:2.0.0-M2"))
+    implementation("org.springframework.ai:spring-ai-starter-model-deepseek")
+    implementation("org.springframework.ai:spring-ai-openai")
+    implementation("org.springframework.ai:spring-ai-starter-mcp-client")
+    implementation("org.springframework.boot:spring-boot-starter-actuator") //AI运行观察
 
     // Test
     testImplementation("org.springframework.boot:spring-boot-starter-test")
@@ -123,4 +126,8 @@ dependencies {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+tasks.withType<org.springframework.boot.gradle.tasks.bundling.BootJar> {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }

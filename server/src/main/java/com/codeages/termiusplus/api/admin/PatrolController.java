@@ -6,10 +6,16 @@ import com.codeages.termiusplus.biz.patrol.service.PatrolEngine;
 import com.codeages.termiusplus.biz.patrol.service.PatrolScriptService;
 import com.codeages.termiusplus.common.IdPayload;
 import com.codeages.termiusplus.common.OkResponse;
+import com.cxytiandi.encrypt.springboot.annotation.DecryptIgnore;
+import com.cxytiandi.encrypt.springboot.annotation.EncryptIgnore;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api-admin/patrol")
@@ -74,7 +80,11 @@ public class PatrolController {
 
     @PostMapping("/agent/chat")
     public AgentChatResponse chat(@RequestBody AgentChatParams params) {
-        String reply = patrolAgentService.chat(params.getMessage());
+        String conversationId = StringUtils.hasText(params.getConversationId())
+                ? params.getConversationId()
+                : UUID.randomUUID().toString();
+
+        String reply = patrolAgentService.chat(params.getMessage(), conversationId);
         boolean needsConfirmation = reply != null && reply.contains("[需要用户确认]");
         String pendingCommand = null;
         if (needsConfirmation) {
@@ -84,6 +94,17 @@ public class PatrolController {
                 pendingCommand = reply.substring(start + 4, end);
             }
         }
-        return new AgentChatResponse(reply, needsConfirmation, pendingCommand);
+        return new AgentChatResponse(reply, needsConfirmation, pendingCommand, conversationId);
+    }
+
+    @GetMapping(value = "/agent/chat/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @EncryptIgnore
+    @DecryptIgnore
+    public Flux<String> chatStream(AgentChatParams params) {
+        String conversationId = StringUtils.hasText(params.getConversationId())
+                ? params.getConversationId()
+                : UUID.randomUUID().toString();
+
+        return patrolAgentService.stream(params.getMessage(), conversationId);
     }
 }

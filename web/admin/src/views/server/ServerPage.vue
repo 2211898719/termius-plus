@@ -12,6 +12,7 @@ import SettingPage from "@/views/server/SettingPage.vue";
 import SnippetListPage from "@/views/server/SnippetListPage.vue";
 import PortForwarderPage from "@/views/server/PortForwarderPage.vue";
 import CronJobPage from "@/views/server/CronJobPage.vue";
+import PatrolPage from "@/views/server/PatrolPage.vue";
 import OsEnum from "@/enums/OsEnum";
 import {useStorage} from "@vueuse/core";
 import ApplicationListPage from "@/views/server/ApplicationListPage.vue";
@@ -276,6 +277,7 @@ let settingRef = ref()
 let applicationListRef = ref()
 let cronJobRef = ref()
 let portForwarderRef = ref()
+let patrolRef = ref()
 
 let activeKeyRefMap = {
   dashboard: dashboardRef,
@@ -285,7 +287,8 @@ let activeKeyRefMap = {
   setting: settingRef,
   application: applicationListRef,
   cronJob: cronJobRef,
-  portForwarder: portForwarderRef
+  portForwarder: portForwarderRef,
+  patrol: patrolRef
 }
 
 let refreshLoading = ref({
@@ -297,6 +300,7 @@ let refreshLoading = ref({
   application: false,
   cronJob: false,
   portForwarder: false,
+  patrol: false,
 })
 
 const handleChangeActiveKey = async (val) => {
@@ -625,6 +629,9 @@ const handleDragLeaveTabBarGroup = () => {
         <a-tab-pane class="setting-pane" tab="设置" key="setting" :closable="false" :forceRender="true">
           <setting-page ref="settingRef"></setting-page>
         </a-tab-pane>
+        <a-tab-pane tab="AI 巡查" key="patrol" :closable="false" :forceRender="true">
+          <PatrolPage ref="patrolRef"></PatrolPage>
+        </a-tab-pane>
 
         <template v-slot:renderTabBar>
           <div class="tab-bar-group-container">
@@ -773,6 +780,21 @@ const handleDragLeaveTabBarGroup = () => {
                 </div>
 
                 <div class="right"></div>
+              </div>
+              <div class="tab-bar" :class="{'tab-active-normal':tagActiveKey==='patrol'}"
+                   @click="changeTab('patrol')">
+                <div class="left">
+                  <div class="tab-icon">
+                    <robot-outlined/>
+                  </div>
+                  <div class="tab-title">
+                    AI 巡查
+                  </div>
+                </div>
+
+                <div class="right">
+                  <loading-outlined class="tab-loading" v-if="refreshLoading.patrol"/>
+                </div>
               </div>
               <div class="sortable" ref="sortableEl">
                 <div v-for="(server,index) in serverList" :key="server.operationId"

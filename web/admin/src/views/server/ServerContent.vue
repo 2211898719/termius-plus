@@ -17,7 +17,6 @@ import {copyToClipboard} from "@/utils/copyUtil";
 import {upload} from "@/utils/File";
 import {sftpApi} from "@/api/sftp";
 import {useAuthStore} from "@shared/store/useAuthStore";
-import PPatrolPanel from "@/components/p-patrol-panel.vue";
 
 const emit = defineEmits(['hot', 'focus'])
 
@@ -62,8 +61,6 @@ let flipStatus = ref(false)
 let sftpEnable = ref(false)
 
 let flip = ref(null)
-
-let showPatrolPanel = ref(false)
 
 let sftpEl = ref([])
 
@@ -540,11 +537,6 @@ const onFileDrop = async (e) => {
                      class="left">
                   <reload-outlined class="tags"/>
                 </div>
-                <div @click="showPatrolPanel = !showPatrolPanel"
-                     style="position: absolute;right: 75px;top: 17px;color: aliceblue;z-index: 99999;cursor: pointer;"
-                     class="left" title="AI 巡查">
-                  <span style="font-size: 12px; border: 1px solid aliceblue; padding: 2px 6px; border-radius: 4px;">AI</span>
-                </div>
                 <div :class="{green:sftpEnable,center:true}" @click="changeSftpEnable"
                      style="position: absolute;right:45px;top: 17px;color: aliceblue;z-index: 99999;fill: aliceblue"
                      class="left" ref="SftpChangeEl">
@@ -701,8 +693,6 @@ const onFileDrop = async (e) => {
         </div>
       </div>
     </a-modal>
-
-    <p-patrol-panel v-model:visible="showPatrolPanel" :server-id="server?.id" />
   </div>
 </template>
 

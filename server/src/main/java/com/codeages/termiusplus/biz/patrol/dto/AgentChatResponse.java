@@ -11,4 +11,5 @@ public class AgentChatResponse {
     private String reply;
     private boolean needsConfirmation;
     private String pendingCommand;
+    private String conversationId;
 }

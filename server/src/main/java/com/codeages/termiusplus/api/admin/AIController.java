@@ -11,9 +11,6 @@ import com.codeages.termiusplus.biz.server.dto.AiCompletionMetadata;
 import com.codeages.termiusplus.ws.ssh.SshHandler;
 import com.cxytiandi.encrypt.springboot.annotation.DecryptIgnore;
 import com.cxytiandi.encrypt.springboot.annotation.EncryptIgnore;
-import io.github.pigmesh.ai.deepseek.core.DeepSeekClient;
-import io.github.pigmesh.ai.deepseek.core.chat.ChatCompletionModel;
-import io.github.pigmesh.ai.deepseek.core.chat.ChatCompletionRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -67,9 +64,6 @@ public class AIController {
     }
 
 
-    @Autowired
-    private DeepSeekClient deepSeekClient;
-
     // sse 流式返回
     @GetMapping(value = "/chat", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     @EncryptIgnore
@@ -82,18 +76,7 @@ public class AIController {
         message = message.replace("{{commandLog}}", Objects.requireNonNullElse(lastCommandLog, ""));
         content = content.replace("{{commandLog}}", Objects.requireNonNullElse(lastCommandLog, ""));
 
-        ChatCompletionRequest request = ChatCompletionRequest.builder()
-
-                                                             // 模型选择，支持 DEEPSEEK_CHAT、DEEPSEEK_REASONER 等
-                                                             .model(ChatCompletionModel.DEEPSEEK_REASONER)
-
-                .addSystemMessage(content)
-                                                             // 添加用户消息
-                                                             .addUserMessage(message)
-
-                                                             .build();
-
-        return deepSeekClient.chatFluxCompletion(request).map(response -> response);
+        return aiService.chat(content, message);
     }
 
     @GetMapping("/chat2Command")
