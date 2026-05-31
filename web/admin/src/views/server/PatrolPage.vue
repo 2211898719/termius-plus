@@ -480,6 +480,7 @@ const insertInlineMention = (server) => {
     newRange.collapse(true);
     newSel.removeAllRanges();
     newSel.addRange(newRange);
+    inputEl.focus();
   }
 };
 
