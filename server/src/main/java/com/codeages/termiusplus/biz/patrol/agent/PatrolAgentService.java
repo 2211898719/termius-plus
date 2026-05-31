@@ -8,8 +8,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
-import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.ai.chat.model.ToolCall;
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.model.Generation;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
@@ -69,24 +69,32 @@ public class PatrolAgentService {
                          .flatMap(response -> {
                              Flux<String> flux = Flux.empty();
 
-                             // 发送内容块
-                             String content = response.getContent();
-                             if (content != null && !content.isEmpty()) {
-                                 flux = Flux.concat(flux, Flux.just("text:" + content));
-                             }
+                             Generation result = response.getResult();
+                             if (result != null) {
+                                 AssistantMessage assistantMessage = result.getOutput();
+                                 if (assistantMessage != null) {
+                                     // 发送文本内容
+                                     String text = assistantMessage.getText();
+                                     if (text != null && !text.isEmpty()) {
+                                         flux = Flux.concat(flux, Flux.just("text:" + text));
+                                     }
 
-                             // 检查是否有工具调用
-                             ToolCall toolCall = response.getToolCall();
-                             if (toolCall != null) {
-                                 try {
-                                     Map<String, Object> toolCallData = Map.of(
-                                             "name", toolCall.name() != null ? toolCall.name() : "",
-                                             "arguments", toolCall.arguments() != null ? toolCall.arguments() : ""
-                                     );
-                                     String toolCallJson = objectMapper.writeValueAsString(toolCallData);
-                                     flux = Flux.concat(flux, Flux.just("tool_call:" + toolCallJson));
-                                 } catch (Exception e) {
-                                     log.error("序列化工具调用失败", e);
+                                     // 检查是否有工具调用
+                                     if (assistantMessage.hasToolCalls()) {
+                                         for (AssistantMessage.ToolCall toolCall : assistantMessage.getToolCalls()) {
+                                             try {
+                                                 Map<String, Object> toolCallData = Map.of(
+                                                         "id", toolCall.id() != null ? toolCall.id() : "",
+                                                         "name", toolCall.name() != null ? toolCall.name() : "",
+                                                         "arguments", toolCall.arguments() != null ? toolCall.arguments() : ""
+                                                 );
+                                                 String toolCallJson = objectMapper.writeValueAsString(toolCallData);
+                                                 flux = Flux.concat(flux, Flux.just("tool_call:" + toolCallJson));
+                                             } catch (Exception e) {
+                                                 log.error("序列化工具调用失败", e);
+                                             }
+                                         }
+                                     }
                                  }
                              }
 
