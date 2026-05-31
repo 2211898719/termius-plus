@@ -1,22 +1,17 @@
 package com.codeages.termiusplus.biz.patrol.memory;
 
+import com.codeages.termiusplus.biz.patrol.entity.ChatMemoryEntity;
+import com.codeages.termiusplus.biz.patrol.repository.ChatMemoryEntityRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.persistence.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.MessageType;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Repository;
 
 import java.util.Collections;
 import java.util.List;
@@ -72,36 +67,6 @@ public class JpaChatMemoryRepository implements ChatMemoryRepository {
     public void deleteByConversationId(String conversationId) {
         entityRepository.deleteByConversationId(conversationId);
     }
-
-    // --- JPA Entity for chat memory ---
-
-    @Entity
-    @Data
-    @NoArgsConstructor
-    @EntityListeners(AuditingEntityListener.class)
-    @jakarta.persistence.Table(name = "`patrol_chat_memory`")
-    public static class ChatMemoryEntity {
-        @Id
-        @GeneratedValue(strategy = GenerationType.IDENTITY)
-        private Long id;
-
-        @Column(nullable = false, length = 36, unique = true)
-        private String conversationId;
-
-        @Column(columnDefinition = "MEDIUMTEXT")
-        private String messagesJson;
-
-        @CreatedDate
-        private Long createdAt;
-    }
-
-    @Repository
-    public interface ChatMemoryEntityRepository extends JpaRepository<ChatMemoryEntity, Long> {
-        ChatMemoryEntity findByConversationId(String conversationId);
-        void deleteByConversationId(String conversationId);
-    }
-
-    // --- Message serialization ---
 
     record StoredMessage(String role, String content) {
         static StoredMessage fromMessage(Message message) {
