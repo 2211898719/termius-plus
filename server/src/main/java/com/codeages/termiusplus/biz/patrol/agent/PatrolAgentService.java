@@ -13,7 +13,10 @@ import org.springframework.ai.chat.model.Generation;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
+import java.util.ArrayList;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Service
@@ -60,6 +63,47 @@ public class PatrolAgentService {
                          .content();
     }
 
+    /**
+     * 解析文本中的 <think> 标签，将其转换为单独的 think 事件
+     */
+    private Flux<String> parseTextWithThink(String text) {
+        Pattern thinkPattern = Pattern.compile("<think>(.*?)</think>", Pattern.DOTALL);
+        Matcher matcher = thinkPattern.matcher(text);
+        ArrayList<String> parts = new ArrayList<>();
+        int lastEnd = 0;
+
+        while (matcher.find()) {
+            // <think> 之前的普通文本
+            if (matcher.start() > lastEnd) {
+                String before = text.substring(lastEnd, matcher.start()).trim();
+                if (!before.isEmpty()) {
+                    parts.add("text:" + before);
+                }
+            }
+            // <think> 内容
+            String thinkContent = matcher.group(1).trim();
+            if (!thinkContent.isEmpty()) {
+                parts.add("think:" + thinkContent);
+            }
+            lastEnd = matcher.end();
+        }
+
+        // </think> 之后的普通文本
+        if (lastEnd < text.length()) {
+            String after = text.substring(lastEnd).trim();
+            if (!after.isEmpty()) {
+                parts.add("text:" + after);
+            }
+        }
+
+        // 如果没有 <think> 标签，直接返回原文
+        if (parts.isEmpty() && !text.trim().isEmpty()) {
+            parts.add("text:" + text.trim());
+        }
+
+        return Flux.fromIterable(parts);
+    }
+
     public Flux<String> stream(String userMessage, String conversationId) {
         // 创建工具调用事件收集器
         var toolEventSink = ToolCallEventCollector.createSink(conversationId);
@@ -87,10 +131,10 @@ public class PatrolAgentService {
                              if (result != null) {
                                  AssistantMessage assistantMessage = result.getOutput();
                                  if (assistantMessage != null) {
-                                     // 发送文本内容
+                                     // 发送文本内容，处理 <think> 标签
                                      String text = assistantMessage.getText();
                                      if (text != null && !text.isEmpty()) {
-                                         flux = Flux.concat(flux, Flux.just("text:" + text));
+                                         flux = Flux.concat(flux, parseTextWithThink(text));
                                      }
                                  }
                              }

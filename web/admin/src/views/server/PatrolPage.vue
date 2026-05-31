@@ -22,15 +22,24 @@
                 <span v-else>&#129302;</span>
               </div>
               <div class="message-body">
+                <!-- 思考内容（历史消息） -->
+                <div v-if="msg.thinkContent" class="think-block">
+                  <div class="think-header" @click="toggleThinkExpand('hist-'+index)">
+                    <span class="think-icon">💭</span>
+                    <span>AI 思考过程</span>
+                    <span class="think-toggle">{{ expandedTools.has('think-'+index) ? '▼' : '▶' }}</span>
+                  </div>
+                  <div v-if="expandedTools.has('think-'+index)" class="think-content">{{ msg.thinkContent }}</div>
+                </div>
                 <!-- 工具调用事件（历史消息） -->
                 <template v-if="msg.toolEvents && msg.toolEvents.length > 0">
                   <div v-for="(event, idx) in msg.toolEvents" :key="'hist-'+idx" class="tool-event">
                     <div class="tool-event-header" @click="toggleToolExpand('hist-'+index+'-'+idx)">
                       <span class="tool-event-icon" :class="event.type">
-                        {{ event.type === 'tool_start' ? '⚙️' : '✅' }}
+                        {{ event.type === 'tool_complete' ? '✅' : '⚙️' }}
                       </span>
                       <span class="tool-event-name">{{ event.toolName }}</span>
-                      <span v-if="event.type === 'tool_result'" class="tool-event-duration">
+                      <span v-if="event.type === 'tool_complete'" class="tool-event-duration">
                         {{ event.durationMs }}ms
                       </span>
                       <span class="tool-event-toggle">{{ expandedTools.has('hist-'+index+'-'+idx) ? '▼' : '▶' }}</span>
@@ -40,7 +49,7 @@
                         <div class="tool-event-label">参数:</div>
                         <code>{{ event.arguments }}</code>
                       </div>
-                      <div v-if="event.type === 'tool_result'" class="tool-event-result">
+                      <div v-if="event.type === 'tool_complete'" class="tool-event-result">
                         <div class="tool-event-label">结果:</div>
                         <pre>{{ event.result }}</pre>
                       </div>
@@ -57,14 +66,23 @@
             <div v-if="streaming" class="message assistant">
               <div class="message-avatar"><span>&#129302;</span></div>
               <div class="message-body">
+                <!-- 思考内容 -->
+                <div v-if="thinkContent" class="think-block">
+                  <div class="think-header" @click="showThink = !showThink">
+                    <span class="think-icon">💭</span>
+                    <span>AI 思考过程</span>
+                    <span class="think-toggle">{{ showThink ? '▼' : '▶' }}</span>
+                  </div>
+                  <div v-if="showThink" class="think-content">{{ thinkContent }}</div>
+                </div>
                 <!-- 工具调用事件 -->
                 <div v-for="(event, idx) in toolEvents" :key="idx" class="tool-event">
                   <div class="tool-event-header" @click="toggleToolExpand(idx)">
                     <span class="tool-event-icon" :class="event.type">
-                      {{ event.type === 'tool_start' ? '⚙️' : '✅' }}
+                      {{ event.type === 'tool_complete' ? '✅' : '⚙️' }}
                     </span>
                     <span class="tool-event-name">{{ event.toolName }}</span>
-                    <span v-if="event.type === 'tool_result'" class="tool-event-duration">
+                    <span v-if="event.type === 'tool_complete'" class="tool-event-duration">
                       {{ event.durationMs }}ms
                     </span>
                     <span class="tool-event-toggle">{{ expandedTools.has(idx) ? '▼' : '▶' }}</span>
@@ -74,7 +92,7 @@
                       <div class="tool-event-label">参数:</div>
                       <code>{{ event.arguments }}</code>
                     </div>
-                    <div v-if="event.type === 'tool_result'" class="tool-event-result">
+                    <div v-if="event.type === 'tool_complete'" class="tool-event-result">
                       <div class="tool-event-label">结果:</div>
                       <pre>{{ event.result }}</pre>
                     </div>
@@ -230,6 +248,8 @@ const messagesRef = ref(null);
 const conversationId = ref(null);
 const streaming = ref(false);
 const streamContent = ref('');
+const thinkContent = ref(''); // 思考内容
+const showThink = ref(false); // 是否显示思考内容
 const toolEvents = ref([]); // 工具调用事件列表
 const expandedTools = ref(new Set()); // 展开的工具 ID
 let eventSource = null;
@@ -752,6 +772,16 @@ const toggleToolExpand = (idx) => {
   }
 };
 
+// 切换思考内容展开/收起
+const toggleThinkExpand = (idx) => {
+  const key = 'think-' + idx;
+  if (expandedTools.value.has(key)) {
+    expandedTools.value.delete(key);
+  } else {
+    expandedTools.value.add(key);
+  }
+};
+
 const sendMessage = async () => {
   if (mentionJustHandled.value) return;
 
@@ -790,12 +820,29 @@ const sendMessage = async () => {
     // 解析事件格式
     if (data.startsWith('text:')) {
       streamContent.value += data.substring(5);
+    } else if (data.startsWith('think:')) {
+      thinkContent.value += data.substring(6);
     } else if (data.startsWith('tool_event:')) {
       try {
         const toolEvent = JSON.parse(data.substring(11));
-        toolEvents.value.push(toolEvent);
-        // 自动展开工具事件
-        expandedTools.value.add(toolEvents.value.length - 1);
+        if (toolEvent.type === 'tool_start') {
+          // 添加新的工具事件
+          toolEvents.value.push(toolEvent);
+          expandedTools.value.add(toolEvents.value.length - 1);
+        } else if (toolEvent.type === 'tool_result') {
+          // 找到对应的 tool_start 并更新结果
+          const idx = toolEvents.value.findIndex(e =>
+            e.type === 'tool_start' && e.toolName === toolEvent.toolName
+          );
+          if (idx !== -1) {
+            toolEvents.value[idx] = {
+              ...toolEvents.value[idx],
+              type: 'tool_complete',
+              result: toolEvent.result,
+              durationMs: toolEvent.durationMs
+            };
+          }
+        }
       } catch (e) {
         console.error('解析工具事件失败:', e);
       }
@@ -813,16 +860,19 @@ const finishStream = () => {
     eventSource.close();
     eventSource = null;
   }
-  if (streamContent.value) {
-    // 保存工具事件到消息中
+  // 保存消息（即使只有思考内容或工具事件）
+  if (streamContent.value || thinkContent.value || toolEvents.value.length > 0) {
     const toolEventsCopy = toolEvents.value.length > 0 ? [...toolEvents.value] : null;
     messages.value.push({
       role: 'assistant',
-      content: streamContent.value,
+      content: streamContent.value || '',
+      thinkContent: thinkContent.value || null,
       toolEvents: toolEventsCopy
     });
-    streamContent.value = '';
   }
+  streamContent.value = '';
+  thinkContent.value = '';
+  showThink.value = false;
   streaming.value = false;
   toolEvents.value = [];
   expandedTools.value = new Set();
@@ -1163,7 +1213,8 @@ onMounted(() => {
   color: #1890ff;
 }
 
-.tool-event-icon.tool_result {
+.tool-event-icon.tool_result,
+.tool-event-icon.tool_complete {
   color: #52c41a;
 }
 
@@ -1223,6 +1274,51 @@ onMounted(() => {
   color: #e0e0e0;
   white-space: pre-wrap;
   word-break: break-all;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+/* Think block styles */
+.think-block {
+  margin-bottom: 8px;
+  background: #1a2e1a;
+  border: 1px solid #2a4a2a;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.think-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #888;
+  transition: background 0.2s;
+}
+
+.think-header:hover {
+  background: #253525;
+}
+
+.think-icon {
+  font-size: 14px;
+}
+
+.think-toggle {
+  color: #666;
+  font-size: 10px;
+  margin-left: auto;
+}
+
+.think-content {
+  padding: 0 12px 12px;
+  border-top: 1px solid #2a4a2a;
+  font-size: 13px;
+  color: #aaa;
+  line-height: 1.6;
+  white-space: pre-wrap;
   max-height: 300px;
   overflow-y: auto;
 }
