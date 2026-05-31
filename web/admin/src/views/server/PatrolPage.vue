@@ -10,9 +10,9 @@
               <div class="welcome-title">AI 巡查助手</div>
               <div class="welcome-desc">我可以帮你检查服务器状态、分析问题、执行运维命令</div>
               <div class="welcome-examples">
-                <div class="example-item" @click="inputText='检查所有服务器的磁盘使用情况'">检查所有服务器的磁盘使用情况</div>
-                <div class="example-item" @click="inputText='查看 nginx 配置和证书状态'">查看 nginx 配置和证书状态</div>
-                <div class="example-item" @click="inputText='列出所有正在运行的服务'">列出所有正在运行的服务</div>
+                <div class="example-item" @click="setInputText('检查所有服务器的磁盘使用情况')">检查所有服务器的磁盘使用情况</div>
+                <div class="example-item" @click="setInputText('查看 nginx 配置和证书状态')">查看 nginx 配置和证书状态</div>
+                <div class="example-item" @click="setInputText('列出所有正在运行的服务')">列出所有正在运行的服务</div>
               </div>
             </div>
             <div v-for="(msg, index) in messages" :key="index"
@@ -39,20 +39,16 @@
           </div>
           <div class="chat-input-area">
             <div class="ai-input-wrapper">
-              <div v-if="selectedServer" class="selected-server-tag">
-                <a-tag closable @close="clearSelectedServer" color="blue">
-                  <cloud-server-outlined /> {{ selectedServer.name }}
-                </a-tag>
-              </div>
-              <a-input
+              <div
                   ref="mentionInputRef"
-                  v-model:value="inputText"
-                  placeholder="描述你想检查的问题，输入 @ 可选择服务器"
+                  class="mention-input-container"
+                  :class="{ disabled: streaming }"
+                  contenteditable="true"
+                  :data-placeholder="streaming ? '' : '描述你想检查的问题，输入 @ 可选择服务器'"
                   @input="handleInput"
                   @keydown="handleMentionKeydown"
-                  :disabled="streaming"
-                  size="large"
-              />
+                  @click="handleInputClick"
+              ></div>
               <div v-if="showMention && filteredServerTree.length > 0" class="mention-dropdown" ref="mentionDropdownRef">
                 <div class="mention-list">
                   <template v-for="group in filteredServerTree" :key="group.id">
@@ -172,7 +168,7 @@
 import {ref, onMounted, nextTick, onUnmounted, computed} from 'vue';
 import {patrolApi} from '@/api/patrol';
 import {serverApi} from '@/api/server';
-import {message as antMessage} from 'ant-design-vue';
+import {message} from 'ant-design-vue';
 import markdownIt from 'markdown-it';
 import {CloudServerOutlined, HddOutlined, WindowsOutlined, FolderOutlined, RightOutlined} from '@ant-design/icons-vue';
 
@@ -181,7 +177,6 @@ const md = markdownIt();
 
 // Chat state
 const messages = ref([]);
-const inputText = ref('');
 const messagesRef = ref(null);
 const conversationId = ref(null);
 const streaming = ref(false);
@@ -193,7 +188,6 @@ let serverTree = ref([]);
 let showMention = ref(false);
 let mentionFilter = ref('');
 let mentionIndex = ref(0);
-let selectedServer = ref(null);
 let mentionJustHandled = ref(false);
 const mentionDropdownRef = ref(null);
 const mentionInputRef = ref(null);
@@ -258,19 +252,6 @@ const filteredServerTree = computed(() => {
   return computeFilteredTree();
 });
 
-// 获取总服务器数量（用于索引）
-const getTotalServers = (list) => {
-  let count = 0;
-  list.forEach(item => {
-    if (item.isGroup && item.children) {
-      count += getTotalServers(item.children);
-    } else if (!item.isGroup) {
-      count++;
-    }
-  });
-  return count;
-};
-
 // 切换分组展开/收起
 const toggleGroup = (group) => {
   group._expanded = !group._expanded;
@@ -287,19 +268,24 @@ const loadAllServers = async () => {
 };
 
 // 处理输入事件，检测@符号
-const handleInput = (e) => {
-  const value = inputText.value;
-  const cursorPos = e.target?.selectionStart || value.length;
+const handleInput = () => {
+  const inputEl = mentionInputRef.value;
+  if (!inputEl) return;
 
-  const lastAtIndex = value.lastIndexOf('@', cursorPos - 1);
+  // 获取纯文本内容
+  const text = getTextContent(inputEl);
+  const selection = window.getSelection();
+  const cursorPos = getCursorPosition(inputEl, selection);
+
+  const lastAtIndex = text.lastIndexOf('@', cursorPos - 1);
 
   if (lastAtIndex !== -1) {
-    const textAfterAt = value.substring(lastAtIndex + 1, cursorPos);
+    const textAfterAt = text.substring(lastAtIndex + 1, cursorPos);
     if (!textAfterAt.includes(' ')) {
       showMention.value = true;
       mentionFilter.value = textAfterAt;
       mentionIndex.value = 0;
-      navIndex = 0; // 重置导航索引
+      navIndex = 0;
       return;
     }
   }
@@ -308,20 +294,209 @@ const handleInput = (e) => {
   mentionFilter.value = '';
 };
 
+// 获取光标在纯文本中的位置
+const getCursorPosition = (el, selection) => {
+  const range = selection?.getRangeAt(0);
+  if (!range) return 0;
+
+  // 创建一个临时元素来计算光标前的纯文本长度
+  const tempRange = document.createRange();
+  tempRange.selectNodeContents(el);
+  tempRange.setEnd(range.endContainer, range.endOffset);
+  return tempRange.toString().length;
+};
+
+// 获取元素的纯文本内容（不包含HTML标签）
+const getTextContent = (el) => {
+  // 暂时移除 inline-mention 的特殊样式，获取纯文本
+  const clone = el.cloneNode(true);
+  const mentions = clone.querySelectorAll('.inline-mention');
+  mentions.forEach(m => {
+    const text = m.getAttribute('data-name') || m.textContent;
+    const span = document.createElement('span');
+    span.textContent = '@' + text;
+    m.parentNode.replaceChild(span, m);
+  });
+  return clone.textContent || '';
+};
+
 // 选择服务器
 const selectMentionServer = async (server) => {
-  const value = inputText.value;
-  const cursorPos = inputText.value.length;
-  const lastAtIndex = value.lastIndexOf('@', cursorPos - 1);
+  const inputEl = mentionInputRef.value;
+  if (!inputEl) return;
+
+  const text = getTextContent(inputEl);
+  const selection = window.getSelection();
+  const cursorPos = getCursorPosition(inputEl, selection);
+
+  // 找到光标前的 @ 位置
+  const lastAtIndex = text.lastIndexOf('@', cursorPos - 1);
 
   if (lastAtIndex !== -1) {
-    inputText.value = value.substring(0, lastAtIndex) + '@' + server.name + ' ';
+    // 使用 Range API 替换 @xxx 为 inline-mention span
+    const range = selection?.getRangeAt(0);
+    if (range) {
+      const walker = document.createTreeWalker(inputEl, NodeFilter.SHOW_TEXT, null, false);
+      let node;
+      let charCount = 0;
+
+      while (node = walker.nextNode()) {
+        if (node === range.startContainer) {
+          charCount += range.startOffset;
+          break;
+        }
+        charCount += node.textContent.length;
+      }
+
+      // 计算 @ 符号在 node tree 中的位置
+      const atNodePos = charCount - range.startOffset + (cursorPos - lastAtIndex - 1);
+
+      // 删除 @xxx 并插入新的 span
+      const newRange = document.createRange();
+      let currentNode = inputEl.firstChild;
+      let currentPos = 0;
+      let startNode = null, startOffset = 0, endNode = null, endOffset = 0;
+
+      while (currentNode) {
+        const nodeLength = currentNode.textContent?.length || 0;
+        if (currentPos <= atNodePos && currentPos + nodeLength >= atNodePos) {
+          startNode = currentNode;
+          startOffset = atNodePos - currentPos;
+        }
+        if (currentPos <= atNodePos + (cursorPos - lastAtIndex) && currentPos + nodeLength >= atNodePos + (cursorPos - lastAtIndex)) {
+          endNode = currentNode;
+          endOffset = atNodePos + (cursorPos - lastAtIndex) - currentPos;
+          break;
+        }
+        currentPos += nodeLength;
+        currentNode = currentNode.nextSibling;
+      }
+
+      if (startNode && endNode) {
+        newRange.setStart(startNode, startOffset);
+        newRange.setEnd(endNode, endOffset);
+        newRange.deleteContents();
+
+        // 创建 inline-mention span
+        const span = document.createElement('span');
+        span.className = 'inline-mention';
+        span.setAttribute('data-id', server.id);
+        span.setAttribute('data-name', server.name);
+        span.contentEditable = 'false';
+        span.innerHTML = `<span class="inline-mention-icon">${getOsIcon(server.os)}</span><span class="inline-mention-name">@${server.name}</span><span class="inline-mention-remove" onclick="this.parentNode.remove()">×</span>`;
+
+        newRange.insertNode(span);
+
+        // 在 span 后插入空格
+        const space = document.createTextNode(' ');
+        span.parentNode.insertBefore(space, span.nextSibling);
+
+        // 移动光标到 span 后
+        const newSel = window.getSelection();
+        newRange.setStartAfter(space);
+        newRange.collapse(true);
+        newSel.removeAllRanges();
+        newSel.addRange(newRange);
+      }
+    }
   }
 
-  selectedServer.value = server;
   showMention.value = false;
   mentionFilter.value = '';
-  navIndex = 0; // 重置导航索引
+  navIndex = 0;
+
+  // 触发 input 事件更新
+  inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+};
+
+// 获取 OS 图标
+const getOsIcon = (os) => {
+  if (os === 'LINUX') return '💻';
+  if (os === 'WINDOWS') return '🪟';
+  return '☁️';
+};
+
+// 处理输入框点击
+const handleInputClick = () => {
+  // 重置下拉菜单状态
+  if (showMention.value && mentionFilter.value) {
+    // 保持菜单显示
+  }
+};
+
+// 插入内联服务器标签
+const insertInlineMention = (server) => {
+  const inputEl = mentionInputRef.value;
+  if (!inputEl) return;
+
+  const text = getTextContent(inputEl);
+  const selection = window.getSelection();
+  const cursorPos = getCursorPosition(inputEl, selection);
+  const lastAtIndex = text.lastIndexOf('@', cursorPos - 1);
+
+  if (lastAtIndex === -1) return;
+
+  // 使用 TreeWalker 找到光标位置对应的文本节点和偏移
+  let charCount = 0;
+  const walker = document.createTreeWalker(inputEl, NodeFilter.SHOW_TEXT, null, false);
+  let node;
+  let startNode = null, startOffset = 0, endNode = null, endOffset = 0;
+
+  while (node = walker.nextNode()) {
+    const nodeLen = node.textContent.length;
+    if (charCount <= atSymbolPos && charCount + nodeLen >= atSymbolPos) {
+      startNode = node;
+      startOffset = atSymbolPos - charCount;
+    }
+    if (charCount <= cursorPos && charCount + nodeLen >= cursorPos) {
+      endNode = node;
+      endOffset = cursorPos - charCount;
+      break;
+    }
+    charCount += nodeLen;
+  }
+
+  if (startNode && endNode) {
+    const range = document.createRange();
+    range.setStart(startNode, startOffset);
+    range.setEnd(endNode, endOffset);
+    range.deleteContents();
+
+    // 创建 inline-mention span
+    const span = document.createElement('span');
+    span.className = 'inline-mention';
+    span.setAttribute('data-id', server.id);
+    span.setAttribute('data-name', server.name);
+    span.contentEditable = 'false';
+    span.innerHTML = `<span class="inline-mention-icon">${getOsIcon(server.os)}</span><span class="inline-mention-name">@${server.name}</span><span class="inline-mention-remove" onclick="this.parentNode.remove(); this.parentNode.dispatchEvent(new Event('input', {bubbles: true}));">×</span>`;
+
+    range.insertNode(span);
+
+    // 在 span 后插入空格
+    const space = document.createTextNode(' ');
+    if (span.nextSibling) {
+      span.parentNode.insertBefore(space, span.nextSibling);
+    } else {
+      span.parentNode.appendChild(space);
+    }
+
+    // 移动光标到 span 后
+    const newSel = window.getSelection();
+    const newRange = document.createRange();
+    newRange.setStartAfter(space);
+    newRange.collapse(true);
+    newSel.removeAllRanges();
+    newSel.addRange(newRange);
+  }
+};
+
+// 设置输入框文本
+const setInputText = (text) => {
+  const inputEl = mentionInputRef.value;
+  if (!inputEl) return;
+  inputEl.innerHTML = text;
+  inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+  inputEl.focus();
 };
 
 // 获取扁平化的服务器列表（带缓存）
@@ -392,18 +567,11 @@ const handleMentionKeydown = (e) => {
           const allServers = getFlatServers();
           const server = allServers.find(s => s.name === serverName);
           if (server) {
-            selectedServer.value = server;
+            // 插入 inline mention
+            insertInlineMention(server);
           }
         }
       }
-      nextTick(() => {
-        inputText.value = '';
-        const nativeInput = mentionInputRef.value?.$el?.querySelector('input') || mentionInputRef.value?.$el;
-        if (nativeInput && nativeInput.tagName === 'INPUT') {
-          nativeInput.value = '';
-          nativeInput.dispatchEvent(new Event('input', { bubbles: true }));
-        }
-      });
       nextTick(() => {
         showMention.value = false;
         navIndex = 0;
@@ -455,11 +623,6 @@ const handleMentionKeydown = (e) => {
   }
 };
 
-// 清除选中的服务器
-const clearSelectedServer = () => {
-  selectedServer.value = null;
-};
-
 const renderMarkdown = (content) => md.render(content || '');
 
 const scrollToBottom = () => {
@@ -473,26 +636,26 @@ const scrollToBottom = () => {
 const sendMessage = async () => {
   if (mentionJustHandled.value) return;
 
-  const text = inputText.value.trim();
+  const inputEl = mentionInputRef.value;
+  if (!inputEl) return;
+
+  const text = getTextContent(inputEl).trim();
   if (!text || streaming.value) return;
 
-  const currentServer = selectedServer.value;
-  let fullText = text;
-  if (currentServer) {
-    fullText = `@${currentServer.name} ${text}`;
-  }
+  // 提取 inline-mention 中的服务器 ID
+  const mentions = inputEl.querySelectorAll('.inline-mention');
+  const serverId = mentions.length > 0 ? mentions[0].getAttribute('data-id') : null;
 
-  messages.value.push({role: 'user', content: fullText});
-  inputText.value = '';
-  selectedServer.value = null;
+  messages.value.push({role: 'user', content: text});
+  inputEl.innerHTML = '';
   scrollToBottom();
 
   streaming.value = true;
   streamContent.value = '';
 
   let url = patrolApi.chatStreamUrl(text, conversationId.value);
-  if (currentServer) {
-    url += '&serverId=' + currentServer.id;
+  if (serverId) {
+    url += '&serverId=' + serverId;
   }
   eventSource = new EventSource(url);
 
@@ -526,7 +689,11 @@ const finishStream = () => {
 
 const confirmCommand = async (msg) => {
   msg.needsConfirmation = false;
-  inputText.value = '确认执行: ' + msg.pendingCommand;
+  const inputEl = mentionInputRef.value;
+  if (inputEl) {
+    inputEl.innerHTML = '确认执行: ' + msg.pendingCommand;
+    inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+  }
   await sendMessage();
 };
 
@@ -866,23 +1033,80 @@ onMounted(() => {
   padding: 16px 20px;
   border-top: 1px solid #222;
   background: #1a1a1a;
-}
-
-.chat-input-area :deep(.ant-input) {
-  background: #252525;
-  border-color: #333;
-  color: #fff;
-  border-radius: 8px;
-}
-
-.chat-input-area :deep(.ant-input:focus) {
-  border-color: #1890ff;
-  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+  align-items: flex-end;
 }
 
 .chat-input-area :deep(.ant-btn) {
   border-radius: 8px;
   min-width: 80px;
+}
+
+/* Contenteditable input */
+.mention-input-container {
+  flex: 1;
+  min-height: 40px;
+  max-height: 120px;
+  padding: 8px 12px;
+  background: #252525;
+  border: 1px solid #333;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-y: auto;
+  outline: none;
+  cursor: text;
+}
+
+.mention-input-container:focus {
+  border-color: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+}
+
+.mention-input-container:empty::before {
+  content: attr(data-placeholder);
+  color: #666;
+  pointer-events: none;
+}
+
+.mention-input-container.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Inline mention tag */
+.inline-mention {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 6px;
+  background: #1890ff;
+  color: #fff;
+  border-radius: 4px;
+  font-size: 13px;
+  vertical-align: middle;
+  margin: 0 2px;
+  cursor: default;
+}
+
+.inline-mention-icon {
+  font-size: 12px;
+}
+
+.inline-mention-name {
+  font-weight: 500;
+}
+
+.inline-mention-remove {
+  margin-left: 4px;
+  cursor: pointer;
+  opacity: 0.7;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.inline-mention-remove:hover {
+  opacity: 1;
 }
 
 /* Scrollbar */
@@ -907,15 +1131,13 @@ onMounted(() => {
 .ai-input-wrapper {
   position: relative;
   flex: 1;
-}
-
-.selected-server-tag {
-  margin-bottom: 4px;
+  display: flex;
+  flex-direction: column;
 }
 
 .mention-dropdown {
   position: absolute;
-  bottom: 100%;
+  top: 0;
   left: 0;
   width: 400px;
   z-index: 1000;
@@ -926,6 +1148,7 @@ onMounted(() => {
   max-height: 240px;
   overflow-y: auto;
   margin-bottom: 8px;
+  transform: translateY(-100%);
 }
 
 .mention-list {
