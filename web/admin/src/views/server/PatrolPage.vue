@@ -156,7 +156,11 @@
                   <!-- 文本内容 -->
                   <div v-else-if="item.type === 'text' && item.content" class="message-content" v-html="renderMarkdown(item.content)"></div>
                 </template>
-                <div class="typing-cursor"></div>
+                <div v-if="streamNeedsConfirm" class="message-actions">
+                  <a-button type="primary" size="small" @click="confirmStreamAction">确认执行</a-button>
+                  <a-button danger size="small" @click="rejectStreamAction">取消</a-button>
+                </div>
+                <div v-else class="typing-cursor"></div>
               </div>
             </div>
           </div>
@@ -370,6 +374,8 @@ const streaming = ref(false);
 const streamTimeline = ref([]); // 统一时间线：[{type: 'text'|'tool'|'think', ...}]
 const showThink = ref(false); // 思考内容是否展开（默认收起）
 const expandedTools = ref(new Set()); // 展开的工具 ID
+const streamNeedsConfirm = ref(false); // 流式响应中是否有待确认的操作
+const streamPendingArgs = ref(''); // 待确认的工具参数
 let eventSource = null;
 let textBuffer = ''; // 文本缓冲区，用于处理跨事件的 <think> 标签
 let isInThinkMode = false; // 是否正在处理 <think> 块
@@ -1061,6 +1067,7 @@ const sendMessage = async () => {
   // 清理打字机状态
   if (typeTimer) { clearInterval(typeTimer); typeTimer = null; }
   typeQueue = [];
+  streamNeedsConfirm.value = false;
 
   let url = patrolApi.chatStreamUrl(text, conversationId.value);
   if (serverIds.length > 0) {
@@ -1110,6 +1117,11 @@ const sendMessage = async () => {
               durationMs: toolEvent.durationMs
             };
           }
+          // 检测需要确认的工具结果
+          if (toolEvent.result && toolEvent.result.includes('需要确认')) {
+            streamNeedsConfirm.value = true;
+            streamPendingArgs.value = tl[idx]?.arguments || '';
+          }
         }
       } catch (e) {
         console.error('解析工具事件失败:', e);
@@ -1132,6 +1144,7 @@ const finishStream = () => {
   }
   // 立即渲染队列中剩余字符
   flushTypeQueue();
+  streamNeedsConfirm.value = false;
   // 保存消息
   if (streamTimeline.value.length > 0) {
     const timeline = [...streamTimeline.value];
@@ -1177,6 +1190,30 @@ const confirmCommand = async (msg) => {
 
 const rejectCommand = (msg) => {
   msg.needsConfirmation = false;
+  messages.value.push({role: 'assistant', content: '已取消执行'});
+  scrollToBottom();
+};
+
+const confirmStreamAction = async () => {
+  streamNeedsConfirm.value = false;
+  // 先完成当前流，再发送确认消息
+  flushBuffer();
+  flushTypeQueue();
+  finishStream();
+  await nextTick();
+  const inputEl = mentionInputRef.value;
+  if (inputEl) {
+    inputEl.innerHTML = '确认执行';
+    inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+  await sendMessage();
+};
+
+const rejectStreamAction = () => {
+  streamNeedsConfirm.value = false;
+  flushBuffer();
+  flushTypeQueue();
+  finishStream();
   messages.value.push({role: 'assistant', content: '已取消执行'});
   scrollToBottom();
 };
