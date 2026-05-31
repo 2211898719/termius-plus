@@ -278,11 +278,12 @@ const handleInput = () => {
   // 检查光标是否在 mention 元素内部，如果在则移到外面
   const range = selection.getRangeAt(0);
   let container = range.endContainer;
+  let cursorInMention = false;
   while (container && container !== inputEl) {
     if (container.classList && container.classList.contains('inline-mention')) {
+      cursorInMention = true;
       // 光标在 mention 内部，移到 mention 后面
       const newRange = document.createRange();
-      newRange.selectNodeContents(inputEl);
       newRange.setStartAfter(container);
       newRange.collapse(true);
       selection.removeAllRanges();
@@ -292,11 +293,51 @@ const handleInput = () => {
     container = container.parentNode;
   }
 
+  // 如果刚移动完光标，等待下一个事件处理
+  if (cursorInMention) {
+    return;
+  }
+
   // 获取纯文本内容
   const text = getTextContent(inputEl);
   const cursorPos = getCursorPosition(inputEl, selection);
 
-  const lastAtIndex = text.lastIndexOf('@', cursorPos - 1);
+  // 从光标位置向前查找@，排除在 mention 标签内的@
+  let lastAtIndex = -1;
+  const mentions = inputEl.querySelectorAll('.inline-mention');
+
+  // 构建 mention 位置信息
+  const mentionRanges = [];
+  let textOffset = 0;
+  const walker = document.createTreeWalker(inputEl, NodeFilter.SHOW_TEXT, null, false);
+  let node;
+  while (node = walker.nextNode()) {
+    for (const m of mentions) {
+      if (node === m.firstChild) {
+        // 这个 text node 是 mention 的第一个子节点
+        mentionRanges.push({ start: textOffset, end: textOffset + m.textContent.length, element: m });
+      }
+    }
+    textOffset += node.textContent.length;
+  }
+
+  // 从光标位置向前逐字符检查
+  for (let i = cursorPos - 1; i >= 0; i--) {
+    if (text[i] === '@') {
+      // 找到@，检查它是否在某个 mention 元素内
+      let inMention = false;
+      for (const mr of mentionRanges) {
+        if (i >= mr.start && i < mr.end) {
+          inMention = true;
+          break;
+        }
+      }
+      if (!inMention) {
+        lastAtIndex = i;
+        break;
+      }
+    }
+  }
 
   if (lastAtIndex !== -1) {
     const textAfterAt = text.substring(lastAtIndex + 1, cursorPos);
@@ -410,13 +451,11 @@ const insertInlineMention = (server) => {
 
     range.insertNode(span);
 
-    // 在 span 后插入空格和零宽字符，确保光标在正确的位置
-    const space = document.createTextNode(' ');
-    const zwc = document.createTextNode('​'); // 零宽字符
-    span.parentNode.appendChild(space);
-    span.parentNode.appendChild(zwc);
+    // 在 span 后插入零宽字符作为光标位置标记
+    const zwc = document.createTextNode('​');
+    span.parentNode.insertBefore(zwc, span.nextSibling);
 
-    // 移动光标到零宽字符前（这样输入会插入到空格后面）
+    // 移动光标到零宽字符前
     const newSel = window.getSelection();
     const newRange = document.createRange();
     newRange.setStartBefore(zwc);
