@@ -420,17 +420,7 @@ const insertInlineMention = (server) => {
 
     // 移动光标到空格后
     const newSel = window.getSelection();
-    const newRange = document.createRange();
-    // 直接在父节点中设置光标位置在空格之后
-    const parent = space.parentNode;
-    const spaceIndex = [...parent.childNodes].indexOf(space);
-    newRange.setStart(parent, spaceIndex + 1);
-    newRange.collapse(true);
-    newSel.removeAllRanges();
-    newSel.addRange(newRange);
-
-    // 确保光标可见
-    inputEl.focus();
+    newSel.collapse(space, 1);
   }
 };
 
