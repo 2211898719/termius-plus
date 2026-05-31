@@ -8,6 +8,8 @@ import com.codeages.termiusplus.biz.patrol.repository.PatrolConversationReposito
 import com.codeages.termiusplus.biz.patrol.repository.PatrolMessageRepository;
 import com.codeages.termiusplus.biz.patrol.service.PatrolEngine;
 import com.codeages.termiusplus.biz.patrol.service.PatrolScriptService;
+import com.codeages.termiusplus.biz.server.entity.Server;
+import com.codeages.termiusplus.biz.server.repository.ServerRepository;
 import com.codeages.termiusplus.common.IdPayload;
 import com.codeages.termiusplus.common.OkResponse;
 import com.cxytiandi.encrypt.springboot.annotation.DecryptIgnore;
@@ -31,6 +33,7 @@ public class PatrolController {
     private final PatrolAgentService patrolAgentService;
     private final PatrolConversationRepository conversationRepository;
     private final PatrolMessageRepository messageRepository;
+    private final ServerRepository serverRepository;
 
     // === 脚本管理 ===
 
@@ -111,6 +114,9 @@ public class PatrolController {
                 ? params.getConversationId()
                 : UUID.randomUUID().toString();
 
+        // 构建包含服务器上下文的消息
+        String message = buildMessageWithContext(params);
+
         // 确保对话记录存在
         conversationRepository.findByConversationId(conversationId)
                 .orElseGet(() -> {
@@ -122,7 +128,32 @@ public class PatrolController {
                     return conversationRepository.save(conv);
                 });
 
-        return patrolAgentService.stream(params.getMessage(), conversationId);
+        return patrolAgentService.stream(message, conversationId);
+    }
+
+    /**
+     * 将用户消息与 @mention 的服务器上下文合并，让模型能准确识别服务器
+     */
+    private String buildMessageWithContext(AgentChatParams params) {
+        List<Long> serverIdList = params.getServerIdList();
+        if (serverIdList.isEmpty()) {
+            return params.getMessage();
+        }
+
+        List<Server> servers = serverRepository.findAllById(serverIdList);
+        if (servers.isEmpty()) {
+            return params.getMessage();
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("## 用户消息\n").append(params.getMessage()).append("\n\n");
+        sb.append("## 用户提及的服务器信息\n");
+        for (Server s : servers) {
+            sb.append(String.format("- [ID:%d] %s (IP:%s, 端口:%d, 系统:%s, 用户:%s)\n",
+                    s.getId(), s.getName(), s.getIp(), s.getPort(), s.getOs(), s.getUsername()));
+        }
+        sb.append("\n注意：当用户消息中提到服务器名称时，请以上方 ID 为准进行工具调用，不要从名称中猜测数字作为 ID。");
+        return sb.toString();
     }
 
     // === 对话管理 ===
