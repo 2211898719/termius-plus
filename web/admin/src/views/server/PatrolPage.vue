@@ -6,12 +6,11 @@
         <div class="chat-layout">
           <!-- 对话列表侧边栏 -->
           <div class="conversation-sidebar">
+            <div class="conv-new-btn" @click="createConversation">
+              <plus-outlined /> 新对话
+            </div>
             <div class="conv-header">
               <span>对话记录</span>
-              <a-button type="primary" size="small" @click="createConversation">
-                <template #icon><plus-outlined /></template>
-                新对话
-              </a-button>
             </div>
             <div class="conv-list">
               <div v-for="conv in conversations" :key="conv.conversationId"
@@ -369,7 +368,7 @@ const deleteConversation = async (id) => {
 };
 const streaming = ref(false);
 const streamTimeline = ref([]); // 统一时间线：[{type: 'text'|'tool'|'think', ...}]
-const showThink = ref(true); // 思考内容是否展开（默认展开）
+const showThink = ref(false); // 思考内容是否展开（默认收起）
 const expandedTools = ref(new Set()); // 展开的工具 ID
 let eventSource = null;
 let textBuffer = ''; // 文本缓冲区，用于处理跨事件的 <think> 标签
@@ -1007,7 +1006,7 @@ const sendMessage = async () => {
 
   streaming.value = true;
   streamTimeline.value = [];
-  showThink.value = true;
+  showThink.value = false;
   expandedTools.value = new Set();
 
   let url = patrolApi.chatStreamUrl(text, conversationId.value);
@@ -1045,7 +1044,6 @@ const sendMessage = async () => {
         const toolEvent = JSON.parse(data.substring(11));
         if (toolEvent.type === 'tool_start') {
           streamTimeline.value.push({ ...toolEvent, type: 'tool' });
-          expandedTools.value.add(streamTimeline.value.length - 1);
         } else if (toolEvent.type === 'tool_result') {
           const tl = streamTimeline.value;
           const idx = tl.findIndex(e =>
@@ -1103,7 +1101,7 @@ const finishStream = () => {
     }
   }
   streamTimeline.value = [];
-  showThink.value = true;
+  showThink.value = false;
   isInThinkMode = false;
   textBuffer = '';
   streaming.value = false;
@@ -1309,15 +1307,32 @@ onMounted(async () => {
   flex-shrink: 0;
 }
 
+.conv-new-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 12px 12px 0;
+  padding: 10px 0;
+  background: #264f78;
+  color: #fff;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.conv-new-btn:hover {
+  background: #2d5f8a;
+}
+
 .conv-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  border-bottom: 1px solid #222;
-  color: #ccc;
-  font-size: 14px;
-  font-weight: 500;
+  padding: 10px 16px 6px;
+  color: #888;
+  font-size: 12px;
 }
 
 .conv-list {
