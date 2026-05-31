@@ -284,6 +284,121 @@ let AiResEl = ref(null)
 let aiSystem = useStorage("aiSystem", "你是一个专业的linux命令生成器，以markDown形式回答命令生成结果。")
 
 let aiMessagePrefix = useStorage("aiMessagePrefix", "{{commandLog}} \n写一条linux命令，")
+
+// @提及服务器功能
+let allServers = ref([])
+let showMention = ref(false)
+let mentionFilter = ref('')
+let mentionIndex = ref(0)
+let selectedServer = ref(null)
+let mentionJustHandled = ref(false)
+
+// 获取所有服务器（扁平化）
+const flattenServers = (list, result = []) => {
+  list.forEach(item => {
+    if (item.isGroup && item.children) {
+      flattenServers(item.children, result)
+    } else if (!item.isGroup) {
+      result.push(item)
+    }
+  })
+  return result
+}
+
+const loadAllServers = async () => {
+  try {
+    let list = await serverApi.list()
+    allServers.value = flattenServers(list)
+  } catch (e) {
+    console.error('Failed to load servers:', e)
+  }
+}
+
+loadAllServers()
+
+// 过滤匹配的服务器
+const mentionServers = computed(() => {
+  if (!mentionFilter.value) return allServers.value
+  const filter = mentionFilter.value.toLowerCase()
+  return allServers.value.filter(s =>
+      s.name?.toLowerCase().includes(filter) ||
+      s.ip?.toLowerCase().includes(filter)
+  )
+})
+
+// 处理输入事件，检测@符号
+const handleAiInput = (e) => {
+  const value = aiMessage.value
+  const cursorPos = e.target?.selectionStart || value.length
+
+  // 找到最后一个@符号的位置
+  const lastAtIndex = value.lastIndexOf('@', cursorPos - 1)
+
+  if (lastAtIndex !== -1) {
+    // 检查@后面是否有空格（表示已经完成了@提及）
+    const textAfterAt = value.substring(lastAtIndex + 1, cursorPos)
+    if (!textAfterAt.includes(' ')) {
+      showMention.value = true
+      mentionFilter.value = textAfterAt
+      mentionIndex.value = 0
+      return
+    }
+  }
+
+  showMention.value = false
+  mentionFilter.value = ''
+}
+
+// 选择服务器
+const selectMentionServer = async (server) => {
+  const value = aiMessage.value
+  const cursorPos = aiMessage.value.length
+  const lastAtIndex = value.lastIndexOf('@', cursorPos - 1)
+
+  if (lastAtIndex !== -1) {
+    // 替换@及其后面的文本为选中的服务器名
+    aiMessage.value = value.substring(0, lastAtIndex) + '@' + server.name + ' '
+  }
+
+  selectedServer.value = server
+  showMention.value = false
+  mentionFilter.value = ''
+
+  // 获取服务器的命令历史
+  try {
+    const history = await serverApi.getHistory(server.id)
+    if (history && history.length > 0) {
+      selectedServer.value.history = history
+    }
+  } catch (e) {
+    console.error('Failed to load server history:', e)
+  }
+}
+
+// 键盘导航
+const handleMentionKeydown = (e) => {
+  if (!showMention.value) return
+
+  const servers = mentionServers.value
+  if (!servers.length) return
+
+  if (e.key === 'ArrowDown') {
+    e.preventDefault()
+    mentionIndex.value = (mentionIndex.value + 1) % servers.length
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault()
+    mentionIndex.value = (mentionIndex.value - 1 + servers.length) % servers.length
+  } else if (e.key === 'Enter' && showMention.value) {
+    e.preventDefault()
+    e.stopPropagation()
+    mentionJustHandled.value = true
+    selectMentionServer(servers[mentionIndex.value])
+    // 重置标志
+    setTimeout(() => { mentionJustHandled.value = false }, 0)
+  } else if (e.key === 'Escape') {
+    showMention.value = false
+  }
+}
 const md = require('markdown-it')({
   html: true,
   linkify: true,
@@ -301,10 +416,30 @@ const chat = async () => {
 
   chatLoading.value = true
   try {
+    // 构建消息，如果有@提及的服务器，添加服务器上下文
+    let message = aiMessagePrefix.value + aiMessage.value
+    let systemPrompt = aiSystem.value
+
+    if (selectedServer.value) {
+      // 添加服务器信息到系统提示
+      const serverInfo = `当前讨论的服务器信息：
+- 名称: ${selectedServer.value.name}
+- IP: ${selectedServer.value.ip}
+- 端口: ${selectedServer.value.port}
+- 用户名: ${selectedServer.value.username}
+- 操作系统: ${selectedServer.value.os || 'Linux'}`
+
+      const historyInfo = selectedServer.value.history?.length > 0
+          ? `\n- 最近命令历史:\n${selectedServer.value.history.slice(0, 10).map(h => `  ${h}`).join('\n')}`
+          : ''
+
+      systemPrompt = `${systemPrompt}\n\n${serverInfo}${historyInfo}`
+    }
+
     const eventSource = new EventSource(serverApi.aiChat({
       sessionId: PTermRef.value.getSessionId(),
-      message: aiMessagePrefix.value + aiMessage.value,
-      prompt: aiSystem.value,
+      message: message,
+      prompt: systemPrompt,
     }));
 
     let originRes = "";
@@ -416,6 +551,16 @@ onMounted(() => {
 const handleKeyup = (event) => {
   if (event.key === 'Enter' && event.isComposing) {
     return; // 忽略输入法的回车
+  }
+
+  // 如果刚刚处理了提及下拉框的选择，不发送消息
+  if (mentionJustHandled.value) {
+    return
+  }
+
+  // 如果提及下拉框正在显示，不发送消息
+  if (showMention.value) {
+    return
   }
 
   chat()
@@ -583,8 +728,32 @@ const onFileDrop = async (e) => {
                 <a-tabs v-model:activeKey="rightTabKey" style="margin: 8px" type="card">
                   <a-tab-pane key="AI" tab="AI">
                     <div>
-                      <a-input v-model:value="aiMessage" @keydown.enter="handleKeyup"
-                               placeholder="请输入问题"></a-input>
+                      <div class="ai-input-wrapper">
+                        <div v-if="selectedServer" class="selected-server-tag">
+                          <a-tag closable @close="selectedServer = null" color="blue">
+                            <cloud-server-outlined /> {{ selectedServer.name }}
+                          </a-tag>
+                        </div>
+                        <a-input v-model:value="aiMessage"
+                                 @input="handleAiInput"
+                                 @keydown="handleMentionKeydown"
+                                 @keydown.enter="handleKeyup"
+                                 placeholder="请输入问题，输入 @ 可选择服务器"></a-input>
+                        <div v-if="showMention && mentionServers.length > 0" class="mention-dropdown">
+                          <div class="mention-list">
+                            <div v-for="(s, index) in mentionServers" :key="s.id"
+                                 :class="['mention-item', { active: index === mentionIndex }]"
+                                 @click="selectMentionServer(s)"
+                                 @mouseenter="mentionIndex = index">
+                              <hdd-outlined v-if="s.os === 'LINUX'" style="color: #E45F2B; margin-right: 8px;" />
+                              <windows-outlined v-else-if="s.os === 'WINDOWS'" style="color: #E45F2B; margin-right: 8px;" />
+                              <cloud-server-outlined v-else style="margin-right: 8px;" />
+                              <span class="mention-name">{{ s.name }}</span>
+                              <span class="mention-ip">{{ s.ip }}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                       <div style="margin-top: 8px;text-align: center">
 
                         <a-button @click="chat" type="primary" :loading="chatLoading">询问</a-button>
@@ -839,6 +1008,55 @@ const onFileDrop = async (e) => {
         margin-top: 16px;
         position: relative;
 
+      }
+    }
+
+    .ai-input-wrapper {
+      position: relative;
+      min-width: 320px;
+
+      .selected-server-tag {
+        margin-bottom: 4px;
+      }
+
+      .mention-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 320px;
+        z-index: 1000;
+        background: #fff;
+        border: 1px solid #d9d9d9;
+        border-radius: 4px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        max-height: 200px;
+        overflow-y: auto;
+
+        .mention-list {
+          padding: 4px 0;
+
+          .mention-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+
+            &:hover, &.active {
+              background: #e6f7ff;
+            }
+
+            .mention-name {
+              flex: 1;
+              font-weight: 500;
+            }
+
+            .mention-ip {
+              color: #999;
+              font-size: 12px;
+              margin-left: 8px;
+            }
+          }
+        }
       }
     }
 

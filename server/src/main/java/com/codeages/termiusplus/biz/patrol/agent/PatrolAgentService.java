@@ -2,13 +2,18 @@ package com.codeages.termiusplus.biz.patrol.agent;
 
 import com.codeages.termiusplus.biz.patrol.agent.tool.*;
 import com.codeages.termiusplus.biz.patrol.service.AgentLlmClientFactory;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.chat.model.ToolCall;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
+
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -35,6 +40,8 @@ public class PatrolAgentService {
             5. 输出使用 Markdown 格式，便于前端展示
             """;
 
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+
     private ChatClient buildChatClient(String conversationId) {
         ChatClient chatClient = factory.createChatClient();
         MessageChatMemoryAdvisor memoryAdvisor = MessageChatMemoryAdvisor.builder(chatMemory)
@@ -58,7 +65,33 @@ public class PatrolAgentService {
                          .tools(cleanupTool, diskTool, executeCommandTool, nginxTool, serviceTool, serverTool)
                          .user(userMessage)
                          .stream()
-                         .content()
+                         .chatResponse()
+                         .flatMap(response -> {
+                             Flux<String> flux = Flux.empty();
+
+                             // 发送内容块
+                             String content = response.getContent();
+                             if (content != null && !content.isEmpty()) {
+                                 flux = Flux.concat(flux, Flux.just("text:" + content));
+                             }
+
+                             // 检查是否有工具调用
+                             ToolCall toolCall = response.getToolCall();
+                             if (toolCall != null) {
+                                 try {
+                                     Map<String, Object> toolCallData = Map.of(
+                                             "name", toolCall.name() != null ? toolCall.name() : "",
+                                             "arguments", toolCall.arguments() != null ? toolCall.arguments() : ""
+                                     );
+                                     String toolCallJson = objectMapper.writeValueAsString(toolCallData);
+                                     flux = Flux.concat(flux, Flux.just("tool_call:" + toolCallJson));
+                                 } catch (Exception e) {
+                                     log.error("序列化工具调用失败", e);
+                                 }
+                             }
+
+                             return flux;
+                         })
                          .concatWith(Flux.just("[DONE]"));
     }
 }

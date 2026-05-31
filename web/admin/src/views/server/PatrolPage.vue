@@ -33,6 +33,10 @@
               <div class="message-avatar"><span>&#129302;</span></div>
               <div class="message-body">
                 <div class="message-content" v-html="renderMarkdown(streamContent)"></div>
+                <div v-if="currentToolCall" class="tool-call-indicator">
+                  <div class="tool-call-name">{{ currentToolCall.name }}</div>
+                  <div class="tool-call-status">执行中...</div>
+                </div>
                 <div class="typing-cursor"></div>
               </div>
             </div>
@@ -181,6 +185,8 @@ const messagesRef = ref(null);
 const conversationId = ref(null);
 const streaming = ref(false);
 const streamContent = ref('');
+const currentToolCall = ref(null); // 当前正在执行的工具调用
+const toolCallResult = ref(''); // 工具执行结果
 let eventSource = null;
 
 // @提及服务器功能
@@ -711,6 +717,8 @@ const sendMessage = async () => {
 
   streaming.value = true;
   streamContent.value = '';
+  currentToolCall.value = null;
+  toolCallResult.value = '';
 
   let url = patrolApi.chatStreamUrl(text, conversationId.value);
   if (serverIds.length > 0) {
@@ -724,7 +732,21 @@ const sendMessage = async () => {
       finishStream();
       return;
     }
-    streamContent.value += data;
+
+    // 解析事件格式
+    if (data.startsWith('text:')) {
+      streamContent.value += data.substring(5);
+    } else if (data.startsWith('tool_call:')) {
+      try {
+        const toolCall = JSON.parse(data.substring(10));
+        currentToolCall.value = {
+          name: toolCall.name,
+          arguments: toolCall.arguments
+        };
+      } catch (e) {
+        console.error('解析工具调用失败:', e);
+      }
+    }
     scrollToBottom();
   };
 
@@ -743,6 +765,8 @@ const finishStream = () => {
     streamContent.value = '';
   }
   streaming.value = false;
+  currentToolCall.value = null;
+  toolCallResult.value = '';
   scrollToBottom();
 };
 
@@ -1047,6 +1071,29 @@ onMounted(() => {
   background: #1e1e1e;
   color: #d4d4d4;
   border-top-left-radius: 4px;
+}
+
+/* Tool call indicator */
+.tool-call-indicator {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: #252525;
+  border: 1px solid #1890ff;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.tool-call-name {
+  color: #1890ff;
+  font-family: monospace;
+  font-weight: 500;
+}
+
+.tool-call-status {
+  color: #888;
 }
 
 .message-content :deep(p) {
