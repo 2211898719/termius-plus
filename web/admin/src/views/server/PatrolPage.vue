@@ -856,6 +856,9 @@ const handleMentionKeydown = (e) => {
   // 忽略输入法组合中的 Enter（如中文输入确认）
   if (e.isComposing) return;
 
+  // Shift+Enter 换行，不发送
+  if (e.key === 'Enter' && e.shiftKey) return;
+
   if (e.key === 'Enter') {
     if (showMention.value) {
       // 下拉菜单打开时，Enter选择服务器
