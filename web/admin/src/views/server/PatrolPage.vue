@@ -368,18 +368,34 @@ const getCursorPosition = (el, selection) => {
 
 // 获取元素的纯文本内容（不包含HTML标签）
 const getTextContent = (el) => {
-  // 暂时移除 inline-mention 的特殊样式，获取纯文本
-  const clone = el.cloneNode(true);
-  const mentions = clone.querySelectorAll('.inline-mention');
-  mentions.forEach(m => {
-    // data-name 不包含 @ 前缀，但 innerHTML 中的 .inline-mention-name 包含 @
-    // 所以直接用 data-name 而不是 m.textContent
-    const name = m.getAttribute('data-name');
-    const span = document.createElement('span');
-    span.textContent = '@' + name;
-    m.parentNode.replaceChild(span, m);
-  });
-  return clone.textContent || '';
+  // 遍历子节点构建纯文本
+  let text = '';
+  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null, false);
+  let node;
+  while (node = walker.nextNode()) {
+    // 检查祖先元素是否是 mention
+    let current = node.parentNode;
+    let isInMention = false;
+    while (current && current !== el) {
+      if (current.classList && current.classList.contains('inline-mention')) {
+        isInMention = true;
+        // 只添加一次 mention 名称（跳过后续的文本节点）
+        const name = current.getAttribute('data-name') || '';
+        if (name && !current._added) {
+          text += '@' + name;
+          current._added = true;
+        }
+        break;
+      }
+      current = current.parentNode;
+    }
+    if (!isInMention) {
+      text += node.textContent;
+    }
+  }
+  // 清理 _added 标记
+  el.querySelectorAll('.inline-mention').forEach(m => m._added = false);
+  return text;
 };
 
 // 选择服务器
@@ -623,12 +639,7 @@ const sendMessage = async () => {
   const mentions = inputEl.querySelectorAll('.inline-mention');
   const serverIds = [...mentions].map(m => m.getAttribute('data-id')).filter(Boolean);
 
-  // 构建带 mention 的消息文本
-  const mentionText = mentions.length > 0
-    ? [...mentions].map(m => `@${m.getAttribute('data-name')}`).join(' ') + ' '
-    : '';
-
-  messages.value.push({role: 'user', content: mentionText + text});
+  messages.value.push({role: 'user', content: text});
   inputEl.innerHTML = '';
   scrollToBottom();
 
