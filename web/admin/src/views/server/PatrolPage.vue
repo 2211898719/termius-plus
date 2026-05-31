@@ -272,9 +272,28 @@ const handleInput = () => {
   const inputEl = mentionInputRef.value;
   if (!inputEl) return;
 
+  const selection = window.getSelection();
+  if (!selection || selection.rangeCount === 0) return;
+
+  // 检查光标是否在 mention 元素内部，如果在则移到外面
+  const range = selection.getRangeAt(0);
+  let container = range.endContainer;
+  while (container && container !== inputEl) {
+    if (container.classList && container.classList.contains('inline-mention')) {
+      // 光标在 mention 内部，移到 mention 后面
+      const newRange = document.createRange();
+      newRange.selectNodeContents(inputEl);
+      newRange.setStartAfter(container);
+      newRange.collapse(true);
+      selection.removeAllRanges();
+      selection.addRange(newRange);
+      break;
+    }
+    container = container.parentNode;
+  }
+
   // 获取纯文本内容
   const text = getTextContent(inputEl);
-  const selection = window.getSelection();
   const cursorPos = getCursorPosition(inputEl, selection);
 
   const lastAtIndex = text.lastIndexOf('@', cursorPos - 1);
