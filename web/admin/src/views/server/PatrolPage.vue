@@ -156,11 +156,7 @@
                   <!-- 文本内容 -->
                   <div v-else-if="item.type === 'text' && item.content" class="message-content" v-html="renderMarkdown(item.content)"></div>
                 </template>
-                <div v-if="streamNeedsConfirm" class="message-actions">
-                  <a-button type="primary" size="small" @click="confirmStreamAction">确认执行</a-button>
-                  <a-button danger size="small" @click="rejectStreamAction">取消</a-button>
-                </div>
-                <div v-else class="typing-cursor"></div>
+                <div class="typing-cursor"></div>
               </div>
             </div>
           </div>
@@ -289,6 +285,20 @@
     <a-modal v-model:visible="showOutputModal" title="执行输出" :footer="null" width="700px">
       <pre style="max-height: 400px; overflow: auto; background: #1a1a1a; padding: 12px; border-radius: 4px; color: #ccc;">{{ currentOutput }}</pre>
     </a-modal>
+
+    <!-- 危险操作确认弹窗 -->
+    <a-modal v-model:visible="showConfirmModal" title="⚠️ 危险操作确认" :closable="false"
+             :maskClosable="false" width="500px" @cancel="rejectConfirmAction">
+      <p style="font-size: 14px; margin-bottom: 12px;">AI 请求执行以下操作，是否确认？</p>
+      <div style="background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 8px; padding: 12px;">
+        <div style="color: #888; font-size: 12px; margin-bottom: 4px;">工具: <span style="color: #d4d4d4; font-family: monospace;">{{ confirmToolName }}</span></div>
+        <div style="color: #888; font-size: 12px;">参数: <code style="color: #e0e0e0;">{{ confirmToolArgs }}</code></div>
+      </div>
+      <template #footer>
+        <a-button danger @click="rejectConfirmAction">取消</a-button>
+        <a-button type="primary" @click="acceptConfirmAction">确认执行</a-button>
+      </template>
+    </a-modal>
   </div>
 </template>
 
@@ -374,8 +384,9 @@ const streaming = ref(false);
 const streamTimeline = ref([]); // 统一时间线：[{type: 'text'|'tool'|'think', ...}]
 const showThink = ref(false); // 思考内容是否展开（默认收起）
 const expandedTools = ref(new Set()); // 展开的工具 ID
-const streamNeedsConfirm = ref(false); // 流式响应中是否有待确认的操作
-const streamPendingArgs = ref(''); // 待确认的工具参数
+const showConfirmModal = ref(false); // 确认弹窗
+const confirmToolName = ref(''); // 待确认的工具名
+const confirmToolArgs = ref(''); // 待确认的工具参数
 let eventSource = null;
 let textBuffer = ''; // 文本缓冲区，用于处理跨事件的 <think> 标签
 let isInThinkMode = false; // 是否正在处理 <think> 块
@@ -1073,7 +1084,6 @@ const sendMessage = async () => {
   // 清理打字机状态
   if (typeTimer) { clearInterval(typeTimer); typeTimer = null; }
   typeQueue = [];
-  streamNeedsConfirm.value = false;
 
   let url = patrolApi.chatStreamUrl(text, conversationId.value);
   if (serverIds.length > 0) {
@@ -1123,15 +1133,26 @@ const sendMessage = async () => {
               durationMs: toolEvent.durationMs
             };
           }
-          // 检测需要确认的工具结果
-          if (toolEvent.result && toolEvent.result.includes('需要确认')) {
-            streamNeedsConfirm.value = true;
-            streamPendingArgs.value = tl[idx]?.arguments || '';
-          }
         }
       } catch (e) {
         console.error('解析工具事件失败:', e);
       }
+    } else if (data.startsWith('needs_confirmation:')) {
+      // 工具需要确认，立即弹窗并暂停流
+      const parts = data.substring(19).split(':');
+      const toolName = parts[0] || '';
+      const toolArgs = parts.slice(1).join(':') || '';
+      confirmToolName.value = toolName;
+      confirmToolArgs.value = toolArgs;
+      showConfirmModal.value = true;
+      // 暂停流：关闭 EventSource，等待用户操作
+      if (eventSource) {
+        eventSource.close();
+        eventSource = null;
+      }
+      flushBuffer();
+      flushTypeQueue();
+      return;
     }
     scrollToBottom();
   };
@@ -1150,7 +1171,6 @@ const finishStream = () => {
   }
   // 立即渲染队列中剩余字符
   flushTypeQueue();
-  streamNeedsConfirm.value = false;
   // 保存消息
   if (streamTimeline.value.length > 0) {
     const timeline = [...streamTimeline.value];
@@ -1200,13 +1220,12 @@ const rejectCommand = (msg) => {
   scrollToBottom();
 };
 
-const confirmStreamAction = async () => {
-  streamNeedsConfirm.value = false;
-  // 先完成当前流，再发送确认消息
-  flushBuffer();
-  flushTypeQueue();
+const acceptConfirmAction = async () => {
+  showConfirmModal.value = false;
+  // 先保存当前流的消息
   finishStream();
   await nextTick();
+  // 发送确认消息
   const inputEl = mentionInputRef.value;
   if (inputEl) {
     inputEl.innerHTML = '确认执行';
@@ -1215,10 +1234,8 @@ const confirmStreamAction = async () => {
   await sendMessage();
 };
 
-const rejectStreamAction = () => {
-  streamNeedsConfirm.value = false;
-  flushBuffer();
-  flushTypeQueue();
+const rejectConfirmAction = () => {
+  showConfirmModal.value = false;
   finishStream();
   messages.value.push({role: 'assistant', content: '已取消执行'});
   scrollToBottom();

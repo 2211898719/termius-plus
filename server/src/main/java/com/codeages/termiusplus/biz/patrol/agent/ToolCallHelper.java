@@ -25,6 +25,10 @@ public class ToolCallHelper {
             long duration = System.currentTimeMillis() - startTime;
             String resultStr = result != null ? result.toString() : "";
             ToolCallEventCollector.emitToolResult(sink, toolName, arguments, resultStr, duration);
+            // 检测需要确认的结果，发送特殊事件
+            if (resultStr.contains("需要确认") && sink != null) {
+                sink.tryEmitNext("needs_confirmation:" + toolName + ":" + arguments);
+            }
             return result;
         } catch (Exception e) {
             long duration = System.currentTimeMillis() - startTime;
