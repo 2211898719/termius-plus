@@ -64,16 +64,15 @@ public class PatrolAgentService {
         // 创建工具调用事件收集器
         var toolEventSink = ToolCallEventCollector.createSink(conversationId);
 
-        // 先订阅工具事件，收集到列表中
-        var toolEventsMono = toolEventSink.asFlux()
+        // 工具事件流 - 实时发送
+        var toolEventFlux = toolEventSink.asFlux()
                 .map(event -> {
                     try {
                         return "tool_event:" + objectMapper.writeValueAsString(event);
                     } catch (Exception e) {
                         return "tool_event:{}";
                     }
-                })
-                .collectList();
+                });
 
         // AI 响应流 - 工具调用会通过 sink 发送事件
         var chatFlux = buildChatClient(conversationId).prompt(SYSTEM_PROMPT)
@@ -100,13 +99,8 @@ public class PatrolAgentService {
                          })
                          .doFinally(signal -> ToolCallEventCollector.clear(conversationId));
 
-        // 先等 AI 响应完成，收集工具事件，然后先发工具事件再发文本
-        return chatFlux.collectList()
-                .flatMapMany(textList -> toolEventsMono.flatMapMany(toolEventList -> {
-                    // 先发工具事件，再发文本
-                    return Flux.fromIterable(toolEventList)
-                            .concatWith(Flux.fromIterable(textList));
-                }))
-                .concatWith(Flux.just("[DONE]"));
+        // 合并工具事件和聊天响应流，实时发送
+        return Flux.merge(toolEventFlux, chatFlux)
+                   .concatWith(Flux.just("[DONE]"));
     }
 }
