@@ -822,6 +822,7 @@ const sendMessage = async () => {
       streamContent.value += data.substring(5);
     } else if (data.startsWith('think:')) {
       thinkContent.value += data.substring(6);
+      showThink.value = true; // 自动展开思考内容
     } else if (data.startsWith('tool_event:')) {
       try {
         const toolEvent = JSON.parse(data.substring(11));

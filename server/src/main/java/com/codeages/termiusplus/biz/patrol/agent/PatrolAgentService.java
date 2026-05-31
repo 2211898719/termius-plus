@@ -118,32 +118,16 @@ public class PatrolAgentService {
                     }
                 });
 
-        // AI 响应流 - 工具调用会通过 sink 发送事件
+        // AI 响应流 - 使用 .content() 获取文本，工具调用通过 sink 发送事件
         var chatFlux = buildChatClient(conversationId).prompt(SYSTEM_PROMPT)
                          .tools(cleanupTool, diskTool, executeCommandTool, nginxTool, serviceTool, serverTool)
                          .user(userMessage)
                          .stream()
-                         .chatResponse()
-                         .flatMap(response -> {
-                             Flux<String> flux = Flux.empty();
-
-                             Generation result = response.getResult();
-                             if (result != null) {
-                                 AssistantMessage assistantMessage = result.getOutput();
-                                 if (assistantMessage != null) {
-                                     // 发送文本内容，处理 <think> 标签
-                                     String text = assistantMessage.getText();
-                                     if (text != null && !text.isEmpty()) {
-                                         flux = Flux.concat(flux, parseTextWithThink(text));
-                                     }
-                                 }
-                             }
-
-                             return flux;
-                         })
+                         .content()
+                         .flatMap(text -> parseTextWithThink(text))
                          .doFinally(signal -> ToolCallEventCollector.clear(conversationId));
 
-        // 合并工具事件和聊天响应流，实时发送
+        // 合并工具事件和聊天响应流
         return Flux.merge(toolEventFlux, chatFlux)
                    .concatWith(Flux.just("[DONE]"));
     }
