@@ -298,72 +298,150 @@ const handleInput = () => {
     return;
   }
 
-  // 获取纯文本内容
-  const text = getTextContent(inputEl);
-  const cursorPos = getCursorPosition(inputEl, selection);
+  // 使用 DOM 结构检测光标前的 @ 是否在 mention 外部
+  const { hasExternalAt, atNode, atOffset, filterText } = findAtBeforeCursor(inputEl, selection);
 
-  // 从光标位置向前查找@，排除在 mention 标签内的@
-  let lastAtIndex = -1;
-  const mentions = inputEl.querySelectorAll('.inline-mention');
-
-  // 构建 mention 位置信息
-  const mentionRanges = [];
-  let textOffset = 0;
-  const walker = document.createTreeWalker(inputEl, NodeFilter.SHOW_TEXT, null, false);
-  let node;
-  while (node = walker.nextNode()) {
-    for (const m of mentions) {
-      if (node === m.firstChild) {
-        // 这个 text node 是 mention 的第一个子节点
-        mentionRanges.push({ start: textOffset, end: textOffset + m.textContent.length, element: m });
-      }
-    }
-    textOffset += node.textContent.length;
-  }
-
-  // 从光标位置向前逐字符检查
-  for (let i = cursorPos - 1; i >= 0; i--) {
-    if (text[i] === '@') {
-      // 找到@，检查它是否在某个 mention 元素内
-      let inMention = false;
-      for (const mr of mentionRanges) {
-        if (i >= mr.start && i < mr.end) {
-          inMention = true;
-          break;
-        }
-      }
-      if (!inMention) {
-        lastAtIndex = i;
-        break;
-      }
-    }
-  }
-
-  if (lastAtIndex !== -1) {
-    const textAfterAt = text.substring(lastAtIndex + 1, cursorPos);
-    if (!textAfterAt.includes(' ')) {
-      showMention.value = true;
-      mentionFilter.value = textAfterAt;
-      mentionIndex.value = 0;
-      navIndex = 0;
-      return;
-    }
+  if (hasExternalAt) {
+    showMention.value = true;
+    mentionFilter.value = filterText;
+    mentionIndex.value = 0;
+    navIndex = 0;
+    return;
   }
 
   showMention.value = false;
   mentionFilter.value = '';
 };
 
+// 找到光标前不在 mention 内的 @ 符号及其后续文本
+const findAtBeforeCursor = (el, selection) => {
+  const range = selection.getRangeAt(0);
+  if (!range) return { hasExternalAt: false };
+
+  // 获取光标位置的节点和偏移
+  let node = range.endContainer;
+  let offset = range.endOffset;
+
+  // 收集光标前从 @ 后面到光标位置的文本
+  let filterText = '';
+  let atNode = null;
+  let atOffset = 0;
+
+  // 从当前节点、光标偏移位置开始向前遍历
+  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null, false);
+  let currentNode = node;
+  let currentOffset = offset;
+
+  // 首先收集从光标到往前第一个非 mention 文本节点边界的所有文本
+  while (currentNode) {
+    if (currentNode === el) break;
+
+    if (currentNode.nodeType !== Node.TEXT_NODE) {
+      currentNode = currentNode.previousSibling;
+      continue;
+    }
+
+    const text = currentNode.textContent;
+    const startPos = currentNode === node ? currentOffset : text.length;
+
+    // 遍历当前文本节点
+    for (let i = startPos - 1; i >= 0; i--) {
+      const char = text[i];
+
+      if (char === '@') {
+        // 检查 @ 是否在 mention span 内
+        let parent = currentNode.parentNode;
+        while (parent && parent !== el) {
+          if (parent.classList && parent.classList.contains('inline-mention')) {
+            // @ 在 mention 内，跳过这个 mention
+            filterText = ''; // 重置 filterText
+            break;
+          }
+          parent = parent.parentNode;
+        }
+        if (parent === el) {
+          // @ 在 mention 外，找到了
+          atNode = currentNode;
+          atOffset = i;
+          return {
+            hasExternalAt: true,
+            atNode,
+            atOffset,
+            filterText
+          };
+        }
+      } else if (char === ' ' || char === '\t' || char === '\n') {
+        // 遇到空白字符，还没找到 @，继续往前找
+        filterText = '';
+      } else {
+        // 普通字符，收集到 filterText
+        filterText = char + filterText;
+      }
+    }
+
+    // 如果当前文本节点在 mention span 内，跳过该 mention 内的所有内容
+    let parent = currentNode.parentNode;
+    if (parent && parent !== el && parent.classList && parent.classList.contains('inline-mention')) {
+      // 跳过整个 mention span
+      let sibling = parent.previousSibling;
+      while (sibling && sibling.nodeType !== Node.TEXT_NODE) {
+        sibling = sibling.previousSibling;
+      }
+      currentNode = sibling;
+    } else {
+      currentNode = currentNode.previousSibling;
+    }
+  }
+
+  return { hasExternalAt: false };
+};
+
 // 获取光标在纯文本中的位置
 const getCursorPosition = (el, selection) => {
-  const range = selection?.getRangeAt(0);
+  const sel = selection || window.getSelection();
+  const range = sel?.getRangeAt(0);
   if (!range) return 0;
 
-  // 创建一个临时元素来计算光标前的纯文本长度
-  const tempRange = document.createRange();
-  tempRange.selectNodeContents(el);
-  tempRange.setEnd(range.endContainer, range.endOffset);
-  return tempRange.toString().length;
+  // 如果光标在 mention span 内部（不应该发生，但以防万一），移到 span 后面
+  let container = range.endContainer;
+  let offset = range.endOffset;
+  while (container && container !== el) {
+    if (container.classList && container.classList.contains('inline-mention')) {
+      // 光标在 mention 内部，移到 mention 后面
+      const newRange = document.createRange();
+      newRange.setStartAfter(container);
+      newRange.collapse(true);
+      sel.removeAllRanges();
+      sel.addRange(newRange);
+      return getCursorPosition(el, sel); // 递归重新计算
+    }
+    container = container.parentNode;
+  }
+
+  // 计算光标前的纯文本长度（排除 mention span 内容）
+  let textLen = 0;
+  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null, false);
+  let node;
+  while (node = walker.nextNode()) {
+    if (node === range.endContainer) {
+      // 到达光标所在节点，返回长度 + 偏移
+      return textLen + range.endOffset;
+    }
+    // 检查是否在 mention 内
+    let current = node.parentNode;
+    let isInMention = false;
+    while (current && current !== el) {
+      if (current.classList && current.classList.contains('inline-mention')) {
+        isInMention = true;
+        break;
+      }
+      current = current.parentNode;
+    }
+    if (!isInMention) {
+      textLen += node.textContent.length;
+    }
+  }
+  return textLen;
 };
 
 // 获取元素的纯文本内容（不包含HTML标签）
@@ -426,62 +504,49 @@ const insertInlineMention = (server) => {
   const inputEl = mentionInputRef.value;
   if (!inputEl) return;
 
-  const text = getTextContent(inputEl);
   const selection = window.getSelection();
-  const cursorPos = getCursorPosition(inputEl, selection);
-  const lastAtIndex = text.lastIndexOf('@', cursorPos - 1);
+  if (!selection || selection.rangeCount === 0) return;
 
-  if (lastAtIndex === -1) return;
+  // 使用 findAtBeforeCursor 找到有效的 @
+  const { atNode, atOffset } = findAtBeforeCursor(inputEl, selection);
+  if (!atNode) return;
 
-  // 使用 TreeWalker 找到光标位置对应的文本节点和偏移
-  let charCount = 0;
-  const walker = document.createTreeWalker(inputEl, NodeFilter.SHOW_TEXT, null, false);
-  let node;
-  let startNode = null, startOffset = 0, endNode = null, endOffset = 0;
+  // 创建范围从 @ 到当前光标
+  const range = selection.getRangeAt(0);
+  const newRange = document.createRange();
+  newRange.setStart(atNode, atOffset);
+  newRange.setEnd(range.endContainer, range.endOffset);
+  newRange.deleteContents();
 
-  while (node = walker.nextNode()) {
-    const nodeLen = node.textContent.length;
-    if (charCount <= lastAtIndex && charCount + nodeLen >= lastAtIndex) {
-      startNode = node;
-      startOffset = lastAtIndex - charCount;
-    }
-    if (charCount <= cursorPos && charCount + nodeLen >= cursorPos) {
-      endNode = node;
-      endOffset = cursorPos - charCount;
-      break;
-    }
-    charCount += nodeLen;
-  }
+  // 创建 inline-mention span
+  const span = document.createElement('span');
+  span.className = 'inline-mention';
+  span.setAttribute('data-id', server.id);
+  span.setAttribute('data-name', server.name);
+  span.contentEditable = 'false';
+  span.innerHTML = `<span class="inline-mention-icon">${getOsIcon(server.os)}</span><span class="inline-mention-name">@${server.name}</span><span class="inline-mention-remove" onclick="this.parentNode.remove(); this.parentNode.dispatchEvent(new Event('input', {bubbles: true}));">×</span>`;
 
-  if (startNode && endNode) {
-    const range = document.createRange();
-    range.setStart(startNode, startOffset);
-    range.setEnd(endNode, endOffset);
-    range.deleteContents();
+  newRange.insertNode(span);
 
-    // 创建 inline-mention span
-    const span = document.createElement('span');
-    span.className = 'inline-mention';
-    span.setAttribute('data-id', server.id);
-    span.setAttribute('data-name', server.name);
-    span.contentEditable = 'false';
-    span.innerHTML = `<span class="inline-mention-icon">${getOsIcon(server.os)}</span><span class="inline-mention-name">@${server.name}</span><span class="inline-mention-remove" onclick="this.parentNode.remove(); this.parentNode.dispatchEvent(new Event('input', {bubbles: true}));">×</span>`;
-
-    range.insertNode(span);
-
-    // 在 span 后插入零宽字符作为光标位置标记
-    const zwc = document.createTextNode('​');
+  // 在 span 后插入零宽字符作为光标位置标记
+  const zwc = document.createTextNode('​');
+  if (span.nextSibling) {
     span.parentNode.insertBefore(zwc, span.nextSibling);
-
-    // 移动光标到零宽字符前
-    const newSel = window.getSelection();
-    const newRange = document.createRange();
-    newRange.setStartBefore(zwc);
-    newRange.collapse(true);
-    newSel.removeAllRanges();
-    newSel.addRange(newRange);
-    inputEl.focus();
+  } else {
+    span.parentNode.appendChild(zwc);
   }
+
+  // 移动光标到零宽字符前
+  const finalSel = window.getSelection();
+  const finalRange = document.createRange();
+  finalRange.setStartBefore(zwc);
+  finalRange.collapse(true);
+  finalSel.removeAllRanges();
+  finalSel.addRange(finalRange);
+  inputEl.focus();
+
+  // 触发 input 事件更新状态
+  inputEl.dispatchEvent(new Event('input', { bubbles: true }));
 };
 
 // 设置输入框文本
