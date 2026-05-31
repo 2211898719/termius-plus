@@ -322,91 +322,10 @@ const getTextContent = (el) => {
 
 // 选择服务器
 const selectMentionServer = async (server) => {
-  const inputEl = mentionInputRef.value;
-  if (!inputEl) return;
-
-  const text = getTextContent(inputEl);
-  const selection = window.getSelection();
-  const cursorPos = getCursorPosition(inputEl, selection);
-
-  // 找到光标前的 @ 位置
-  const lastAtIndex = text.lastIndexOf('@', cursorPos - 1);
-
-  if (lastAtIndex !== -1) {
-    // 使用 Range API 替换 @xxx 为 inline-mention span
-    const range = selection?.getRangeAt(0);
-    if (range) {
-      const walker = document.createTreeWalker(inputEl, NodeFilter.SHOW_TEXT, null, false);
-      let node;
-      let charCount = 0;
-
-      while (node = walker.nextNode()) {
-        if (node === range.startContainer) {
-          charCount += range.startOffset;
-          break;
-        }
-        charCount += node.textContent.length;
-      }
-
-      // 计算 @ 符号在 node tree 中的位置
-      const atNodePos = charCount - range.startOffset + (cursorPos - lastAtIndex - 1);
-
-      // 删除 @xxx 并插入新的 span
-      const newRange = document.createRange();
-      let currentNode = inputEl.firstChild;
-      let currentPos = 0;
-      let startNode = null, startOffset = 0, endNode = null, endOffset = 0;
-
-      while (currentNode) {
-        const nodeLength = currentNode.textContent?.length || 0;
-        if (currentPos <= atNodePos && currentPos + nodeLength >= atNodePos) {
-          startNode = currentNode;
-          startOffset = atNodePos - currentPos;
-        }
-        if (currentPos <= atNodePos + (cursorPos - lastAtIndex) && currentPos + nodeLength >= atNodePos + (cursorPos - lastAtIndex)) {
-          endNode = currentNode;
-          endOffset = atNodePos + (cursorPos - lastAtIndex) - currentPos;
-          break;
-        }
-        currentPos += nodeLength;
-        currentNode = currentNode.nextSibling;
-      }
-
-      if (startNode && endNode) {
-        newRange.setStart(startNode, startOffset);
-        newRange.setEnd(endNode, endOffset);
-        newRange.deleteContents();
-
-        // 创建 inline-mention span
-        const span = document.createElement('span');
-        span.className = 'inline-mention';
-        span.setAttribute('data-id', server.id);
-        span.setAttribute('data-name', server.name);
-        span.contentEditable = 'false';
-        span.innerHTML = `<span class="inline-mention-icon">${getOsIcon(server.os)}</span><span class="inline-mention-name">@${server.name}</span><span class="inline-mention-remove" onclick="this.parentNode.remove()">×</span>`;
-
-        newRange.insertNode(span);
-
-        // 在 span 后插入空格
-        const space = document.createTextNode(' ');
-        span.parentNode.insertBefore(space, span.nextSibling);
-
-        // 移动光标到 span 后
-        const newSel = window.getSelection();
-        newRange.setStartAfter(space);
-        newRange.collapse(true);
-        newSel.removeAllRanges();
-        newSel.addRange(newRange);
-      }
-    }
-  }
-
+  insertInlineMention(server);
   showMention.value = false;
   mentionFilter.value = '';
   navIndex = 0;
-
-  // 触发 input 事件更新
-  inputEl.dispatchEvent(new Event('input', { bubbles: true }));
 };
 
 // 获取 OS 图标
@@ -444,9 +363,9 @@ const insertInlineMention = (server) => {
 
   while (node = walker.nextNode()) {
     const nodeLen = node.textContent.length;
-    if (charCount <= atSymbolPos && charCount + nodeLen >= atSymbolPos) {
+    if (charCount <= lastAtIndex && charCount + nodeLen >= lastAtIndex) {
       startNode = node;
-      startOffset = atSymbolPos - charCount;
+      startOffset = lastAtIndex - charCount;
     }
     if (charCount <= cursorPos && charCount + nodeLen >= cursorPos) {
       endNode = node;
