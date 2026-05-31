@@ -819,7 +819,21 @@ const sendMessage = async () => {
 
     // 解析事件格式
     if (data.startsWith('text:')) {
-      streamContent.value += data.substring(5);
+      const text = data.substring(5);
+      // 解析 <think> 标签
+      const thinkMatch = text.match(/<think>([\s\S]*?)<\/think>/);
+      if (thinkMatch) {
+        // 有 <think> 标签，提取思考内容
+        const beforeThink = text.substring(0, text.indexOf('<think>')).trim();
+        const thinkText = thinkMatch[1].trim();
+        const afterThink = text.substring(text.indexOf('</think>') + 8).trim();
+        if (beforeThink) streamContent.value += beforeThink;
+        thinkContent.value += thinkText;
+        showThink.value = true;
+        if (afterThink) streamContent.value += afterThink;
+      } else {
+        streamContent.value += text;
+      }
     } else if (data.startsWith('think:')) {
       thinkContent.value += data.substring(6);
       showThink.value = true; // 自动展开思考内容

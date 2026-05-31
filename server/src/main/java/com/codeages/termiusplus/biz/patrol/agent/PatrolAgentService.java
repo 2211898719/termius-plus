@@ -118,13 +118,13 @@ public class PatrolAgentService {
                     }
                 });
 
-        // AI 响应流 - 使用 .content() 获取文本，工具调用通过 sink 发送事件
+        // AI 响应流 - 直接发送原始文本，由前端解析 <think> 标签
         var chatFlux = buildChatClient(conversationId).prompt(SYSTEM_PROMPT)
                          .tools(cleanupTool, diskTool, executeCommandTool, nginxTool, serviceTool, serverTool)
                          .user(userMessage)
                          .stream()
                          .content()
-                         .flatMap(text -> parseTextWithThink(text))
+                         .map(text -> "text:" + text)
                          .doFinally(signal -> ToolCallEventCollector.clear(conversationId));
 
         // 合并工具事件和聊天响应流

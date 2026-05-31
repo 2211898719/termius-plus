@@ -15,10 +15,6 @@ public class ToolCallHelper {
             T result = executor.execute();
             long duration = System.currentTimeMillis() - startTime;
             String resultStr = result != null ? result.toString() : "";
-            // 截断过长的结果
-            if (resultStr.length() > 2000) {
-                resultStr = resultStr.substring(0, 2000) + "\n... (结果已截断)";
-            }
             ToolCallEventCollector.emitToolResult(toolName, arguments, resultStr, duration);
             return result;
         } catch (Exception e) {
