@@ -413,13 +413,8 @@ const insertInlineMention = (server) => {
     // 在 span 后插入空格和零宽字符，确保光标在正确的位置
     const space = document.createTextNode(' ');
     const zwc = document.createTextNode('​'); // 零宽字符
-    if (span.nextSibling) {
-      span.parentNode.insertBefore(space, span.nextSibling);
-      span.parentNode.insertBefore(zwc, span.nextSibling);
-    } else {
-      span.parentNode.appendChild(space);
-      span.parentNode.appendChild(zwc);
-    }
+    span.parentNode.appendChild(space);
+    span.parentNode.appendChild(zwc);
 
     // 移动光标到零宽字符前（这样输入会插入到空格后面）
     const newSel = window.getSelection();
