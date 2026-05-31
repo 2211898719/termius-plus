@@ -993,35 +993,53 @@ onMounted(() => {
   cursor: not-allowed;
 }
 
-/* Inline mention tag */
+/* Inline mention tag - Ant Design tag style */
 .inline-mention {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
-  padding: 2px 6px;
-  background: #1890ff;
-  color: #fff;
+  gap: 4px;
+  padding: 0 7px;
+  height: 24px;
+  background: #f4f4f5;
+  border: 1px solid #d9d9d9;
   border-radius: 4px;
   font-size: 13px;
   vertical-align: middle;
-  margin: 0 2px;
+  margin: 2px 4px 2px 0;
   cursor: default;
+  color: #333;
+}
+
+.inline-mention:hover {
+  background: #e6e6e6;
+  border-color: #bfbfbf;
 }
 
 .inline-mention-icon {
   font-size: 12px;
+  opacity: 0.75;
 }
 
 .inline-mention-name {
-  font-weight: 500;
+  font-weight: 400;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .inline-mention-remove {
-  margin-left: 4px;
+  margin-left: 2px;
   cursor: pointer;
-  opacity: 0.7;
-  font-size: 14px;
+  opacity: 0.5;
+  font-size: 10px;
   line-height: 1;
+  color: #999;
+}
+
+.inline-mention-remove:hover {
+  opacity: 1;
+  color: #333;
 }
 
 .inline-mention-remove:hover {
