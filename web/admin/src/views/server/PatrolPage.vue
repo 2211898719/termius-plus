@@ -374,6 +374,50 @@ let eventSource = null;
 let textBuffer = ''; // 文本缓冲区，用于处理跨事件的 <think> 标签
 let isInThinkMode = false; // 是否正在处理 <think> 块
 
+// 打字机效果
+let typeQueue = []; // [{char, entry}]
+let typeTimer = null;
+const TYPE_SPEED = 15; // ms per tick
+
+function startTypeTimer() {
+  if (typeTimer) return;
+  typeTimer = setInterval(() => {
+    if (typeQueue.length === 0) {
+      if (!streaming.value) {
+        clearInterval(typeTimer);
+        typeTimer = null;
+      }
+      return;
+    }
+    // 队列越长，每 tick 处理越多字符，避免严重滞后
+    const batch = typeQueue.length > 120 ? 8 : typeQueue.length > 60 ? 4 : 2;
+    for (let i = 0; i < batch && typeQueue.length > 0; i++) {
+      const { char, entry } = typeQueue.shift();
+      entry.content += char;
+    }
+    scrollToBottom();
+  }, TYPE_SPEED);
+}
+
+function queueText(text, entry) {
+  for (const char of text) {
+    typeQueue.push({ char, entry });
+  }
+  startTypeTimer();
+}
+
+function flushTypeQueue() {
+  const groups = new Map();
+  for (const { char, entry } of typeQueue) {
+    if (!groups.has(entry)) groups.set(entry, '');
+    groups.set(entry, groups.get(entry) + char);
+  }
+  for (const [entry, text] of groups) {
+    entry.content += text;
+  }
+  typeQueue = [];
+}
+
 // @提及服务器功能
 let serverTree = ref([]);
 let showMention = ref(false);
@@ -903,9 +947,11 @@ const processTextChunk = (chunk) => {
         // 没有 <think>，追加到最后一个 text 条目或创建新的
         const tl = streamTimeline.value;
         if (tl.length > 0 && tl[tl.length - 1].type === 'text') {
-          tl[tl.length - 1].content += textBuffer;
+          queueText(textBuffer, tl[tl.length - 1]);
         } else if (textBuffer) {
-          tl.push({ type: 'text', content: textBuffer });
+          const entry = { type: 'text', content: '' };
+          tl.push(entry);
+          queueText(textBuffer, entry);
         }
         textBuffer = '';
         break;
@@ -915,9 +961,11 @@ const processTextChunk = (chunk) => {
         const before = textBuffer.substring(0, thinkStart);
         const tl = streamTimeline.value;
         if (tl.length > 0 && tl[tl.length - 1].type === 'text') {
-          tl[tl.length - 1].content += before;
+          queueText(before, tl[tl.length - 1]);
         } else {
-          tl.push({ type: 'text', content: before });
+          const entry = { type: 'text', content: '' };
+          tl.push(entry);
+          queueText(before, entry);
         }
       }
       // 进入思考模式，创建 timeline 条目
@@ -931,7 +979,7 @@ const processTextChunk = (chunk) => {
         const tl = streamTimeline.value;
         const last = tl[tl.length - 1];
         if (last && last.type === 'think') {
-          last.content += textBuffer;
+          queueText(textBuffer, last);
         }
         textBuffer = '';
         break;
@@ -940,7 +988,7 @@ const processTextChunk = (chunk) => {
       const tl = streamTimeline.value;
       const last = tl[tl.length - 1];
       if (last && last.type === 'think') {
-        last.content += textBuffer.substring(0, thinkEnd);
+        queueText(textBuffer.substring(0, thinkEnd), last);
       }
       textBuffer = textBuffer.substring(thinkEnd + 8);
       isInThinkMode = false;
@@ -955,13 +1003,15 @@ const flushBuffer = () => {
     if (isInThinkMode) {
       const last = tl[tl.length - 1];
       if (last && last.type === 'think') {
-        last.content += textBuffer;
+        queueText(textBuffer, last);
       }
     } else {
       if (tl.length > 0 && tl[tl.length - 1].type === 'text') {
-        tl[tl.length - 1].content += textBuffer;
+        queueText(textBuffer, tl[tl.length - 1]);
       } else {
-        tl.push({ type: 'text', content: textBuffer });
+        const entry = { type: 'text', content: '' };
+        tl.push(entry);
+        queueText(textBuffer, entry);
       }
     }
     textBuffer = '';
@@ -1008,6 +1058,9 @@ const sendMessage = async () => {
   streamTimeline.value = [];
   showThink.value = false;
   expandedTools.value = new Set();
+  // 清理打字机状态
+  if (typeTimer) { clearInterval(typeTimer); typeTimer = null; }
+  typeQueue = [];
 
   let url = patrolApi.chatStreamUrl(text, conversationId.value);
   if (serverIds.length > 0) {
@@ -1077,6 +1130,8 @@ const finishStream = () => {
     eventSource.close();
     eventSource = null;
   }
+  // 立即渲染队列中剩余字符
+  flushTypeQueue();
   // 保存消息
   if (streamTimeline.value.length > 0) {
     const timeline = [...streamTimeline.value];
@@ -1129,6 +1184,10 @@ const rejectCommand = (msg) => {
 onUnmounted(() => {
   if (eventSource) {
     eventSource.close();
+  }
+  if (typeTimer) {
+    clearInterval(typeTimer);
+    typeTimer = null;
   }
 });
 const scripts = ref([]);
