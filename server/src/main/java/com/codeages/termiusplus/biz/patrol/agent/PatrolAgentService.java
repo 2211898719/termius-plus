@@ -61,7 +61,19 @@ public class PatrolAgentService {
     }
 
     public Flux<String> stream(String userMessage, String conversationId) {
-        return buildChatClient(conversationId).prompt(SYSTEM_PROMPT)
+        // 创建工具调用事件收集器
+        var toolEventSink = ToolCallEventCollector.createSink();
+        var toolEventFlux = toolEventSink.asFlux()
+                .map(event -> {
+                    try {
+                        return "tool_event:" + objectMapper.writeValueAsString(event);
+                    } catch (Exception e) {
+                        return "tool_event:{}";
+                    }
+                });
+
+        // AI 响应流
+        var chatFlux = buildChatClient(conversationId).prompt(SYSTEM_PROMPT)
                          .tools(cleanupTool, diskTool, executeCommandTool, nginxTool, serviceTool, serverTool)
                          .user(userMessage)
                          .stream()
@@ -100,6 +112,10 @@ public class PatrolAgentService {
 
                              return flux;
                          })
-                         .concatWith(Flux.just("[DONE]"));
+                         .doFinally(signal -> ToolCallEventCollector.clear());
+
+        // 合并工具事件和聊天响应流
+        return Flux.merge(toolEventFlux, chatFlux)
+                   .concatWith(Flux.just("[DONE]"));
     }
 }

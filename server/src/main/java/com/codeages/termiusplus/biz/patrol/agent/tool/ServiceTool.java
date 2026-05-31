@@ -1,5 +1,6 @@
 package com.codeages.termiusplus.biz.patrol.agent.tool;
 
+import com.codeages.termiusplus.biz.patrol.agent.ToolCallHelper;
 import com.codeages.termiusplus.biz.util.ExecuteCommandSSHClient;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
@@ -14,19 +15,23 @@ public class ServiceTool {
     public String getServiceStatus(
             @ToolParam(description = "服务器ID") Long serverId,
             @ToolParam(description = "服务名称，例如 nginx、mysql 或 redis") String serviceName) {
-        try (ExecuteCommandSSHClient client = new ExecuteCommandSSHClient(serverId)) {
-            return client.executeCommand("systemctl status " + serviceName + " 2>&1");
-        } catch (Exception e) {
-            return "检查失败: " + e.getMessage();
-        }
+        return ToolCallHelper.execute("getServiceStatus", "serverId=" + serverId + ", serviceName=" + serviceName, () -> {
+            try (ExecuteCommandSSHClient client = new ExecuteCommandSSHClient(serverId)) {
+                return client.executeCommand("systemctl status " + serviceName + " 2>&1");
+            } catch (Exception e) {
+                return "检查失败: " + e.getMessage();
+            }
+        });
     }
 
     @Tool(description = "列出所有正在运行的服务。")
     public String listRunningServices(@ToolParam(description = "服务器ID") Long serverId) {
-        try (ExecuteCommandSSHClient client = new ExecuteCommandSSHClient(serverId)) {
-            return client.executeCommand("systemctl list-units --type=service --state=running --no-pager");
-        } catch (Exception e) {
-            return "获取失败: " + e.getMessage();
-        }
+        return ToolCallHelper.execute("listRunningServices", "serverId=" + serverId, () -> {
+            try (ExecuteCommandSSHClient client = new ExecuteCommandSSHClient(serverId)) {
+                return client.executeCommand("systemctl list-units --type=service --state=running --no-pager");
+            } catch (Exception e) {
+                return "获取失败: " + e.getMessage();
+            }
+        });
     }
 }

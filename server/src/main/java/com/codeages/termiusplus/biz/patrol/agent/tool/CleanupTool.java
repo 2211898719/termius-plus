@@ -1,5 +1,6 @@
 package com.codeages.termiusplus.biz.patrol.agent.tool;
 
+import com.codeages.termiusplus.biz.patrol.agent.ToolCallHelper;
 import com.codeages.termiusplus.biz.util.ExecuteCommandSSHClient;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
@@ -16,16 +17,18 @@ public class CleanupTool {
             @ToolParam(description = "路径") String path,
             @ToolParam(description = "文件名模式") String pattern,
             @ToolParam(description = "超过多少天") int olderThanDays) {
-        String command = String.format("find %s -name '%s' -mtime +%d -type f 2>/dev/null | head -50", path, pattern, olderThanDays);
-        try (ExecuteCommandSSHClient client = new ExecuteCommandSSHClient(serverId)) {
-            String files = client.executeCommand(command);
-            if (files.isEmpty()) {
-                return "没有找到符合条件的文件";
+        return ToolCallHelper.execute("cleanupFiles", "serverId=" + serverId + ", path=" + path + ", pattern=" + pattern + ", olderThanDays=" + olderThanDays, () -> {
+            String command = String.format("find %s -name '%s' -mtime +%d -type f 2>/dev/null | head -50", path, pattern, olderThanDays);
+            try (ExecuteCommandSSHClient client = new ExecuteCommandSSHClient(serverId)) {
+                String files = client.executeCommand(command);
+                if (files.isEmpty()) {
+                    return "没有找到符合条件的文件";
+                }
+                return "以下文件将被删除（需要确认）:\n" + files;
+            } catch (Exception e) {
+                return "查找失败: " + e.getMessage();
             }
-            return "以下文件将被删除（需要确认）:\n" + files;
-        } catch (Exception e) {
-            return "查找失败: " + e.getMessage();
-        }
+        });
     }
 
     @Tool(description = "确认执行文件清理。在用户确认后调用此工具实际删除文件。")
@@ -34,11 +37,13 @@ public class CleanupTool {
             @ToolParam(description = "路径") String path,
             @ToolParam(description = "文件名模式") String pattern,
             @ToolParam(description = "超过多少天") int olderThanDays) {
-        String command = String.format("find %s -name '%s' -mtime +%d -type f -delete 2>&1", path, pattern, olderThanDays);
-        try (ExecuteCommandSSHClient client = new ExecuteCommandSSHClient(serverId)) {
-            return "清理完成: " + client.executeCommand(command);
-        } catch (Exception e) {
-            return "清理失败: " + e.getMessage();
-        }
+        return ToolCallHelper.execute("confirmCleanup", "serverId=" + serverId + ", path=" + path + ", pattern=" + pattern + ", olderThanDays=" + olderThanDays, () -> {
+            String command = String.format("find %s -name '%s' -mtime +%d -type f -delete 2>&1", path, pattern, olderThanDays);
+            try (ExecuteCommandSSHClient client = new ExecuteCommandSSHClient(serverId)) {
+                return "清理完成: " + client.executeCommand(command);
+            } catch (Exception e) {
+                return "清理失败: " + e.getMessage();
+            }
+        });
     }
 }

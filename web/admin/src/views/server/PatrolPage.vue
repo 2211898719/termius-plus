@@ -22,6 +22,31 @@
                 <span v-else>&#129302;</span>
               </div>
               <div class="message-body">
+                <!-- 工具调用事件（历史消息） -->
+                <template v-if="msg.toolEvents && msg.toolEvents.length > 0">
+                  <div v-for="(event, idx) in msg.toolEvents" :key="'hist-'+idx" class="tool-event">
+                    <div class="tool-event-header" @click="toggleToolExpand('hist-'+index+'-'+idx)">
+                      <span class="tool-event-icon" :class="event.type">
+                        {{ event.type === 'tool_start' ? '⚙️' : '✅' }}
+                      </span>
+                      <span class="tool-event-name">{{ event.toolName }}</span>
+                      <span v-if="event.type === 'tool_result'" class="tool-event-duration">
+                        {{ event.durationMs }}ms
+                      </span>
+                      <span class="tool-event-toggle">{{ expandedTools.has('hist-'+index+'-'+idx) ? '▼' : '▶' }}</span>
+                    </div>
+                    <div v-if="expandedTools.has('hist-'+index+'-'+idx)" class="tool-event-detail">
+                      <div class="tool-event-args">
+                        <div class="tool-event-label">参数:</div>
+                        <code>{{ event.arguments }}</code>
+                      </div>
+                      <div v-if="event.type === 'tool_result'" class="tool-event-result">
+                        <div class="tool-event-label">结果:</div>
+                        <pre>{{ event.result }}</pre>
+                      </div>
+                    </div>
+                  </div>
+                </template>
                 <div class="message-content" v-html="renderMarkdown(msg.content)"></div>
                 <div v-if="msg.needsConfirmation" class="message-actions">
                   <a-button type="primary" size="small" @click="confirmCommand(msg, index)">确认执行</a-button>
@@ -32,11 +57,31 @@
             <div v-if="streaming" class="message assistant">
               <div class="message-avatar"><span>&#129302;</span></div>
               <div class="message-body">
-                <div class="message-content" v-html="renderMarkdown(streamContent)"></div>
-                <div v-if="currentToolCall" class="tool-call-indicator">
-                  <div class="tool-call-name">{{ currentToolCall.name }}</div>
-                  <div class="tool-call-status">执行中...</div>
+                <!-- 工具调用事件 -->
+                <div v-for="(event, idx) in toolEvents" :key="idx" class="tool-event">
+                  <div class="tool-event-header" @click="toggleToolExpand(idx)">
+                    <span class="tool-event-icon" :class="event.type">
+                      {{ event.type === 'tool_start' ? '⚙️' : '✅' }}
+                    </span>
+                    <span class="tool-event-name">{{ event.toolName }}</span>
+                    <span v-if="event.type === 'tool_result'" class="tool-event-duration">
+                      {{ event.durationMs }}ms
+                    </span>
+                    <span class="tool-event-toggle">{{ expandedTools.has(idx) ? '▼' : '▶' }}</span>
+                  </div>
+                  <div v-if="expandedTools.has(idx)" class="tool-event-detail">
+                    <div class="tool-event-args">
+                      <div class="tool-event-label">参数:</div>
+                      <code>{{ event.arguments }}</code>
+                    </div>
+                    <div v-if="event.type === 'tool_result'" class="tool-event-result">
+                      <div class="tool-event-label">结果:</div>
+                      <pre>{{ event.result }}</pre>
+                    </div>
+                  </div>
                 </div>
+                <!-- AI 回复内容 -->
+                <div v-if="streamContent" class="message-content" v-html="renderMarkdown(streamContent)"></div>
                 <div class="typing-cursor"></div>
               </div>
             </div>
@@ -185,8 +230,8 @@ const messagesRef = ref(null);
 const conversationId = ref(null);
 const streaming = ref(false);
 const streamContent = ref('');
-const currentToolCall = ref(null); // 当前正在执行的工具调用
-const toolCallResult = ref(''); // 工具执行结果
+const toolEvents = ref([]); // 工具调用事件列表
+const expandedTools = ref(new Set()); // 展开的工具 ID
 let eventSource = null;
 
 // @提及服务器功能
@@ -698,6 +743,15 @@ const scrollToBottom = () => {
   });
 };
 
+// 切换工具事件展开/收起
+const toggleToolExpand = (idx) => {
+  if (expandedTools.value.has(idx)) {
+    expandedTools.value.delete(idx);
+  } else {
+    expandedTools.value.add(idx);
+  }
+};
+
 const sendMessage = async () => {
   if (mentionJustHandled.value) return;
 
@@ -717,8 +771,8 @@ const sendMessage = async () => {
 
   streaming.value = true;
   streamContent.value = '';
-  currentToolCall.value = null;
-  toolCallResult.value = '';
+  toolEvents.value = [];
+  expandedTools.value = new Set();
 
   let url = patrolApi.chatStreamUrl(text, conversationId.value);
   if (serverIds.length > 0) {
@@ -736,15 +790,14 @@ const sendMessage = async () => {
     // 解析事件格式
     if (data.startsWith('text:')) {
       streamContent.value += data.substring(5);
-    } else if (data.startsWith('tool_call:')) {
+    } else if (data.startsWith('tool_event:')) {
       try {
-        const toolCall = JSON.parse(data.substring(10));
-        currentToolCall.value = {
-          name: toolCall.name,
-          arguments: toolCall.arguments
-        };
+        const toolEvent = JSON.parse(data.substring(11));
+        toolEvents.value.push(toolEvent);
+        // 自动展开工具事件
+        expandedTools.value.add(toolEvents.value.length - 1);
       } catch (e) {
-        console.error('解析工具调用失败:', e);
+        console.error('解析工具事件失败:', e);
       }
     }
     scrollToBottom();
@@ -761,12 +814,18 @@ const finishStream = () => {
     eventSource = null;
   }
   if (streamContent.value) {
-    messages.value.push({role: 'assistant', content: streamContent.value});
+    // 保存工具事件到消息中
+    const toolEventsCopy = toolEvents.value.length > 0 ? [...toolEvents.value] : null;
+    messages.value.push({
+      role: 'assistant',
+      content: streamContent.value,
+      toolEvents: toolEventsCopy
+    });
     streamContent.value = '';
   }
   streaming.value = false;
-  currentToolCall.value = null;
-  toolCallResult.value = '';
+  toolEvents.value = [];
+  expandedTools.value = new Set();
   scrollToBottom();
 };
 
@@ -1073,27 +1132,99 @@ onMounted(() => {
   border-top-left-radius: 4px;
 }
 
-/* Tool call indicator */
-.tool-call-indicator {
-  margin-top: 8px;
-  padding: 8px 12px;
-  background: #252525;
-  border: 1px solid #1890ff;
-  border-radius: 6px;
+/* Tool event styles */
+.tool-event {
+  margin-bottom: 8px;
+  background: #1a1a2e;
+  border: 1px solid #2a2a4a;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.tool-event-header {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
   font-size: 13px;
+  transition: background 0.2s;
 }
 
-.tool-call-name {
+.tool-event-header:hover {
+  background: #252545;
+}
+
+.tool-event-icon {
+  font-size: 14px;
+}
+
+.tool-event-icon.tool_start {
   color: #1890ff;
+}
+
+.tool-event-icon.tool_result {
+  color: #52c41a;
+}
+
+.tool-event-name {
+  color: #d4d4d4;
   font-family: monospace;
   font-weight: 500;
+  flex: 1;
 }
 
-.tool-call-status {
+.tool-event-duration {
   color: #888;
+  font-size: 12px;
+}
+
+.tool-event-toggle {
+  color: #666;
+  font-size: 10px;
+}
+
+.tool-event-detail {
+  padding: 0 12px 12px;
+  border-top: 1px solid #2a2a4a;
+}
+
+.tool-event-args {
+  margin-top: 8px;
+}
+
+.tool-event-label {
+  color: #888;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.tool-event-args code {
+  display: block;
+  padding: 8px;
+  background: #0d0d1a;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #e0e0e0;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.tool-event-result {
+  margin-top: 8px;
+}
+
+.tool-event-result pre {
+  margin: 0;
+  padding: 8px;
+  background: #0d0d1a;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #e0e0e0;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 300px;
+  overflow-y: auto;
 }
 
 .message-content :deep(p) {
