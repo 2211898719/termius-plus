@@ -617,11 +617,16 @@ const sendMessage = async () => {
   const text = getTextContent(inputEl).trim();
   if (!text || streaming.value) return;
 
-  // 提取 inline-mention 中的服务器 ID
+  // 提取所有 inline-mention 中的服务器 ID
   const mentions = inputEl.querySelectorAll('.inline-mention');
-  const serverId = mentions.length > 0 ? mentions[0].getAttribute('data-id') : null;
+  const serverIds = [...mentions].map(m => m.getAttribute('data-id')).filter(Boolean);
 
-  messages.value.push({role: 'user', content: text});
+  // 构建带 mention 的消息文本
+  const mentionText = mentions.length > 0
+    ? [...mentions].map(m => `@${m.getAttribute('data-name')}`).join(' ') + ' '
+    : '';
+
+  messages.value.push({role: 'user', content: mentionText + text});
   inputEl.innerHTML = '';
   scrollToBottom();
 
@@ -629,8 +634,8 @@ const sendMessage = async () => {
   streamContent.value = '';
 
   let url = patrolApi.chatStreamUrl(text, conversationId.value);
-  if (serverId) {
-    url += '&serverId=' + serverId;
+  if (serverIds.length > 0) {
+    url += '&serverIds=' + serverIds.join(',');
   }
   eventSource = new EventSource(url);
 
