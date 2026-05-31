@@ -372,9 +372,11 @@ const getTextContent = (el) => {
   const clone = el.cloneNode(true);
   const mentions = clone.querySelectorAll('.inline-mention');
   mentions.forEach(m => {
-    const text = m.getAttribute('data-name') || m.textContent;
+    // data-name 不包含 @ 前缀，但 innerHTML 中的 .inline-mention-name 包含 @
+    // 所以直接用 data-name 而不是 m.textContent
+    const name = m.getAttribute('data-name');
     const span = document.createElement('span');
-    span.textContent = '@' + text;
+    span.textContent = '@' + name;
     m.parentNode.replaceChild(span, m);
   });
   return clone.textContent || '';
