@@ -38,13 +38,58 @@
             </div>
           </div>
           <div class="chat-input-area">
-            <a-input
-                v-model:value="inputText"
-                placeholder="描述你想检查的问题，如：检查 nginx 证书是否过期"
-                @pressEnter="sendMessage"
-                :disabled="streaming"
-                size="large"
-            />
+            <div class="ai-input-wrapper">
+              <div v-if="selectedServer" class="selected-server-tag">
+                <a-tag closable @close="clearSelectedServer" color="blue">
+                  <cloud-server-outlined /> {{ selectedServer.name }}
+                </a-tag>
+              </div>
+              <a-input
+                  ref="mentionInputRef"
+                  v-model:value="inputText"
+                  placeholder="描述你想检查的问题，输入 @ 可选择服务器"
+                  @input="handleInput"
+                  @keydown="handleMentionKeydown"
+                  :disabled="streaming"
+                  size="large"
+              />
+              <div v-if="showMention && filteredServerTree.length > 0" class="mention-dropdown" ref="mentionDropdownRef">
+                <div class="mention-list">
+                  <template v-for="group in filteredServerTree" :key="group.id">
+                    <div class="mention-group" v-if="group.isGroup">
+                      <div class="mention-group-header" @click="toggleGroup(group)">
+                        <folder-outlined style="margin-right: 8px; flex-shrink: 0;" />
+                        <span class="group-name">{{ group.name }}</span>
+                        <span class="group-count">({{ group.children?.length || 0 }})</span>
+                        <right-outlined class="group-arrow" :class="{ expanded: group._expanded }" />
+                      </div>
+                      <div class="mention-group-children" v-if="group._expanded">
+                        <div v-for="s in group.children" :key="s.id"
+                             :class="['mention-item', { active: s._index === mentionIndex }]"
+                             @click="selectMentionServer(s)"
+                             @mouseenter="mentionIndex = s._index">
+                          <hdd-outlined v-if="s.os === 'LINUX'" style="color: #E45F2B; margin-right: 8px;" />
+                          <windows-outlined v-else-if="s.os === 'WINDOWS'" style="color: #E45F2B; margin-right: 8px;" />
+                          <cloud-server-outlined v-else style="margin-right: 8px;" />
+                          <span class="mention-name">{{ s.name }}</span>
+                          <span class="mention-ip">{{ s.ip }}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div v-else
+                         :class="['mention-item', { active: group._index === mentionIndex }]"
+                         @click="selectMentionServer(group)"
+                         @mouseenter="mentionIndex = group._index">
+                      <hdd-outlined v-if="group.os === 'LINUX'" style="color: #E45F2B; margin-right: 8px;" />
+                      <windows-outlined v-else-if="group.os === 'WINDOWS'" style="color: #E45F2B; margin-right: 8px;" />
+                      <cloud-server-outlined v-else style="margin-right: 8px;" />
+                      <span class="mention-name">{{ group.name }}</span>
+                      <span class="mention-ip">{{ group.ip }}</span>
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </div>
             <a-button type="primary" @click="sendMessage" :loading="streaming" size="large">
               {{ streaming ? '思考中...' : '发送' }}
             </a-button>
@@ -124,10 +169,12 @@
 </template>
 
 <script setup>
-import {ref, onMounted, nextTick, onUnmounted} from 'vue';
+import {ref, onMounted, nextTick, onUnmounted, computed} from 'vue';
 import {patrolApi} from '@/api/patrol';
+import {serverApi} from '@/api/server';
 import {message as antMessage} from 'ant-design-vue';
 import markdownIt from 'markdown-it';
+import {CloudServerOutlined, HddOutlined, WindowsOutlined, FolderOutlined, RightOutlined} from '@ant-design/icons-vue';
 
 const activeTab = ref('chat');
 const md = markdownIt();
@@ -141,6 +188,278 @@ const streaming = ref(false);
 const streamContent = ref('');
 let eventSource = null;
 
+// @提及服务器功能
+let serverTree = ref([]);
+let showMention = ref(false);
+let mentionFilter = ref('');
+let mentionIndex = ref(0);
+let selectedServer = ref(null);
+let mentionJustHandled = ref(false);
+const mentionDropdownRef = ref(null);
+const mentionInputRef = ref(null);
+// 导航索引（用于跟踪键盘导航位置，与Vue响应式分离避免被覆盖）
+let navIndex = 0;
+
+// 缓存的扁平服务器列表（避免快速键盘导航时computed重复计算导致索引错乱）
+let cachedFlatServers = [];
+let lastServerTreeVersion = 0;
+let lastFilterValue = '';
+
+// 过滤服务器树
+const filterServerTree = (list, filter, parentExpanded = true, indexRef = { current: 0 }) => {
+  const result = [];
+
+  list.forEach(item => {
+    if (item.isGroup && item.children) {
+      const filteredChildren = filterServerTree(item.children, filter, parentExpanded, indexRef);
+      if (filteredChildren.length > 0) {
+        const group = {
+          ...item,
+          _expanded: parentExpanded,
+          children: filteredChildren
+        };
+        result.push(group);
+      }
+    } else if (!item.isGroup) {
+      if (!filter ||
+          item.name?.toLowerCase().includes(filter) ||
+          item.ip?.toLowerCase().includes(filter)) {
+        const server = {...item, _index: indexRef.current};
+        indexRef.current++;
+        result.push(server);
+      }
+    }
+  });
+
+  return result;
+};
+
+// 缓存的过滤后服务器树（带持久化的_index）
+let cachedFilteredTree = [];
+let lastServerTreeHash = '';
+let lastMentionFilter = '';
+
+// 计算过滤后服务器树（带索引缓存）
+const computeFilteredTree = () => {
+  const filter = mentionFilter.value.toLowerCase();
+  const serverTreeJson = JSON.stringify(serverTree.value);
+
+  // 只有当服务器列表或过滤器变化时才重新计算
+  if (serverTreeJson !== lastServerTreeHash || filter !== lastMentionFilter) {
+    lastServerTreeHash = serverTreeJson;
+    lastMentionFilter = filter;
+    cachedFilteredTree = filterServerTree(serverTree.value, filter, true, { current: 0 });
+  }
+
+  return cachedFilteredTree;
+};
+
+const filteredServerTree = computed(() => {
+  return computeFilteredTree();
+});
+
+// 获取总服务器数量（用于索引）
+const getTotalServers = (list) => {
+  let count = 0;
+  list.forEach(item => {
+    if (item.isGroup && item.children) {
+      count += getTotalServers(item.children);
+    } else if (!item.isGroup) {
+      count++;
+    }
+  });
+  return count;
+};
+
+// 切换分组展开/收起
+const toggleGroup = (group) => {
+  group._expanded = !group._expanded;
+};
+
+// 加载服务器树
+const loadAllServers = async () => {
+  try {
+    let list = await serverApi.list();
+    serverTree.value = list;
+  } catch (e) {
+    console.error('Failed to load servers:', e);
+  }
+};
+
+// 处理输入事件，检测@符号
+const handleInput = (e) => {
+  const value = inputText.value;
+  const cursorPos = e.target?.selectionStart || value.length;
+
+  const lastAtIndex = value.lastIndexOf('@', cursorPos - 1);
+
+  if (lastAtIndex !== -1) {
+    const textAfterAt = value.substring(lastAtIndex + 1, cursorPos);
+    if (!textAfterAt.includes(' ')) {
+      showMention.value = true;
+      mentionFilter.value = textAfterAt;
+      mentionIndex.value = 0;
+      navIndex = 0; // 重置导航索引
+      return;
+    }
+  }
+
+  showMention.value = false;
+  mentionFilter.value = '';
+};
+
+// 选择服务器
+const selectMentionServer = async (server) => {
+  const value = inputText.value;
+  const cursorPos = inputText.value.length;
+  const lastAtIndex = value.lastIndexOf('@', cursorPos - 1);
+
+  if (lastAtIndex !== -1) {
+    inputText.value = value.substring(0, lastAtIndex) + '@' + server.name + ' ';
+  }
+
+  selectedServer.value = server;
+  showMention.value = false;
+  mentionFilter.value = '';
+  navIndex = 0; // 重置导航索引
+};
+
+// 获取扁平化的服务器列表（带缓存）
+const getFlatServers = () => {
+  const currentFilter = mentionFilter.value.toLowerCase();
+  const currentServerTree = serverTree.value;
+
+  // 只有当服务器列表或过滤器变化时才重新计算
+  if (currentServerTree !== lastServerTreeVersion || currentFilter !== lastFilterValue) {
+    lastServerTreeVersion = currentServerTree;
+    lastFilterValue = currentFilter;
+    cachedFlatServers = [];
+    const traverse = (items) => {
+      items.forEach(item => {
+        if (item.isGroup && item.children) {
+          traverse(item.children);
+        } else if (!item.isGroup) {
+          if (!currentFilter ||
+              item.name?.toLowerCase().includes(currentFilter) ||
+              item.ip?.toLowerCase().includes(currentFilter)) {
+            cachedFlatServers.push(item);
+          }
+        }
+      });
+    };
+    traverse(currentServerTree);
+  }
+
+  return cachedFlatServers;
+};
+
+// 滚动到指定索引的元素
+const scrollToMentionIndex = (index) => {
+  nextTick(() => {
+    const dropdown = mentionDropdownRef.value;
+    if (!dropdown) return;
+
+    const items = dropdown.querySelectorAll('.mention-item');
+    const activeItem = dropdown.querySelector('.mention-item.active');
+
+    if (activeItem && items.length > 0) {
+      const dropdownRect = dropdown.getBoundingClientRect();
+      const itemRect = activeItem.getBoundingClientRect();
+
+      // 如果元素在可见区域之外，进行滚动（使用instant避免键盘快速导航时动画滞后）
+      if (itemRect.top < dropdownRect.top) {
+        activeItem.scrollIntoView({block: 'start', behavior: 'instant'});
+      } else if (itemRect.bottom > dropdownRect.bottom) {
+        activeItem.scrollIntoView({block: 'end', behavior: 'instant'});
+      }
+    }
+  });
+};
+
+// 键盘导航
+const handleMentionKeydown = (e) => {
+  if (e.key === 'Enter') {
+    if (showMention.value) {
+      // 下拉菜单打开时，Enter选择服务器
+      e.preventDefault();
+      e.stopPropagation();
+      mentionJustHandled.value = true;
+      const dropdown = mentionDropdownRef.value;
+      const activeItem = dropdown?.querySelector('.mention-item.active');
+      if (activeItem) {
+        const serverName = activeItem.querySelector('.mention-name')?.textContent;
+        if (serverName) {
+          const allServers = getFlatServers();
+          const server = allServers.find(s => s.name === serverName);
+          if (server) {
+            selectedServer.value = server;
+          }
+        }
+      }
+      nextTick(() => {
+        inputText.value = '';
+        const nativeInput = mentionInputRef.value?.$el?.querySelector('input') || mentionInputRef.value?.$el;
+        if (nativeInput && nativeInput.tagName === 'INPUT') {
+          nativeInput.value = '';
+          nativeInput.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+      });
+      nextTick(() => {
+        showMention.value = false;
+        navIndex = 0;
+        setTimeout(() => { mentionJustHandled.value = false; }, 0);
+      });
+    } else {
+      // 下拉菜单关闭时，Enter发送消息
+      e.preventDefault();
+      sendMessage();
+    }
+    return;
+  }
+
+  if (!showMention.value) return;
+
+  const dropdown = mentionDropdownRef.value;
+  if (!dropdown) return;
+
+  const items = dropdown.querySelectorAll('.mention-item');
+  if (!items.length) return;
+
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    const dropdown = mentionDropdownRef.value;
+    if (!dropdown) return;
+    const items = dropdown.querySelectorAll('.mention-item');
+    if (!items.length) return;
+
+    // 计算下一个导航索引（使用navIndex而不是mentionIndex避免Vue响应式覆盖）
+    if (e.key === 'ArrowDown') {
+      navIndex = (navIndex + 1) % items.length;
+    } else {
+      navIndex = (navIndex - 1 + items.length) % items.length;
+    }
+
+    // 直接操作DOM - 移除当前active，添加新的active
+    const currentActive = dropdown.querySelector('.mention-item.active');
+    if (currentActive) {
+      currentActive.classList.remove('active');
+    }
+    const targetItem = items[navIndex];
+    targetItem.classList.add('active');
+
+    // 直接设置scrollTop到目标位置（使目标项在容器中央居中）
+    dropdown.scrollTop = targetItem.offsetTop - (dropdown.offsetHeight / 2) + (targetItem.offsetHeight / 2);
+  } else if (e.key === 'Escape') {
+    showMention.value = false;
+    navIndex = 0;
+  }
+};
+
+// 清除选中的服务器
+const clearSelectedServer = () => {
+  selectedServer.value = null;
+};
+
 const renderMarkdown = (content) => md.render(content || '');
 
 const scrollToBottom = () => {
@@ -152,17 +471,29 @@ const scrollToBottom = () => {
 };
 
 const sendMessage = async () => {
+  if (mentionJustHandled.value) return;
+
   const text = inputText.value.trim();
   if (!text || streaming.value) return;
 
-  messages.value.push({role: 'user', content: text});
+  const currentServer = selectedServer.value;
+  let fullText = text;
+  if (currentServer) {
+    fullText = `@${currentServer.name} ${text}`;
+  }
+
+  messages.value.push({role: 'user', content: fullText});
   inputText.value = '';
+  selectedServer.value = null;
   scrollToBottom();
 
   streaming.value = true;
   streamContent.value = '';
 
-  const url = patrolApi.chatStreamUrl(text, conversationId.value);
+  let url = patrolApi.chatStreamUrl(text, conversationId.value);
+  if (currentServer) {
+    url += '&serverId=' + currentServer.id;
+  }
   eventSource = new EventSource(url);
 
   eventSource.onmessage = (event) => {
@@ -307,6 +638,7 @@ const showOutput = (record) => {
 
 onMounted(() => {
   loadScripts();
+  loadAllServers();
 });
 </script>
 
@@ -569,5 +901,125 @@ onMounted(() => {
 
 .chat-messages::-webkit-scrollbar-thumb:hover {
   background: #444;
+}
+
+/* @mention styles */
+.ai-input-wrapper {
+  position: relative;
+  flex: 1;
+}
+
+.selected-server-tag {
+  margin-bottom: 4px;
+}
+
+.mention-dropdown {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  width: 400px;
+  z-index: 1000;
+  background: #252525;
+  border: 1px solid #333;
+  border-radius: 8px;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.3);
+  max-height: 240px;
+  overflow-y: auto;
+  margin-bottom: 8px;
+}
+
+.mention-list {
+  padding: 4px 0;
+}
+
+.mention-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  color: #d4d4d4;
+  overflow: hidden;
+}
+
+.mention-item :deep(.anticon) {
+  flex-shrink: 0;
+}
+
+.mention-item:hover, .mention-item.active {
+  background: #1890ff;
+  color: #fff;
+}
+
+.mention-group {
+  margin: 4px 0;
+}
+
+.mention-group-header {
+  padding: 8px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  color: #888;
+  font-size: 13px;
+  background: #1e1e1e;
+  overflow: hidden;
+}
+
+.group-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.mention-group-header:hover {
+  color: #d4d4d4;
+  background: #2a2a2a;
+}
+
+.group-count {
+  margin-left: 4px;
+  color: #666;
+  font-size: 12px;
+}
+
+.group-arrow {
+  margin-left: auto;
+  transition: transform 0.2s;
+  font-size: 10px;
+}
+
+.group-arrow.expanded {
+  transform: rotate(90deg);
+}
+
+.mention-group-children {
+  margin-left: 16px;
+}
+
+.mention-name {
+  flex: 1;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.mention-ip {
+  color: #888;
+  font-size: 12px;
+  margin-left: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 180px;
+  flex-shrink: 0;
+}
+
+.mention-item:hover .mention-ip,
+.mention-item.active .mention-ip {
+  color: #e0e0e0;
 }
 </style>
