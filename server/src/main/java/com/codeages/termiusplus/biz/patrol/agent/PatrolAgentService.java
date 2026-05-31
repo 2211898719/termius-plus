@@ -62,7 +62,7 @@ public class PatrolAgentService {
 
     public Flux<String> stream(String userMessage, String conversationId) {
         // 创建工具调用事件收集器
-        var toolEventSink = ToolCallEventCollector.createSink();
+        var toolEventSink = ToolCallEventCollector.createSink(conversationId);
         var toolEventFlux = toolEventSink.asFlux()
                 .map(event -> {
                     try {
@@ -112,7 +112,7 @@ public class PatrolAgentService {
 
                              return flux;
                          })
-                         .doFinally(signal -> ToolCallEventCollector.clear());
+                         .doFinally(signal -> ToolCallEventCollector.clear(conversationId));
 
         // 合并工具事件和聊天响应流
         return Flux.merge(toolEventFlux, chatFlux)

@@ -3,20 +3,24 @@ package com.codeages.termiusplus.biz.patrol.agent;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
+import java.util.concurrent.ConcurrentHashMap;
+
 /**
  * 工具调用事件收集器
- * 工具在执行时通过此类上报事件，流式响应订阅此事件流
+ * 使用 conversationId 作为 key 存储 sink，解决 WebFlux 多线程问题
  */
 public class ToolCallEventCollector {
 
-    private static final ThreadLocal<Sinks.Many<ToolCallEvent>> CURRENT_SINK = new ThreadLocal<>();
+    private static final ConcurrentHashMap<String, Sinks.Many<ToolCallEvent>> SINKS = new ConcurrentHashMap<>();
+    private static volatile String currentConversationId;
 
     /**
      * 为当前请求创建新的事件 sink
      */
-    public static Sinks.Many<ToolCallEvent> createSink() {
+    public static Sinks.Many<ToolCallEvent> createSink(String conversationId) {
         Sinks.Many<ToolCallEvent> sink = Sinks.many().multicast().onBackpressureBuffer();
-        CURRENT_SINK.set(sink);
+        SINKS.put(conversationId, sink);
+        currentConversationId = conversationId;
         return sink;
     }
 
@@ -24,14 +28,21 @@ public class ToolCallEventCollector {
      * 获取当前请求的事件 sink
      */
     public static Sinks.Many<ToolCallEvent> getCurrentSink() {
-        return CURRENT_SINK.get();
+        String convId = currentConversationId;
+        if (convId != null) {
+            return SINKS.get(convId);
+        }
+        return null;
     }
 
     /**
-     * 清理当前请求的事件 sink
+     * 清理指定会话的事件 sink
      */
-    public static void clear() {
-        CURRENT_SINK.remove();
+    public static void clear(String conversationId) {
+        SINKS.remove(conversationId);
+        if (conversationId != null && conversationId.equals(currentConversationId)) {
+            currentConversationId = null;
+        }
     }
 
     /**
@@ -52,16 +63,5 @@ public class ToolCallEventCollector {
         if (sink != null) {
             sink.tryEmitNext(new ToolCallEvent("tool_result", toolName, arguments, result, durationMs));
         }
-    }
-
-    /**
-     * 订阅事件流
-     */
-    public static Flux<ToolCallEvent> getEventFlux() {
-        Sinks.Many<ToolCallEvent> sink = getCurrentSink();
-        if (sink != null) {
-            return sink.asFlux();
-        }
-        return Flux.empty();
     }
 }
