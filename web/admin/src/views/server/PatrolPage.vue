@@ -853,6 +853,9 @@ const scrollToMentionIndex = (index) => {
 
 // 键盘导航
 const handleMentionKeydown = (e) => {
+  // 忽略输入法组合中的 Enter（如中文输入确认）
+  if (e.isComposing) return;
+
   if (e.key === 'Enter') {
     if (showMention.value) {
       // 下拉菜单打开时，Enter选择服务器
