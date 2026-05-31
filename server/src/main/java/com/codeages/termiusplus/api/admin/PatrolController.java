@@ -122,8 +122,8 @@ public class PatrolController {
                 .orElseGet(() -> {
                     PatrolConversation conv = new PatrolConversation();
                     conv.setConversationId(conversationId);
-                    conv.setTitle(params.getMessage().length() > 50
-                            ? params.getMessage().substring(0, 50) + "..."
+                    conv.setTitle(params.getMessage().length() > 10
+                            ? params.getMessage().substring(0, 10)
                             : params.getMessage());
                     return conversationRepository.save(conv);
                 });

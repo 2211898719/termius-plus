@@ -1151,7 +1151,7 @@ const finishStream = () => {
     if (conversations.value.length > 0) {
       const conv = conversations.value.find(c => c.conversationId === conversationId.value);
       if (conv && conv.title === '新对话' && messages.value.length >= 2) {
-        conv.title = messages.value[0].content?.substring(0, 50) || '新对话';
+        conv.title = messages.value[0].content?.substring(0, 10) || '新对话';
       }
     }
   }
