@@ -63,16 +63,19 @@ public class PatrolAgentService {
     public Flux<String> stream(String userMessage, String conversationId) {
         // 创建工具调用事件收集器
         var toolEventSink = ToolCallEventCollector.createSink(conversationId);
-        var toolEventFlux = toolEventSink.asFlux()
+
+        // 先订阅工具事件，收集到列表中
+        var toolEventsMono = toolEventSink.asFlux()
                 .map(event -> {
                     try {
                         return "tool_event:" + objectMapper.writeValueAsString(event);
                     } catch (Exception e) {
                         return "tool_event:{}";
                     }
-                });
+                })
+                .collectList();
 
-        // AI 响应流
+        // AI 响应流 - 工具调用会通过 sink 发送事件
         var chatFlux = buildChatClient(conversationId).prompt(SYSTEM_PROMPT)
                          .tools(cleanupTool, diskTool, executeCommandTool, nginxTool, serviceTool, serverTool)
                          .user(userMessage)
@@ -90,23 +93,6 @@ public class PatrolAgentService {
                                      if (text != null && !text.isEmpty()) {
                                          flux = Flux.concat(flux, Flux.just("text:" + text));
                                      }
-
-                                     // 检查是否有工具调用
-                                     if (assistantMessage.hasToolCalls()) {
-                                         for (AssistantMessage.ToolCall toolCall : assistantMessage.getToolCalls()) {
-                                             try {
-                                                 Map<String, Object> toolCallData = Map.of(
-                                                         "id", toolCall.id() != null ? toolCall.id() : "",
-                                                         "name", toolCall.name() != null ? toolCall.name() : "",
-                                                         "arguments", toolCall.arguments() != null ? toolCall.arguments() : ""
-                                                 );
-                                                 String toolCallJson = objectMapper.writeValueAsString(toolCallData);
-                                                 flux = Flux.concat(flux, Flux.just("tool_call:" + toolCallJson));
-                                             } catch (Exception e) {
-                                                 log.error("序列化工具调用失败", e);
-                                             }
-                                         }
-                                     }
                                  }
                              }
 
@@ -114,8 +100,13 @@ public class PatrolAgentService {
                          })
                          .doFinally(signal -> ToolCallEventCollector.clear(conversationId));
 
-        // 合并工具事件和聊天响应流
-        return Flux.merge(toolEventFlux, chatFlux)
-                   .concatWith(Flux.just("[DONE]"));
+        // 先等 AI 响应完成，收集工具事件，然后先发工具事件再发文本
+        return chatFlux.collectList()
+                .flatMapMany(textList -> toolEventsMono.flatMapMany(toolEventList -> {
+                    // 先发工具事件，再发文本
+                    return Flux.fromIterable(toolEventList)
+                            .concatWith(Flux.fromIterable(textList));
+                }))
+                .concatWith(Flux.just("[DONE]"));
     }
 }
