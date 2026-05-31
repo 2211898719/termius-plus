@@ -1565,7 +1565,7 @@ onMounted(async () => {
 }
 
 .message-body {
-  max-width: 80%;
+  max-width: 49%;
   min-width: 0;
 }
 
