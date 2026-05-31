@@ -8,6 +8,7 @@ import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Sinks;
 
 import java.util.List;
 
@@ -15,9 +16,15 @@ import java.util.List;
 @Component
 public class DiskTool {
 
+    private Sinks.Many<String> sink;
+
+    public void setSink(Sinks.Many<String> sink) {
+        this.sink = sink;
+    }
+
     @Tool(description = "获取服务器磁盘使用情况，包括各分区的总容量、已用、可用和使用率。")
     public String getDiskUsage(@ToolParam(description = "服务器ID") Long serverId) {
-        return ToolCallHelper.execute("getDiskUsage", "serverId=" + serverId, () -> {
+        return ToolCallHelper.execute(sink, "getDiskUsage", "serverId=" + serverId, () -> {
             try (ExecuteCommandSSHClient client = new ExecuteCommandSSHClient(serverId)) {
                 List<DiskUsage> usages = client.getDiskUsage();
                 return JSONUtil.toJsonStr(usages);
@@ -31,7 +38,7 @@ public class DiskTool {
     public String analyzeStorageUsage(
             @ToolParam(description = "服务器ID") Long serverId,
             @ToolParam(description = "目录路径，例如 / 或 /var") String path) {
-        return ToolCallHelper.execute("analyzeStorageUsage", "serverId=" + serverId + ", path=" + path, () -> {
+        return ToolCallHelper.execute(sink, "analyzeStorageUsage", "serverId=" + serverId + ", path=" + path, () -> {
             try (ExecuteCommandSSHClient client = new ExecuteCommandSSHClient(serverId)) {
                 return client.executeCommand("du -sh " + path + "/* 2>/dev/null | sort -rh | head -20");
             } catch (Exception e) {

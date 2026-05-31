@@ -3,7 +3,28 @@
     <a-tabs v-model:activeKey="activeTab">
       <!-- AI 对话 Tab -->
       <a-tab-pane key="chat" tab="AI 对话">
-        <div class="chat-container">
+        <div class="chat-layout">
+          <!-- 对话列表侧边栏 -->
+          <div class="conversation-sidebar">
+            <div class="conv-header">
+              <span>对话记录</span>
+              <a-button type="primary" size="small" @click="createConversation">
+                <template #icon><plus-outlined /></template>
+                新对话
+              </a-button>
+            </div>
+            <div class="conv-list">
+              <div v-for="conv in conversations" :key="conv.conversationId"
+                   :class="['conv-item', { active: conv.conversationId === conversationId }]"
+                   @click="switchConversation(conv.conversationId)">
+                <span class="conv-title">{{ conv.title || '新对话' }}</span>
+                <delete-outlined class="conv-delete" @click.stop="deleteConversation(conv.conversationId)" />
+              </div>
+              <div v-if="conversations.length === 0" class="conv-empty">暂无对话</div>
+            </div>
+          </div>
+          <!-- 聊天区域 -->
+          <div class="chat-container">
           <div class="chat-messages" ref="messagesRef">
             <div v-if="messages.length === 0" class="chat-welcome">
               <div class="welcome-icon">&#129302;</div>
@@ -22,41 +43,77 @@
                 <span v-else>&#129302;</span>
               </div>
               <div class="message-body">
-                <!-- 思考内容（历史消息） -->
-                <div v-if="msg.thinkContent" class="think-block">
-                  <div class="think-header" @click="toggleThinkExpand('hist-'+index)">
-                    <span class="think-icon">💭</span>
-                    <span>AI 思考过程</span>
-                    <span class="think-toggle">{{ expandedTools.has('think-'+index) ? '▼' : '▶' }}</span>
-                  </div>
-                  <div v-if="expandedTools.has('think-'+index)" class="think-content">{{ msg.thinkContent }}</div>
-                </div>
-                <!-- 工具调用事件（历史消息） -->
-                <template v-if="msg.toolEvents && msg.toolEvents.length > 0">
-                  <div v-for="(event, idx) in msg.toolEvents" :key="'hist-'+idx" class="tool-event">
-                    <div class="tool-event-header" @click="toggleToolExpand('hist-'+index+'-'+idx)">
-                      <span class="tool-event-icon" :class="event.type">
-                        {{ event.type === 'tool_complete' ? '✅' : '⚙️' }}
-                      </span>
-                      <span class="tool-event-name">{{ event.toolName }}</span>
-                      <span v-if="event.type === 'tool_complete'" class="tool-event-duration">
-                        {{ event.durationMs }}ms
-                      </span>
-                      <span class="tool-event-toggle">{{ expandedTools.has('hist-'+index+'-'+idx) ? '▼' : '▶' }}</span>
-                    </div>
-                    <div v-if="expandedTools.has('hist-'+index+'-'+idx)" class="tool-event-detail">
-                      <div class="tool-event-args">
-                        <div class="tool-event-label">参数:</div>
-                        <code>{{ event.arguments }}</code>
+                <!-- 时间线（历史消息） -->
+                <template v-if="msg.timeline">
+                  <template v-for="(item, idx) in msg.timeline" :key="'tl-'+index+'-'+idx">
+                    <!-- 工具调用 -->
+                    <div v-if="item.type === 'tool'" class="tool-event">
+                      <div class="tool-event-header" @click="toggleToolExpand('tl-'+index+'-'+idx)">
+                        <span class="tool-event-icon" :class="item.result ? 'tool_complete' : 'tool_start'">
+                          {{ item.result ? '✅' : '⚙️' }}
+                        </span>
+                        <span class="tool-event-name">{{ item.toolName }}</span>
+                        <span v-if="item.durationMs" class="tool-event-duration">{{ item.durationMs }}ms</span>
+                        <span class="tool-event-toggle">{{ expandedTools.has('tl-'+index+'-'+idx) ? '▼' : '▶' }}</span>
                       </div>
-                      <div v-if="event.type === 'tool_complete'" class="tool-event-result">
-                        <div class="tool-event-label">结果:</div>
-                        <pre>{{ event.result }}</pre>
+                      <div v-if="expandedTools.has('tl-'+index+'-'+idx)" class="tool-event-detail">
+                        <div class="tool-event-args">
+                          <div class="tool-event-label">参数:</div>
+                          <code>{{ item.arguments }}</code>
+                        </div>
+                        <div v-if="item.result" class="tool-event-result">
+                          <div class="tool-event-label">结果:</div>
+                          <pre>{{ item.result }}</pre>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                    <!-- 思考内容 -->
+                    <div v-else-if="item.type === 'think'" class="think-block">
+                      <div class="think-header" @click="toggleToolExpand('think-'+index+'-'+idx)">
+                        <span class="think-icon">💭</span>
+                        <span>AI 思考过程</span>
+                        <span class="think-toggle">{{ expandedTools.has('think-'+index+'-'+idx) ? '▼' : '▶' }}</span>
+                      </div>
+                      <div v-if="expandedTools.has('think-'+index+'-'+idx)" class="think-content">{{ item.content }}</div>
+                    </div>
+                    <!-- 文本内容 -->
+                    <div v-else-if="item.type === 'text' && item.content" class="message-content" v-html="renderMarkdown(item.content)"></div>
+                  </template>
                 </template>
-                <div class="message-content" v-html="renderMarkdown(msg.content)"></div>
+                <!-- 兼容旧格式 -->
+                <template v-else>
+                  <div v-if="msg.thinkContent" class="think-block">
+                    <div class="think-header" @click="toggleToolExpand('think-old-'+index)">
+                      <span class="think-icon">💭</span>
+                      <span>AI 思考过程</span>
+                      <span class="think-toggle">{{ expandedTools.has('think-old-'+index) ? '▼' : '▶' }}</span>
+                    </div>
+                    <div v-if="expandedTools.has('think-old-'+index)" class="think-content">{{ msg.thinkContent }}</div>
+                  </div>
+                  <template v-if="msg.toolEvents && msg.toolEvents.length > 0">
+                    <div v-for="(event, idx) in msg.toolEvents" :key="'hist-'+idx" class="tool-event">
+                      <div class="tool-event-header" @click="toggleToolExpand('hist-'+index+'-'+idx)">
+                        <span class="tool-event-icon" :class="event.type">
+                          {{ event.type === 'tool_complete' ? '✅' : '⚙️' }}
+                        </span>
+                        <span class="tool-event-name">{{ event.toolName }}</span>
+                        <span v-if="event.type === 'tool_complete'" class="tool-event-duration">{{ event.durationMs }}ms</span>
+                        <span class="tool-event-toggle">{{ expandedTools.has('hist-'+index+'-'+idx) ? '▼' : '▶' }}</span>
+                      </div>
+                      <div v-if="expandedTools.has('hist-'+index+'-'+idx)" class="tool-event-detail">
+                        <div class="tool-event-args">
+                          <div class="tool-event-label">参数:</div>
+                          <code>{{ event.arguments }}</code>
+                        </div>
+                        <div v-if="event.type === 'tool_complete'" class="tool-event-result">
+                          <div class="tool-event-label">结果:</div>
+                          <pre>{{ event.result }}</pre>
+                        </div>
+                      </div>
+                    </div>
+                  </template>
+                  <div v-if="msg.content" class="message-content" v-html="renderMarkdown(msg.content)"></div>
+                </template>
                 <div v-if="msg.needsConfirmation" class="message-actions">
                   <a-button type="primary" size="small" @click="confirmCommand(msg, index)">确认执行</a-button>
                   <a-button danger size="small" @click="rejectCommand(msg, index)">拒绝</a-button>
@@ -66,40 +123,40 @@
             <div v-if="streaming" class="message assistant">
               <div class="message-avatar"><span>&#129302;</span></div>
               <div class="message-body">
-                <!-- 思考内容 -->
-                <div v-if="thinkContent" class="think-block">
-                  <div class="think-header" @click="showThink = !showThink">
-                    <span class="think-icon">💭</span>
-                    <span>AI 思考过程</span>
-                    <span class="think-toggle">{{ showThink ? '▼' : '▶' }}</span>
-                  </div>
-                  <div v-if="showThink" class="think-content">{{ thinkContent }}</div>
-                </div>
-                <!-- 工具调用事件 -->
-                <div v-for="(event, idx) in toolEvents" :key="idx" class="tool-event">
-                  <div class="tool-event-header" @click="toggleToolExpand(idx)">
-                    <span class="tool-event-icon" :class="event.type">
-                      {{ event.type === 'tool_complete' ? '✅' : '⚙️' }}
-                    </span>
-                    <span class="tool-event-name">{{ event.toolName }}</span>
-                    <span v-if="event.type === 'tool_complete'" class="tool-event-duration">
-                      {{ event.durationMs }}ms
-                    </span>
-                    <span class="tool-event-toggle">{{ expandedTools.has(idx) ? '▼' : '▶' }}</span>
-                  </div>
-                  <div v-if="expandedTools.has(idx)" class="tool-event-detail">
-                    <div class="tool-event-args">
-                      <div class="tool-event-label">参数:</div>
-                      <code>{{ event.arguments }}</code>
+                <template v-for="(item, idx) in streamTimeline" :key="idx">
+                  <!-- 思考内容 -->
+                  <div v-if="item.type === 'think'" class="think-block">
+                    <div class="think-header" @click="showThink = !showThink">
+                      <span class="think-icon">💭</span>
+                      <span>AI 思考过程</span>
+                      <span class="think-toggle">{{ showThink ? '▼' : '▶' }}</span>
                     </div>
-                    <div v-if="event.type === 'tool_complete'" class="tool-event-result">
-                      <div class="tool-event-label">结果:</div>
-                      <pre>{{ event.result }}</pre>
+                    <div v-if="showThink" class="think-content">{{ item.content }}</div>
+                  </div>
+                  <!-- 工具调用 -->
+                  <div v-else-if="item.type === 'tool'" class="tool-event">
+                    <div class="tool-event-header" @click="toggleToolExpand(idx)">
+                      <span class="tool-event-icon" :class="item.result ? 'tool_complete' : 'tool_start'">
+                        {{ item.result ? '✅' : '⚙️' }}
+                      </span>
+                      <span class="tool-event-name">{{ item.toolName }}</span>
+                      <span v-if="item.durationMs" class="tool-event-duration">{{ item.durationMs }}ms</span>
+                      <span class="tool-event-toggle">{{ expandedTools.has(idx) ? '▼' : '▶' }}</span>
+                    </div>
+                    <div v-if="expandedTools.has(idx)" class="tool-event-detail">
+                      <div class="tool-event-args">
+                        <div class="tool-event-label">参数:</div>
+                        <code>{{ item.arguments }}</code>
+                      </div>
+                      <div v-if="item.result" class="tool-event-result">
+                        <div class="tool-event-label">结果:</div>
+                        <pre>{{ item.result }}</pre>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <!-- AI 回复内容 -->
-                <div v-if="streamContent" class="message-content" v-html="renderMarkdown(streamContent)"></div>
+                  <!-- 文本内容 -->
+                  <div v-else-if="item.type === 'text' && item.content" class="message-content" v-html="renderMarkdown(item.content)"></div>
+                </template>
                 <div class="typing-cursor"></div>
               </div>
             </div>
@@ -157,6 +214,7 @@
               {{ streaming ? '思考中...' : '发送' }}
             </a-button>
           </div>
+        </div>
         </div>
       </a-tab-pane>
 
@@ -237,7 +295,7 @@ import {patrolApi} from '@/api/patrol';
 import {serverApi} from '@/api/server';
 import {message} from 'ant-design-vue';
 import markdownIt from 'markdown-it';
-import {CloudServerOutlined, HddOutlined, WindowsOutlined, FolderOutlined, RightOutlined} from '@ant-design/icons-vue';
+import {CloudServerOutlined, HddOutlined, WindowsOutlined, FolderOutlined, RightOutlined, PlusOutlined, DeleteOutlined} from '@ant-design/icons-vue';
 
 const activeTab = ref('chat');
 const md = markdownIt();
@@ -245,14 +303,77 @@ const md = markdownIt();
 // Chat state
 const messages = ref([]);
 const messagesRef = ref(null);
+// 对话管理
+const conversations = ref([]);
 const conversationId = ref(null);
+
+function generateUuid() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0;
+    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+  });
+}
+
+const loadConversations = async () => {
+  try {
+    conversations.value = await patrolApi.listConversations();
+  } catch (e) {
+    console.error('Failed to load conversations:', e);
+  }
+};
+
+const createConversation = async () => {
+  try {
+    const result = await patrolApi.createConversation();
+    conversationId.value = result.conversationId;
+    messages.value = [];
+    await loadConversations();
+  } catch (e) {
+    console.error('Failed to create conversation:', e);
+  }
+};
+
+const switchConversation = async (id) => {
+  if (streaming.value || id === conversationId.value) return;
+  conversationId.value = id;
+  try {
+    const msgs = await patrolApi.listMessages(id);
+    messages.value = msgs.map(m => ({
+      role: m.role,
+      content: m.content || '',
+      timeline: m.timeline ? JSON.parse(m.timeline) : null
+    }));
+    scrollToBottom();
+  } catch (e) {
+    console.error('Failed to load messages:', e);
+  }
+};
+
+const deleteConversation = async (id) => {
+  try {
+    await patrolApi.deleteConversation(id);
+    if (conversationId.value === id) {
+      conversationId.value = null;
+      messages.value = [];
+    }
+    await loadConversations();
+    // 如果删除后没有对话，自动创建一个
+    if (conversations.value.length === 0) {
+      await createConversation();
+    } else if (!conversationId.value) {
+      await switchConversation(conversations.value[0].conversationId);
+    }
+  } catch (e) {
+    console.error('Failed to delete conversation:', e);
+  }
+};
 const streaming = ref(false);
-const streamContent = ref('');
-const thinkContent = ref(''); // 思考内容
-const showThink = ref(false); // 是否显示思考内容
-const toolEvents = ref([]); // 工具调用事件列表
+const streamTimeline = ref([]); // 统一时间线：[{type: 'text'|'tool'|'think', ...}]
+const showThink = ref(true); // 思考内容是否展开（默认展开）
 const expandedTools = ref(new Set()); // 展开的工具 ID
 let eventSource = null;
+let textBuffer = ''; // 文本缓冲区，用于处理跨事件的 <think> 标签
+let isInThinkMode = false; // 是否正在处理 <think> 块
 
 // @提及服务器功能
 let serverTree = ref([]);
@@ -772,13 +893,79 @@ const toggleToolExpand = (idx) => {
   }
 };
 
-// 切换思考内容展开/收起
-const toggleThinkExpand = (idx) => {
-  const key = 'think-' + idx;
-  if (expandedTools.value.has(key)) {
-    expandedTools.value.delete(key);
-  } else {
-    expandedTools.value.add(key);
+// 处理文本块，解析 <think> 标签，构建统一时间线
+const processTextChunk = (chunk) => {
+  textBuffer += chunk;
+
+  while (true) {
+    if (!isInThinkMode) {
+      const thinkStart = textBuffer.indexOf('<think>');
+      if (thinkStart === -1) {
+        // 没有 <think>，追加到最后一个 text 条目或创建新的
+        const tl = streamTimeline.value;
+        if (tl.length > 0 && tl[tl.length - 1].type === 'text') {
+          tl[tl.length - 1].content += textBuffer;
+        } else if (textBuffer) {
+          tl.push({ type: 'text', content: textBuffer });
+        }
+        textBuffer = '';
+        break;
+      }
+      // <think> 之前的普通文本
+      if (thinkStart > 0) {
+        const before = textBuffer.substring(0, thinkStart);
+        const tl = streamTimeline.value;
+        if (tl.length > 0 && tl[tl.length - 1].type === 'text') {
+          tl[tl.length - 1].content += before;
+        } else {
+          tl.push({ type: 'text', content: before });
+        }
+      }
+      // 进入思考模式，创建 timeline 条目
+      textBuffer = textBuffer.substring(thinkStart + 7);
+      isInThinkMode = true;
+      streamTimeline.value.push({ type: 'think', content: '' });
+    } else {
+      const thinkEnd = textBuffer.indexOf('</think>');
+      if (thinkEnd === -1) {
+        // 追加到当前 think 条目
+        const tl = streamTimeline.value;
+        const last = tl[tl.length - 1];
+        if (last && last.type === 'think') {
+          last.content += textBuffer;
+        }
+        textBuffer = '';
+        break;
+      }
+      // 思考内容结束
+      const tl = streamTimeline.value;
+      const last = tl[tl.length - 1];
+      if (last && last.type === 'think') {
+        last.content += textBuffer.substring(0, thinkEnd);
+      }
+      textBuffer = textBuffer.substring(thinkEnd + 8);
+      isInThinkMode = false;
+    }
+  }
+};
+
+// 刷新缓冲区，将剩余内容追加到时间线
+const flushBuffer = () => {
+  if (textBuffer) {
+    const tl = streamTimeline.value;
+    if (isInThinkMode) {
+      const last = tl[tl.length - 1];
+      if (last && last.type === 'think') {
+        last.content += textBuffer;
+      }
+    } else {
+      if (tl.length > 0 && tl[tl.length - 1].type === 'text') {
+        tl[tl.length - 1].content += textBuffer;
+      } else {
+        tl.push({ type: 'text', content: textBuffer });
+      }
+    }
+    textBuffer = '';
   }
 };
 
@@ -799,9 +986,28 @@ const sendMessage = async () => {
   inputEl.innerHTML = '';
   scrollToBottom();
 
+  // 如果没有对话，自动创建
+  if (!conversationId.value) {
+    try {
+      const result = await patrolApi.createConversation();
+      conversationId.value = result.conversationId;
+      await loadConversations();
+    } catch (e) {
+      console.error('Failed to create conversation:', e);
+    }
+  }
+
+  // 保存用户消息到后端
+  patrolApi.saveMessage({
+    conversationId: conversationId.value,
+    role: 'user',
+    content: text,
+    timeline: null
+  });
+
   streaming.value = true;
-  streamContent.value = '';
-  toolEvents.value = [];
+  streamTimeline.value = [];
+  showThink.value = true;
   expandedTools.value = new Set();
 
   let url = patrolApi.chatStreamUrl(text, conversationId.value);
@@ -810,49 +1016,45 @@ const sendMessage = async () => {
   }
   eventSource = new EventSource(url);
 
+  // 重置状态
+  textBuffer = '';
+  isInThinkMode = false;
+
   eventSource.onmessage = (event) => {
     const data = event.data;
     if (data === '[DONE]') {
+      // 处理缓冲区中剩余的内容
+      flushBuffer();
       finishStream();
       return;
     }
 
     // 解析事件格式
     if (data.startsWith('text:')) {
-      const text = data.substring(5);
-      // 解析 <think> 标签
-      const thinkMatch = text.match(/<think>([\s\S]*?)<\/think>/);
-      if (thinkMatch) {
-        // 有 <think> 标签，提取思考内容
-        const beforeThink = text.substring(0, text.indexOf('<think>')).trim();
-        const thinkText = thinkMatch[1].trim();
-        const afterThink = text.substring(text.indexOf('</think>') + 8).trim();
-        if (beforeThink) streamContent.value += beforeThink;
-        thinkContent.value += thinkText;
-        showThink.value = true;
-        if (afterThink) streamContent.value += afterThink;
-      } else {
-        streamContent.value += text;
-      }
+      processTextChunk(data.substring(5));
     } else if (data.startsWith('think:')) {
-      thinkContent.value += data.substring(6);
-      showThink.value = true; // 自动展开思考内容
+      const tl = streamTimeline.value;
+      const last = tl[tl.length - 1];
+      if (last && last.type === 'think') {
+        last.content += data.substring(6);
+      } else {
+        tl.push({ type: 'think', content: data.substring(6) });
+      }
     } else if (data.startsWith('tool_event:')) {
       try {
         const toolEvent = JSON.parse(data.substring(11));
         if (toolEvent.type === 'tool_start') {
-          // 添加新的工具事件
-          toolEvents.value.push(toolEvent);
-          expandedTools.value.add(toolEvents.value.length - 1);
+          streamTimeline.value.push({ ...toolEvent, type: 'tool' });
+          expandedTools.value.add(streamTimeline.value.length - 1);
         } else if (toolEvent.type === 'tool_result') {
-          // 找到对应的 tool_start 并更新结果
-          const idx = toolEvents.value.findIndex(e =>
-            e.type === 'tool_start' && e.toolName === toolEvent.toolName
+          const tl = streamTimeline.value;
+          const idx = tl.findIndex(e =>
+            e.type === 'tool' && e.toolName === toolEvent.toolName && !e.result
           );
           if (idx !== -1) {
-            toolEvents.value[idx] = {
-              ...toolEvents.value[idx],
-              type: 'tool_complete',
+            tl[idx] = {
+              ...tl[idx],
+              type: 'tool',
               result: toolEvent.result,
               durationMs: toolEvent.durationMs
             };
@@ -866,6 +1068,8 @@ const sendMessage = async () => {
   };
 
   eventSource.onerror = () => {
+    // 处理缓冲区中剩余的内容
+    flushBuffer();
     finishStream();
   };
 };
@@ -875,24 +1079,38 @@ const finishStream = () => {
     eventSource.close();
     eventSource = null;
   }
-  // 保存消息（即使只有思考内容或工具事件）
-  if (streamContent.value || thinkContent.value || toolEvents.value.length > 0) {
-    const toolEventsCopy = toolEvents.value.length > 0 ? [...toolEvents.value] : null;
+  // 保存消息
+  if (streamTimeline.value.length > 0) {
+    const timeline = [...streamTimeline.value];
     messages.value.push({
       role: 'assistant',
-      content: streamContent.value || '',
-      thinkContent: thinkContent.value || null,
-      toolEvents: toolEventsCopy
+      content: '',
+      timeline
     });
+    // 持久化到后端
+    patrolApi.saveMessage({
+      conversationId: conversationId.value,
+      role: 'assistant',
+      content: '',
+      timeline: JSON.stringify(timeline)
+    });
+    // 更新对话标题（第一条消息时）
+    if (conversations.value.length > 0) {
+      const conv = conversations.value.find(c => c.conversationId === conversationId.value);
+      if (conv && conv.title === '新对话' && messages.value.length >= 2) {
+        conv.title = messages.value[0].content?.substring(0, 50) || '新对话';
+      }
+    }
   }
-  streamContent.value = '';
-  thinkContent.value = '';
-  showThink.value = false;
+  streamTimeline.value = [];
+  showThink.value = true;
+  isInThinkMode = false;
+  textBuffer = '';
   streaming.value = false;
-  toolEvents.value = [];
   expandedTools.value = new Set();
   scrollToBottom();
 };
+
 
 const confirmCommand = async (msg) => {
   msg.needsConfirmation = false;
@@ -1010,9 +1228,14 @@ const showOutput = (record) => {
   showOutputModal.value = true;
 };
 
-onMounted(() => {
+onMounted(async () => {
   loadScripts();
   loadAllServers();
+  await loadConversations();
+  // 自动选中最新对话
+  if (conversations.value.length > 0) {
+    await switchConversation(conversations.value[0].conversationId);
+  }
 });
 </script>
 
@@ -1068,12 +1291,110 @@ onMounted(() => {
 </style>
 
 <style scoped>
-.chat-container {
+/* Conversation sidebar */
+.chat-layout {
   display: flex;
-  flex-direction: column;
   height: calc(100vh - 180px);
   background: #141414;
   border-radius: 12px;
+  overflow: hidden;
+}
+
+.conversation-sidebar {
+  width: 240px;
+  background: #1a1a1a;
+  border-right: 1px solid #222;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.conv-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid #222;
+  color: #ccc;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.conv-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.conv-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #aaa;
+  font-size: 13px;
+  transition: all 0.2s;
+  margin-bottom: 2px;
+}
+
+.conv-item:hover {
+  background: #252525;
+  color: #d4d4d4;
+}
+
+.conv-item.active {
+  background: #264f78;
+  color: #fff;
+}
+
+.conv-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.conv-delete {
+  opacity: 0;
+  color: #666;
+  font-size: 12px;
+  margin-left: 8px;
+  transition: opacity 0.2s;
+}
+
+.conv-item:hover .conv-delete {
+  opacity: 1;
+}
+
+.conv-delete:hover {
+  color: #ff4d4f;
+}
+
+.conv-empty {
+  text-align: center;
+  color: #555;
+  padding: 20px;
+  font-size: 13px;
+}
+
+.conv-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.conv-list::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 2px;
+}
+
+/* Chat container */
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
 }
 

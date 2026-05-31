@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Sinks;
 
 import java.util.*;
 
@@ -17,10 +18,15 @@ import java.util.*;
 public class ServerTool {
 
     private final ServerRepository serverRepository;
+    private Sinks.Many<String> sink;
+
+    public void setSink(Sinks.Many<String> sink) {
+        this.sink = sink;
+    }
 
     @Tool(description = "获取服务器树列表，返回所有服务器的分组结构。包含服务器ID、名称、IP、端口、操作系统、用户名等信息，不包含密码等敏感信息。")
     public String getServerTree() {
-        return ToolCallHelper.execute("getServerTree", "", () -> {
+        return ToolCallHelper.execute(sink, "getServerTree", "", () -> {
             try {
                 List<Server> servers = serverRepository.findAll();
                 List<Map<String, Object>> safeServers = servers.stream()

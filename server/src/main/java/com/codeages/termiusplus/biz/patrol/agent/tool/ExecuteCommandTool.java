@@ -8,6 +8,7 @@ import org.springframework.ai.tool.annotation.ToolParam;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Sinks;
 
 @Slf4j
 @Component
@@ -15,12 +16,17 @@ import org.springframework.stereotype.Component;
 public class ExecuteCommandTool {
 
     private final CommandWhitelistConfig whitelistConfig;
+    private Sinks.Many<String> sink;
+
+    public void setSink(Sinks.Many<String> sink) {
+        this.sink = sink;
+    }
 
     @Tool(description = "在指定服务器上执行 shell 命令。如果命令在白名单中会自动执行，否则返回需要用户确认的提示。")
     public String executeCommand(
             @ToolParam(description = "服务器ID") Long serverId,
             @ToolParam(description = "要执行的命令") String command) {
-        return ToolCallHelper.execute("executeCommand", "serverId=" + serverId + ", command=" + command, () -> {
+        return ToolCallHelper.execute(sink, "executeCommand", "serverId=" + serverId + ", command=" + command, () -> {
             boolean autoExecute = whitelistConfig.shouldAutoExecute(command);
 
             if (!autoExecute) {
@@ -40,7 +46,7 @@ public class ExecuteCommandTool {
     public String executeDangerousCommand(
             @ToolParam(description = "服务器ID") Long serverId,
             @ToolParam(description = "要执行的危险命令") String command) {
-        return ToolCallHelper.execute("executeDangerousCommand", "serverId=" + serverId + ", command=" + command, () -> {
+        return ToolCallHelper.execute(sink, "executeDangerousCommand", "serverId=" + serverId + ", command=" + command, () -> {
             try (ExecuteCommandSSHClient client = new ExecuteCommandSSHClient(serverId)) {
                 return client.executeCommand(command);
             } catch (Exception e) {

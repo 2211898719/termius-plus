@@ -6,14 +6,21 @@ import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Sinks;
 
 @Slf4j
 @Component
 public class NginxTool {
 
+    private Sinks.Many<String> sink;
+
+    public void setSink(Sinks.Many<String> sink) {
+        this.sink = sink;
+    }
+
     @Tool(description = "获取服务器上所有 nginx 站点的 SSL 证书信息，包括域名、到期时间、颁发者等。")
     public String getNginxCerts(@ToolParam(description = "服务器ID") Long serverId) {
-        return ToolCallHelper.execute("getNginxCerts", "serverId=" + serverId, () -> {
+        return ToolCallHelper.execute(sink, "getNginxCerts", "serverId=" + serverId, () -> {
             String script = "for conf in /etc/nginx/sites-enabled/* /etc/nginx/conf.d/*.conf; do "
                     + "[ -f \"$conf\" ] || continue; "
                     + "domain=$(basename \"$conf\" .conf); "
@@ -34,7 +41,7 @@ public class NginxTool {
 
     @Tool(description = "检查 nginx 配置是否正确。")
     public String checkNginxConfig(@ToolParam(description = "服务器ID") Long serverId) {
-        return ToolCallHelper.execute("checkNginxConfig", "serverId=" + serverId, () -> {
+        return ToolCallHelper.execute(sink, "checkNginxConfig", "serverId=" + serverId, () -> {
             try (ExecuteCommandSSHClient client = new ExecuteCommandSSHClient(serverId)) {
                 return client.executeCommand("nginx -t 2>&1");
             } catch (Exception e) {

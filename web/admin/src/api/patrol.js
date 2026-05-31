@@ -23,4 +23,11 @@ export const patrolApi = {
         if (conversationId) params.append('conversationId', conversationId);
         return `/api-admin/patrol/agent/chat/stream?${params.toString()}`;
     },
+
+    // 对话管理
+    listConversations: () => client.get("/api-admin/patrol/agent/conversations"),
+    createConversation: () => client.post("/api-admin/patrol/agent/conversations"),
+    deleteConversation: (conversationId) => client.post("/api-admin/patrol/agent/conversations/delete", {conversationId}),
+    listMessages: (conversationId) => client.get(`/api-admin/patrol/agent/messages?conversationId=${conversationId}`),
+    saveMessage: (params) => client.post("/api-admin/patrol/agent/messages", params),
 }

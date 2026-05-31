@@ -2,21 +2,17 @@ package com.codeages.termiusplus.biz.patrol.agent;
 
 import com.codeages.termiusplus.biz.patrol.agent.tool.*;
 import com.codeages.termiusplus.biz.patrol.service.AgentLlmClientFactory;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
-import org.springframework.ai.chat.messages.AssistantMessage;
-import org.springframework.ai.chat.model.Generation;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Sinks;
 
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 @Service
@@ -43,8 +39,6 @@ public class PatrolAgentService {
             5. 输出使用 Markdown 格式，便于前端展示
             """;
 
-    private static final ObjectMapper objectMapper = new ObjectMapper();
-
     private ChatClient buildChatClient(String conversationId) {
         ChatClient chatClient = factory.createChatClient();
         MessageChatMemoryAdvisor memoryAdvisor = MessageChatMemoryAdvisor.builder(chatMemory)
@@ -63,72 +57,50 @@ public class PatrolAgentService {
                          .content();
     }
 
-    /**
-     * 解析文本中的 <think> 标签，将其转换为单独的 think 事件
-     */
-    private Flux<String> parseTextWithThink(String text) {
-        Pattern thinkPattern = Pattern.compile("<think>(.*?)</think>", Pattern.DOTALL);
-        Matcher matcher = thinkPattern.matcher(text);
-        ArrayList<String> parts = new ArrayList<>();
-        int lastEnd = 0;
-
-        while (matcher.find()) {
-            // <think> 之前的普通文本
-            if (matcher.start() > lastEnd) {
-                String before = text.substring(lastEnd, matcher.start()).trim();
-                if (!before.isEmpty()) {
-                    parts.add("text:" + before);
-                }
-            }
-            // <think> 内容
-            String thinkContent = matcher.group(1).trim();
-            if (!thinkContent.isEmpty()) {
-                parts.add("think:" + thinkContent);
-            }
-            lastEnd = matcher.end();
-        }
-
-        // </think> 之后的普通文本
-        if (lastEnd < text.length()) {
-            String after = text.substring(lastEnd).trim();
-            if (!after.isEmpty()) {
-                parts.add("text:" + after);
-            }
-        }
-
-        // 如果没有 <think> 标签，直接返回原文
-        if (parts.isEmpty() && !text.trim().isEmpty()) {
-            parts.add("text:" + text.trim());
-        }
-
-        return Flux.fromIterable(parts);
-    }
-
     public Flux<String> stream(String userMessage, String conversationId) {
-        // 创建工具调用事件收集器
-        var toolEventSink = ToolCallEventCollector.createSink(conversationId);
+        // 创建统一的事件 sink（工具事件、AI 响应、[DONE] 都通过它发送）
+        Sinks.Many<String> sink = ToolCallEventCollector.createSink(conversationId);
 
-        // 工具事件流 - 实时发送
-        var toolEventFlux = toolEventSink.asFlux()
-                .map(event -> {
-                    try {
-                        return "tool_event:" + objectMapper.writeValueAsString(event);
-                    } catch (Exception e) {
-                        return "tool_event:{}";
-                    }
-                });
+        // 设置工具的 sink，使工具事件直接发送到统一 sink
+        cleanupTool.setSink(sink);
+        diskTool.setSink(sink);
+        executeCommandTool.setSink(sink);
+        nginxTool.setSink(sink);
+        serviceTool.setSink(sink);
+        serverTool.setSink(sink);
 
-        // AI 响应流 - 直接发送原始文本，由前端解析 <think> 标签
-        var chatFlux = buildChatClient(conversationId).prompt(SYSTEM_PROMPT)
+        // 跟踪工具执行状态
+        AtomicInteger activeToolCount = new AtomicInteger(0);
+        AtomicBoolean chatDone = new AtomicBoolean(false);
+
+        // AI 响应流 - 启动异步执行，文本和工具事件都发送到 sink
+        buildChatClient(conversationId).prompt(SYSTEM_PROMPT)
                          .tools(cleanupTool, diskTool, executeCommandTool, nginxTool, serviceTool, serverTool)
                          .user(userMessage)
                          .stream()
                          .content()
-                         .map(text -> "text:" + text)
-                         .doFinally(signal -> ToolCallEventCollector.clear(conversationId));
+                         .doOnNext(text -> sink.tryEmitNext("text:" + text))
+                         .doOnComplete(() -> {
+                             chatDone.set(true);
+                             if (activeToolCount.get() == 0) {
+                                 sink.tryEmitNext("[DONE]");
+                             }
+                         })
+                         .subscribe();
 
-        // 合并工具事件和聊天响应流
-        return Flux.merge(toolEventFlux, chatFlux)
-                   .concatWith(Flux.just("[DONE]"));
+        // 返回 sink 流，在 doOnNext 中跟踪工具事件以发送 [DONE]
+        return sink.asFlux()
+                   .doOnNext(event -> {
+                       if (event.startsWith("tool_event:")) {
+                           if (event.contains("\"tool_start\"")) {
+                               activeToolCount.incrementAndGet();
+                           } else if (event.contains("\"tool_result\"")) {
+                               if (activeToolCount.decrementAndGet() == 0 && chatDone.get()) {
+                                   sink.tryEmitNext("[DONE]");
+                               }
+                           }
+                       }
+                   })
+                   .doFinally(signal -> ToolCallEventCollector.clear(conversationId));
     }
 }

@@ -6,10 +6,17 @@ import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Sinks;
 
 @Slf4j
 @Component
 public class CleanupTool {
+
+    private Sinks.Many<String> sink;
+
+    public void setSink(Sinks.Many<String> sink) {
+        this.sink = sink;
+    }
 
     @Tool(description = "清理指定路径下符合模式的旧文件（如 /tmp 下超过 7 天的文件）。此操作会删除文件，必须先获得用户确认。")
     public String cleanupFiles(
@@ -17,7 +24,7 @@ public class CleanupTool {
             @ToolParam(description = "路径") String path,
             @ToolParam(description = "文件名模式") String pattern,
             @ToolParam(description = "超过多少天") int olderThanDays) {
-        return ToolCallHelper.execute("cleanupFiles", "serverId=" + serverId + ", path=" + path + ", pattern=" + pattern + ", olderThanDays=" + olderThanDays, () -> {
+        return ToolCallHelper.execute(sink, "cleanupFiles", "serverId=" + serverId + ", path=" + path + ", pattern=" + pattern + ", olderThanDays=" + olderThanDays, () -> {
             String command = String.format("find %s -name '%s' -mtime +%d -type f 2>/dev/null | head -50", path, pattern, olderThanDays);
             try (ExecuteCommandSSHClient client = new ExecuteCommandSSHClient(serverId)) {
                 String files = client.executeCommand(command);
@@ -37,7 +44,7 @@ public class CleanupTool {
             @ToolParam(description = "路径") String path,
             @ToolParam(description = "文件名模式") String pattern,
             @ToolParam(description = "超过多少天") int olderThanDays) {
-        return ToolCallHelper.execute("confirmCleanup", "serverId=" + serverId + ", path=" + path + ", pattern=" + pattern + ", olderThanDays=" + olderThanDays, () -> {
+        return ToolCallHelper.execute(sink, "confirmCleanup", "serverId=" + serverId + ", path=" + path + ", pattern=" + pattern + ", olderThanDays=" + olderThanDays, () -> {
             String command = String.format("find %s -name '%s' -mtime +%d -type f -delete 2>&1", path, pattern, olderThanDays);
             try (ExecuteCommandSSHClient client = new ExecuteCommandSSHClient(serverId)) {
                 return "清理完成: " + client.executeCommand(command);

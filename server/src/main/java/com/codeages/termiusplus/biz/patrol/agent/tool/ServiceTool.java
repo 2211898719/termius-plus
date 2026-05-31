@@ -6,16 +6,23 @@ import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Sinks;
 
 @Slf4j
 @Component
 public class ServiceTool {
 
+    private Sinks.Many<String> sink;
+
+    public void setSink(Sinks.Many<String> sink) {
+        this.sink = sink;
+    }
+
     @Tool(description = "检查指定服务（如 nginx, mysql, redis 等）的运行状态。")
     public String getServiceStatus(
             @ToolParam(description = "服务器ID") Long serverId,
             @ToolParam(description = "服务名称，例如 nginx、mysql 或 redis") String serviceName) {
-        return ToolCallHelper.execute("getServiceStatus", "serverId=" + serverId + ", serviceName=" + serviceName, () -> {
+        return ToolCallHelper.execute(sink, "getServiceStatus", "serverId=" + serverId + ", serviceName=" + serviceName, () -> {
             try (ExecuteCommandSSHClient client = new ExecuteCommandSSHClient(serverId)) {
                 return client.executeCommand("systemctl status " + serviceName + " 2>&1");
             } catch (Exception e) {
@@ -26,7 +33,7 @@ public class ServiceTool {
 
     @Tool(description = "列出所有正在运行的服务。")
     public String listRunningServices(@ToolParam(description = "服务器ID") Long serverId) {
-        return ToolCallHelper.execute("listRunningServices", "serverId=" + serverId, () -> {
+        return ToolCallHelper.execute(sink, "listRunningServices", "serverId=" + serverId, () -> {
             try (ExecuteCommandSSHClient client = new ExecuteCommandSSHClient(serverId)) {
                 return client.executeCommand("systemctl list-units --type=service --state=running --no-pager");
             } catch (Exception e) {

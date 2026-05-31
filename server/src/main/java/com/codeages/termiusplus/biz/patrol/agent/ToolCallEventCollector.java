@@ -11,14 +11,14 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class ToolCallEventCollector {
 
-    private static final ConcurrentHashMap<String, Sinks.Many<ToolCallEvent>> SINKS = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, Sinks.Many<String>> SINKS = new ConcurrentHashMap<>();
     private static volatile String currentConversationId;
 
     /**
-     * 为当前请求创建新的事件 sink
+     * 为当前请求创建新的事件 sink（统一接收所有事件：tool_event、text、[DONE]）
      */
-    public static Sinks.Many<ToolCallEvent> createSink(String conversationId) {
-        Sinks.Many<ToolCallEvent> sink = Sinks.many().multicast().onBackpressureBuffer();
+    public static Sinks.Many<String> createSink(String conversationId) {
+        Sinks.Many<String> sink = Sinks.many().multicast().onBackpressureBuffer();
         SINKS.put(conversationId, sink);
         currentConversationId = conversationId;
         return sink;
@@ -27,7 +27,7 @@ public class ToolCallEventCollector {
     /**
      * 获取当前请求的事件 sink
      */
-    public static Sinks.Many<ToolCallEvent> getCurrentSink() {
+    public static Sinks.Many<String> getCurrentSink() {
         String convId = currentConversationId;
         if (convId != null) {
             return SINKS.get(convId);
@@ -46,22 +46,46 @@ public class ToolCallEventCollector {
     }
 
     /**
-     * 工具开始执行时调用
+     * 工具开始执行时调用（使用当前 sink）
      */
     public static void emitToolStart(String toolName, String arguments) {
-        Sinks.Many<ToolCallEvent> sink = getCurrentSink();
+        emitToolStart(getCurrentSink(), toolName, arguments);
+    }
+
+    /**
+     * 工具开始执行时调用（指定 sink）
+     */
+    public static void emitToolStart(Sinks.Many<String> sink, String toolName, String arguments) {
         if (sink != null) {
-            sink.tryEmitNext(new ToolCallEvent("tool_start", toolName, arguments, null, 0));
+            try {
+                String json = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(
+                        new ToolCallEvent("tool_start", toolName, arguments, null, 0));
+                sink.tryEmitNext("tool_event:" + json);
+            } catch (Exception e) {
+                sink.tryEmitNext("tool_event:{}");
+            }
         }
     }
 
     /**
-     * 工具执行完成时调用
+     * 工具执行完成时调用（使用当前 sink）
      */
     public static void emitToolResult(String toolName, String arguments, String result, long durationMs) {
-        Sinks.Many<ToolCallEvent> sink = getCurrentSink();
+        emitToolResult(getCurrentSink(), toolName, arguments, result, durationMs);
+    }
+
+    /**
+     * 工具执行完成时调用（指定 sink）
+     */
+    public static void emitToolResult(Sinks.Many<String> sink, String toolName, String arguments, String result, long durationMs) {
         if (sink != null) {
-            sink.tryEmitNext(new ToolCallEvent("tool_result", toolName, arguments, result, durationMs));
+            try {
+                String json = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(
+                        new ToolCallEvent("tool_result", toolName, arguments, result, durationMs));
+                sink.tryEmitNext("tool_event:" + json);
+            } catch (Exception e) {
+                sink.tryEmitNext("tool_event:{}");
+            }
         }
     }
 }
