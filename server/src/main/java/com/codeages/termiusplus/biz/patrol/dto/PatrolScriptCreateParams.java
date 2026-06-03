@@ -12,4 +12,6 @@ public class PatrolScriptCreateParams {
     private String scriptContent;
     private String outputSchema;
     private String category = "custom";
+    private String serverIds;
+    private String groupIds;
 }

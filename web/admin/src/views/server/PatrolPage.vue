@@ -12,7 +12,7 @@
             <div class="conv-header">
               <span>对话记录</span>
             </div>
-            <div class="conv-list">
+            <div class="conv-list" ref="convListRef">
               <div v-for="conv in conversations" :key="conv.conversationId"
                    :class="['conv-item', { active: conv.conversationId === conversationId }]"
                    @click="switchConversation(conv.conversationId)">
@@ -27,7 +27,7 @@
           <div class="chat-messages" ref="messagesRef">
             <div v-if="messages.length === 0" class="chat-welcome">
               <div class="welcome-icon">&#129302;</div>
-              <div class="welcome-title">AI 巡查助手</div>
+              <div class="welcome-title">AI 助手</div>
               <div class="welcome-desc">我可以帮你检查服务器状态、分析问题、执行运维命令</div>
               <div class="welcome-examples">
                 <div class="example-item" @click="setInputText('检查所有服务器的磁盘使用情况')">检查所有服务器的磁盘使用情况</div>
@@ -184,36 +184,22 @@
               ></div>
               <div v-if="showMention && filteredServerTree.length > 0" class="mention-dropdown" ref="mentionDropdownRef">
                 <div class="mention-list">
-                  <template v-for="group in filteredServerTree" :key="group.id">
-                    <div class="mention-group" v-if="group.isGroup">
-                      <div class="mention-group-header" @click="toggleGroup(group)">
-                        <folder-outlined style="margin-right: 8px; flex-shrink: 0;" />
-                        <span class="group-name">{{ group.name }}</span>
-                        <span class="group-count">({{ group.children?.length || 0 }})</span>
-                        <right-outlined class="group-arrow" :class="{ expanded: group._expanded }" />
-                      </div>
-                      <div class="mention-group-children" v-if="group._expanded">
-                        <div v-for="s in group.children" :key="s.id"
-                             :class="['mention-item', { active: s._index === mentionIndex }]"
-                             @click="selectMentionServer(s)"
-                             @mouseenter="mentionIndex = s._index">
-                          <hdd-outlined v-if="s.os === 'LINUX'" style="color: #E45F2B; margin-right: 8px;" />
-                          <windows-outlined v-else-if="s.os === 'WINDOWS'" style="color: #E45F2B; margin-right: 8px;" />
-                          <cloud-server-outlined v-else style="margin-right: 8px;" />
-                          <span class="mention-name">{{ s.name }}</span>
-                          <span class="mention-ip">{{ s.ip }}</span>
-                        </div>
-                      </div>
+                  <template v-for="item in filteredServerTree" :key="`${item.type}-${item.node.id}-${item.depth}`">
+                    <div v-if="item.type === 'group'" class="mention-group-header"
+                         :style="{paddingLeft: `${8 + item.depth * 14}px`}">
+                      <folder-outlined style="margin-right: 6px; flex-shrink: 0; opacity: 0.7;" />
+                      <span class="group-name" style="opacity: 0.85;">{{ item.node.name }}</span>
                     </div>
                     <div v-else
-                         :class="['mention-item', { active: group._index === mentionIndex }]"
-                         @click="selectMentionServer(group)"
-                         @mouseenter="mentionIndex = group._index">
-                      <hdd-outlined v-if="group.os === 'LINUX'" style="color: #E45F2B; margin-right: 8px;" />
-                      <windows-outlined v-else-if="group.os === 'WINDOWS'" style="color: #E45F2B; margin-right: 8px;" />
+                         :class="['mention-item', { active: item._index === mentionIndex }]"
+                         :style="{paddingLeft: `${8 + item.depth * 14}px`}"
+                         @click="selectMentionServer(item.node)"
+                         @mouseenter="mentionIndex = item._index">
+                      <hdd-outlined v-if="item.node.os === 'LINUX'" style="color: #E45F2B; margin-right: 8px;" />
+                      <windows-outlined v-else-if="item.node.os === 'WINDOWS'" style="color: #E45F2B; margin-right: 8px;" />
                       <cloud-server-outlined v-else style="margin-right: 8px;" />
-                      <span class="mention-name">{{ group.name }}</span>
-                      <span class="mention-ip">{{ group.ip }}</span>
+                      <span class="mention-name">{{ item.node.name }}</span>
+                      <span class="mention-ip">{{ item.node.ip }}</span>
                     </div>
                   </template>
                 </div>
@@ -230,7 +216,7 @@
       <!-- 脚本管理 Tab -->
       <a-tab-pane key="scripts" tab="巡检脚本">
         <div style="margin-bottom: 16px; display: flex; gap: 8px;">
-          <a-button type="primary" @click="showGenerateModal = true">AI 生成脚本</a-button>
+          <a-button type="primary" @click="openGenerateModal">AI 生成脚本</a-button>
           <a-button @click="loadScripts">刷新</a-button>
           <a-button type="primary" ghost @click="executeAllScripts">执行全部</a-button>
         </div>
@@ -242,8 +228,15 @@
             <template v-if="column.key === 'category'">
               <a-tag :color="categoryColor(record.category)">{{ record.category }}</a-tag>
             </template>
+            <template v-if="column.key === 'scope'">
+              <span :style="{color: formatScope(record).startsWith('所有') ? '#52c41a' : '#faad14'}">
+                {{ formatScope(record) }}
+              </span>
+            </template>
             <template v-if="column.key === 'action'">
               <a-space>
+                <a @click="openViewScript(record)">查看</a>
+                <a @click="openEditScript(record)">编辑</a>
                 <a @click="executeScript(record)">执行</a>
                 <a-popconfirm title="确认删除？" @confirm="deleteScript(record.id)">
                   <a style="color: red">删除</a>
@@ -270,10 +263,15 @@
     </a-tabs>
 
     <!-- AI 生成脚本弹窗 -->
-    <a-modal v-model:visible="showGenerateModal" title="AI 生成巡检脚本" @ok="generateScript"
-             :confirmLoading="generating" width="600px">
+    <a-modal v-model:visible="showGenerateModal" title="AI 生成巡检脚本"
+             :okText="generatedScript ? '保存' : '生成'"
+             :confirmLoading="generating || savingGenerated"
+             @ok="handleGenerateModalOk"
+             @cancel="resetGenerateModal"
+             width="640px">
       <a-textarea v-model:value="generateDescription" :rows="4"
-                  placeholder="描述你想检查什么，如：检查所有磁盘分区使用率，超过 80% 报警" />
+                  placeholder="描述你想检查什么，如：检查所有磁盘分区使用率，超过 80% 报警"
+                  :disabled="generating || savingGenerated || !!generatedScript" />
       <div v-if="generatedScript" style="margin-top: 16px;">
         <div style="margin-bottom: 8px; font-weight: bold;">生成结果预览：</div>
         <a-textarea v-model:value="generatedScript.scriptContent" :rows="10"
@@ -287,6 +285,107 @@
             <a-select-option value="service">服务</a-select-option>
             <a-select-option value="custom">自定义</a-select-option>
           </a-select>
+        </div>
+        <div style="margin-top: 14px;">
+          <div style="margin-bottom: 6px; color: #aaa; font-size: 12px;">
+            应用范围 <span style="opacity: 0.6;">不选则对所有服务器生效</span>
+          </div>
+          <div style="background: #1e1e1e; border: 1px solid #333; border-radius: 6px; padding: 6px 8px; max-height: 240px; overflow: auto;">
+            <a-tree
+                :tree-data="scopeTreeData"
+                v-model:checkedKeys="scopeCheckedKeys"
+                checkable
+                check-strictly
+                :block-node="true"
+            />
+          </div>
+          <div v-if="scopeCheckedKeys.length === 0" style="margin-top: 6px; color: #52c41a; font-size: 12px;">
+            当前为「所有服务器」
+          </div>
+        </div>
+      </div>
+    </a-modal>
+
+    <!-- 脚本查看/编辑弹窗 -->
+    <a-modal v-model:visible="showScriptModal"
+             :title="scriptModalMode === 'view' ? '查看巡检脚本' : '编辑巡检脚本'"
+             :okText="scriptModalMode === 'view' ? '关闭' : '保存'"
+             :cancelButtonProps="scriptModalMode === 'view' ? { style: { display: 'none' } } : {}"
+             :confirmLoading="savingScript"
+             @ok="handleScriptModalOk"
+             @cancel="closeScriptModal"
+             width="780px"
+             :destroyOnClose="true">
+      <div v-if="editingScript">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; margin-bottom: 12px;">
+          <div>
+            <div style="margin-bottom: 4px; color: #aaa; font-size: 12px;">名称</div>
+            <a-input v-model:value="editingScript.name" :disabled="scriptModalMode === 'view'" placeholder="脚本名称" />
+          </div>
+          <div>
+            <div style="margin-bottom: 4px; color: #aaa; font-size: 12px;">分类</div>
+            <a-select v-model:value="editingScript.category" :disabled="scriptModalMode === 'view'" style="width: 100%;">
+              <a-select-option value="disk">磁盘</a-select-option>
+              <a-select-option value="nginx">Nginx</a-select-option>
+              <a-select-option value="security">安全</a-select-option>
+              <a-select-option value="service">服务</a-select-option>
+              <a-select-option value="custom">自定义</a-select-option>
+            </a-select>
+          </div>
+        </div>
+        <div style="margin-bottom: 12px;">
+          <div style="margin-bottom: 4px; color: #aaa; font-size: 12px;">说明</div>
+          <a-textarea v-model:value="editingScript.description" :disabled="scriptModalMode === 'view'"
+                      :rows="2" placeholder="脚本用途说明" />
+        </div>
+        <div style="margin-bottom: 12px;">
+          <div style="margin-bottom: 4px; color: #aaa; font-size: 12px;">脚本内容</div>
+          <a-textarea v-model:value="editingScript.scriptContent" :disabled="scriptModalMode === 'view'"
+                      :rows="16"
+                      style="font-family: monospace; font-size: 12px;"
+                      placeholder="#!/bin/bash ..." />
+        </div>
+        <div v-if="scriptModalMode === 'edit'" style="margin-bottom: 12px; padding: 10px 12px; background: #1e1e1e; border: 1px solid #333; border-radius: 6px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="color: #aaa; font-size: 12px; white-space: nowrap;">测试服务器:</span>
+            <a-select v-model:value="testServerId"
+                      :options="flatServerOptions"
+                      :filterOption="(input, option) => option.label.toLowerCase().includes(input.toLowerCase())"
+                      show-search
+                      placeholder="选择一台服务器运行当前编辑中的脚本"
+                      style="flex: 1; min-width: 240px;"
+                      :disabled="testingScript" />
+            <a-button type="primary" ghost :loading="testingScript"
+                      :disabled="!testServerId || !editingScript.scriptContent?.trim()"
+                      @click="testScript">
+              运行测试
+            </a-button>
+          </div>
+          <div style="margin-top: 6px; color: #888; font-size: 11px;">
+            测试运行的是当前编辑器里的内容(未保存也能测),不会写入「执行记录」,只会触发告警通知。
+          </div>
+        </div>
+        <div style="margin-bottom: 12px;">
+          <div style="margin-bottom: 4px; color: #aaa; font-size: 12px;">输出 JSON Schema(可选)</div>
+          <a-textarea v-model:value="editingScript.outputSchema" :disabled="scriptModalMode === 'view'"
+                      :rows="3" style="font-family: monospace; font-size: 12px;" />
+        </div>
+        <div v-if="scriptModalMode === 'edit'">
+          <div style="margin-bottom: 6px; color: #aaa; font-size: 12px;">
+            应用范围 <span style="opacity: 0.6;">不选则对所有服务器生效</span>
+          </div>
+          <div style="background: #1e1e1e; border: 1px solid #333; border-radius: 6px; padding: 6px 8px; max-height: 200px; overflow: auto;">
+            <a-tree
+                :tree-data="scopeTreeData"
+                v-model:checkedKeys="editScopeCheckedKeys"
+                checkable
+                check-strictly
+                :block-node="true"
+            />
+          </div>
+          <div v-if="editScopeCheckedKeys.length === 0" style="margin-top: 6px; color: #52c41a; font-size: 12px;">
+            当前为「所有服务器」
+          </div>
         </div>
       </div>
     </a-modal>
@@ -304,7 +403,7 @@ import {patrolApi} from '@/api/patrol';
 import {serverApi} from '@/api/server';
 import {message} from 'ant-design-vue';
 import markdownIt from 'markdown-it';
-import {CloudServerOutlined, HddOutlined, WindowsOutlined, FolderOutlined, RightOutlined, PlusOutlined, DeleteOutlined} from '@ant-design/icons-vue';
+import {CloudServerOutlined, HddOutlined, WindowsOutlined, FolderOutlined, PlusOutlined, DeleteOutlined} from '@ant-design/icons-vue';
 
 const activeTab = ref('chat');
 const md = markdownIt();
@@ -314,6 +413,7 @@ const messages = ref([]);
 const messagesRef = ref(null);
 // 对话管理
 const conversations = ref([]);
+const convListRef = ref(null);
 const conversationId = ref(null);
 
 function generateUuid() {
@@ -323,9 +423,19 @@ function generateUuid() {
   });
 }
 
+const scrollConvListToBottom = () => {
+  nextTick(() => {
+    const el = convListRef.value;
+    if (el) el.scrollTop = el.scrollHeight;
+  });
+};
+
 const loadConversations = async () => {
   try {
-    conversations.value = await patrolApi.listConversations();
+    const list = await patrolApi.listConversations();
+    // 翻转：API 返回最新在前，前端按聊天列表习惯显示最新在底部
+    conversations.value = list.slice().reverse();
+    scrollConvListToBottom();
   } catch (e) {
     console.error('Failed to load conversations:', e);
   }
@@ -439,36 +549,33 @@ const mentionInputRef = ref(null);
 // 导航索引（用于跟踪键盘导航位置，与Vue响应式分离避免被覆盖）
 let navIndex = 0;
 
+// 保存 @ 触发时的光标位置（用于点击选择时恢复焦点和光标）
+let savedSelection = null;
+
 // 缓存的扁平服务器列表（避免快速键盘导航时computed重复计算导致索引错乱）
 let cachedFlatServers = [];
 let lastServerTreeVersion = 0;
 let lastFilterValue = '';
 
-// 过滤服务器树
-const filterServerTree = (list, filter, parentExpanded = true, indexRef = { current: 0 }) => {
+// 把服务器树扁平化为 [{type: 'group' | 'server', node, depth, _index}],只输出有命中后代的组,组本身不可选
+const filterServerTree = (list, filter, depth = 0, indexRef = { current: 0 }) => {
   const result = [];
 
-  list.forEach(item => {
-    if (item.isGroup && item.children) {
-      const filteredChildren = filterServerTree(item.children, filter, parentExpanded, indexRef);
-      if (filteredChildren.length > 0) {
-        const group = {
-          ...item,
-          _expanded: parentExpanded,
-          children: filteredChildren
-        };
-        result.push(group);
+  for (const item of list || []) {
+    if (item.isGroup) {
+      const sub = filterServerTree(item.children, filter, depth + 1, indexRef);
+      if (sub.length > 0) {
+        result.push({type: 'group', node: item, depth, _index: -1});
+        result.push(...sub);
       }
-    } else if (!item.isGroup) {
-      if (!filter ||
-          item.name?.toLowerCase().includes(filter) ||
-          item.ip?.toLowerCase().includes(filter)) {
-        const server = {...item, _index: indexRef.current};
-        indexRef.current++;
-        result.push(server);
+    } else {
+      const name = (item.name || '').toLowerCase();
+      const ip = (item.ip || '').toLowerCase();
+      if (!filter || name.includes(filter) || ip.includes(filter)) {
+        result.push({type: 'server', node: item, depth, _index: indexRef.current++});
       }
     }
-  });
+  }
 
   return result;
 };
@@ -496,11 +603,6 @@ const computeFilteredTree = () => {
 const filteredServerTree = computed(() => {
   return computeFilteredTree();
 });
-
-// 切换分组展开/收起
-const toggleGroup = (group) => {
-  group._expanded = !group._expanded;
-};
 
 // 加载服务器树
 const loadAllServers = async () => {
@@ -551,11 +653,14 @@ const handleInput = () => {
     mentionFilter.value = filterText;
     mentionIndex.value = 0;
     navIndex = 0;
+    // 保存当前光标位置，用于点击选择时恢复
+    savedSelection = selection.getRangeAt(0).cloneRange();
     return;
   }
 
   showMention.value = false;
   mentionFilter.value = '';
+  savedSelection = null;
 };
 
 // 找到光标前不在 mention 内的 @ 符号及其后续文本
@@ -723,10 +828,23 @@ const getTextContent = (el) => {
 
 // 选择服务器
 const selectMentionServer = async (server) => {
+  // 组不可选 — 避免嵌套组被误当成服务器塞进对话
+  if (server.isGroup) return;
+  // 点击时输入框可能已失焦，恢复焦点和光标位置
+  const inputEl = mentionInputRef.value;
+  if (inputEl) {
+    inputEl.focus();
+    if (savedSelection) {
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(savedSelection);
+    }
+  }
   insertInlineMention(server);
   showMention.value = false;
   mentionFilter.value = '';
   navIndex = 0;
+  savedSelection = null;
 };
 
 // 获取 OS 图标
@@ -930,6 +1048,7 @@ const handleMentionKeydown = (e) => {
   } else if (e.key === 'Escape') {
     showMention.value = false;
     navIndex = 0;
+    savedSelection = null;
   }
 };
 
@@ -1199,7 +1318,7 @@ const confirmCommand = async (msg) => {
   msg.needsConfirmation = false;
   const inputEl = mentionInputRef.value;
   if (inputEl) {
-    inputEl.innerHTML = '确认执行: ' + msg.pendingCommand;
+    inputEl.innerHTML = '确认执行';
     inputEl.dispatchEvent(new Event('input', { bubbles: true }));
   }
   await sendMessage();
@@ -1247,16 +1366,72 @@ const showGenerateModal = ref(false);
 const showOutputModal = ref(false);
 const generateDescription = ref('');
 const generating = ref(false);
+const savingGenerated = ref(false);
 const generatedScript = ref(null);
+const scopeCheckedKeys = ref([]);
 const currentOutput = ref('');
+
+// 脚本查看/编辑弹窗
+const showScriptModal = ref(false);
+const scriptModalMode = ref('view'); // 'view' | 'edit'
+const editingScript = ref(null);
+const savingScript = ref(false);
+const editScopeCheckedKeys = ref([]);
+const testServerId = ref(null);
+const testingScript = ref(false);
+const flatServerOptions = computed(() => {
+  const opts = [];
+  const walk = (nodes, path) => {
+    for (const n of nodes || []) {
+      const label = path ? `${path} / ${n.name}` : n.name;
+      if (n.isGroup) {
+        walk(n.children || [], label);
+      } else {
+        opts.push({value: n.id, label: `${label} (${n.ip || '-'})`});
+      }
+    }
+  };
+  walk(serverTree.value, '');
+  return opts;
+});
 
 const scriptColumns = [
   {title: '名称', dataIndex: 'name', key: 'name'},
   {title: '分类', dataIndex: 'category', key: 'category'},
+  {title: '范围', key: 'scope', width: 180},
   {title: '描述', dataIndex: 'description', key: 'description', ellipsis: true},
   {title: '启用', dataIndex: 'enabled', key: 'enabled'},
   {title: '操作', key: 'action'},
 ];
+
+const parseIdList = (json) => {
+  if (!json) return [];
+  try { return JSON.parse(json); } catch { return []; }
+};
+
+const formatScope = (record) => {
+  const serverCount = parseIdList(record.serverIds).length;
+  const groupCount = parseIdList(record.groupIds).length;
+  if (serverCount === 0 && groupCount === 0) return '所有服务器';
+  const parts = [];
+  if (serverCount > 0) parts.push(`${serverCount}台服务器`);
+  if (groupCount > 0) parts.push(`${groupCount}个分组`);
+  return parts.join(' + ');
+};
+
+// 把 serverTree 转成 a-tree 需要的格式，保留 isGroup 用于判断类型
+const scopeTreeData = computed(() => {
+  return (serverTree.value || []).map(node => buildScopeNode(node));
+});
+
+function buildScopeNode(node) {
+  return {
+    key: node.id,
+    title: node.name,
+    isGroup: !!node.isGroup,
+    children: (node.children || []).map(buildScopeNode)
+  };
+}
 
 const taskColumns = [
   {title: '脚本ID', dataIndex: 'scriptId', key: 'scriptId'},
@@ -1284,11 +1459,206 @@ const generateScript = async () => {
   generating.value = true;
   try {
     generatedScript.value = await patrolApi.generateScript(generateDescription.value);
+    scopeCheckedKeys.value = [];
     message.success('脚本已生成，请确认后保存');
   } catch (e) {
     message.error('生成失败: ' + e.message);
   }
   generating.value = false;
+};
+
+const openGenerateModal = () => {
+  resetGenerateModal();
+  showGenerateModal.value = true;
+};
+
+const openViewScript = (record) => {
+  editingScript.value = {
+    id: record.id,
+    name: record.name,
+    description: record.description,
+    category: record.category || 'custom',
+    scriptContent: record.scriptContent || '',
+    outputSchema: record.outputSchema || '',
+    serverIds: record.serverIds,
+    groupIds: record.groupIds,
+  };
+  scriptModalMode.value = 'view';
+  showScriptModal.value = true;
+};
+
+const openEditScript = async (record) => {
+  try {
+    const full = await patrolApi.getScript(record.id);
+    editingScript.value = {
+      id: full.id,
+      name: full.name,
+      description: full.description,
+      category: full.category || 'custom',
+      scriptContent: full.scriptContent || '',
+      outputSchema: full.outputSchema || '',
+      enabled: full.enabled !== false,
+      serverIds: full.serverIds,
+      groupIds: full.groupIds,
+    };
+    editScopeCheckedKeys.value = [
+      ...parseIdList(full.serverIds),
+      ...parseIdList(full.groupIds),
+    ];
+    scriptModalMode.value = 'edit';
+    showScriptModal.value = true;
+  } catch (e) {
+    message.error('加载脚本失败: ' + e.message);
+  }
+};
+
+const closeScriptModal = () => {
+  showScriptModal.value = false;
+  editingScript.value = null;
+  editScopeCheckedKeys.value = [];
+  testServerId.value = null;
+  testingScript.value = false;
+};
+
+const handleScriptModalOk = async () => {
+  if (scriptModalMode.value === 'view') {
+    closeScriptModal();
+    return;
+  }
+  if (!editingScript.value.name?.trim()) {
+    message.warning('请填写脚本名称');
+    return;
+  }
+  savingScript.value = true;
+  try {
+    const payload = {
+      id: editingScript.value.id,
+      name: editingScript.value.name,
+      description: editingScript.value.description,
+      scriptContent: editingScript.value.scriptContent,
+      outputSchema: editingScript.value.outputSchema,
+      category: editingScript.value.category || 'custom',
+      enabled: editingScript.value.enabled !== false,
+    };
+    const serverIds = [];
+    const groupIds = [];
+    for (const key of editScopeCheckedKeys.value) {
+      if (findScopeNode(serverTree.value, key)?.isGroup) {
+        groupIds.push(key);
+      } else {
+        serverIds.push(key);
+      }
+    }
+    payload.serverIds = serverIds.length ? JSON.stringify(serverIds) : null;
+    payload.groupIds = groupIds.length ? JSON.stringify(groupIds) : null;
+    await patrolApi.updateScript(payload);
+    message.success('脚本已保存');
+    closeScriptModal();
+    await loadScripts();
+  } catch (e) {
+    message.error('保存失败: ' + e.message);
+  }
+  savingScript.value = false;
+};
+
+const testScript = async () => {
+  if (!testServerId.value) {
+    message.warning('请先选择测试服务器');
+    return;
+  }
+  if (!editingScript.value?.scriptContent?.trim()) {
+    message.warning('脚本内容为空');
+    return;
+  }
+  testingScript.value = true;
+  try {
+    const result = await patrolApi.executeDraft({
+      serverId: testServerId.value,
+      scriptContent: editingScript.value.scriptContent,
+      scriptName: editingScript.value.name || '草稿',
+    });
+    let pretty;
+    try {
+      pretty = JSON.stringify(JSON.parse(result.output || '{}'), null, 2);
+    } catch {
+      pretty = result.output || '(无输出)';
+    }
+    const statusLabel = {ok: '✅ 正常', warning: '⚠️ 警告', error: '❌ 错误'}[result.status] || result.status;
+    currentOutput.value =
+      `状态: ${statusLabel}\n` +
+      `服务器: ${result.serverId}\n` +
+      `脚本: ${editingScript.value.name || '草稿'}\n` +
+      `执行时间: ${result.executedAt || '-'}\n` +
+      `\n--- 输出 ---\n${pretty}`;
+    showOutputModal.value = true;
+  } catch (e) {
+    currentOutput.value = '测试失败: ' + (e.response?.data?.message || e.message);
+    showOutputModal.value = true;
+  }
+  testingScript.value = false;
+};
+
+const resetGenerateModal = () => {
+  generateDescription.value = '';
+  generatedScript.value = null;
+  scopeCheckedKeys.value = [];
+};
+
+const handleGenerateModalOk = async () => {
+  if (!generatedScript.value) {
+    await generateScript();
+    return;
+  }
+  if (!generatedScript.value.name?.trim()) {
+    message.warning('请填写脚本名称');
+    return;
+  }
+  savingGenerated.value = true;
+  try {
+    const payload = {
+      name: generatedScript.value.name,
+      description: generatedScript.value.description,
+      scriptContent: generatedScript.value.scriptContent,
+      outputSchema: generatedScript.value.outputSchema,
+      category: generatedScript.value.category || 'custom',
+    };
+    const { serverIds, groupIds } = buildScopePayload();
+    if (serverIds) payload.serverIds = serverIds;
+    if (groupIds) payload.groupIds = groupIds;
+    await patrolApi.createScript(payload);
+    message.success('脚本已保存');
+    showGenerateModal.value = false;
+    resetGenerateModal();
+    await loadScripts();
+  } catch (e) {
+    message.error('保存失败: ' + e.message);
+  }
+  savingGenerated.value = false;
+};
+
+const buildScopePayload = () => {
+  const serverIds = [];
+  const groupIds = [];
+  for (const key of scopeCheckedKeys.value) {
+    if (findScopeNode(serverTree.value, key)?.isGroup) {
+      groupIds.push(key);
+    } else {
+      serverIds.push(key);
+    }
+  }
+  return {
+    serverIds: serverIds.length ? JSON.stringify(serverIds) : null,
+    groupIds: groupIds.length ? JSON.stringify(groupIds) : null,
+  };
+};
+
+const findScopeNode = (nodes, key) => {
+  for (const n of nodes || []) {
+    if (n.id === key) return n;
+    const child = findScopeNode(n.children, key);
+    if (child) return child;
+  }
+  return null;
 };
 
 const toggleScript = async (record) => {
@@ -1338,9 +1708,9 @@ onMounted(async () => {
   loadScripts();
   loadAllServers();
   await loadConversations();
-  // 自动选中最新对话
+  // 自动选中最新对话（在翻转后的列表里是最后一项）
   if (conversations.value.length > 0) {
-    await switchConversation(conversations.value[0].conversationId);
+    await switchConversation(conversations.value[conversations.value.length - 1].conversationId);
   }
 });
 </script>
@@ -1813,6 +2183,25 @@ onMounted(async () => {
   margin-bottom: 0;
 }
 
+.message-content :deep(h1),
+.message-content :deep(h2),
+.message-content :deep(h3),
+.message-content :deep(h4),
+.message-content :deep(h5),
+.message-content :deep(h6) {
+  color: #d4d4d4;
+  font-weight: 600;
+  margin: 16px 0 8px;
+  line-height: 1.4;
+}
+
+.message-content :deep(h1) { font-size: 22px; }
+.message-content :deep(h2) { font-size: 19px; }
+.message-content :deep(h3) { font-size: 17px; }
+.message-content :deep(h4) { font-size: 15px; }
+.message-content :deep(h5) { font-size: 14px; }
+.message-content :deep(h6) { font-size: 14px; color: #aaa; }
+
 .message-content :deep(code) {
   background: #2d2d2d;
   padding: 2px 6px;
@@ -2004,13 +2393,8 @@ onMounted(async () => {
   color: #fff;
 }
 
-.mention-group {
-  margin: 4px 0;
-}
-
 .mention-group-header {
   padding: 8px 12px;
-  cursor: pointer;
   display: flex;
   align-items: center;
   color: #888;
@@ -2025,31 +2409,6 @@ onMounted(async () => {
   white-space: nowrap;
   flex: 1;
   min-width: 0;
-}
-
-.mention-group-header:hover {
-  color: #d4d4d4;
-  background: #2a2a2a;
-}
-
-.group-count {
-  margin-left: 4px;
-  color: #666;
-  font-size: 12px;
-}
-
-.group-arrow {
-  margin-left: auto;
-  transition: transform 0.2s;
-  font-size: 10px;
-}
-
-.group-arrow.expanded {
-  transform: rotate(90deg);
-}
-
-.mention-group-children {
-  margin-left: 16px;
 }
 
 .mention-name {

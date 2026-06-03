@@ -629,7 +629,7 @@ const handleDragLeaveTabBarGroup = () => {
         <a-tab-pane class="setting-pane" tab="设置" key="setting" :closable="false" :forceRender="true">
           <setting-page ref="settingRef"></setting-page>
         </a-tab-pane>
-        <a-tab-pane tab="AI 巡查" key="patrol" :closable="false" :forceRender="true">
+        <a-tab-pane tab="AI" key="patrol" :closable="false" :forceRender="true">
           <PatrolPage ref="patrolRef"></PatrolPage>
         </a-tab-pane>
 
@@ -788,7 +788,7 @@ const handleDragLeaveTabBarGroup = () => {
                     <robot-outlined/>
                   </div>
                   <div class="tab-title">
-                    AI 巡查
+                    AI
                   </div>
                 </div>
 

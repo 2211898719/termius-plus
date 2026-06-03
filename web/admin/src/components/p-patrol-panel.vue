@@ -1,7 +1,7 @@
 <template>
   <div class="patrol-panel" v-if="visible">
     <div class="patrol-panel-header">
-      <span>AI 巡查助手</span>
+      <span>AI 助手</span>
       <a-button type="text" size="small" @click="close" style="color: #fff">×</a-button>
     </div>
     <div class="patrol-panel-messages" ref="messagesRef">
@@ -84,7 +84,7 @@ const confirmCommand = async (msg, index) => {
   msg.needsConfirmation = false;
   loading.value = true;
   try {
-    const response = await patrolApi.chat('确认执行: ' + msg.pendingCommand, props.serverId, conversationId.value);
+    const response = await patrolApi.chat('确认执行', props.serverId, conversationId.value);
     conversationId.value = response.conversationId;
     messages.value.push({role: 'assistant', content: response.reply});
   } catch (e) {

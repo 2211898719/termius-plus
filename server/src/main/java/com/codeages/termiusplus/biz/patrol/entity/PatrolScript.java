@@ -36,6 +36,12 @@ public class PatrolScript {
     @Column(nullable = false)
     private Boolean enabled = true;
 
+    @Column(columnDefinition = "TEXT")
+    private String serverIds;
+
+    @Column(columnDefinition = "TEXT")
+    private String groupIds;
+
     @CreatedDate
     private Long createdAt;
 

@@ -1,17 +1,21 @@
 package com.codeages.termiusplus.biz.patrol.agent.tool;
 
+import com.codeages.termiusplus.biz.patrol.agent.PatrolPermissionService;
 import com.codeages.termiusplus.biz.patrol.agent.ToolCallHelper;
 import com.codeages.termiusplus.biz.util.ExecuteCommandSSHClient;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Sinks;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class NginxTool {
 
+    private final PatrolPermissionService permissionService;
     private Sinks.Many<String> sink;
 
     public void setSink(Sinks.Many<String> sink) {
@@ -21,6 +25,9 @@ public class NginxTool {
     @Tool(description = "获取服务器上所有 nginx 站点的 SSL 证书信息，包括域名、到期时间、颁发者等。")
     public String getNginxCerts(@ToolParam(description = "服务器ID") Long serverId) {
         return ToolCallHelper.execute(sink, "getNginxCerts", "serverId=" + serverId, () -> {
+            if (!permissionService.canAccessServer(serverId)) {
+                return "无权限访问服务器 " + serverId + "，操作已拒绝。";
+            }
             String script = "for conf in /etc/nginx/sites-enabled/* /etc/nginx/conf.d/*.conf; do "
                     + "[ -f \"$conf\" ] || continue; "
                     + "domain=$(basename \"$conf\" .conf); "
@@ -42,6 +49,9 @@ public class NginxTool {
     @Tool(description = "检查 nginx 配置是否正确。")
     public String checkNginxConfig(@ToolParam(description = "服务器ID") Long serverId) {
         return ToolCallHelper.execute(sink, "checkNginxConfig", "serverId=" + serverId, () -> {
+            if (!permissionService.canAccessServer(serverId)) {
+                return "无权限访问服务器 " + serverId + "，操作已拒绝。";
+            }
             try (ExecuteCommandSSHClient client = new ExecuteCommandSSHClient(serverId)) {
                 return client.executeCommand("nginx -t 2>&1");
             } catch (Exception e) {

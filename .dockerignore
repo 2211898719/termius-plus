@@ -1,0 +1,31 @@
+# 后端(保留 build/libs/ 里的 JAR)
+server/.gradle/
+server/build/classes/
+server/build/generated/
+server/build/tmp/
+server/build/resources/
+server/build/reports/
+server/target/
+server/.idea/
+server/*.iml
+server/out/
+
+# 前端(保留 dist/ 产物)
+web/admin/node_modules/
+web/admin/.env.local
+web/admin/.cache/
+
+# 通用
+.git/
+.gitignore
+.DS_Store
+*.log
+.idea/
+.vscode/
+README.md
+docs/
+conf/
+mysql8/
+data/
+target/
+scripts/

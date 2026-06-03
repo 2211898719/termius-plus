@@ -75,6 +75,11 @@ public class PatrolController {
         return patrolEngine.executeScript(params.getScriptId(), params.getServerId());
     }
 
+    @PostMapping("/execute/draft")
+    public PatrolTaskDto executeDraft(@RequestBody PatrolExecuteDraftParams params) {
+        return patrolEngine.executeDraft(params.getScriptContent(), params.getScriptName(), params.getServerId());
+    }
+
     @PostMapping("/execute/script/{scriptId}")
     public List<PatrolTaskDto> executeScriptOnAll(@PathVariable Long scriptId) {
         return patrolEngine.executeScriptOnAllServers(scriptId);
@@ -122,9 +127,7 @@ public class PatrolController {
                 .orElseGet(() -> {
                     PatrolConversation conv = new PatrolConversation();
                     conv.setConversationId(conversationId);
-                    conv.setTitle(params.getMessage().length() > 10
-                            ? params.getMessage().substring(0, 10)
-                            : params.getMessage());
+                    conv.setTitle(deriveTitle(params.getMessage()));
                     return conversationRepository.save(conv);
                 });
 
@@ -210,6 +213,7 @@ public class PatrolController {
                 .toList();
     }
 
+    @Transactional
     @PostMapping("/agent/messages")
     public OkResponse saveMessage(@RequestBody Map<String, Object> body) {
         String conversationId = (String) body.get("conversationId");
@@ -231,6 +235,24 @@ public class PatrolController {
         msg.setSortOrder(count + 1);
         messageRepository.save(msg);
 
+        if ("user".equals(role) && count == 0) {
+            conversationRepository.findByConversationId(conversationId).ifPresent(conv -> {
+                conv.setTitle(deriveTitle(content));
+                conversationRepository.save(conv);
+            });
+        }
+
         return OkResponse.TRUE;
+    }
+
+    private String deriveTitle(String message) {
+        if (!StringUtils.hasText(message)) {
+            return "新对话";
+        }
+        String cleaned = message.replaceAll("\\s+", " ").trim();
+        if (cleaned.isEmpty()) {
+            return "新对话";
+        }
+        return cleaned.length() > 10 ? cleaned.substring(0, 10) : cleaned;
     }
 }

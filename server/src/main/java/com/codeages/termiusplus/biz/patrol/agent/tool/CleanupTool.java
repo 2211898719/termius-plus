@@ -1,17 +1,21 @@
 package com.codeages.termiusplus.biz.patrol.agent.tool;
 
+import com.codeages.termiusplus.biz.patrol.agent.PatrolPermissionService;
 import com.codeages.termiusplus.biz.patrol.agent.ToolCallHelper;
 import com.codeages.termiusplus.biz.util.ExecuteCommandSSHClient;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Sinks;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class CleanupTool {
 
+    private final PatrolPermissionService permissionService;
     private Sinks.Many<String> sink;
 
     public void setSink(Sinks.Many<String> sink) {
@@ -25,6 +29,9 @@ public class CleanupTool {
             @ToolParam(description = "文件名模式") String pattern,
             @ToolParam(description = "超过多少天") int olderThanDays) {
         return ToolCallHelper.execute(sink, "cleanupFiles", "serverId=" + serverId + ", path=" + path + ", pattern=" + pattern + ", olderThanDays=" + olderThanDays, () -> {
+            if (!permissionService.canAccessServer(serverId)) {
+                return "无权限访问服务器 " + serverId + "，操作已拒绝。";
+            }
             String command = String.format("find %s -name '%s' -mtime +%d -type f 2>/dev/null | head -50", path, pattern, olderThanDays);
             try (ExecuteCommandSSHClient client = new ExecuteCommandSSHClient(serverId)) {
                 String files = client.executeCommand(command);
@@ -45,6 +52,9 @@ public class CleanupTool {
             @ToolParam(description = "文件名模式") String pattern,
             @ToolParam(description = "超过多少天") int olderThanDays) {
         return ToolCallHelper.execute(sink, "confirmCleanup", "serverId=" + serverId + ", path=" + path + ", pattern=" + pattern + ", olderThanDays=" + olderThanDays, () -> {
+            if (!permissionService.canAccessServer(serverId)) {
+                return "无权限访问服务器 " + serverId + "，操作已拒绝。";
+            }
             String command = String.format("find %s -name '%s' -mtime +%d -type f -delete 2>&1", path, pattern, olderThanDays);
             try (ExecuteCommandSSHClient client = new ExecuteCommandSSHClient(serverId)) {
                 return "清理完成: " + client.executeCommand(command);

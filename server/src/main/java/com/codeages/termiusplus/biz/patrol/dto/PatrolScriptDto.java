@@ -11,6 +11,8 @@ public class PatrolScriptDto {
     private String outputSchema;
     private String category;
     private Boolean enabled;
+    private String serverIds;
+    private String groupIds;
     private Long createdAt;
     private Long updatedAt;
 }

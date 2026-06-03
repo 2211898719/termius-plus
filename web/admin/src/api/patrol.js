@@ -13,6 +13,7 @@ export const patrolApi = {
     execute: (scriptId, serverId) => client.post("/api-admin/patrol/execute", {scriptId, serverId}),
     executeScriptOnAll: (scriptId) => client.post(`/api-admin/patrol/execute/script/${scriptId}`),
     executeAll: () => client.post("/api-admin/patrol/execute/all"),
+    executeDraft: (params) => client.post("/api-admin/patrol/execute/draft", params),
 
     // Agent 对话
     chat: (message, serverId, conversationId) => client.post("/api-admin/patrol/agent/chat", {message, serverId, conversationId}),

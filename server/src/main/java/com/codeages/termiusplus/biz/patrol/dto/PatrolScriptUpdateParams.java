@@ -13,4 +13,6 @@ public class PatrolScriptUpdateParams {
     private String outputSchema;
     private String category;
     private Boolean enabled;
+    private String serverIds;
+    private String groupIds;
 }

@@ -24,6 +24,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -43,7 +44,7 @@ public class ExecuteCommandSSHClient implements AutoCloseable {
     @SneakyThrows
     public String executeCommand(String command) {
         Session session = sshClient.startSession();
-        Session.Command cmd = session.exec(command);
+        Session.Command cmd = session.exec(wrapWithSudo(command));
 
         InputStream in = cmd.getInputStream();
         BufferedReader reader = new BufferedReader(new InputStreamReader(in));
@@ -55,6 +56,19 @@ public class ExecuteCommandSSHClient implements AutoCloseable {
         }
         return output.toString()
                      .trim();
+    }
+
+    /**
+     * 用 sudo -i 提权到 root 执行命令。命令用 base64 编码避免 shell 转义问题，
+     * 密码做单引号转义后通过管道喂给 sudo -S。
+     * 若服务器未配置 sudo 免密或权限不足，命令会失败（用户已知情）。
+     */
+    private String wrapWithSudo(String command) {
+        String encoded = Base64.getEncoder()
+                               .encodeToString(command.getBytes(StandardCharsets.UTF_8));
+        String escapedPassword = serverDto.getPassword()
+                                          .replace("'", "'\\''");
+        return "echo '" + escapedPassword + "' | sudo -S -i bash -c 'echo " + encoded + " | base64 -d | bash'";
     }
 
     @SneakyThrows
